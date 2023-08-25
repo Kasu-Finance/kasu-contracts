@@ -8,5 +8,5 @@ struct PoolConfiguration {
 }
 
 interface ILendingPoolFactory {
-    function createPool(PoolConfiguration poolConfiguration) external returns (address);
+    function createPool(PoolConfiguration calldata poolConfiguration) external returns (address);
 }

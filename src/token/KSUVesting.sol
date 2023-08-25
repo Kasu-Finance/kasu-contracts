@@ -123,6 +123,7 @@ contract KSUVesting is Context {
      * Default implementation is a linear vesting curve.
      */
     function vestedAmount(uint64 timestamp) public view returns (uint256) {
+        // TODO: handle scenario where tokens haven't been sent to the vesting contract yet
         return _vestingSchedule(IERC20(token).balanceOf(address(this)) + _totalReleased - _vestedAtStart, timestamp)
             + _vestedAtStart;
     }

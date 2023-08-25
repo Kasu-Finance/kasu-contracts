@@ -23,5 +23,5 @@ interface ILoanManager {
     function addLoans(address lendingPool, Loan[] calldata loans) external returns (uint256);
     function removeLoans(address lendingPool, uint256[] calldata loanIDs) external;
     function reportLoss(Loss[] calldata loss) external;
-    function makePayment(LoanPayment[] calldata payments);
+    function makePayment(LoanPayment[] calldata payments) external;
 }
