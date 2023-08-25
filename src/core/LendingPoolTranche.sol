@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
-import "@openzeppelin-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 
 /**
  * @dev 
@@ -12,5 +12,10 @@ import "@openzeppelin-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
  * - when deposits are cleared, users receive ERC20 receipt tokens
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
-interface ILendingPoolTranche is IERC20Upgradeable, IERC1155Upgradeable {
+contract LendingPoolTranche is ERC20Upgradeable, ERC1155Upgradeable {
+    /// @note user => nftIDs[]
+    mapping(address => uint256[]) private userDepositNFTs;
+    
+    /// @note user => nftIDs[]
+    mapping(address => uint256[]) private userWithdrawalNFTs;
 }

@@ -19,9 +19,14 @@ struct LoanPayment {
     uint256 amountYield;
 }
 
+// mapping (address => Loan[]) _loans;
+
 interface ILoanManager {
     function addLoans(address lendingPool, Loan[] calldata loans) external returns (uint256);
-    function removeLoans(address lendingPool, uint256[] calldata loanIDs) external;
+    function removeLoans(uint256[] calldata loanIDs) external;
     function reportLoss(Loss[] calldata loss) external;
     function makePayment(LoanPayment[] calldata payments) external;
+
+    function lendingPoolLoan(address lendingPool, uint256 loanlID) external view returns (Loan memory);
+    function lendingPoolLoans(address lendingPool) external view returns (Loan[] memory);
 }
