@@ -5,7 +5,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/utils/Address.sol";
 import "@openzeppelin/utils/Context.sol";
 import "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/interfaces/IERC20.sol";
+import "@openzeppelin/token/ERC20/IERC20.sol";
 
 /* ========== ERRORS ========== */
 /**

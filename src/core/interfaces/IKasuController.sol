@@ -16,6 +16,11 @@ error MissingRole(bytes32 role, address account);
 error SystemPaused();
 
 /**
+ * @notice Used when setting lending pool owner
+ */
+error LendingPoolOwnerAlreadySet(address lendingPool);
+
+/**
  * @notice Used when a contract tries to enter in a non-reentrant state.
  */
 error ReentrantCall();
@@ -27,6 +32,13 @@ error NoReentrantRole();
 
 interface IKasuController is IAccessControlUpgradeable {
     /* ========== VIEW FUNCTIONS ========== */
+
+    /**
+     * @notice Gets owner of a lending pool.
+     * @param lendingPool Lending pool.
+     * @return owner Owner of the lending pool.
+     */
+    function lendingPoolOwner(address lendingPool) external view returns (address owner);
 
     /**
      * @notice Looks if an account has a role for a lending pool.
@@ -46,7 +58,7 @@ interface IKasuController is IAccessControlUpgradeable {
      * @param lendingPool Address of the lending pool.
      * @param account to check.
      */
-    function checkIsAdminOrPoolAdmin(address lendingPool, address account) external view;
+    function checkIsAdminOrVaultAdmin(address lendingPool, address account) external view;
 
     /**
      * @notice Checks if system is paused or not.
@@ -73,7 +85,7 @@ interface IKasuController is IAccessControlUpgradeable {
     /**
      * @notice Grants role to an account for a lending pool.
      * @dev Requirements:
-     * - caller must have either role ROLE_KASU_ADMIN or role ROLE_LENDING_POOL_ADMIN for the lending pool
+     * - caller must have either role ROLE_SPOOL_ADMIN or role ROLE_SMART_VAULT_ADMIN for the lending pool
      * @param lendingPool Address of the lending pool.
      * @param role Role to grant.
      * @param account Account to grant the role to.
@@ -83,7 +95,7 @@ interface IKasuController is IAccessControlUpgradeable {
     /**
      * @notice Revokes role from an account for a lending pool.
      * @dev Requirements:
-     * - caller must have either role ROLE_KASU_ADMIN or role ROLE_LENDING_POOL_ADMIN for the lending pool
+     * - caller must have either role ROLE_SPOOL_ADMIN or role ROLE_SMART_VAULT_ADMIN for the lending pool
      * @param lendingPool Address of the lending pool.
      * @param role Role to revoke.
      * @param account Account to revoke the role from.
@@ -96,6 +108,14 @@ interface IKasuController is IAccessControlUpgradeable {
      * @param role Role to renounce.
      */
     function renounceLendingPoolRole(address lendingPool, bytes32 role) external;
+
+    /**
+     * @notice Grant ownership to lending pool and assigns admin role.
+     * @dev Ownership can only be granted once and it should be done at vault creation time.
+     * @param lendingPool Address of the lending pool.
+     * @param owner address to which grant ownership to
+     */
+    function grantLendingPoolOwnership(address lendingPool, address owner) external;
 
     /**
      * @notice Checks and reverts if a system has already entered in the non-reentrant state.
@@ -114,24 +134,31 @@ interface IKasuController is IAccessControlUpgradeable {
     function nonReentrantAfter() external;
 
     /**
-     * @notice Smart vault specific role was granted
-     * @param lendingPool Smart vault address
+     * @notice Emitted when ownership of a lending pool is granted to an address
+     * @param lendingPool Lending pool address
+     * @param address_ Address of the new lending pool owner
+     */
+    event LendingPoolOwnershipGranted(address indexed lendingPool, address indexed address_);
+
+    /**
+     * @notice Lending pool specific role was granted
+     * @param lendingPool Lending pool address
      * @param role Role ID
      * @param account Account to which the role was granted
      */
     event LendingPoolRoleGranted(address indexed lendingPool, bytes32 indexed role, address indexed account);
 
     /**
-     * @notice Smart vault specific role was revoked
-     * @param lendingPool Smart vault address
+     * @notice Lending pool specific role was revoked
+     * @param lendingPool Lending pool address
      * @param role Role ID
      * @param account Account for which the role was revoked
      */
     event LendingPoolRoleRevoked(address indexed lendingPool, bytes32 indexed role, address indexed account);
 
     /**
-     * @notice Smart vault specific role was renounced
-     * @param lendingPool Smart vault address
+     * @notice Lending pool specific role was renounced
+     * @param lendingPool Lending pool address
      * @param role Role ID
      * @param account Account that renounced the role
      */
