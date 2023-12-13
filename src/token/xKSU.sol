@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.21;
+
+import "@openzeppelin-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+
+abstract contract xKSU is ERC20PermitUpgradeable {
+    error NonTransferrable();
+
+    function _initializeXKSU() internal initializer {
+        __ERC20_init("xKasu Token", "xKSU");
+    }
+
+    function transfer(address, uint256) public virtual override returns (bool) {
+        revert NonTransferrable();
+    }
+
+    function transferFrom(
+        address,
+        address,
+        uint256
+    ) public virtual override returns (bool) {
+        revert NonTransferrable();
+    }
+
+    function approve(address, uint256) public virtual override returns (bool) {
+        revert NonTransferrable();
+    }
+
+    function increaseAllowance(address, uint256) public virtual override returns (bool) {
+        revert NonTransferrable();
+    }
+
+    function decreaseAllowance(address, uint256) public virtual override returns (bool) {
+        revert NonTransferrable();
+    }
+}
