@@ -4,7 +4,7 @@ pragma solidity 0.8.21;
 import "./interfaces/ILoanManager.sol";
 import "./interfaces/ILoanImpairments.sol";
 
-contract LendingPoolManager is ILoanManager, ILoanImpairments {
+abstract contract LendingPoolManager is ILoanManager, ILoanImpairments {
     mapping(uint256 => Loan) private lendingPoolLoans;
 
     function addLoans(address lendingPool, Loan[] calldata loans) external returns (uint256) {
@@ -27,7 +27,7 @@ contract LendingPoolManager is ILoanManager, ILoanImpairments {
         revert("0");
     }
 
-    function lendingPoolLoans(address lendingPool) external view returns (Loan[] memory) {
+    function lendingPoolLoansArray(address lendingPool) external view returns (Loan[] memory) {
         revert("0");
     }
 }

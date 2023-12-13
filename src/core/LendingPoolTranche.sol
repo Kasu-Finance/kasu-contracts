@@ -13,9 +13,9 @@ import "@openzeppelin-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
 contract LendingPoolTranche is ERC20Upgradeable, ERC1155Upgradeable {
-    /// @note user => nftIDs[]
+    /// @notice user => nftIDs[]
     mapping(address => uint256[]) private userDepositNFTs;
     
-    /// @note user => nftIDs[]
+    /// @notice user => nftIDs[]
     mapping(address => uint256[]) private userWithdrawalNFTs;
 }
