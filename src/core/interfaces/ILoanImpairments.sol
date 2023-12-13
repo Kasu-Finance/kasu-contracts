@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
-import "@openzeppelin-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 
 interface ILoanImpairments is IERC1155Upgradeable {
     function claim() external;
