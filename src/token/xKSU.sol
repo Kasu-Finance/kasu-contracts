@@ -14,11 +14,7 @@ abstract contract xKSU is ERC20PermitUpgradeable {
         revert NonTransferrable();
     }
 
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) public virtual override returns (bool) {
+    function transferFrom(address, address, uint256) public virtual override returns (bool) {
         revert NonTransferrable();
     }
 

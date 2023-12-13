@@ -8,7 +8,7 @@ interface IKSULocking {
         uint256 startTime;
         uint256 lockPeriod;
     }
-    
+
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId);
     function unlock(uint256 amount, uint256 userLockId) external;
 

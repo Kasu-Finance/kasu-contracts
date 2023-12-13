@@ -20,7 +20,7 @@ contract KSULocking is IKSULocking, xKSU {
 
     IERC20 public ksuToken;
     IERC20 public feeToken;
-    
+
     mapping(address => UserLock[]) public userLocks;
     mapping(uint256 => LockDetails) public lockDetailsMapping;
 
@@ -83,7 +83,5 @@ contract KSULocking is IKSULocking, xKSU {
         // update reward details
     }
 
-    function claimFees() external {
-        
-    }
+    function claimFees() external {}
 }
