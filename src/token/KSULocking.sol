@@ -3,8 +3,11 @@ pragma solidity 0.8.21;
 
 import "./xKSU.sol";
 import "./interfaces/IKSULocking.sol";
-
+import "../shared/Constants.sol";
 import "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
+
+
+import "lib/forge-std/src/console2.sol";
 
 contract KSULocking is IKSULocking, xKSU {
     using SafeERC20 for IERC20;
@@ -16,10 +19,16 @@ contract KSULocking is IKSULocking, xKSU {
         bool isActive;
     }
 
-    uint256 constant FULL_PERCENT = 100_00;
+    uint256 private constant REWARDS_PRECISION = 1e24;
 
     IERC20 public ksuToken;
     IERC20 public feeToken;
+    
+    // global reward details
+    uint256 public accumulatedRewardsPerShare;
+
+    mapping(address => uint256) public rewards;
+    mapping(address => uint256) public rewardDebt;
 
     mapping(address => UserLock[]) public userLocks;
     mapping(uint256 => LockDetails) public lockDetailsMapping;
@@ -48,9 +57,23 @@ contract KSULocking is IKSULocking, xKSU {
      * @return userLockId lock id
      */
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId) {
+        return _lock(amount, lockPeriod);
+    }
+
+    /**
+     * @notice Lock KSU token for a period of time.
+     * @dev User must approve KSU token before calling this function.
+     * @param amount KSU token amount to lock
+     * @param lockPeriod in seconds
+     * @return userLockId lock id
+     */
+    function _lock(uint256 amount, uint256 lockPeriod) private returns (uint256 userLockId) {
         if (!lockDetailsMapping[lockPeriod].isActive) {
             revert LockPeriodNotSupported(lockPeriod);
         }
+
+        // calculate current user rewards
+        _updateUserRewards(msg.sender);
 
         // transfer KSU token from user
         ksuToken.transferFrom(msg.sender, address(this), amount);
@@ -64,6 +87,7 @@ contract KSULocking is IKSULocking, xKSU {
         userLocks[msg.sender].push(UserLock(amount, xKSUAmount, block.timestamp, lockPeriod));
 
         // update user reward details
+        rewardDebt[msg.sender] = balanceOf(msg.sender) * accumulatedRewardsPerShare / REWARDS_PRECISION;
     }
 
     function unlock(uint256 amount, uint256 userLockId) external {
@@ -81,7 +105,38 @@ contract KSULocking is IKSULocking, xKSU {
         feeToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // update reward details
+        _updatePoolRewards(amount);
+        console2.log("accumulatedRewardsPerShare", accumulatedRewardsPerShare);
     }
 
-    function claimFees() external {}
+    function _updatePoolRewards(uint256 newRewards) private {
+        console2.log("totalSupply()", totalSupply());
+        console2.log("newRewards", newRewards);
+        if (totalSupply() == 0) {
+            return;
+        }
+         
+        accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / totalSupply();
+    }
+
+    function _getUserRewards(address user) private view returns (uint256) {
+        return balanceOf(user) * accumulatedRewardsPerShare / REWARDS_PRECISION - rewardDebt[user];
+    }
+
+    function _updateUserRewards(address user) private {
+        uint256 earned = _getUserRewards(user);
+        
+        console2.log("earned", earned);
+        rewards[user] += earned;
+    }
+
+    function claimFees() external returns (uint256 earned) {
+        _updateUserRewards(msg.sender);
+
+        earned = rewards[msg.sender];
+
+        rewards[msg.sender] = 0;
+
+        feeToken.safeTransfer(msg.sender, earned);
+    }
 }

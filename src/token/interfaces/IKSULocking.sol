@@ -13,5 +13,5 @@ interface IKSULocking {
     function unlock(uint256 amount, uint256 userLockId) external;
 
     function emitFees(uint256 amount) external;
-    function claimFees() external;
+    function claimFees() external returns (uint256 earned);
 }
