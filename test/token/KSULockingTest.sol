@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import "forge-std/Test.sol";
-import  "../../src/token/KSULocking.sol";
+import "../../src/token/KSULocking.sol";
 import "@openzeppelin/token/ERC20/ERC20.sol";
 import "../../src/shared/Constants.sol";
 
@@ -41,7 +41,7 @@ contract KSULockingTest is Test {
         // ACT
         vm.startPrank(admin);
         _KSULocking.emitFees(amount);
-    
+
         // ASSERT
         assertEq(_usdc.balanceOf(address(_KSULocking)), amount);
     }
@@ -55,7 +55,7 @@ contract KSULockingTest is Test {
         // ACT
         vm.startPrank(alice);
         _KSULocking.lock(lockAmount, lockPeriod);
-    
+
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), lockAmount);
         assertEq(_KSULocking.balanceOf(alice), lockAmount * lockMultiplier / FULL_PERCENT);
@@ -73,7 +73,7 @@ contract KSULockingTest is Test {
         _KSULocking.lock(lockAmount, lockPeriod);
         vm.prank(admin);
         _KSULocking.emitFees(rewardAmount);
-    
+
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), lockAmount);
         assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
@@ -81,7 +81,7 @@ contract KSULockingTest is Test {
         // ACT
         vm.prank(alice);
         _KSULocking.claimFees();
-    
+
         // ASSERT
         assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1);
         assertApproxEqAbs(_usdc.balanceOf(address(alice)), rewardAmount, 1);

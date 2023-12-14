@@ -6,9 +6,6 @@ import "./interfaces/IKSULocking.sol";
 import "../shared/Constants.sol";
 import "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 
-
-import "lib/forge-std/src/console2.sol";
-
 contract KSULocking is IKSULocking, xKSU {
     using SafeERC20 for IERC20;
 
@@ -23,7 +20,7 @@ contract KSULocking is IKSULocking, xKSU {
 
     IERC20 public ksuToken;
     IERC20 public feeToken;
-    
+
     // global reward details
     uint256 public accumulatedRewardsPerShare;
 
@@ -106,16 +103,13 @@ contract KSULocking is IKSULocking, xKSU {
 
         // update reward details
         _updatePoolRewards(amount);
-        console2.log("accumulatedRewardsPerShare", accumulatedRewardsPerShare);
     }
 
     function _updatePoolRewards(uint256 newRewards) private {
-        console2.log("totalSupply()", totalSupply());
-        console2.log("newRewards", newRewards);
         if (totalSupply() == 0) {
             return;
         }
-         
+
         accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / totalSupply();
     }
 
@@ -125,8 +119,7 @@ contract KSULocking is IKSULocking, xKSU {
 
     function _updateUserRewards(address user) private {
         uint256 earned = _getUserRewards(user);
-        
-        console2.log("earned", earned);
+
         rewards[user] += earned;
     }
 
