@@ -3,11 +3,11 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-abstract contract xKSU is ERC20PermitUpgradeable {
+abstract contract rKSU is ERC20PermitUpgradeable {
     error NonTransferrable();
 
     function _initializeXKSU() internal onlyInitializing {
-        __ERC20_init("xKasu Token", "xKSU");
+        __ERC20_init("rKasu Token", "rKSU");
     }
 
     function transfer(address, uint256) public virtual override returns (bool) {

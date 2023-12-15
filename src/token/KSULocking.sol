@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "./xKSU.sol";
+import "./rKSU.sol";
 import "./interfaces/IKSULocking.sol";
 import "../shared/Constants.sol";
 import "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 
-contract KSULocking is IKSULocking, xKSU {
+contract KSULocking is IKSULocking, rKSU {
     using SafeERC20 for IERC20;
 
     error LockPeriodNotSupported(uint256 lockPeriod);
