@@ -10,6 +10,7 @@ contract KSULocking is IKSULocking, rKSU {
     using SafeERC20 for IERC20;
 
     error LockPeriodNotSupported(uint256 lockPeriod);
+    error DepositLocked(uint256 lockPeriod);
 
     struct LockDetails {
         uint256 xKSUMultiplier;
@@ -89,7 +90,12 @@ contract KSULocking is IKSULocking, rKSU {
 
     function unlock(uint256 amount, uint256 userLockId) external {
         // check if lock is ok and unlocked
-
+        UserLock storage userLock = userLocks[msg.sender][userLockId];
+        uint256 unlockTime = userLock.startTime + userLock.lockPeriod;
+        if(unlockTime < block.timestamp){
+            
+        }
+        
         // burn xKSU
 
         // update reward details
