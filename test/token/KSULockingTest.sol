@@ -36,11 +36,8 @@ contract KSULockingTest is Test {
         // ARRANGE
         uint256 amount = 100 * 1e6;
 
-        _approve(_usdc, admin, address(_KSULocking), amount);
-
         // ACT
-        vm.startPrank(admin);
-        _KSULocking.emitFees(amount);
+        _emitFees(amount);
 
         // ASSERT
         assertEq(_usdc.balanceOf(address(_KSULocking)), amount);
@@ -48,34 +45,26 @@ contract KSULockingTest is Test {
 
     function testLock() public {
         // ARRANGE
-        uint256 _lockAmount = 100 ether;
-
-        _approve(_ksu, alice, address(_KSULocking), _lockAmount);
+        uint256 aliceLockAmount = 100 ether;
 
         // ACT
-        vm.startPrank(alice);
-        _KSULocking.lock(_lockAmount, lockPeriod);
+        _lock(alice, aliceLockAmount, lockPeriod);
 
         // ASSERT
-        assertEq(_ksu.balanceOf(address(_KSULocking)), _lockAmount);
-        assertEq(_KSULocking.balanceOf(alice), _lockAmount * lockMultiplier / FULL_PERCENT);
+        assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
+        assertEq(_KSULocking.balanceOf(alice), aliceLockAmount * lockMultiplier / FULL_PERCENT);
     }
 
     function testLockRewards() public {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
-        uint256 _lockAmount = 200 ether;
+        uint256 aliceLockAmount = 200 ether;
 
-        _approve(_ksu, alice, address(_KSULocking), _lockAmount);
-        _approve(_usdc, admin, address(_KSULocking), rewardAmount);
-
-        vm.prank(alice);
-        _KSULocking.lock(_lockAmount, lockPeriod);
-        vm.prank(admin);
-        _KSULocking.emitFees(rewardAmount);
+        _lock(alice, aliceLockAmount, lockPeriod);
+        _emitFees(rewardAmount);
 
         // ASSERT
-        assertEq(_ksu.balanceOf(address(_KSULocking)), _lockAmount);
+        assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
         assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
 
         // ACT
@@ -93,8 +82,8 @@ contract KSULockingTest is Test {
         uint256 aliceLockAmount = 100 ether;
         uint256 bobLockAmount = 300 ether;
 
-        _lockAmount(alice, aliceLockAmount, lockPeriod);
-        _lockAmount(bob, bobLockAmount, lockPeriod);
+        _lock(alice, aliceLockAmount, lockPeriod);
+        _lock(bob, bobLockAmount, lockPeriod);
         _emitFees(rewardAmount);
 
         // ACT
@@ -114,16 +103,16 @@ contract KSULockingTest is Test {
         uint256 aliceLockAmountDeposit1 = 100 ether;
         uint256 bobLockAmountDeposit1 = 300 ether;
 
-        _lockAmount(alice, aliceLockAmountDeposit1, lockPeriod);
-        _lockAmount(bob, bobLockAmountDeposit1, lockPeriod);
+        _lock(alice, aliceLockAmountDeposit1, lockPeriod);
+        _lock(bob, bobLockAmountDeposit1, lockPeriod);
         _emitFees(reward1Amount);
 
         uint256 reward2Amount = 50 * 1e6;
         uint256 aliceLockAmountDeposit2 = 200 ether;
         uint256 bobLockAmountDeposit2 = 200 ether;
 
-        _lockAmount(alice, aliceLockAmountDeposit2, lockPeriod);
-        _lockAmount(bob, bobLockAmountDeposit2, lockPeriod);
+        _lock(alice, aliceLockAmountDeposit2, lockPeriod);
+        _lock(bob, bobLockAmountDeposit2, lockPeriod);
         _emitFees(reward2Amount);
 
         // ACT
@@ -141,6 +130,16 @@ contract KSULockingTest is Test {
         token.approve(spender, amount);
     }
 
+    function _lock(address sender, uint256 amount, uint256 lockPeriod_) private prank(sender) {
+        _ksu.approve(address(_KSULocking), amount);
+        _KSULocking.lock(amount, lockPeriod_);
+    }
+
+    function _emitFees(uint256 rewardAmount) private prank(admin) {
+        _usdc.approve(address(_KSULocking), rewardAmount);
+        _KSULocking.emitFees(rewardAmount);
+    }
+
     modifier prank(address executor) {
         _prank(executor);
         _;
@@ -154,17 +153,5 @@ contract KSULockingTest is Test {
             vm.allowCheatcodes(executor);
             startHoax(executor);
         }
-    }
-
-    function _lockAmount(address sender, uint256 amount, uint256 lockPeriod) private  {
-        _approve(_ksu, sender, address(_KSULocking), amount);
-        vm.prank(sender);
-        _KSULocking.lock(amount, lockPeriod);
-    }
-
-    function _emitFees(uint256 rewardAmount) private  {
-        _approve(_usdc, admin, address(_KSULocking), rewardAmount);
-        vm.prank(admin);
-        _KSULocking.emitFees(rewardAmount);
     }
 }
