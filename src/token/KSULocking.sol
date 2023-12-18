@@ -113,11 +113,13 @@ contract KSULocking is IKSULocking, rKSU {
         _updateUserRewards(msg.sender);
         
         // burn xKSU
+        _burn(msg.sender, amount * userLock.xKSUMultiplier / FULL_PERCENT);
 
         // update reward details
+        userLock.amount = userLock.amount - amount;
 
         // transfer KSU token to user
-        // ksuToken.transfer
+        ksuToken.safeTransfer(msg.sender, amount);
     }
 
     function emitFees(uint256 amount) external {
