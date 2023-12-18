@@ -15,8 +15,20 @@ contract KSULockingTest is Test {
     address public alice = address(0x1);
     address public bob = address(0x2);
 
-    uint256 public lockPeriod = 30 days;
-    uint256 public lockMultiplier = 105_00;
+    uint256 public lockPeriod30 = 30 days;
+    uint256 public lockMultiplier30 = 5_00;
+
+
+    uint256 public lockPeriod180 = 180 days;
+    uint256 public lockMultiplier180 = 25_00;
+
+
+    uint256 public lockPeriod360 = 360 days;
+    uint256 public lockMultiplier360 = 50_00;
+
+
+    uint256 public lockPeriod720 = 720 days;
+    uint256 public lockMultiplier720 = 100_00;
 
     function setUp() public {
         _ksu = new ERC20("KSU", "KSU");
@@ -29,7 +41,10 @@ contract KSULockingTest is Test {
         deal(address(_ksu), bob, 1000 ether, true);
         deal(address(_usdc), admin, 1000 * 1e6, true);
 
-        _KSULocking.addLockPeriod(lockPeriod, lockMultiplier);
+        _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30);
+        _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180);
+        _KSULocking.addLockPeriod(lockPeriod360, lockMultiplier360);
+        _KSULocking.addLockPeriod(lockPeriod720, lockMultiplier720);
     }
 
     function testEmitFees() public {
@@ -48,11 +63,11 @@ contract KSULockingTest is Test {
         uint256 aliceLockAmount = 100 ether;
 
         // ACT
-        _lock(alice, aliceLockAmount, lockPeriod);
+        _lock(alice, aliceLockAmount, lockPeriod30);
 
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
-        assertEq(_KSULocking.balanceOf(alice), aliceLockAmount * lockMultiplier / FULL_PERCENT);
+        assertEq(_KSULocking.balanceOf(alice), aliceLockAmount * lockMultiplier30 / FULL_PERCENT);
     }
 
     function testLockRewards() public {
@@ -60,7 +75,7 @@ contract KSULockingTest is Test {
         uint256 rewardAmount = 100 * 1e6;
         uint256 aliceLockAmount = 200 ether;
 
-        _lock(alice, aliceLockAmount, lockPeriod);
+        _lock(alice, aliceLockAmount, lockPeriod30);
         _emitFees(rewardAmount);
 
         // ASSERT
@@ -82,8 +97,8 @@ contract KSULockingTest is Test {
         uint256 aliceLockAmount = 100 ether;
         uint256 bobLockAmount = 300 ether;
 
-        _lock(alice, aliceLockAmount, lockPeriod);
-        _lock(bob, bobLockAmount, lockPeriod);
+        _lock(alice, aliceLockAmount, lockPeriod30);
+        _lock(bob, bobLockAmount, lockPeriod30);
         _emitFees(rewardAmount);
 
         // ACT
@@ -103,16 +118,16 @@ contract KSULockingTest is Test {
         uint256 aliceLockAmountDeposit1 = 100 ether;
         uint256 bobLockAmountDeposit1 = 300 ether;
 
-        _lock(alice, aliceLockAmountDeposit1, lockPeriod);
-        _lock(bob, bobLockAmountDeposit1, lockPeriod);
+        _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
+        _lock(bob, bobLockAmountDeposit1, lockPeriod30);
         _emitFees(reward1Amount);
 
         uint256 reward2Amount = 50 * 1e6;
         uint256 aliceLockAmountDeposit2 = 200 ether;
         uint256 bobLockAmountDeposit2 = 200 ether;
 
-        _lock(alice, aliceLockAmountDeposit2, lockPeriod);
-        _lock(bob, bobLockAmountDeposit2, lockPeriod);
+        _lock(alice, aliceLockAmountDeposit2, lockPeriod30);
+        _lock(bob, bobLockAmountDeposit2, lockPeriod30);
         _emitFees(reward2Amount);
 
         // ACT
@@ -130,7 +145,7 @@ contract KSULockingTest is Test {
         // ARRANGE
         uint256 aliceLockAmountDeposit = 100 ether;
 
-        uint256 lockId = _lock(alice, aliceLockAmountDeposit, lockPeriod);
+        uint256 lockId = _lock(alice, aliceLockAmountDeposit, lockPeriod30);
 
         // ACT / ASSET
         uint256 aliceUnLockAmount = 80 ether;
@@ -146,11 +161,11 @@ contract KSULockingTest is Test {
         uint256 aliceLockAmountDeposit = 100 ether;
         uint256 bobLockAmountDeposit = 300 ether;
 
-        _lock(alice, aliceLockAmountDeposit, lockPeriod);
-        _lock(bob, bobLockAmountDeposit, lockPeriod);
+        _lock(alice, aliceLockAmountDeposit, lockPeriod30);
+        _lock(bob, bobLockAmountDeposit, lockPeriod30);
         _emitFees(reward1Amount);
 
-        skip(lockPeriod);
+        skip(lockPeriod30);
 
         // ACT
         uint256 aliceUnLockAmount = 80 ether;
@@ -162,8 +177,8 @@ contract KSULockingTest is Test {
         _KSULocking.unlock(bobUnLockAmount, 0);
 
         // ASSERT
-        assertApproxEqAbs(_KSULocking.balanceOf(alice), 20 ether * lockMultiplier / FULL_PERCENT, 1);
-        assertApproxEqAbs(_KSULocking.balanceOf(bob), 80 ether * lockMultiplier / FULL_PERCENT, 1);
+        assertApproxEqAbs(_KSULocking.balanceOf(alice), 20 ether * lockMultiplier30 / FULL_PERCENT, 1);
+        assertApproxEqAbs(_KSULocking.balanceOf(bob), 80 ether * lockMultiplier30 / FULL_PERCENT, 1);
     }
 
     // ###  Helper Functions ###

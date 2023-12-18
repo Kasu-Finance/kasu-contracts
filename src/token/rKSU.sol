@@ -6,7 +6,7 @@ import "@openzeppelin-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.
 abstract contract rKSU is ERC20PermitUpgradeable {
     error NonTransferrable();
 
-    function _initializeXKSU() internal onlyInitializing {
+    function _initializeRKSU() internal onlyInitializing {
         __ERC20_init("rKasu Token", "rKSU");
     }
 

@@ -29,7 +29,7 @@ contract KSULocking is IKSULocking, rKSU {
     mapping(uint256 => LockDetails) public lockDetailsMapping;
 
     function initialize(IERC20 ksuToken_, IERC20 feeToken_) external initializer {
-        _initializeXKSU();
+        _initializeRKSU();
         ksuToken = ksuToken_;
         feeToken = feeToken_;
     }
