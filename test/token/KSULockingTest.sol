@@ -140,12 +140,6 @@ contract KSULockingTest is Test {
         _KSULocking.emitFees(rewardAmount);
     }
 
-    modifier prank(address executor) {
-        _prank(executor);
-        _;
-        vm.stopPrank();
-    }
-
     function _prank(address executor) internal {
         if (executor.balance > 0) {
             vm.startPrank(executor);
@@ -153,5 +147,11 @@ contract KSULockingTest is Test {
             vm.allowCheatcodes(executor);
             startHoax(executor);
         }
+    }
+
+    modifier prank(address executor) {
+        _prank(executor);
+        _;
+        vm.stopPrank();
     }
 }

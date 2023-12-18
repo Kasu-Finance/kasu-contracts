@@ -11,6 +11,8 @@ contract KSULocking is IKSULocking, rKSU {
 
     error LockPeriodNotSupported(uint256 lockPeriod);
     error DepositLocked(uint256 lockPeriod);
+    error InvalidUserDeposit(uint256 userLockId);
+    error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
 
     struct LockDetails {
         uint256 xKSUMultiplier;
@@ -70,19 +72,20 @@ contract KSULocking is IKSULocking, rKSU {
             revert LockPeriodNotSupported(lockPeriod);
         }
 
-        // calculate current user rewards
-        _updateUserRewards(msg.sender);
-
         // transfer KSU token from user
         ksuToken.transferFrom(msg.sender, address(this), amount);
 
+        // calculate current user rewards
+        _updateUserRewards(msg.sender);
+
         // mint xKSU
-        uint256 xKSUAmount = amount * lockDetailsMapping[lockPeriod].xKSUMultiplier / FULL_PERCENT;
+        uint256 xKSUMultiplier = lockDetailsMapping[lockPeriod].xKSUMultiplier;
+        uint256 xKSUAmount = amount * xKSUMultiplier / FULL_PERCENT;
         _mint(msg.sender, xKSUAmount);
 
         // add user lock details
         userLockId = userLocks[msg.sender].length;
-        userLocks[msg.sender].push(UserLock(amount, xKSUAmount, block.timestamp, lockPeriod));
+        userLocks[msg.sender].push(UserLock(amount, xKSUAmount, xKSUMultiplier, block.timestamp, lockPeriod));
 
         // update user reward details
         rewardDebt[msg.sender] = balanceOf(msg.sender) * accumulatedRewardsPerShare / REWARDS_PRECISION;
@@ -91,17 +94,30 @@ contract KSULocking is IKSULocking, rKSU {
     function unlock(uint256 amount, uint256 userLockId) external {
         // check if lock is ok and unlocked
         UserLock storage userLock = userLocks[msg.sender][userLockId];
-        uint256 unlockTime = userLock.startTime + userLock.lockPeriod;
-        if(unlockTime < block.timestamp){
-            
+        
+        if (userLock.amount == 0) {
+            revert InvalidUserDeposit(userLockId);
         }
+        
+        if (userLock.amount < amount) {
+            revert UserUnlockAmountTooHigh(userLockId, userLock.amount, amount);
+        }
+        
+        uint256 unlockTime = userLock.startTime + userLock.lockPeriod;
+        
+        if (unlockTime < block.timestamp) {
+            revert DepositLocked(userLockId);
+        }
+
+        // calculate current user rewards
+        _updateUserRewards(msg.sender);
         
         // burn xKSU
 
         // update reward details
 
         // transfer KSU token to user
-        revert("0");
+        // ksuToken.transfer
     }
 
     function emitFees(uint256 amount) external {

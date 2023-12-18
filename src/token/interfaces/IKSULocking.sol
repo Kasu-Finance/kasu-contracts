@@ -5,6 +5,7 @@ interface IKSULocking {
     struct UserLock {
         uint256 amount;
         uint256 xKSUAmount;
+        uint256 xKSUMultiplier;
         uint256 startTime;
         uint256 lockPeriod;
     }
