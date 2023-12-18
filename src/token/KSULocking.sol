@@ -9,13 +9,8 @@ import "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 contract KSULocking is IKSULocking, rKSU {
     using SafeERC20 for IERC20;
 
-    error LockPeriodNotSupported(uint256 lockPeriod);
-    error DepositLocked(uint256 lockPeriod);
-    error InvalidUserDeposit(uint256 userLockId);
-    error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
-
     struct LockDetails {
-        uint256 xKSUMultiplier;
+        uint256 rKSUMultiplier;
         bool isActive;
     }
 
@@ -43,10 +38,10 @@ contract KSULocking is IKSULocking, rKSU {
      * @notice Add period lock details.
      * @dev TODO: Only owner can call this function.
      * @param lockPeriod in seconds
-     * @param xKSUMultiplier xKSU multiplier for the lock period
+     * @param rKSUMultiplier xKSU multiplier for the lock period
      */
-    function addLockPeriod(uint256 lockPeriod, uint256 xKSUMultiplier) external {
-        lockDetailsMapping[lockPeriod] = LockDetails(xKSUMultiplier, true);
+    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier) external {
+        lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, true);
     }
 
     /**
@@ -79,19 +74,19 @@ contract KSULocking is IKSULocking, rKSU {
         _updateUserRewards(msg.sender);
 
         // mint xKSU
-        uint256 xKSUMultiplier = lockDetailsMapping[lockPeriod].xKSUMultiplier;
-        uint256 xKSUAmount = amount * xKSUMultiplier / FULL_PERCENT;
-        _mint(msg.sender, xKSUAmount);
+        uint256 rKSUMultiplier = lockDetailsMapping[lockPeriod].rKSUMultiplier;
+        uint256 rKSUAmount = amount * rKSUMultiplier / FULL_PERCENT;
+        _mint(msg.sender, rKSUAmount);
 
         // add user lock details
         userLockId = userLocks[msg.sender].length;
-        userLocks[msg.sender].push(UserLock(amount, xKSUAmount, xKSUMultiplier, block.timestamp, lockPeriod));
+        userLocks[msg.sender].push(UserLock(amount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
 
         // update user reward details
         rewardDebt[msg.sender] = balanceOf(msg.sender) * accumulatedRewardsPerShare / REWARDS_PRECISION;
     }
 
-    function unlock(uint256 amount, uint256 userLockId) external {
+    function unlock(uint256 unlockAmount, uint256 userLockId) external {
         // check if lock is ok and unlocked
         UserLock storage userLock = userLocks[msg.sender][userLockId];
         
@@ -99,13 +94,13 @@ contract KSULocking is IKSULocking, rKSU {
             revert InvalidUserDeposit(userLockId);
         }
         
-        if (userLock.amount < amount) {
-            revert UserUnlockAmountTooHigh(userLockId, userLock.amount, amount);
+        if (userLock.amount < unlockAmount) {
+            revert UserUnlockAmountTooHigh(userLockId, userLock.amount, unlockAmount);
         }
         
         uint256 unlockTime = userLock.startTime + userLock.lockPeriod;
         
-        if (unlockTime < block.timestamp) {
+        if (unlockTime > block.timestamp) {
             revert DepositLocked(userLockId);
         }
 
@@ -113,13 +108,17 @@ contract KSULocking is IKSULocking, rKSU {
         _updateUserRewards(msg.sender);
         
         // burn xKSU
-        _burn(msg.sender, amount * userLock.xKSUMultiplier / FULL_PERCENT);
+        uint256 amountRemaining = userLock.amount - unlockAmount;
+        uint256 rKSURemaining = amountRemaining * userLock.rKSUMultiplier / FULL_PERCENT;
+
+        _burn(msg.sender, userLock.rKSUAmount - rKSURemaining);
 
         // update reward details
-        userLock.amount = userLock.amount - amount;
+        userLock.amount = amountRemaining;
+        userLock.rKSUAmount = rKSURemaining;
 
         // transfer KSU token to user
-        ksuToken.safeTransfer(msg.sender, amount);
+        ksuToken.transfer(msg.sender, unlockAmount);
     }
 
     function emitFees(uint256 amount) external {

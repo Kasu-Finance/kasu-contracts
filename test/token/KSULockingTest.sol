@@ -126,6 +126,20 @@ contract KSULockingTest is Test {
         assertApproxEqAbs(_usdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
     }
 
+    function testUnlockWhenNotExpired_ShouldRevert() public {
+        // ARRANGE
+        uint256 aliceLockAmountDeposit = 100 ether;
+
+        uint256 lockId = _lock(alice, aliceLockAmountDeposit, lockPeriod);
+
+        // ACT / ASSET
+        uint256 aliceUnLockAmount = 80 ether;
+        vm.prank(alice);
+        console2.logBytes(abi.encodeWithSelector(DepositLocked.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(DepositLocked.selector, lockId));
+        _KSULocking.unlock(aliceUnLockAmount, 0);
+    }
+
     function testUnlockForTwoUsers() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
@@ -135,6 +149,8 @@ contract KSULockingTest is Test {
         _lock(alice, aliceLockAmountDeposit, lockPeriod);
         _lock(bob, bobLockAmountDeposit, lockPeriod);
         _emitFees(reward1Amount);
+
+        skip(lockPeriod);
 
         // ACT
         uint256 aliceUnLockAmount = 80 ether;
@@ -156,9 +172,9 @@ contract KSULockingTest is Test {
         token.approve(spender, amount);
     }
 
-    function _lock(address sender, uint256 amount, uint256 lockPeriod_) private prank(sender) {
+    function _lock(address sender, uint256 amount, uint256 lockPeriod_) private prank(sender) returns (uint256 userLockId) {
         _ksu.approve(address(_KSULocking), amount);
-        _KSULocking.lock(amount, lockPeriod_);
+        return _KSULocking.lock(amount, lockPeriod_);
     }
 
     function _emitFees(uint256 rewardAmount) private prank(admin) {
