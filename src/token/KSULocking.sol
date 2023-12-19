@@ -141,7 +141,7 @@ contract KSULocking is IKSULocking, rKSU {
         feeToken.safeTransfer(msg.sender, earned);
     }
 
-    function getRewards(address user) public view returns (uint256) {
+    function getRewards(address user) external view returns (uint256) {
         return rewards[user] + _getUserRewards(msg.sender);
     }
 
