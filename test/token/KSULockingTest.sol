@@ -20,14 +20,11 @@ contract KSULockingTest is Test {
     uint256 public lockPeriod30 = 30 days;
     uint256 public lockMultiplier30 = 5_00;
 
-
     uint256 public lockPeriod180 = 180 days;
     uint256 public lockMultiplier180 = 25_00;
 
-
     uint256 public lockPeriod360 = 360 days;
     uint256 public lockMultiplier360 = 50_00;
-
 
     uint256 public lockPeriod720 = 720 days;
     uint256 public lockMultiplier720 = 100_00;
@@ -77,7 +74,7 @@ contract KSULockingTest is Test {
     function testLockWithPermit() public {
         // ARRANGE
         SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(IERC20Permit(address(_ksu)).DOMAIN_SEPARATOR());
-        
+
         uint256 lockAmount = 100 ether;
         uint256 deadline = 1 days;
         uint256 userPrivateKey = 0xA11CE;
@@ -97,13 +94,9 @@ contract KSULockingTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
 
         hoax(user);
-        _KSULocking.lockWithPermit(lockAmount, lockPeriod30, IKSULocking.ERC20Permit({
-            value: lockAmount,
-            deadline: deadline,
-            v: v,
-            r: r,
-            s: s
-        }));
+        _KSULocking.lockWithPermit(
+            lockAmount, lockPeriod30, IKSULocking.ERC20Permit({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
+        );
 
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), lockAmount);
@@ -131,7 +124,7 @@ contract KSULockingTest is Test {
         assertApproxEqAbs(_usdc.balanceOf(address(alice)), rewardAmount, 1);
     }
 
-    function testLockRewardsForTwoUsersOneDeposit() public  {
+    function testLockRewardsForTwoUsersOneDeposit() public {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
         uint256 aliceLockAmount = 100 ether;
@@ -152,7 +145,7 @@ contract KSULockingTest is Test {
         assertApproxEqAbs(_usdc.balanceOf(address(bob)), 75 * 1e6, 1);
     }
 
-    function testLockRewardsForTwoUsersMultipleDepositsAndRewards() public  {
+    function testLockRewardsForTwoUsersMultipleDepositsAndRewards() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
@@ -255,7 +248,11 @@ contract KSULockingTest is Test {
         token.approve(spender, amount);
     }
 
-    function _lock(address sender, uint256 amount, uint256 lockPeriod_) private prank(sender) returns (uint256 userLockId) {
+    function _lock(address sender, uint256 amount, uint256 lockPeriod_)
+        private
+        prank(sender)
+        returns (uint256 userLockId)
+    {
         _ksu.approve(address(_KSULocking), amount);
         return _KSULocking.lock(amount, lockPeriod_);
     }

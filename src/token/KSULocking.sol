@@ -66,8 +66,13 @@ contract KSULocking is IKSULocking, rKSU {
      * @param ksuPermit KSU token permit
      * @return userLockId lock id
      */
-    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit) external returns (uint256) {
-        IERC20Permit(address(ksuToken)).permit(msg.sender, address(this), ksuPermit.value, ksuPermit.deadline, ksuPermit.v, ksuPermit.r, ksuPermit.s);
+    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
+        external
+        returns (uint256)
+    {
+        IERC20Permit(address(ksuToken)).permit(
+            msg.sender, address(this), ksuPermit.value, ksuPermit.deadline, ksuPermit.v, ksuPermit.r, ksuPermit.s
+        );
 
         return _lock(amount, lockPeriod);
     }
@@ -79,24 +84,24 @@ contract KSULocking is IKSULocking, rKSU {
     function unlock(uint256 unlockAmount, uint256 userLockId) external {
         // check if lock is ok and unlocked
         UserLock storage userLock = userLocks[msg.sender][userLockId];
-        
+
         if (userLock.amount == 0) {
             revert InvalidUserDeposit(userLockId);
         }
-        
+
         if (userLock.amount < unlockAmount) {
             revert UserUnlockAmountTooHigh(userLockId, userLock.amount, unlockAmount);
         }
-        
+
         uint256 unlockTime = userLock.startTime + userLock.lockPeriod;
-        
+
         if (unlockTime > block.timestamp) {
             revert DepositLocked(userLockId);
         }
 
         // calculate current user rewards
         _updateUserRewards(msg.sender);
-        
+
         // burn xKSU
         uint256 amountRemaining = userLock.amount - unlockAmount;
         uint256 rKSURemaining = amountRemaining * userLock.rKSUMultiplier / FULL_PERCENT;
@@ -183,5 +188,4 @@ contract KSULocking is IKSULocking, rKSU {
 
         rewards[user] += earned;
     }
-
 }
