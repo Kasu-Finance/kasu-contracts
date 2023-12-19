@@ -181,6 +181,34 @@ contract KSULockingTest is Test {
         assertApproxEqAbs(_KSULocking.balanceOf(bob), 80 ether * lockMultiplier30 / FULL_PERCENT, 1);
     }
 
+    function testGetRewards() public {
+        // ARRANGE
+        uint256 reward1Amount = 100 * 1e6;
+        uint256 aliceLockAmountDeposit1 = 100 ether;
+        uint256 bobLockAmountDeposit1 = 300 ether;
+
+        _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
+        _lock(bob, bobLockAmountDeposit1, lockPeriod30);
+        _emitFees(reward1Amount);
+
+        uint256 reward2Amount = 50 * 1e6;
+        uint256 aliceLockAmountDeposit2 = 200 ether;
+        uint256 bobLockAmountDeposit2 = 200 ether;
+
+        // ACT
+        _lock(alice, aliceLockAmountDeposit2, lockPeriod30);
+        _lock(bob, bobLockAmountDeposit2, lockPeriod30);
+        _emitFees(reward2Amount);
+
+        // ASSERT
+        vm.startPrank(alice);
+        assertApproxEqAbs(_KSULocking.getRewards(), 25 * 1e6 + 1875 * 1e4, 1);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        assertApproxEqAbs(_KSULocking.getRewards(), 75 * 1e6 + 3125 * 1e4, 1);
+        vm.stopPrank();
+    }
+
     // ###  Helper Functions ###
 
     function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {
