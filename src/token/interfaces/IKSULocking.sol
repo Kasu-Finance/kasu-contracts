@@ -15,7 +15,16 @@ interface IKSULocking {
         uint256 lockPeriod;
     }
 
+    struct ERC20Permit {
+        uint256 value;
+        uint256 deadline;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId);
+    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit) external returns (uint256 userLockId);
     function unlock(uint256 amount, uint256 userLockId) external;
 
     function emitFees(uint256 amount) external;

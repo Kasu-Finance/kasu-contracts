@@ -58,6 +58,19 @@ contract KSULocking is IKSULocking, rKSU {
         return _lock(amount, lockPeriod);
     }
 
+    /**
+     * @notice Lock KSU token for a period of time
+     * @dev User must approve KSU token before calling this function
+     * @param amount KSU token amount to lock
+     * @param lockPeriod in seconds
+     * @param ksuPermit KSU token permit
+     * @return userLockId lock id
+     */
+    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit) external returns (uint256) {
+        IERC20Permit(address(ksuToken)).permit(msg.sender, address(this), ksuPermit.value, ksuPermit.deadline, ksuPermit.v, ksuPermit.r, ksuPermit.s);
+
+        return _lock(amount, lockPeriod);
+    }
 
     /**
      * @notice Unlock KSU token. Locking period must over

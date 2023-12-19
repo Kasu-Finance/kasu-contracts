@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import "../../src/token/KSULocking.sol";
 import "@openzeppelin/token/ERC20/ERC20.sol";
 import "../../src/shared/Constants.sol";
+import "../../src/token/KSU.sol";
+import "../shared/SigUtilsERC20.sol";
 
 contract KSULockingTest is Test {
     IERC20 private _ksu;
@@ -31,7 +33,9 @@ contract KSULockingTest is Test {
     uint256 public lockMultiplier720 = 100_00;
 
     function setUp() public {
-        _ksu = new ERC20("KSU", "KSU");
+        KSU ksu_ = new KSU();
+        ksu_.initialize(address(admin));
+        _ksu = IERC20(address(ksu_));
         _usdc = new ERC20("USDC", "USDC");
         _KSULocking = new KSULocking();
 
@@ -68,6 +72,42 @@ contract KSULockingTest is Test {
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
         assertEq(_KSULocking.balanceOf(alice), aliceLockAmount * lockMultiplier30 / FULL_PERCENT);
+    }
+
+    function testLockWithPermit() public {
+        // ARRANGE
+        SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(IERC20Permit(address(_ksu)).DOMAIN_SEPARATOR());
+        
+        uint256 lockAmount = 100 ether;
+        uint256 deadline = 1 days;
+        uint256 userPrivateKey = 0xA11CE;
+        address user = vm.addr(userPrivateKey);
+        deal(address(_ksu), user, 1000 ether, true);
+
+        // ACT
+        SigUtilsERC20.Permit memory permit = SigUtilsERC20.Permit({
+            owner: user,
+            spender: address(_KSULocking),
+            value: lockAmount,
+            nonce: IERC20Permit(address(_ksu)).nonces(user),
+            deadline: deadline
+        });
+
+        bytes32 digest = sigUtilsERC20.getTypedDataHash(permit);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
+
+        hoax(user);
+        _KSULocking.lockWithPermit(lockAmount, lockPeriod30, IKSULocking.ERC20Permit({
+            value: lockAmount,
+            deadline: deadline,
+            v: v,
+            r: r,
+            s: s
+        }));
+
+        // ASSERT
+        assertEq(_ksu.balanceOf(address(_KSULocking)), lockAmount);
+        assertEq(_KSULocking.balanceOf(user), lockAmount * lockMultiplier30 / FULL_PERCENT);
     }
 
     function testLockRewards() public {
@@ -229,7 +269,6 @@ contract KSULockingTest is Test {
         if (executor.balance > 0) {
             vm.startPrank(executor);
         } else {
-            vm.allowCheatcodes(executor);
             startHoax(executor);
         }
     }
