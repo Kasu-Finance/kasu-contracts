@@ -235,10 +235,10 @@ contract KSULockingTest is Test {
 
         // ASSERT
         vm.startPrank(alice);
-        assertApproxEqAbs(_KSULocking.getRewards(), 25 * 1e6 + 1875 * 1e4, 1);
+        assertApproxEqAbs(_KSULocking.getRewards(alice), 25 * 1e6 + 1875 * 1e4, 1);
         vm.stopPrank();
         vm.startPrank(bob);
-        assertApproxEqAbs(_KSULocking.getRewards(), 75 * 1e6 + 3125 * 1e4, 1);
+        assertApproxEqAbs(_KSULocking.getRewards(bob), 75 * 1e6 + 3125 * 1e4, 1);
         vm.stopPrank();
     }
 
