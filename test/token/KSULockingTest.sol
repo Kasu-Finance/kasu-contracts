@@ -53,13 +53,18 @@ contract KSULockingTest is Test {
 
     function testEmitFees() public {
         // ARRANGE
-        uint256 amount = 100 * 1e6;
+        uint256 rewardAmount = 100 * 1e6;
 
-        // ACT
-        _emitFees(amount);
+        // ACT / ASSERT
+        vm.startPrank(admin);
+        _usdc.approve(address(_KSULocking), rewardAmount);
+        vm.expectEmit(true, false, false, true, address(_KSULocking));
+        emit KSULocking.FeesEmitted(address(admin), rewardAmount);
+        _KSULocking.emitFees(rewardAmount);
+        vm.stopPrank();
 
         // ASSERT
-        assertEq(_usdc.balanceOf(address(_KSULocking)), amount);
+        assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
     }
 
     function testLock_() public {

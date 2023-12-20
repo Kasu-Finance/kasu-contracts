@@ -138,6 +138,9 @@ contract KSULocking is IKSULocking, rKSU {
 
         // update reward details
         _updatePoolRewards(amount);
+
+        // emit event
+        emit FeesEmitted(msg.sender, amount);
     }
 
     /**
