@@ -47,7 +47,7 @@ contract KSULocking is IKSULocking, rKSU {
     // ### Public Interface ###
 
     /**
-    * @dev See {IKSILocking-addLockPeriod}.
+     * @dev See {IKSILocking-addLockPeriod}.
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external {
         lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
