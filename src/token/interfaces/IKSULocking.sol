@@ -53,7 +53,8 @@ interface IKSULocking {
 
     /**
      * @notice Unlock KSU token. Locking period must over.
-     * @param unlockAmount KSU token amount to unlock
+     * @param amount KSU token amount to unlock
+     * @param userLockId lock id
      */
     function unlock(uint256 amount, uint256 userLockId) external;
 
