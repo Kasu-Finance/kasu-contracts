@@ -42,7 +42,7 @@ contract KSULocking is IKSULocking, rKSU {
     event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
     event FeesClaimed(address indexed user, uint256 amount);
-    event FeesEmmitted(address indexed user, uint256 amount);
+    event FeesEmitted(address indexed user, uint256 amount);
 
     // ### Public Interface ###
 
@@ -222,7 +222,7 @@ contract KSULocking is IKSULocking, rKSU {
         }
 
         if (ksuSentAmount > 0) {
-            ksuToken.transferFrom(ksuBonusTokens, ksuSentAmount);
+            ksuToken.transferFrom(ksuBonusTokens, msg.sender, ksuSentAmount);
         }
     }
 }
