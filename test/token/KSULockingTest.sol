@@ -129,8 +129,11 @@ contract KSULockingTest is Test {
         assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
 
         // ACT
-        vm.prank(alice);
+        vm.startPrank(alice);
+        vm.expectEmit();
+        emit KSULocking.FeesClaimed(address(alice), rewardAmount);
         _KSULocking.claimFees();
+        vm.stopPrank();
 
         // ASSERT
         assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1);
