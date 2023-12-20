@@ -47,33 +47,21 @@ contract KSULocking is IKSULocking, rKSU {
     // ### Public Interface ###
 
     /**
-     * @notice Add period lock details
-     * @dev TODO: Only owner can call this function
-     * @param lockPeriod in seconds
-     * @param rKSUMultiplier xKSU multiplier for the lock period
+    * @dev See {IKSILocking-addLockPeriod}.
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external {
         lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
     }
 
     /**
-     * @notice Lock KSU token for a period of time
-     * @dev User must approve KSU token before calling this function
-     * @param amount KSU token amount to lock
-     * @param lockPeriod in seconds
-     * @return userLockId lock id
+     * @dev See {IKSILocking-lock}.
      */
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId) {
         return _lock(amount, lockPeriod);
     }
 
     /**
-     * @notice Lock KSU token for a period of time
-     * @dev User must approve KSU token before calling this function
-     * @param amount KSU token amount to lock
-     * @param lockPeriod in seconds
-     * @param ksuPermit KSU token permit
-     * @return userLockId lock id
+     * @dev See {IKSULocking-lockWithPermit}.
      */
     function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
         external
@@ -87,8 +75,7 @@ contract KSULocking is IKSULocking, rKSU {
     }
 
     /**
-     * @notice Unlock KSU token. Locking period must over
-     * @param unlockAmount KSU token amount to unlock
+     * @dev See {IKSULocking-unlock}.
      */
     function unlock(uint256 unlockAmount, uint256 userLockId) external {
         // check if lock is ok and unlocked
@@ -129,9 +116,7 @@ contract KSULocking is IKSULocking, rKSU {
     }
 
     /**
-     * @notice Adding USDC to the locking contracts
-     * @dev Must approve USDC token before calling this function
-     * @param amount amount of fees to add
+     * @dev See {IKSULocking-emitFees}.
      */
     function emitFees(uint256 amount) external {
         feeToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -144,7 +129,7 @@ contract KSULocking is IKSULocking, rKSU {
     }
 
     /**
-     * @notice Called by user to get all his USDC fees
+     * @dev See {IKSULocking-claimFees}.
      */
     function claimFees() external returns (uint256 earned) {
         _updateUserRewards(msg.sender);
@@ -158,6 +143,9 @@ contract KSULocking is IKSULocking, rKSU {
         emit FeesClaimed(msg.sender, earned);
     }
 
+    /**
+     * @dev See {IKSULocking-getRewards}.
+     */
     function getRewards(address user) external view returns (uint256) {
         return rewards[user] + _getUserRewards(msg.sender);
     }

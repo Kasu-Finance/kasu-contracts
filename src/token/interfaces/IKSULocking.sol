@@ -23,13 +23,54 @@ interface IKSULocking {
         bytes32 s;
     }
 
+    /**
+     * @notice Add period lock details
+     * @dev TODO: Only owner can call this function
+     * @param lockPeriod in seconds
+     * @param rKSUMultiplier xKSU multiplier for the lock period
+     */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external;
+
+    /**
+     * @notice Lock KSU token for a period of time
+     * @dev User must approve KSU token before calling this function
+     * @param amount KSU token amount to lock
+     * @param lockPeriod in seconds
+     * @return userLockId lock id
+     */
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId);
+
+    /**
+     * @notice Lock KSU token for a period of time
+     * @param amount KSU token amount to lock
+     * @param lockPeriod in seconds
+     * @param ksuPermit KSU token permit
+     * @return userLockId lock id
+     */
     function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
         external
         returns (uint256 userLockId);
+
+    /**
+     * @notice Unlock KSU token. Locking period must over.
+     * @param unlockAmount KSU token amount to unlock
+     */
     function unlock(uint256 amount, uint256 userLockId) external;
+
+    /**
+     * @notice Adding USDC to the locking contracts
+     * @dev Must approve USDC token before calling this function
+     * @param amount amount of fees to add
+     */
     function emitFees(uint256 amount) external;
+
+    /**
+     * @notice Called by user to get all his USDC fees
+     */
     function claimFees() external returns (uint256 earned);
+
+    /**
+     * @notice Returns USDC user reward amount
+     */
     function getRewards(address user) external view returns (uint256);
 }
