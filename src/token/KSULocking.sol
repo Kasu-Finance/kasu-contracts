@@ -11,6 +11,8 @@ contract KSULocking is IKSULocking, rKSU {
 
     uint256 private constant REWARDS_PRECISION = 1e24;
 
+    address public ksuBonusTokens;
+
     // ERC20 tokens
     IERC20 public ksuToken;
     IERC20 public feeToken;
@@ -18,6 +20,7 @@ contract KSULocking is IKSULocking, rKSU {
     // Global reward attributes
     struct LockDetails {
         uint256 rKSUMultiplier;
+        uint256 ksuBonusMultiplier;
         bool isActive;
     }
 
@@ -36,7 +39,7 @@ contract KSULocking is IKSULocking, rKSU {
     }
 
     // Events
-    event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount);
+    event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
     event FeesClaimed(address indexed user, uint256 amount);
     event FeesEmmitted(address indexed user, uint256 amount);
@@ -49,8 +52,8 @@ contract KSULocking is IKSULocking, rKSU {
      * @param lockPeriod in seconds
      * @param rKSUMultiplier xKSU multiplier for the lock period
      */
-    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier) external {
-        lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, true);
+    function addLockPeriod(uint256 lockPeriod, uint256 ksuBonusMultiplier, uint256 rKSUMultiplier) external {
+        lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
     }
 
     /**
@@ -169,20 +172,26 @@ contract KSULocking is IKSULocking, rKSU {
         // calculate current user rewards
         _updateUserRewards(msg.sender);
 
+        // transfer bonus KSU token to user
+        uint256 ksuBonusMultiplier = lockDetailsMapping[lockPeriod].ksuBonusMultiplier;
+        uint256 ksuCalculatedBonusAmount = amount * ksuBonusMultiplier / FULL_PERCENT;
+        uint256 ksuBonusAmount = _getBonusKSU(ksuCalculatedBonusAmount);
+        uint256 lockAmount = amount + ksuBonusAmount;
+
         // mint xKSU
         uint256 rKSUMultiplier = lockDetailsMapping[lockPeriod].rKSUMultiplier;
-        uint256 rKSUAmount = amount * rKSUMultiplier / FULL_PERCENT;
+        uint256 rKSUAmount = lockAmount * rKSUMultiplier / FULL_PERCENT;
         _mint(msg.sender, rKSUAmount);
 
         // add user lock details
         userLockId = userLocks[msg.sender].length;
-        userLocks[msg.sender].push(UserLock(amount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
+        userLocks[msg.sender].push(UserLock(lockAmount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
 
         // update user reward details
         rewardDebt[msg.sender] = balanceOf(msg.sender) * accumulatedRewardsPerShare / REWARDS_PRECISION;
 
         // emit event
-        emit UserLocked(msg.sender, userLockId, amount);
+        emit UserLocked(msg.sender, userLockId, amount, ksuBonusAmount);
     }
 
     function _updatePoolRewards(uint256 newRewards) private {
@@ -201,5 +210,19 @@ contract KSULocking is IKSULocking, rKSU {
         uint256 earned = _getUserRewards(user);
 
         rewards[user] += earned;
+    }
+
+    function _getBonusKSU(uint256 requestedAmount) private returns (uint256 ksuSentAmount) {
+        uint256 balance = ksuToken.balanceOf(ksuBonusTokens);
+
+        if (balance > requestedAmount) {
+            ksuSentAmount = requestedAmount;
+        } else {
+            ksuSentAmount = balance;
+        }
+
+        if (ksuSentAmount > 0) {
+            ksuToken.transferFrom(ksuBonusTokens, ksuSentAmount);
+        }
     }
 }
