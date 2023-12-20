@@ -23,6 +23,7 @@ interface IKSULocking {
         bytes32 s;
     }
 
+    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external;
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId);
     function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
         external

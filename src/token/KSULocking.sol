@@ -52,7 +52,7 @@ contract KSULocking is IKSULocking, rKSU {
      * @param lockPeriod in seconds
      * @param rKSUMultiplier xKSU multiplier for the lock period
      */
-    function addLockPeriod(uint256 lockPeriod, uint256 ksuBonusMultiplier, uint256 rKSUMultiplier) external {
+    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external {
         lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
     }
 
@@ -213,16 +213,21 @@ contract KSULocking is IKSULocking, rKSU {
     }
 
     function _getBonusKSU(uint256 requestedAmount) private returns (uint256 ksuSentAmount) {
-        uint256 balance = ksuToken.balanceOf(ksuBonusTokens);
+        uint256 bonusAmount = ksuToken.balanceOf(ksuBonusTokens);
+        uint256 bonusAllowance = ksuToken.allowance(ksuBonusTokens);
 
-        if (balance > requestedAmount) {
+        if (bonusAmount > bonusAllowance) {
+            bonusAmount = bonusAllowance;
+        }
+
+        if (bonusAmount > requestedAmount) {
             ksuSentAmount = requestedAmount;
         } else {
-            ksuSentAmount = balance;
+            ksuSentAmount = bonusAmount;
         }
 
         if (ksuSentAmount > 0) {
-            ksuToken.transferFrom(ksuBonusTokens, msg.sender, ksuSentAmount);
+            ksuToken.transferFrom(ksuBonusTokens, address(this), ksuSentAmount);
         }
     }
 }
