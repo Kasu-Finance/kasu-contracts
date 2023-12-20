@@ -214,7 +214,7 @@ contract KSULocking is IKSULocking, rKSU {
 
     function _getBonusKSU(uint256 requestedAmount) private returns (uint256 ksuSentAmount) {
         uint256 bonusAmount = ksuToken.balanceOf(ksuBonusTokens);
-        uint256 bonusAllowance = ksuToken.allowance(ksuBonusTokens);
+        uint256 bonusAllowance = ksuToken.allowance(ksuBonusTokens, address(this));
 
         if (bonusAmount > bonusAllowance) {
             bonusAmount = bonusAllowance;

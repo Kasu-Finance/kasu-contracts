@@ -75,7 +75,7 @@ contract KSULockingTest is Test {
 
         // ASSERT
         uint256 aliceExpectedLockAmount = aliceLockAmount * lockMultiplier30 / FULL_PERCENT;
-        assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount );
+        assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
         assertEq(_KSULocking.balanceOf(alice), aliceExpectedLockAmount);
     }
 
@@ -190,12 +190,16 @@ contract KSULockingTest is Test {
         _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
         _emitFees(reward1Amount);
 
+        skip(lockPeriod30);
+
         // ACT / ASSET
         uint256 aliceUnLockAmount = 80 ether;
+
+        vm.startPrank(alice);
         vm.expectEmit(true, true, false, false, address(_KSULocking));
         emit KSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount);
         _KSULocking.unlock(aliceUnLockAmount, 0);
-
+        vm.stopPrank();
     }
 
     function testUnlockWhenNotExpired_ShouldRevert() public {
@@ -207,7 +211,6 @@ contract KSULockingTest is Test {
         // ACT / ASSET
         uint256 aliceUnLockAmount = 80 ether;
         vm.prank(alice);
-        console2.logBytes(abi.encodeWithSelector(DepositLocked.selector, 1));
         vm.expectRevert(abi.encodeWithSelector(DepositLocked.selector, lockId));
         _KSULocking.unlock(aliceUnLockAmount, 0);
     }
