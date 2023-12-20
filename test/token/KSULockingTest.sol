@@ -59,12 +59,16 @@ contract KSULockingTest is Test {
         assertEq(_usdc.balanceOf(address(_KSULocking)), amount);
     }
 
-    function testLock() public {
+    function testLock_() public {
         // ARRANGE
         uint256 aliceLockAmount = 100 ether;
 
         // ACT
-        _lock(alice, aliceLockAmount, lockPeriod30);
+        startHoax(alice);
+        _ksu.approve(address(_KSULocking), aliceLockAmount);
+        vm.expectEmit(true, true, false, false, address(_KSULocking));
+        emit KSULocking.UserLocked(address(alice), 0, aliceLockAmount);
+        _KSULocking.lock(aliceLockAmount, lockPeriod30);
 
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);

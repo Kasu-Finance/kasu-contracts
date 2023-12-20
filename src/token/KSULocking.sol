@@ -35,6 +35,12 @@ contract KSULocking is IKSULocking, rKSU {
         feeToken = feeToken_;
     }
 
+    // Events
+    event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount);
+    event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
+    event FeesClaimed(address indexed user, uint256 amount);
+    event FeesEmmitted(address indexed user, uint256 amount);
+
     // ### Public Interface ###
 
     /**
@@ -114,6 +120,9 @@ contract KSULocking is IKSULocking, rKSU {
 
         // transfer KSU token to user
         ksuToken.transfer(msg.sender, unlockAmount);
+
+        // emit event
+        emit UserUnlocked(msg.sender, userLockId, unlockAmount);
     }
 
     /**
@@ -139,6 +148,8 @@ contract KSULocking is IKSULocking, rKSU {
         rewards[msg.sender] = 0;
 
         feeToken.safeTransfer(msg.sender, earned);
+
+        emit FeesClaimed(msg.sender, earned);
     }
 
     function getRewards(address user) external view returns (uint256) {
@@ -169,6 +180,9 @@ contract KSULocking is IKSULocking, rKSU {
 
         // update user reward details
         rewardDebt[msg.sender] = balanceOf(msg.sender) * accumulatedRewardsPerShare / REWARDS_PRECISION;
+
+        // emit event
+        emit UserLocked(msg.sender, userLockId, amount);
     }
 
     function _updatePoolRewards(uint256 newRewards) private {
