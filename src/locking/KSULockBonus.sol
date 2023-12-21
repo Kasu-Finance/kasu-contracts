@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract KSULockBonus is Initializable {
     address public ksuLocking;
