@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {rKSU} from "../rKSU.sol";
 
-    error LockPeriodNotSupported(uint256 lockPeriod);
+error LockPeriodNotSupported(uint256 lockPeriod);
 error DepositLocked(uint256 lockPeriod);
 error InvalidUserDeposit(uint256 userLockId);
 error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
@@ -27,7 +27,6 @@ interface IKSULocking {
 
     /**
      * @notice Add period lock details
-     * @dev TODO: Only owner can call this function
      * @param lockPeriod in seconds
      * @param rKSUMultiplier xKSU multiplier for the lock period
      */

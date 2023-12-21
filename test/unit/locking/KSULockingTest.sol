@@ -7,7 +7,6 @@ import "@openzeppelin/token/ERC20/ERC20.sol";
 import "../../../src/shared/Constants.sol";
 import "../../../src/token/KSU.sol";
 import "../../shared/SigUtilsERC20.sol";
-import "forge-std/console2.sol";
 import "../../../src/locking/KSULockBonus.sol";
 
 contract KSULockingTest is Test {

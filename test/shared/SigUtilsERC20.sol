@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-//Taken from Foundry Book
+// Taken from Foundry Book
 contract SigUtilsERC20 {
     bytes32 internal DOMAIN_SEPARATOR;
 
