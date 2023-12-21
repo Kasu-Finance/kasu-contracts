@@ -21,12 +21,4 @@ abstract contract rKSU is ERC20PermitUpgradeable {
     function approve(address, uint256) public virtual override returns (bool) {
         revert NonTransferrable();
     }
-
-    function increaseAllowance(address, uint256) public virtual override returns (bool) {
-        revert NonTransferrable();
-    }
-
-    function decreaseAllowance(address, uint256) public virtual override returns (bool) {
-        revert NonTransferrable();
-    }
 }

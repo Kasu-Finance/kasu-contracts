@@ -3,11 +3,11 @@ pragma solidity 0.8.23;
 
 import "forge-std/Test.sol";
 import "../../../src/locking/KSULocking.sol";
-import "@openzeppelin/token/ERC20/ERC20.sol";
 import "../../../src/shared/Constants.sol";
 import "../../../src/token/KSU.sol";
-import "../../shared/SigUtilsERC20.sol";
 import "../../../src/locking/KSULockBonus.sol";
+import "../../shared/SigUtilsERC20.sol";
+import "../../shared/MockERC20Permit.sol";
 
 contract KSULockingTest is Test {
     IERC20 private _ksu;
@@ -34,14 +34,13 @@ contract KSULockingTest is Test {
     uint256 public ksuBonusMultiplier = 25_00;
 
     function setUp() public {
-        KSU ksu_ = new KSU();
-        ksu_.initialize(address(admin));
-        _ksu = IERC20(address(ksu_));
-        _usdc = new ERC20("USDC", "USDC");
+        _ksu = new MockERC20Permit("KSU", "KSU", 18);
+        _usdc = new MockERC20Permit("USDC", "USDC", 6);
         _KSULocking = new KSULocking();
 
         _KSULocking.initialize(_ksu, _usdc);
 
+        deal(address(_ksu), admin, 1000 ether, true);
         deal(address(_ksu), alice, 1000 ether, true);
         deal(address(_ksu), bob, 1000 ether, true);
         deal(address(_usdc), admin, 1000 * 1e6, true);

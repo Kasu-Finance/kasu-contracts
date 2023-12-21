@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/access/IAccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
  * @notice Used when an account is missing a required role.
@@ -30,7 +30,7 @@ error ReentrantCall();
  */
 error NoReentrantRole();
 
-interface IKasuController is IAccessControlUpgradeable {
+interface IKasuController is IAccessControl {
     /* ========== VIEW FUNCTIONS ========== */
 
     /**
