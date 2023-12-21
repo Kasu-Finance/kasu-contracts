@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-error LockPeriodNotSupported(uint256 lockPeriod);
+import {rKSU} from "../rKSU.sol";
+
+    error LockPeriodNotSupported(uint256 lockPeriod);
 error DepositLocked(uint256 lockPeriod);
 error InvalidUserDeposit(uint256 userLockId);
 error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);

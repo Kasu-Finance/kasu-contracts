@@ -2,13 +2,13 @@
 pragma solidity 0.8.23;
 
 import "forge-std/Test.sol";
-import "../../src/token/KSULocking.sol";
+import "../../../src/locking/KSULocking.sol";
 import "@openzeppelin/token/ERC20/ERC20.sol";
-import "../../src/shared/Constants.sol";
-import "../../src/token/KSU.sol";
-import "../shared/SigUtilsERC20.sol";
+import "../../../src/shared/Constants.sol";
+import "../../../src/token/KSU.sol";
+import "../../shared/SigUtilsERC20.sol";
 import "forge-std/console2.sol";
-import "../../src/token/KSULockBonus.sol";
+import "../../../src/locking/KSULockBonus.sol";
 
 contract KSULockingTest is Test {
     IERC20 private _ksu;
