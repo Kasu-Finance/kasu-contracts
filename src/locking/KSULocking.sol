@@ -4,9 +4,10 @@ pragma solidity 0.8.23;
 import "./rKSU.sol";
 import "./interfaces/IKSULocking.sol";
 import "../shared/Constants.sol";
+import "../shared/access/KasuAccessControllable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract KSULocking is IKSULocking, rKSU {
+contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     using SafeERC20 for IERC20;
 
     uint256 private constant REWARDS_PRECISION = 1e24;
@@ -32,6 +33,10 @@ contract KSULocking is IKSULocking, rKSU {
     mapping(address => UserLock[]) public userLocks;
     mapping(uint256 => LockDetails) public lockDetailsMapping;
 
+    constructor(IKasuController controller_)
+        KasuAccessControllable(controller_)
+    {}
+
     function initialize(IERC20 ksuToken_, IERC20 feeToken_) external initializer {
         _initializeRKSU();
         ksuToken = ksuToken_;
@@ -47,14 +52,14 @@ contract KSULocking is IKSULocking, rKSU {
     // ### Public Interface ###
 
     /**
-     * @dev See {IKSILocking-addLockPeriod}.
+     * @dev See {IKSULocking-addLockPeriod}.
      */
-    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external {
+    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external onlyAdmin {
         lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
     }
 
     /**
-     * @dev See {IKSILocking-lock}.
+     * @dev See {IKSULocking-lock}.
      */
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId) {
         return _lock(amount, lockPeriod);

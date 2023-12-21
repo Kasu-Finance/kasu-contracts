@@ -8,7 +8,7 @@ import "./Roles.sol";
 /**
  * @notice Account access role verification middleware
  */
-abstract contract SpoolAccessControllable {
+abstract contract KasuAccessControllable {
     /* ========== CONSTANTS ========== */
 
     /**
@@ -36,7 +36,7 @@ abstract contract SpoolAccessControllable {
      */
     function _checkRole(bytes32 role, address account) internal view virtual {
         if (!controller.hasRole(role, account)) {
-            revert MissingRole(role, account);
+            revert IAccessControl.AccessControlUnauthorizedAccount(account, role);
         }
     }
 
@@ -48,32 +48,20 @@ abstract contract SpoolAccessControllable {
      */
     function _checkLendingPoolRole(address lendingPool, bytes32 role, address account) internal view {
         if (!controller.hasLendingPoolRole(lendingPool, role, account)) {
-            revert MissingRole(role, account);
+            revert IAccessControl.AccessControlUnauthorizedAccount(account, role);
         }
-    }
-
-    /**
-     * @dev Throws if the contract is paused.
-     */
-    function _requireNotPaused() internal view virtual {
-        if (controller.paused()) {
-            revert SystemPaused();
-        }
-    }
-
-    function _checkNonReentrant() internal view {
-        controller.checkNonReentrant();
-    }
-
-    function _nonReentrantBefore() internal {
-        controller.nonReentrantBefore();
-    }
-
-    function _nonReentrantAfter() internal {
-        controller.nonReentrantAfter();
     }
 
     /* ========== MODIFIERS ========== */
+
+    /**
+     * @notice Only allows Kasu admin.
+     * @dev Reverts when the account fails check.
+     */
+    modifier onlyAdmin() {
+        _checkRole(ROLE_KASU_ADMIN, msg.sender);
+        _;
+    }
 
     /**
      * @notice Only allows accounts with granted role.
@@ -110,38 +98,9 @@ abstract contract SpoolAccessControllable {
     }
 
     /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     */
-    modifier whenNotPaused() {
-        _requireNotPaused();
-        _;
-    }
-
-    /**
-     * @dev Prevents a contract from calling itself, or other contracts using this modifier.
-     */
-    modifier nonReentrant() {
-        _nonReentrantBefore();
-        _;
-        _nonReentrantAfter();
-    }
-
-    /**
-     * @dev Check if a system has already entered in the non-reentrant state.
-     */
-    modifier checkNonReentrant() {
-        _checkNonReentrant();
-        _;
-    }
-
-    /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 }
