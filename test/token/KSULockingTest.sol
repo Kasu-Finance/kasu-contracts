@@ -8,11 +8,13 @@ import "../../src/shared/Constants.sol";
 import "../../src/token/KSU.sol";
 import "../shared/SigUtilsERC20.sol";
 import "forge-std/console2.sol";
+import "../../src/token/KSULockBonus.sol";
 
 contract KSULockingTest is Test {
     IERC20 private _ksu;
     IERC20 private _usdc;
     KSULocking private _KSULocking;
+    KSULockBonus private _KSULockBonus;
 
     address public admin = address(0xad);
     address public alice = address(0x1);
@@ -114,6 +116,33 @@ contract KSULockingTest is Test {
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), lockAmount);
         assertEq(_KSULocking.balanceOf(user), lockAmount * lockMultiplier30 / FULL_PERCENT);
+    }
+
+    function testLockWithBonusKSU() public {
+        // ARRANGE
+        _KSULockBonus = new KSULockBonus();
+        _KSULockBonus.initialize(address(_KSULocking), _ksu);
+        _KSULocking.setKSULockBonus(address(_KSULockBonus));
+        vm.prank(admin);
+        _ksu.transfer(address(_KSULockBonus), 1000 ether);
+
+        // ACT / ASSER
+        uint256 aliceLockAmount = 100 ether;
+        uint256 expectedAliceBaseKSULockAmount = 100 ether;
+        uint256 expectedAliceBonusKSULockAmount = 25 ether;
+
+        vm.startPrank(alice);
+        _ksu.approve(address(_KSULocking), aliceLockAmount);
+        vm.expectEmit(true, true, false, true, address(_KSULocking));
+        emit KSULocking.UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
+        _KSULocking.lock(aliceLockAmount, lockPeriod30);
+        vm.stopPrank();
+
+        // ASSERT
+        uint256 aliceExpectedLockedRKSUAmount =
+            (expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount) * lockMultiplier30 / FULL_PERCENT;
+        assertEq(_ksu.balanceOf(address(_KSULocking)), expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount);
+        assertEq(_KSULocking.balanceOf(alice), aliceExpectedLockedRKSUAmount);
     }
 
     function testLockRewards() public {

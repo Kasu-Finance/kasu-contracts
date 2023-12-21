@@ -74,4 +74,9 @@ interface IKSULocking {
      * @notice Returns USDC user reward amount
      */
     function getRewards(address user) external view returns (uint256);
+
+    /**
+     * @notice Sets the KSU Bonus Tokens contract address
+     */
+    function setKSULockBonus(address ksuBonusTokens_) external;
 }

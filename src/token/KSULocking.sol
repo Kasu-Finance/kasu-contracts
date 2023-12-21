@@ -144,6 +144,13 @@ contract KSULocking is IKSULocking, rKSU {
     }
 
     /**
+     * @dev See {IKSULocking-setKSULockBonus}.
+     */
+    function setKSULockBonus(address ksuBonusTokens_) external {
+        ksuBonusTokens = ksuBonusTokens_;
+    }
+
+    /**
      * @dev See {IKSULocking-getRewards}.
      */
     function getRewards(address user) external view returns (uint256) {
