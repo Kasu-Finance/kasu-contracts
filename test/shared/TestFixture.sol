@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "../../src/shared/access/KasuController.sol";
 import "../../src/locking/KSULocking.sol";
@@ -19,6 +20,7 @@ contract TestFixture is Test {
     address internal admin = address(0xad);
     address internal alice = address(0x1);
     address internal bob = address(0x2);
+    address internal carol = address(0x3);
 
     uint256 internal lockPeriod30 = 30 days;
     uint256 internal lockMultiplier30 = 5_00;
@@ -37,17 +39,19 @@ contract TestFixture is Test {
     uint256 internal ksuBonusMultiplier720 = 70_00;
 
     function setupBase() internal virtual {
-        _ksu = new MockERC20Permit("KSU", "KSU", 18);
-        _usdc = new MockERC20Permit("USDC", "USDC", 6);
-        setupBase(_ksu, _usdc);
+        MockERC20Permit mockKsu = new MockERC20Permit("KSU", "KSU", 18);
+        MockERC20Permit mockUsdc = new MockERC20Permit("USDC", "USDC", 6);
+        setupBase(mockKsu, mockUsdc);
     }
 
     function setupBase(ERC20Permit ksu, IERC20 usdc) internal virtual {
+        _ksu = ksu;
+        _usdc = usdc;
         ProxyAdmin proxy = new ProxyAdmin(admin);
 
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =
-                    new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
+            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
@@ -59,6 +63,7 @@ contract TestFixture is Test {
         deal(address(_ksu), admin, 1000 ether, true);
         deal(address(_ksu), alice, 1000 ether, true);
         deal(address(_ksu), bob, 1000 ether, true);
+        deal(address(_ksu), carol, 1000 ether, true);
         deal(address(_usdc), admin, 1000 * 1e6, true);
 
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
@@ -69,4 +74,45 @@ contract TestFixture is Test {
         vm.stopPrank();
     }
 
+    // ###  Helper Functions ###
+
+    function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {
+        token.approve(spender, amount);
+    }
+
+    function _lock(address sender, uint256 amount, uint256 lockPeriod_)
+        internal
+        prank(sender)
+        returns (uint256 userLockId)
+    {
+        _ksu.approve(address(_KSULocking), amount);
+        return _KSULocking.lock(amount, lockPeriod_);
+    }
+
+    function _emitFees(uint256 rewardAmount) internal prank(admin) {
+        _usdc.approve(address(_KSULocking), rewardAmount);
+        _KSULocking.emitFees(rewardAmount);
+    }
+
+    function _unlock(address sender, uint256 amount, uint256 userLockId) internal prank(sender) {
+        _KSULocking.unlock(amount, userLockId);
+    }
+
+    function _claimFees(address sender) internal prank(sender) returns (uint256) {
+        return _KSULocking.claimFees();
+    }
+
+    function _prank(address executor) internal {
+        if (executor.balance > 0) {
+            vm.startPrank(executor);
+        } else {
+            startHoax(executor);
+        }
+    }
+
+    modifier prank(address executor) {
+        _prank(executor);
+        _;
+        vm.stopPrank();
+    }
 }
