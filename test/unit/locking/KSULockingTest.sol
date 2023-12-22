@@ -1,72 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import "forge-std/Test.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../../../src/locking/KSULocking.sol";
-import "../../../src/shared/Constants.sol";
-import "../../../src/shared/access/KasuController.sol";
-import "../../../src/token/KSU.sol";
-import "../../../src/locking/KSULockBonus.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import "@openzeppelin/contracts/access/IAccessControl.sol";
+import {TestFixture} from "../../shared/TestFixture.sol";
 import "../../shared/SigUtilsERC20.sol";
-import "../../shared/MockERC20Permit.sol";
+import "../../../src/locking/KSULockBonus.sol";
+import "../../../src/locking/interfaces/IKSULocking.sol";
+import "../../../src/shared/Constants.sol";
+import "../../../src/shared/access/Roles.sol";
 
-contract KSULockingTest is Test {
-    IERC20 private _ksu;
-    IERC20 private _usdc;
-    KasuController private _kasuController;
-    KSULocking private _KSULocking;
-    KSULockBonus private _KSULockBonus;
-
-    address public admin = address(0xad);
-    address public alice = address(0x1);
-    address public bob = address(0x2);
-
-    uint256 public lockPeriod30 = 30 days;
-    uint256 public lockMultiplier30 = 5_00;
-    uint256 public ksuBonusMultiplier30 = 0;
-
-    uint256 public lockPeriod180 = 180 days;
-    uint256 public lockMultiplier180 = 25_00;
-    uint256 public ksuBonusMultiplier180 = 10_00;
-
-    uint256 public lockPeriod360 = 360 days;
-    uint256 public lockMultiplier360 = 50_00;
-    uint256 public ksuBonusMultiplier360 = 25_00;
-
-    uint256 public lockPeriod720 = 720 days;
-    uint256 public lockMultiplier720 = 100_00;
-    uint256 public ksuBonusMultiplier720 = 70_00;
-
+contract KSULockingTest is TestFixture {
     function setUp() public {
-        _ksu = new MockERC20Permit("KSU", "KSU", 18);
-        _usdc = new MockERC20Permit("USDC", "USDC", 6);
-
-        ProxyAdmin proxy = new ProxyAdmin(admin);
-
-        KasuController kasuControllerImpl = new KasuController();
-        TransparentUpgradeableProxy kasuControllerProxy =
-            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
-        _kasuController = KasuController(address(kasuControllerProxy));
-
-        startHoax(admin);
-        _kasuController.initialize();
-
-        _KSULocking = new KSULocking(_kasuController);
-        _KSULocking.initialize(_ksu, _usdc);
-
-        deal(address(_ksu), admin, 1000 ether, true);
-        deal(address(_ksu), alice, 1000 ether, true);
-        deal(address(_ksu), bob, 1000 ether, true);
-        deal(address(_usdc), admin, 1000 * 1e6, true);
-
-        _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
-        _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180, ksuBonusMultiplier180);
-        _KSULocking.addLockPeriod(lockPeriod360, lockMultiplier360, ksuBonusMultiplier360);
-        _KSULocking.addLockPeriod(lockPeriod720, lockMultiplier720, ksuBonusMultiplier720);
-
-        vm.stopPrank();
+        setupBase();
     }
 
     function testAddLockPeriod_WhenNotAdmin_ShouldRevert() public {
