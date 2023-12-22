@@ -39,12 +39,15 @@ contract TestFixture is Test {
     function setupBase() internal virtual {
         _ksu = new MockERC20Permit("KSU", "KSU", 18);
         _usdc = new MockERC20Permit("USDC", "USDC", 6);
+        setupBase(_ksu, _usdc);
+    }
 
+    function setupBase(ERC20Permit ksu, IERC20 usdc) internal virtual {
         ProxyAdmin proxy = new ProxyAdmin(admin);
 
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =
-            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
+                    new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
@@ -65,4 +68,5 @@ contract TestFixture is Test {
 
         vm.stopPrank();
     }
+
 }
