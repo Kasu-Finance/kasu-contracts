@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "./MockERC20Permit.sol";
 
 contract TestFixture is Test {
-    IERC20 internal _ksu;
+    ERC20Permit internal _ksu;
     IERC20 internal _usdc;
 
     KasuController internal _kasuController;

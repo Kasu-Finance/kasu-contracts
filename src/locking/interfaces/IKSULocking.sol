@@ -29,7 +29,7 @@ interface IKSULocking {
         uint256 lockPeriod;
     }
 
-    struct ERC20Permit {
+    struct ERC20PermitPayload {
         uint256 value;
         uint256 deadline;
         uint8 v;
@@ -60,7 +60,7 @@ interface IKSULocking {
      * @param ksuPermit KSU token permit
      * @return userLockId lock id
      */
-    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
+    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20PermitPayload calldata ksuPermit)
         external
         returns (uint256 userLockId);
 

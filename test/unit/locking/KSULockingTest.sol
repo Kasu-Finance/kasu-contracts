@@ -4,7 +4,6 @@ pragma solidity 0.8.23;
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 import {TestFixture} from "../../shared/TestFixture.sol";
 import "../../shared/SigUtilsERC20.sol";
@@ -61,7 +60,7 @@ contract KSULockingTest is TestFixture {
 
     function testLockWithPermit() public {
         // ARRANGE
-        SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(IERC20Permit(address(_ksu)).DOMAIN_SEPARATOR());
+        SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(_ksu.DOMAIN_SEPARATOR());
 
         uint256 lockAmount = 100 ether;
         uint256 deadline = 1 days;
@@ -74,7 +73,7 @@ contract KSULockingTest is TestFixture {
             owner: user,
             spender: address(_KSULocking),
             value: lockAmount,
-            nonce: IERC20Permit(address(_ksu)).nonces(user),
+            nonce: _ksu.nonces(user),
             deadline: deadline
         });
 
@@ -83,7 +82,7 @@ contract KSULockingTest is TestFixture {
 
         hoax(user);
         _KSULocking.lockWithPermit(
-            lockAmount, lockPeriod30, IKSULocking.ERC20Permit({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
+            lockAmount, lockPeriod30, IKSULocking.ERC20PermitPayload({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
         );
 
         // ASSERT

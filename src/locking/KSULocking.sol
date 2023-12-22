@@ -6,6 +6,7 @@ import "./interfaces/IKSULocking.sol";
 import "../shared/Constants.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     using SafeERC20 for IERC20;
@@ -15,7 +16,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     address public ksuBonusTokens;
 
     // ERC20 tokens
-    IERC20 public ksuToken;
+    ERC20Permit public ksuToken;
     IERC20 public feeToken;
 
     // Global reward attributes
@@ -35,7 +36,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
-    function initialize(IERC20 ksuToken_, IERC20 feeToken_) external initializer {
+    function initialize(ERC20Permit ksuToken_, IERC20 feeToken_) external initializer {
         _initializeRKSU();
         ksuToken = ksuToken_;
         feeToken = feeToken_;
@@ -61,7 +62,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-lockWithPermit}.
      */
-    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
+    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20PermitPayload calldata ksuPermit)
         external
         returns (uint256)
     {
