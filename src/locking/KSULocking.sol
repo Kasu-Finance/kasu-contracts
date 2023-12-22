@@ -48,6 +48,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
     event FeesClaimed(address indexed user, uint256 amount);
     event FeesEmitted(address indexed user, uint256 amount);
+    event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
 
     // ### Public Interface ###
 
@@ -56,6 +57,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external onlyAdmin {
         lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
+        emit LockPeriodAdded(lockPeriod, rKSUMultiplier, ksuBonusMultiplier);
     }
 
     /**
