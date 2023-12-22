@@ -21,6 +21,7 @@ contract TestFixture is Test {
     address internal alice = address(0x1);
     address internal bob = address(0x2);
     address internal carol = address(0x3);
+    address internal david = address(0x4);
 
     uint256 internal lockPeriod30 = 30 days;
     uint256 internal lockMultiplier30 = 5_00;
@@ -64,7 +65,8 @@ contract TestFixture is Test {
         deal(address(_ksu), alice, 1000 ether, true);
         deal(address(_ksu), bob, 1000 ether, true);
         deal(address(_ksu), carol, 1000 ether, true);
-        deal(address(_usdc), admin, 1000 * 1e6, true);
+        deal(address(_ksu), david, 1000 ether, true);
+        deal(address(_usdc), admin, 10000 * 1e6, true);
 
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
         _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180, ksuBonusMultiplier180);
@@ -96,6 +98,11 @@ contract TestFixture is Test {
 
     function _unlock(address sender, uint256 amount, uint256 userLockId) internal prank(sender) {
         _KSULocking.unlock(amount, userLockId);
+    }
+
+    function _unlockAll(address sender, uint256 userLockId) internal prank(sender) returns (uint256 totalAmount) {
+        (totalAmount,,,,) = _KSULocking.userLocks(sender, userLockId);
+        _KSULocking.unlock(totalAmount, userLockId);
     }
 
     function _claimFees(address sender) internal prank(sender) returns (uint256) {

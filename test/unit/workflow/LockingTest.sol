@@ -34,27 +34,45 @@ contract LockingTest is TestFixture {
         skip(lockPeriod30);
         _lock(carol, 500 ether, lockPeriod720);
         _claimFees(alice);
-        //assertApproxEqAbs(_usdc.balanceOf(address(alice)), 0, 1);
+        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 1);
+        //        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 801526717600000000, 1);
         _unlock(alice, 50 ether, 0);
-
         // assert Alice
         // A reward of 200 USC is emitted to Lock Contract
+        _emitFees(200 * 1e6);
         // David locks 500 KSU for 360d
+        _lock(david, 400 ether, lockPeriod360);
         // Alice locks 800 KSU for 180d
+        _lock(alice, 800 ether, lockPeriod180);
         // A reward of 600 USC is emitted to Lock Contract
+        _emitFees(600 * 1e6);
         // 180d pass
+        skip(lockPeriod180);
         // Bob collect his rewards // USDC
-        // Bob unlocks 1/3 of his locked amount // KSU
+        _claimFees(bob);
+        // Bob unlocks 200 of his locked amount // KSU
+        _lock(bob, 200, lockPeriod720);
         // assert Bob
         // A reward of 400 USC is emitted to Lock Contract
+        _emitFees(400 * 1e6);
         // 360d pass
+        skip(lockPeriod360);
         // David collect his rewards // USDC
+        _claimFees(david);
         // David unlocks all of his locked amount // KSU
+        _unlockAll(david, 0);
         // assert David
         // 360d pass
+        skip(lockPeriod360);
         // Carol collects her rewards // USDC
+        _claimFees(carol);
         // assert Carol
         // Everyone unlocks
+        _unlockAll(alice, 0);
+        _unlockAll(alice, 1);
+        _unlockAll(bob, 0);
+        _unlockAll(bob, 1);
+        _unlockAll(carol, 0);
         // assert everyone
     }
 }
