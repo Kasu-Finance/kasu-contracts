@@ -49,7 +49,8 @@ contract KSULockingTest is Test {
         ProxyAdmin proxy = new ProxyAdmin(admin);
 
         KasuController kasuControllerImpl = new KasuController();
-        TransparentUpgradeableProxy kasuControllerProxy = new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
+        TransparentUpgradeableProxy kasuControllerProxy =
+            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
@@ -73,7 +74,9 @@ contract KSULockingTest is Test {
 
     function testAddLockPeriod_WhenNotAdmin_ShouldRevert() public {
         hoax(alice);
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN));
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier);
     }
 

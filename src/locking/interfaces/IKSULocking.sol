@@ -11,9 +11,13 @@ error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 re
 
 // Events
 event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
+
 event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
+
 event FeesClaimed(address indexed user, uint256 amount);
+
 event FeesEmitted(address indexed user, uint256 amount);
+
 event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
 
 interface IKSULocking {

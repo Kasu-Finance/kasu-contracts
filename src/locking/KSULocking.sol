@@ -33,17 +33,13 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     mapping(address => UserLock[]) public userLocks;
     mapping(uint256 => LockDetails) public lockDetailsMapping;
 
-    constructor(IKasuController controller_)
-        KasuAccessControllable(controller_)
-    {}
+    constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
     function initialize(IERC20 ksuToken_, IERC20 feeToken_) external initializer {
         _initializeRKSU();
         ksuToken = ksuToken_;
         feeToken = feeToken_;
     }
-
-
 
     // ### Public Interface ###
 
