@@ -85,7 +85,7 @@ contract KSULockingTest is Test {
         vm.startPrank(admin);
         _usdc.approve(address(_KSULocking), rewardAmount);
         vm.expectEmit(true, false, false, true, address(_KSULocking));
-        emit KSULocking.FeesEmitted(address(admin), rewardAmount);
+        emit FeesEmitted(address(admin), rewardAmount);
         _KSULocking.emitFees(rewardAmount);
         vm.stopPrank();
 
@@ -101,7 +101,7 @@ contract KSULockingTest is Test {
         startHoax(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit KSULocking.UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
+        emit UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
         _KSULocking.lock(aliceLockAmount, lockPeriod30);
 
         // ASSERT
@@ -158,7 +158,7 @@ contract KSULockingTest is Test {
         vm.startPrank(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit KSULocking.UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
+        emit UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
         _KSULocking.lock(aliceLockAmount, lockPeriod30);
         vm.stopPrank();
 
@@ -184,7 +184,7 @@ contract KSULockingTest is Test {
         // ACT
         vm.startPrank(alice);
         vm.expectEmit();
-        emit KSULocking.FeesClaimed(address(alice), rewardAmount);
+        emit FeesClaimed(address(alice), rewardAmount);
         _KSULocking.claimFees();
         vm.stopPrank();
 
@@ -258,7 +258,7 @@ contract KSULockingTest is Test {
 
         vm.startPrank(alice);
         vm.expectEmit(true, true, false, false, address(_KSULocking));
-        emit KSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount);
+        emit UserUnlocked(address(alice), 0, aliceUnLockAmount);
         _KSULocking.unlock(aliceUnLockAmount, 0);
         vm.stopPrank();
     }
