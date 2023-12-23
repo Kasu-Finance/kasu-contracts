@@ -34,6 +34,7 @@ contract KSULockingTest is TestFixture {
         _usdc.approve(address(_KSULocking), rewardAmount);
         vm.expectEmit(true, false, false, true, address(_KSULocking));
         emit FeesEmitted(address(admin), rewardAmount);
+        deal(address(_usdc), admin, rewardAmount, true);
         _KSULocking.emitFees(rewardAmount);
         vm.stopPrank();
 
@@ -50,6 +51,7 @@ contract KSULockingTest is TestFixture {
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
         emit UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
+        deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod30);
 
         // ASSERT
@@ -97,8 +99,7 @@ contract KSULockingTest is TestFixture {
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
-        vm.prank(admin);
-        _ksu.transfer(address(_KSULockBonus), 1000 ether);
+        _addBonusKSU(1000 ether);
 
         // ACT / ASSER
         uint256 aliceLockAmount = 100 ether;
@@ -109,6 +110,7 @@ contract KSULockingTest is TestFixture {
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
         emit UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
+        deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod180);
         vm.stopPrank();
 
@@ -120,6 +122,7 @@ contract KSULockingTest is TestFixture {
         _ksu.approve(address(_KSULocking), bobLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
         emit UserLocked(address(bob), 0, expectedBobBaseKSULockAmount, expectedBobBonusKSULockAmount);
+        deal(address(_ksu), bob, bobLockAmount, true);
         _KSULocking.lock(bobLockAmount, lockPeriod360);
         vm.stopPrank();
 

@@ -61,13 +61,6 @@ contract TestFixture is Test {
         _KSULocking = new KSULocking(_kasuController);
         _KSULocking.initialize(_ksu, _usdc);
 
-        deal(address(_ksu), admin, 1000 ether, true);
-        deal(address(_ksu), alice, 1000 ether, true);
-        deal(address(_ksu), bob, 1000 ether, true);
-        deal(address(_ksu), carol, 1000 ether, true);
-        deal(address(_ksu), david, 1000 ether, true);
-        deal(address(_usdc), admin, 10000 * 1e6, true);
-
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
         _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180, ksuBonusMultiplier180);
         _KSULocking.addLockPeriod(lockPeriod360, lockMultiplier360, ksuBonusMultiplier360);
@@ -87,11 +80,13 @@ contract TestFixture is Test {
         prank(sender)
         returns (uint256 userLockId)
     {
+        deal(address(_ksu), sender, amount, true);
         _ksu.approve(address(_KSULocking), amount);
         return _KSULocking.lock(amount, lockPeriod_);
     }
 
     function _emitFees(uint256 rewardAmount) internal prank(admin) {
+        deal(address(_usdc), admin, rewardAmount, true);
         _usdc.approve(address(_KSULocking), rewardAmount);
         _KSULocking.emitFees(rewardAmount);
     }
@@ -107,6 +102,11 @@ contract TestFixture is Test {
 
     function _claimFees(address sender) internal prank(sender) returns (uint256) {
         return _KSULocking.claimFees();
+    }
+
+    function _addBonusKSU(uint256 amount) internal prank(admin) {
+        deal(address(_ksu), admin, amount, true);
+        _ksu.transfer(address(_KSULockBonus), amount);
     }
 
     function _prank(address executor) internal {
