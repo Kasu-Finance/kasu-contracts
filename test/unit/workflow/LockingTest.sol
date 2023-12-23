@@ -51,7 +51,7 @@ contract LockingTest is TestFixture {
         // Bob collect his rewards // USDC
         _claimFees(bob);
         // Bob unlocks 200 of his locked amount // KSU
-        _lock(bob, 200, lockPeriod720);
+        _unlock(bob, 200 ether, 0);
         // assert Bob
         // A reward of 400 USC is emitted to Lock Contract
         _emitFees(400 * 1e6);
@@ -71,8 +71,23 @@ contract LockingTest is TestFixture {
         _unlockAll(alice, 0);
         _unlockAll(alice, 1);
         _unlockAll(bob, 0);
-        _unlockAll(bob, 1);
         _unlockAll(carol, 0);
+
+        _claimFees(alice);
+        _claimFees(bob);
+        _claimFees(carol);
+        _claimFees(david);
+
         // assert everyone
+
+        console2.log("KSU alice:", _ksu.balanceOf(address(alice)));
+        console2.log("KSU bob:", _ksu.balanceOf(address(bob)));
+        console2.log("KSU carol:", _ksu.balanceOf(address(carol)));
+        console2.log("KSU david:", _ksu.balanceOf(address(david)));
+
+        console2.log("USDC alice:", _usdc.balanceOf(address(alice)));
+        console2.log("USDC bob:", _usdc.balanceOf(address(bob)));
+        console2.log("USDC carol:", _usdc.balanceOf(address(carol)));
+        console2.log("USDC david:", _usdc.balanceOf(address(david)));
     }
 }

@@ -110,6 +110,9 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // transfer KSU token to user
         ksuToken.transfer(msg.sender, unlockAmount);
 
+        // update user reward debt
+        _updateUserRewardDebt(msg.sender);
+
         // emit event
         emit UserUnlocked(msg.sender, userLockId, unlockAmount);
     }
@@ -138,6 +141,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         rewards[msg.sender] = 0;
 
         feeToken.safeTransfer(msg.sender, earned);
+
+        _updateUserRewardDebt(msg.sender);
 
         emit FeesClaimed(msg.sender, earned);
     }
@@ -184,8 +189,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         userLockId = userLocks[msg.sender].length;
         userLocks[msg.sender].push(UserLock(lockAmount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
 
-        // update user reward details
-        rewardDebt[msg.sender] = balanceOf(msg.sender) * accumulatedRewardsPerShare / REWARDS_PRECISION;
+        // update user reward debt
+        _updateUserRewardDebt(msg.sender);
 
         // emit event
         emit UserLocked(msg.sender, userLockId, amount, ksuBonusAmount);
@@ -207,6 +212,10 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         uint256 earned = _getUserRewards(user);
 
         rewards[user] += earned;
+    }
+
+    function _updateUserRewardDebt(address user) private {
+        rewardDebt[user] = balanceOf(user) * accumulatedRewardsPerShare / REWARDS_PRECISION;
     }
 
     function _getBonusKSU(uint256 requestedAmount) private returns (uint256 ksuSentAmount) {
