@@ -30,7 +30,6 @@ contract LockingTest is TestFixture {
         _addBonusKSU(300 * 1e6);
         // Alice locks 100 KSU for 30d
         _lock(alice, 100 ether, lockPeriod30);
-        console2.log("KSU alice:", _ksu.balanceOf(address(alice)));
         // Bob locks 400 KSU for 180d
         _lock(bob, 400 ether, lockPeriod180);
         // A reward of 500 USC is emitted to Lock Contract
@@ -41,9 +40,17 @@ contract LockingTest is TestFixture {
         _lock(carol, 500 ether, lockPeriod720);
         // Alice collect her rewards - USDC
         _claimFees(alice);
-//        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 1);
+        console2.log("KSU alice:", _ksu.balanceOf(address(alice)));
+        console2.log("rKSU alice:", _KSULocking.balanceOf(address(alice)));
+        console2.log("USDC alice:", _usdc.balanceOf(address(alice)));
+
+        _claimFees(bob);
+        console2.log("KSU bob:", _ksu.balanceOf(address(bob)));
+        console2.log("rKSU bob:", _KSULocking.balanceOf(address(bob)));
+        console2.log("USDC bob:", _usdc.balanceOf(address(bob)));
+        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 217391304300000000, 1);
 //        // Alice unlocks 50 KSU of her locked amount - KSU
-//        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 801526717600000000, 1);
+//
 //        _unlock(alice, 50 ether, 0);
 //        // assert Alice
 //        // A reward of 200 USC is emitted to Lock Contract
