@@ -13,4 +13,8 @@ contract MockERC20Permit is ERC20Permit {
     function mint(address recipient, uint256 amount) external {
         _mint(recipient, amount);
     }
+
+    function decimals() public view override returns (uint8) {
+        return _decimals;
+    }
 }

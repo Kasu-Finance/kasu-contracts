@@ -95,14 +95,27 @@ contract LockingTest is TestFixture {
 
         // assert everyone
 
-        console2.log("KSU alice:", _ksu.balanceOf(address(alice)));
-        console2.log("KSU bob:", _ksu.balanceOf(address(bob)));
-        console2.log("KSU carol:", _ksu.balanceOf(address(carol)));
-        console2.log("KSU david:", _ksu.balanceOf(address(david)));
+        _logBalanceOf("KSU alice", _ksu, alice);
+        _logBalanceOf("KSU bob  ", _ksu, bob);
+        _logBalanceOf("KSU carol", _ksu, carol);
+        _logBalanceOf("KSU david", _ksu, david);
 
-        console2.log("USDC alice:", _usdc.balanceOf(address(alice)));
-        console2.log("USDC bob:", _usdc.balanceOf(address(bob)));
-        console2.log("USDC carol:", _usdc.balanceOf(address(carol)));
-        console2.log("USDC david:", _usdc.balanceOf(address(david)));
+        _logBalanceOf("USDC alice", _usdc, alice);
+        _logBalanceOf("USDC bob  ", _usdc, bob);
+        _logBalanceOf("USDC carol", _usdc, carol);
+        _logBalanceOf("USDC david", _usdc, david);
+    }
+
+    function _logBalanceOf(string memory msg_, IERC20 token, address user) internal {
+        emit log_named_decimal_uint(msg_, token.balanceOf(user), IERC20Metadata(address(token)).decimals());
+    }
+
+    function _logBalanceOf(string memory msg_, address token, address user) internal {
+        IERC20 t = IERC20(token);
+        _logBalanceOf(msg_, t, user);
+    }
+
+    function _logBalanceOf(address token, address user) internal {
+        _logBalanceOf("", token, user);
     }
 }
