@@ -97,7 +97,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // calculate current user rewards
         _updateUserRewards(msg.sender);
 
-        // burn xKSU
+        // burn rKSU
         uint256 amountRemaining = userLock.amount - unlockAmount;
         uint256 rKSURemaining = amountRemaining * userLock.rKSUMultiplier / FULL_PERCENT;
 
@@ -180,7 +180,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         uint256 ksuBonusAmount = _getBonusKSU(ksuCalculatedBonusAmount);
         uint256 lockAmount = amount + ksuBonusAmount;
 
-        // mint xKSU
+        // mint rKSU
         uint256 rKSUMultiplier = lockDetailsMapping[lockPeriod].rKSUMultiplier;
         uint256 rKSUAmount = lockAmount * rKSUMultiplier / FULL_PERCENT;
         _mint(msg.sender, rKSUAmount);

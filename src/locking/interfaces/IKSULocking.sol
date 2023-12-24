@@ -40,7 +40,7 @@ interface IKSULocking {
     /**
      * @notice Add period lock details
      * @param lockPeriod in seconds
-     * @param rKSUMultiplier xKSU multiplier for the lock period
+     * @param rKSUMultiplier rKSU multiplier for the lock period
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external;
 
