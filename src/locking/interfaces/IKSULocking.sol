@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {rKSU} from "../rKSU.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Errors
 error LockPeriodNotSupported(uint256 lockPeriod);
@@ -20,7 +20,7 @@ event FeesEmitted(address indexed user, uint256 amount);
 
 event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
 
-interface IKSULocking {
+interface IKSULocking is IERC20 {
     struct UserLock {
         uint256 amount;
         uint256 rKSUAmount;
@@ -36,6 +36,18 @@ interface IKSULocking {
         bytes32 r;
         bytes32 s;
     }
+
+    struct LockPeriodDetails {
+        uint256 rKSUMultiplier;
+        uint256 ksuBonusMultiplier;
+        bool isActive;
+    }
+
+    function userTotalDeposits(address) external view returns (uint256);
+
+    function userLocks(address, uint256) external view returns (UserLock memory);
+
+    function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory);
 
     /**
      * @notice Add period lock details

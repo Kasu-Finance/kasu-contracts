@@ -19,21 +19,14 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     ERC20Permit public ksuToken;
     IERC20 public feeToken;
 
+    mapping(address => uint256) public userTotalDeposits;
+    mapping(address => UserLock[]) private _userLocks;
+    mapping(uint256 => LockPeriodDetails) public _lockDetails;
+
     // Global reward attributes
-    struct LockDetails {
-        uint256 rKSUMultiplier;
-        uint256 ksuBonusMultiplier;
-        bool isActive;
-    }
-
     uint256 public accumulatedRewardsPerShare;
-
     mapping(address => uint256) public rewards;
     mapping(address => uint256) public rewardDebt;
-
-    mapping(address => uint256) public userTotalDeposits;
-    mapping(address => UserLock[]) public userLocks;
-    mapping(uint256 => LockDetails) public lockDetailsMapping;
 
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
@@ -45,11 +38,19 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     // ### Public Interface ###
 
+    function userLocks(address user, uint256 userLockId) external view returns (UserLock memory) {
+        return _userLocks[user][userLockId];
+    }
+
+    function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory) {
+        return _lockDetails[lockPeriod];
+    }
+
     /**
      * @dev See {IKSULocking-addLockPeriod}.
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external onlyAdmin {
-        lockDetailsMapping[lockPeriod] = LockDetails(rKSUMultiplier, ksuBonusMultiplier, true);
+        _lockDetails[lockPeriod] = LockPeriodDetails(rKSUMultiplier, ksuBonusMultiplier, true);
         emit LockPeriodAdded(lockPeriod, rKSUMultiplier, ksuBonusMultiplier);
     }
 
@@ -79,7 +80,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      */
     function unlock(uint256 unlockAmount, uint256 userLockId) external {
         // check if lock is ok and unlocked
-        UserLock storage userLock = userLocks[msg.sender][userLockId];
+        UserLock storage userLock = _userLocks[msg.sender][userLockId];
 
         if (userLock.amount == 0) {
             revert InvalidUserDeposit(userLockId);
@@ -166,7 +167,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     // ### Private Functions ###
 
     function _lock(uint256 amount, uint256 lockPeriod) private returns (uint256 userLockId) {
-        if (!lockDetailsMapping[lockPeriod].isActive) {
+        if (!_lockDetails[lockPeriod].isActive) {
             revert LockPeriodNotSupported(lockPeriod);
         }
 
@@ -177,19 +178,19 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewards(msg.sender);
 
         // transfer bonus KSU token to user
-        uint256 ksuBonusMultiplier = lockDetailsMapping[lockPeriod].ksuBonusMultiplier;
+        uint256 ksuBonusMultiplier = _lockDetails[lockPeriod].ksuBonusMultiplier;
         uint256 ksuCalculatedBonusAmount = amount * ksuBonusMultiplier / FULL_PERCENT;
         uint256 ksuBonusAmount = _getBonusKSU(ksuCalculatedBonusAmount);
         uint256 lockAmount = amount + ksuBonusAmount;
 
         // mint rKSU
-        uint256 rKSUMultiplier = lockDetailsMapping[lockPeriod].rKSUMultiplier;
+        uint256 rKSUMultiplier = _lockDetails[lockPeriod].rKSUMultiplier;
         uint256 rKSUAmount = lockAmount * rKSUMultiplier / FULL_PERCENT;
         _mint(msg.sender, rKSUAmount);
 
         // add user lock details
-        userLockId = userLocks[msg.sender].length;
-        userLocks[msg.sender].push(UserLock(lockAmount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
+        userLockId = _userLocks[msg.sender].length;
+        _userLocks[msg.sender].push(UserLock(lockAmount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
         userTotalDeposits[msg.sender] += lockAmount;
 
         // update user reward debt

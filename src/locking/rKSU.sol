@@ -10,15 +10,15 @@ abstract contract rKSU is ERC20Upgradeable {
         __ERC20_init("rKasu Token", "rKSU");
     }
 
-    function transfer(address, uint256) public override returns (bool) {
+    function transfer(address, uint256) public override pure returns (bool) {
         revert NonTransferrable();
     }
 
-    function transferFrom(address, address, uint256) public override returns (bool) {
+    function transferFrom(address, address, uint256) public override pure returns (bool) {
         revert NonTransferrable();
     }
 
-    function approve(address, uint256) public override returns (bool) {
+    function approve(address, uint256) public override pure returns (bool) {
         revert NonTransferrable();
     }
 }
