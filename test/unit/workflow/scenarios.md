@@ -12,23 +12,19 @@ Steps:
 - 30d pass
 - Carol locks 500 KSU for 720d
 - Alice collect her rewards - USDC
-- Alice unlocks 1/2 of her locked amount - KSU
-- assert Alice
+- Alice unlocks 50 KSU of her locked amount - KSU
 - A reward of 200 USC is emitted to Lock Contract
 - David locks 500 KSU for 360d
 - Alice locks 800 KSU for 180d
 - A reward of 600 USC is emitted to Lock Contract
 - 180d pass
 - Bob collect his rewards - USDC
-- Bob unlocks 1/3 of his locked amount - KSU
-- assert Bob
+- Bob unlocks 200 KSU of his locked amount - KSU
 - A reward of 400 USC is emitted to Lock Contract
 - 360d pass
 - David collect his rewards - USDC
 - David unlocks all of his locked amount - KSU
-- assert David
 - 360d pass
 - Carol collects her rewards - USDC
-- assert Carol
 - Everyone unlocks
-- assert everyone
+- Everyone claims
