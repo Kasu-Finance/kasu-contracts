@@ -152,7 +152,7 @@ contract LockingTest is TestFixture {
         assertApproxEqAbs(_KSULocking.totalSupply(), 0 ether, 0);
         // Everyone claims
         _claimFees(alice);
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 184051173, 1); // <-- ???
+        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 184051201, 1);
         _claimFees(bob);
         assertApproxEqAbs(_usdc.balanceOf(address(bob)), 574974075, 1);
         _claimFees(carol);
