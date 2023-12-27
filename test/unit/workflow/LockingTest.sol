@@ -30,35 +30,49 @@ contract LockingTest is TestFixture {
         _addBonusKSU(300 ether);
         // Alice locks 100 KSU for 30d
         _lock(alice, 100 ether, lockPeriod30);
+        assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 5 ether, 0);
+        assertApproxEqAbs(_KSULocking.totalSupply(), 5 ether, 0);
         // Bob locks 400 KSU for 180d
         _lock(bob, 400 ether, lockPeriod180);
+        assertApproxEqAbs(_KSULocking.balanceOf(address(bob)), 110 ether, 0);
+        assertApproxEqAbs(_KSULocking.totalSupply(), 115 ether, 0);
         // A reward of 500 USC is emitted to Lock Contract
         _emitFees(500 * 1e6);
+        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 500 * 1e6, 0);
         // 30d pass
         skip(lockPeriod30);
         // Carol locks 500 KSU for 720d
         _lock(carol, 500 ether, lockPeriod720);
-        // Alice collect her rewards - USDC
+        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 0);
+        assertApproxEqAbs(_KSULocking.totalSupply(), 875 ether, 0);
+        // Alice collects her rewards - USDC
         _claimFees(alice);
-        console2.log("KSU alice:", _ksu.balanceOf(address(alice)));
-        console2.log("rKSU alice:", _KSULocking.balanceOf(address(alice)));
-        console2.log("USDC alice:", _usdc.balanceOf(address(alice)));
-
+        assertApproxEqAbs(_ksu.balanceOf(address(alice)), 0, 0);
+        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 21739130, 0);
+        // Bob collects hid rewards - USDC
         _claimFees(bob);
-        console2.log("KSU bob:", _ksu.balanceOf(address(bob)));
-        console2.log("rKSU bob:", _KSULocking.balanceOf(address(bob)));
-        console2.log("USDC bob:", _usdc.balanceOf(address(bob)));
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 21739130, 1);
+        assertApproxEqAbs(_ksu.balanceOf(address(bob)), 0 ether, 0);
+        assertApproxEqAbs(_usdc.balanceOf(address(bob)), 478260869, 0);
+        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1); // 0 vs 1
         // Alice unlocks 50 KSU of her locked amount - KSU
-
         _unlock(alice, 50 ether, 0);
-        // assert Alice
+        assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 2.5 ether, 0);
+        assertApproxEqAbs(_ksu.balanceOf(address(alice)), 50 ether, 0);
+        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1250 ether, 0);
+        assertApproxEqAbs(_KSULocking.totalSupply(), 872.5 ether, 0);
         // A reward of 200 USC is emitted to Lock Contract
         _emitFees(200 * 1e6);
+        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 200 * 1e6, 1); // 200.000001 vs 200
         // David locks 500 KSU for 360d
         _lock(david, 400 ether, lockPeriod360);
+        assertApproxEqAbs(_KSULocking.balanceOf(address(david)), 200 ether, 0);
+        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1650 ether, 0);
+        assertApproxEqAbs(_KSULocking.totalSupply(), 1072.5 ether, 0);
         // Alice locks 800 KSU for 180d
         _lock(alice, 800 ether, lockPeriod180);
+//        assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 222.5 ether, 0);
+//        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 2450 ether, 0);
+//        assertApproxEqAbs(_KSULocking.totalSupply(), 1112.5 ether, 0);
         // A reward of 600 USC is emitted to Lock Contract
         _emitFees(600 * 1e6);
         // 180d pass
@@ -94,16 +108,16 @@ contract LockingTest is TestFixture {
         _claimFees(david);
 
         // assert everyone
-
-        _logBalanceOf("KSU alice", _ksu, alice);
-        _logBalanceOf("KSU bob  ", _ksu, bob);
-        _logBalanceOf("KSU carol", _ksu, carol);
-        _logBalanceOf("KSU david", _ksu, david);
-
-        _logBalanceOf("USDC alice", _usdc, alice);
-        _logBalanceOf("USDC bob  ", _usdc, bob);
-        _logBalanceOf("USDC carol", _usdc, carol);
-        _logBalanceOf("USDC david", _usdc, david);
+//
+//        _logBalanceOf("KSU alice", _ksu, alice);
+//        _logBalanceOf("KSU bob  ", _ksu, bob);
+//        _logBalanceOf("KSU carol", _ksu, carol);
+//        _logBalanceOf("KSU david", _ksu, david);
+//
+//        _logBalanceOf("USDC alice", _usdc, alice);
+//        _logBalanceOf("USDC bob  ", _usdc, bob);
+//        _logBalanceOf("USDC carol", _usdc, carol);
+//        _logBalanceOf("USDC david", _usdc, david);
     }
 
     function _logBalanceOf(string memory msg_, IERC20 token, address user) internal {
