@@ -31,11 +31,13 @@ contract LockingTest is TestFixture {
         // Alice locks 100 KSU for 30d
         _lock(alice, 100 ether, lockPeriod30);
         // KSU locked alice: 100
+        assertApproxEqAbs(_ksu.balanceOf(address(alice)), 0, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 100 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 5 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 5 ether, 0);
         // Bob locks 400 KSU for 180d
         _lock(bob, 400 ether, lockPeriod180);
+        assertApproxEqAbs(_ksu.balanceOf(address(bob)), 0 ether, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(bob), 440 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(bob)), 110 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 115 ether, 0);
@@ -46,16 +48,16 @@ contract LockingTest is TestFixture {
         skip(lockPeriod30);
         // Carol locks 500 KSU for 720d
         _lock(carol, 500 ether, lockPeriod720);
+        assertApproxEqAbs(_ksu.balanceOf(address(carol)), 0 ether, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(carol), 760 ether, 0);
-        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 0);
+        assertApproxEqAbs(_KSULocking.balanceOf(address(carol)), 760 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 875 ether, 0);
+        assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 0);
         // Alice collects her rewards - USDC
         _claimFees(alice);
-        assertApproxEqAbs(_ksu.balanceOf(address(alice)), 0, 0);
         assertApproxEqAbs(_usdc.balanceOf(address(alice)), 21739130, 0);
         // Bob collects hid rewards - USDC
         _claimFees(bob);
-        assertApproxEqAbs(_ksu.balanceOf(address(bob)), 0 ether, 0);
         assertApproxEqAbs(_usdc.balanceOf(address(bob)), 478260869, 0);
         assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1); // 0 vs 1
         // Alice unlocks 50 KSU of her locked amount - KSU
@@ -67,9 +69,10 @@ contract LockingTest is TestFixture {
         assertApproxEqAbs(_KSULocking.totalSupply(), 872.5 ether, 0);
         // A reward of 200 USC is emitted to Lock Contract
         _emitFees(200 * 1e6);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 200 * 1e6, 1); // 200.000001 vs 200
+        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 200 * 1e6, 1); // 200.000001
         // David locks 500 KSU for 360d
         _lock(david, 400 ether, lockPeriod360);
+        assertApproxEqAbs(_ksu.balanceOf(address(david)), 0 ether, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(david), 400 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(david)), 200 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1650 ether, 0);
@@ -79,16 +82,17 @@ contract LockingTest is TestFixture {
         assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 850 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 202.5 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 2450 ether, 0);
-        assertApproxEqAbs(_KSULocking.totalSupply(), 1275 ether, 0);
+        assertApproxEqAbs(_KSULocking.totalSupply(), 1272.5 ether, 0);
         // A reward of 600 USC is emitted to Lock Contract
         _emitFees(600 * 1e6);
+        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 800 * 1e6, 1); // 800.000001
         // 180d pass
         skip(lockPeriod180);
         // Bob collect his rewards // USDC
         _claimFees(bob);
+        // assertApproxEqAbs(_usdc.balanceOf(address(bob)), ???, 0); // <----------
         // Bob unlocks 200 of his locked amount // KSU
         _unlock(bob, 200 ether, 0);
-        // assert Bob
         // A reward of 400 USC is emitted to Lock Contract
         _emitFees(400 * 1e6);
         // 360d pass
