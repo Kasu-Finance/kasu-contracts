@@ -1,14 +1,26 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {rKSU} from "../rKSU.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// Errors
 error LockPeriodNotSupported(uint256 lockPeriod);
 error DepositLocked(uint256 lockPeriod);
 error InvalidUserDeposit(uint256 userLockId);
 error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
 
-interface IKSULocking {
+// Events
+event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
+
+event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
+
+event FeesClaimed(address indexed user, uint256 amount);
+
+event FeesEmitted(address indexed user, uint256 amount);
+
+event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
+
+interface IKSULocking is IERC20 {
     struct UserLock {
         uint256 amount;
         uint256 rKSUAmount;
@@ -17,7 +29,7 @@ interface IKSULocking {
         uint256 lockPeriod;
     }
 
-    struct ERC20Permit {
+    struct ERC20PermitPayload {
         uint256 value;
         uint256 deadline;
         uint8 v;
@@ -25,10 +37,22 @@ interface IKSULocking {
         bytes32 s;
     }
 
+    struct LockPeriodDetails {
+        uint256 rKSUMultiplier;
+        uint256 ksuBonusMultiplier;
+        bool isActive;
+    }
+
+    function userTotalDeposits(address) external view returns (uint256);
+
+    function userLocks(address, uint256) external view returns (UserLock memory);
+
+    function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory);
+
     /**
      * @notice Add period lock details
      * @param lockPeriod in seconds
-     * @param rKSUMultiplier xKSU multiplier for the lock period
+     * @param rKSUMultiplier rKSU multiplier for the lock period
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external;
 
@@ -48,7 +72,7 @@ interface IKSULocking {
      * @param ksuPermit KSU token permit
      * @return userLockId lock id
      */
-    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20Permit calldata ksuPermit)
+    function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20PermitPayload calldata ksuPermit)
         external
         returns (uint256 userLockId);
 

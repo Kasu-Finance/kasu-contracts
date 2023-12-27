@@ -1,54 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import "forge-std/Test.sol";
-import "../../../src/locking/KSULocking.sol";
-import "../../../src/shared/Constants.sol";
-import "../../../src/token/KSU.sol";
-import "../../../src/locking/KSULockBonus.sol";
+import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "../../shared/TestFixture.sol";
 import "../../shared/SigUtilsERC20.sol";
-import "../../shared/MockERC20Permit.sol";
+import "../../../src/locking/KSULockBonus.sol";
+import "../../../src/locking/interfaces/IKSULocking.sol";
+import "../../../src/shared/Constants.sol";
+import "../../../src/shared/access/Roles.sol";
 
-contract KSULockingTest is Test {
-    IERC20 private _ksu;
-    IERC20 private _usdc;
-    KSULocking private _KSULocking;
-    KSULockBonus private _KSULockBonus;
-
-    address public admin = address(0xad);
-    address public alice = address(0x1);
-    address public bob = address(0x2);
-
-    uint256 public lockPeriod30 = 30 days;
-    uint256 public lockMultiplier30 = 5_00;
-
-    uint256 public lockPeriod180 = 180 days;
-    uint256 public lockMultiplier180 = 25_00;
-
-    uint256 public lockPeriod360 = 360 days;
-    uint256 public lockMultiplier360 = 50_00;
-
-    uint256 public lockPeriod720 = 720 days;
-    uint256 public lockMultiplier720 = 100_00;
-
-    uint256 public ksuBonusMultiplier = 25_00;
-
+contract KSULockingTest is TestFixture {
     function setUp() public {
-        _ksu = new MockERC20Permit("KSU", "KSU", 18);
-        _usdc = new MockERC20Permit("USDC", "USDC", 6);
-        _KSULocking = new KSULocking();
+        setupBase();
+    }
 
-        _KSULocking.initialize(_ksu, _usdc);
-
-        deal(address(_ksu), admin, 1000 ether, true);
-        deal(address(_ksu), alice, 1000 ether, true);
-        deal(address(_ksu), bob, 1000 ether, true);
-        deal(address(_usdc), admin, 1000 * 1e6, true);
-
-        _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier);
-        _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180, ksuBonusMultiplier);
-        _KSULocking.addLockPeriod(lockPeriod360, lockMultiplier360, ksuBonusMultiplier);
-        _KSULocking.addLockPeriod(lockPeriod720, lockMultiplier720, ksuBonusMultiplier);
+    function testAddLockPeriod_WhenNotAdmin_ShouldRevert() public {
+        hoax(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
+        _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
     }
 
     function testEmitFees() public {
@@ -59,7 +33,8 @@ contract KSULockingTest is Test {
         vm.startPrank(admin);
         _usdc.approve(address(_KSULocking), rewardAmount);
         vm.expectEmit(true, false, false, true, address(_KSULocking));
-        emit KSULocking.FeesEmitted(address(admin), rewardAmount);
+        emit FeesEmitted(address(admin), rewardAmount);
+        deal(address(_usdc), admin, rewardAmount, true);
         _KSULocking.emitFees(rewardAmount);
         vm.stopPrank();
 
@@ -67,7 +42,7 @@ contract KSULockingTest is Test {
         assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
     }
 
-    function testLock_() public {
+    function testLock() public {
         // ARRANGE
         uint256 aliceLockAmount = 100 ether;
 
@@ -75,7 +50,8 @@ contract KSULockingTest is Test {
         startHoax(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit KSULocking.UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
+        emit UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
+        deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod30);
 
         // ASSERT
@@ -86,7 +62,7 @@ contract KSULockingTest is Test {
 
     function testLockWithPermit() public {
         // ARRANGE
-        SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(IERC20Permit(address(_ksu)).DOMAIN_SEPARATOR());
+        SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(_ksu.DOMAIN_SEPARATOR());
 
         uint256 lockAmount = 100 ether;
         uint256 deadline = 1 days;
@@ -99,7 +75,7 @@ contract KSULockingTest is Test {
             owner: user,
             spender: address(_KSULocking),
             value: lockAmount,
-            nonce: IERC20Permit(address(_ksu)).nonces(user),
+            nonce: _ksu.nonces(user),
             deadline: deadline
         });
 
@@ -108,7 +84,9 @@ contract KSULockingTest is Test {
 
         hoax(user);
         _KSULocking.lockWithPermit(
-            lockAmount, lockPeriod30, IKSULocking.ERC20Permit({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
+            lockAmount,
+            lockPeriod30,
+            IKSULocking.ERC20PermitPayload({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
         );
 
         // ASSERT
@@ -121,26 +99,46 @@ contract KSULockingTest is Test {
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
-        vm.prank(admin);
-        _ksu.transfer(address(_KSULockBonus), 1000 ether);
+        _addBonusKSU(1000 ether);
 
         // ACT / ASSER
         uint256 aliceLockAmount = 100 ether;
         uint256 expectedAliceBaseKSULockAmount = 100 ether;
-        uint256 expectedAliceBonusKSULockAmount = 25 ether;
+        uint256 expectedAliceBonusKSULockAmount = 10 ether;
 
         vm.startPrank(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit KSULocking.UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
-        _KSULocking.lock(aliceLockAmount, lockPeriod30);
+        emit UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
+        deal(address(_ksu), alice, aliceLockAmount, true);
+        _KSULocking.lock(aliceLockAmount, lockPeriod180);
+        vm.stopPrank();
+
+        uint256 bobLockAmount = 200 ether;
+        uint256 expectedBobBaseKSULockAmount = 200 ether;
+        uint256 expectedBobBonusKSULockAmount = 50 ether;
+
+        vm.startPrank(bob);
+        _ksu.approve(address(_KSULocking), bobLockAmount);
+        vm.expectEmit(true, true, false, true, address(_KSULocking));
+        emit UserLocked(address(bob), 0, expectedBobBaseKSULockAmount, expectedBobBonusKSULockAmount);
+        deal(address(_ksu), bob, bobLockAmount, true);
+        _KSULocking.lock(bobLockAmount, lockPeriod360);
         vm.stopPrank();
 
         // ASSERT
         uint256 aliceExpectedLockedRKSUAmount =
-            (expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount) * lockMultiplier30 / FULL_PERCENT;
-        assertEq(_ksu.balanceOf(address(_KSULocking)), expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount);
+            (expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount) * lockMultiplier180 / FULL_PERCENT;
         assertEq(_KSULocking.balanceOf(alice), aliceExpectedLockedRKSUAmount);
+
+        uint256 bobExpectedLockedRKSUAmount =
+            (expectedBobBaseKSULockAmount + expectedBobBonusKSULockAmount) * lockMultiplier360 / FULL_PERCENT;
+        assertEq(
+            _ksu.balanceOf(address(_KSULocking)),
+            expectedBobBaseKSULockAmount + expectedBobBonusKSULockAmount + expectedAliceBaseKSULockAmount
+                + expectedAliceBonusKSULockAmount
+        );
+        assertEq(_KSULocking.balanceOf(bob), bobExpectedLockedRKSUAmount);
     }
 
     function testLockRewards() public {
@@ -158,7 +156,7 @@ contract KSULockingTest is Test {
         // ACT
         vm.startPrank(alice);
         vm.expectEmit();
-        emit KSULocking.FeesClaimed(address(alice), rewardAmount);
+        emit FeesClaimed(address(alice), rewardAmount);
         _KSULocking.claimFees();
         vm.stopPrank();
 
@@ -178,10 +176,8 @@ contract KSULockingTest is Test {
         _emitFees(rewardAmount);
 
         // ACT
-        vm.prank(alice);
-        _KSULocking.claimFees();
-        vm.prank(bob);
-        _KSULocking.claimFees();
+        _claimFees(alice);
+        _claimFees(bob);
 
         // ASSERT
         assertApproxEqAbs(_usdc.balanceOf(address(alice)), 25 * 1e6, 1);
@@ -217,7 +213,7 @@ contract KSULockingTest is Test {
         assertApproxEqAbs(_usdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
     }
 
-    function testUnlock_() public {
+    function testUnlock() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
@@ -232,7 +228,7 @@ contract KSULockingTest is Test {
 
         vm.startPrank(alice);
         vm.expectEmit(true, true, false, false, address(_KSULocking));
-        emit KSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount);
+        emit UserUnlocked(address(alice), 0, aliceUnLockAmount);
         _KSULocking.unlock(aliceUnLockAmount, 0);
         vm.stopPrank();
     }
@@ -263,13 +259,8 @@ contract KSULockingTest is Test {
         skip(lockPeriod30);
 
         // ACT
-        uint256 aliceUnLockAmount = 80 ether;
-        vm.prank(alice);
-        _KSULocking.unlock(aliceUnLockAmount, 0);
-
-        uint256 bobUnLockAmount = 220 ether;
-        vm.prank(bob);
-        _KSULocking.unlock(bobUnLockAmount, 0);
+        _unlock(alice, 80 ether, 0);
+        _unlock(bob, 220 ether, 0);
 
         // ASSERT
         assertApproxEqAbs(_KSULocking.balanceOf(alice), 20 ether * lockMultiplier30 / FULL_PERCENT, 1);
@@ -301,40 +292,6 @@ contract KSULockingTest is Test {
         vm.stopPrank();
         vm.startPrank(bob);
         assertApproxEqAbs(_KSULocking.getRewards(bob), 75 * 1e6 + 3125 * 1e4, 1);
-        vm.stopPrank();
-    }
-
-    // ###  Helper Functions ###
-
-    function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {
-        token.approve(spender, amount);
-    }
-
-    function _lock(address sender, uint256 amount, uint256 lockPeriod_)
-        private
-        prank(sender)
-        returns (uint256 userLockId)
-    {
-        _ksu.approve(address(_KSULocking), amount);
-        return _KSULocking.lock(amount, lockPeriod_);
-    }
-
-    function _emitFees(uint256 rewardAmount) private prank(admin) {
-        _usdc.approve(address(_KSULocking), rewardAmount);
-        _KSULocking.emitFees(rewardAmount);
-    }
-
-    function _prank(address executor) internal {
-        if (executor.balance > 0) {
-            vm.startPrank(executor);
-        } else {
-            startHoax(executor);
-        }
-    }
-
-    modifier prank(address executor) {
-        _prank(executor);
-        _;
         vm.stopPrank();
     }
 }

@@ -38,7 +38,7 @@ interface IKasuController is IAccessControl {
      * @param lendingPool Lending pool.
      * @return owner Owner of the lending pool.
      */
-    function lendingPoolOwner(address lendingPool) external view returns (address owner);
+    // function lendingPoolOwner(address lendingPool) external view returns (address owner);
 
     /**
      * @notice Looks if an account has a role for a lending pool.
@@ -60,27 +60,7 @@ interface IKasuController is IAccessControl {
      */
     function checkIsAdminOrVaultAdmin(address lendingPool, address account) external view;
 
-    /**
-     * @notice Checks if system is paused or not.
-     * @return isPaused True if system is paused, false otherwise.
-     */
-    function paused() external view returns (bool isPaused);
-
     /* ========== MUTATIVE FUNCTIONS ========== */
-
-    /**
-     * @notice Pauses the whole system.
-     * @dev Requirements:
-     * - caller must have role ROLE_PAUSER
-     */
-    function pause() external;
-
-    /**
-     * @notice Unpauses the whole system.
-     * @dev Requirements:
-     * - caller must have role ROLE_UNPAUSER
-     */
-    function unpause() external;
 
     /**
      * @notice Grants role to an account for a lending pool.
@@ -107,7 +87,7 @@ interface IKasuController is IAccessControl {
      * @param lendingPool Address of the lending pool.
      * @param role Role to renounce.
      */
-    function renounceLendingPoolRole(address lendingPool, bytes32 role) external;
+    // function renounceLendingPoolRole(address lendingPool, bytes32 role) external;
 
     /**
      * @notice Grant ownership to lending pool and assigns admin role.
@@ -115,23 +95,7 @@ interface IKasuController is IAccessControl {
      * @param lendingPool Address of the lending pool.
      * @param owner address to which grant ownership to
      */
-    function grantLendingPoolOwnership(address lendingPool, address owner) external;
-
-    /**
-     * @notice Checks and reverts if a system has already entered in the non-reentrant state.
-     */
-    function checkNonReentrant() external view;
-
-    /**
-     * @notice Sets the entered flag to true when entering for the first time.
-     * @dev Reverts if a system has already entered before.
-     */
-    function nonReentrantBefore() external;
-
-    /**
-     * @notice Resets the entered flag after the call is finished.
-     */
-    function nonReentrantAfter() external;
+    // function grantLendingPoolOwnership(address lendingPool, address owner) external;
 
     /**
      * @notice Emitted when ownership of a lending pool is granted to an address
