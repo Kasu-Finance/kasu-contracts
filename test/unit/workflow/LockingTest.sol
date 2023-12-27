@@ -31,11 +31,12 @@ contract LockingTest is TestFixture {
         // Alice locks 100 KSU for 30d
         _lock(alice, 100 ether, lockPeriod30);
         // KSU locked alice: 100
+        assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 100 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 5 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 5 ether, 0);
         // Bob locks 400 KSU for 180d
         _lock(bob, 400 ether, lockPeriod180);
-        // KSU locked bob: 440
+        assertApproxEqAbs(_KSULocking.userTotalDeposits(bob), 440 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(bob)), 110 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 115 ether, 0);
         // A reward of 500 USC is emitted to Lock Contract
@@ -45,7 +46,7 @@ contract LockingTest is TestFixture {
         skip(lockPeriod30);
         // Carol locks 500 KSU for 720d
         _lock(carol, 500 ether, lockPeriod720);
-        // KSU locked carol: 760
+        assertApproxEqAbs(_KSULocking.userTotalDeposits(carol), 760 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 875 ether, 0);
         // Alice collects her rewards - USDC
@@ -59,7 +60,7 @@ contract LockingTest is TestFixture {
         assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1); // 0 vs 1
         // Alice unlocks 50 KSU of her locked amount - KSU
         _unlock(alice, 50 ether, 0);
-        // KSU locked david: 50
+        assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 50 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 2.5 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(alice)), 50 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1250 ether, 0);
@@ -69,13 +70,13 @@ contract LockingTest is TestFixture {
         assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 200 * 1e6, 1); // 200.000001 vs 200
         // David locks 500 KSU for 360d
         _lock(david, 400 ether, lockPeriod360);
-        // KSU locked david: 400
+        assertApproxEqAbs(_KSULocking.userTotalDeposits(david), 400 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(david)), 200 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1650 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 1072.5 ether, 0);
         // Alice locks 800 KSU for 180d
         _lock(alice, 800 ether, lockPeriod180);
-        // KSU locked alice: 850
+        assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 850 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 202.5 ether, 0);
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 2450 ether, 0);
         assertApproxEqAbs(_KSULocking.totalSupply(), 1275 ether, 0);
