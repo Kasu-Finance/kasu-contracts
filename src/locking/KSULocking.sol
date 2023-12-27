@@ -31,6 +31,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     mapping(address => uint256) public rewards;
     mapping(address => uint256) public rewardDebt;
 
+    mapping(address => uint256) public userTotalDeposits;
     mapping(address => UserLock[]) public userLocks;
     mapping(uint256 => LockDetails) public lockDetailsMapping;
 
@@ -106,6 +107,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // update reward details
         userLock.amount = amountRemaining;
         userLock.rKSUAmount = rKSURemaining;
+        userTotalDeposits[msg.sender] -= unlockAmount;
 
         // transfer KSU token to user
         ksuToken.transfer(msg.sender, unlockAmount);
@@ -188,6 +190,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // add user lock details
         userLockId = userLocks[msg.sender].length;
         userLocks[msg.sender].push(UserLock(lockAmount, rKSUAmount, rKSUMultiplier, block.timestamp, lockPeriod));
+        userTotalDeposits[msg.sender] += lockAmount;
 
         // update user reward debt
         _updateUserRewardDebt(msg.sender);
