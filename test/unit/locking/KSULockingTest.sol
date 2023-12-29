@@ -33,7 +33,7 @@ contract KSULockingTest is TestFixture {
         vm.startPrank(admin);
         _usdc.approve(address(_KSULocking), rewardAmount);
         vm.expectEmit(true, false, false, true, address(_KSULocking));
-        emit FeesEmitted(address(admin), rewardAmount);
+        emit IKSULocking.FeesEmitted(address(admin), rewardAmount);
         deal(address(_usdc), admin, rewardAmount, true);
         _KSULocking.emitFees(rewardAmount);
         vm.stopPrank();
@@ -50,7 +50,7 @@ contract KSULockingTest is TestFixture {
         startHoax(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
+        emit IKSULocking.UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
         deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod30);
 
@@ -109,7 +109,7 @@ contract KSULockingTest is TestFixture {
         vm.startPrank(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
+        emit IKSULocking.UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
         deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod180);
         vm.stopPrank();
@@ -121,7 +121,7 @@ contract KSULockingTest is TestFixture {
         vm.startPrank(bob);
         _ksu.approve(address(_KSULocking), bobLockAmount);
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit UserLocked(address(bob), 0, expectedBobBaseKSULockAmount, expectedBobBonusKSULockAmount);
+        emit IKSULocking.UserLocked(address(bob), 0, expectedBobBaseKSULockAmount, expectedBobBonusKSULockAmount);
         deal(address(_ksu), bob, bobLockAmount, true);
         _KSULocking.lock(bobLockAmount, lockPeriod360);
         vm.stopPrank();
@@ -156,7 +156,7 @@ contract KSULockingTest is TestFixture {
         // ACT
         vm.startPrank(alice);
         vm.expectEmit();
-        emit FeesClaimed(address(alice), rewardAmount);
+        emit IKSULocking.FeesClaimed(address(alice), rewardAmount);
         _KSULocking.claimFees();
         vm.stopPrank();
 
@@ -223,12 +223,12 @@ contract KSULockingTest is TestFixture {
 
         skip(lockPeriod30);
 
-        // ACT / ASSET
+        // ACT / ASSERT
         uint256 aliceUnLockAmount = 80 ether;
 
         vm.startPrank(alice);
         vm.expectEmit(true, true, false, false, address(_KSULocking));
-        emit UserUnlocked(address(alice), 0, aliceUnLockAmount);
+        emit IKSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount);
         _KSULocking.unlock(aliceUnLockAmount, 0);
         vm.stopPrank();
     }
@@ -239,10 +239,10 @@ contract KSULockingTest is TestFixture {
 
         uint256 lockId = _lock(alice, aliceLockAmountDeposit, lockPeriod30);
 
-        // ACT / ASSET
+        // ACT / ASSERT
         uint256 aliceUnLockAmount = 80 ether;
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(DepositLocked.selector, lockId));
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.DepositLocked.selector, lockId));
         _KSULocking.unlock(aliceUnLockAmount, 0);
     }
 

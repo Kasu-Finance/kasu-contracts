@@ -3,23 +3,6 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// Errors
-error LockPeriodNotSupported(uint256 lockPeriod);
-error DepositLocked(uint256 lockPeriod);
-error InvalidUserDeposit(uint256 userLockId);
-error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
-
-// Events
-event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
-
-event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
-
-event FeesClaimed(address indexed user, uint256 amount);
-
-event FeesEmitted(address indexed user, uint256 amount);
-
-event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
-
 interface IKSULocking is IERC20 {
     struct UserLock {
         uint256 amount;
@@ -104,4 +87,21 @@ interface IKSULocking is IERC20 {
      * @notice Sets the KSU Bonus Tokens contract address
      */
     function setKSULockBonus(address ksuBonusTokens_) external;
+
+    // Events
+    event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
+
+    event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
+
+    event FeesClaimed(address indexed user, uint256 amount);
+
+    event FeesEmitted(address indexed user, uint256 amount);
+
+    event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
+
+    // Errors
+    error LockPeriodNotSupported(uint256 lockPeriod);
+    error DepositLocked(uint256 lockPeriod);
+    error InvalidUserDeposit(uint256 userLockId);
+    error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
 }
