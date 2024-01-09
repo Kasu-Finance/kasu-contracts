@@ -1,5 +1,9 @@
 import * as deployment from '../deployments/localhost/export.json';
-import { KSU__factory, KSULocking__factory } from '../typechain-types';
+import {
+    KSU__factory,
+    KSULocking__factory,
+    MockUSDC__factory,
+} from '../typechain-types';
 import * as hre from 'hardhat';
 import { parseUnits } from 'ethers';
 import { lockPeriod180, lockPeriod30 } from '../deploy/deploy';
@@ -23,6 +27,23 @@ async function main() {
         ksuLockingAddress,
         admin,
     );
+    const usdcAdminContract = MockUSDC__factory.connect(usdcAddress, admin);
+    // fees emitted
+    let tx;
+    tx = await usdcAdminContract.approve(
+        ksuLockingAddress,
+        parseUnits('200', 6),
+    );
+    await tx.wait();
+    tx = await ksuLockingAdminContract.emitFees(parseUnits('200', 6));
+    await tx.wait();
+    tx = await usdcAdminContract.approve(
+        ksuLockingAddress,
+        parseUnits('600', 6),
+    );
+    await tx.wait();
+    tx = await ksuLockingAdminContract.emitFees(parseUnits('600', 6));
+    await tx.wait();
     // alice locks 50 KSU
     await ksuAdminContract.transfer(alice, parseUnits('100', 'ether'));
     await ksuAliceContract.approve(
@@ -33,34 +54,47 @@ async function main() {
         ksuLockingAddress,
         alice,
     );
-    await ksuLockingContractAlice.lock(
+    tx = await ksuLockingContractAlice.lock(
         parseUnits('100', 'ether'),
         lockPeriod30,
     );
+    await tx.wait();
     // alice locks 800 KSU
-    await ksuAdminContract.transfer(alice, parseUnits('800', 'ether'));
-    await ksuAliceContract.approve(
+    tx = await ksuAdminContract.transfer(alice, parseUnits('800', 'ether'));
+    await tx.wait();
+    tx = await ksuAliceContract.approve(
         ksuLockingAddress,
         parseUnits('800', 'ether'),
     );
-    await ksuLockingContractAlice.lock(
+    await tx.wait();
+    tx = await ksuLockingContractAlice.lock(
         parseUnits('800', 'ether'),
         lockPeriod180,
     );
+    await tx.wait();
     // bob locks 404 KSU
-    await ksuAdminContract.transfer(bob, parseUnits('404', 'ether'));
-    await ksuBobContract.approve(ksuLockingAddress, parseUnits('404', 'ether'));
+    tx = await ksuAdminContract.transfer(bob, parseUnits('404', 'ether'));
+    await tx.wait();
+    tx = await ksuBobContract.approve(
+        ksuLockingAddress,
+        parseUnits('404', 'ether'),
+    );
+    await tx.wait();
     const ksuLockingContractBob = KSULocking__factory.connect(
         ksuLockingAddress,
         bob,
     );
-    await ksuLockingContractBob.lock(parseUnits('404', 'ether'), lockPeriod30);
-    // fees emitted
-    await ksuLockingAdminContract.emitFees(parseUnits('200', 6));
-    await ksuLockingAdminContract.emitFees(parseUnits('600', 6));
-    // alice unlocks 800 KSU
-    await ksuLockingContractAlice.unlock(parseUnits('50', 'ether'), 0n);
+    tx = await ksuLockingContractBob.lock(
+        parseUnits('404', 'ether'),
+        lockPeriod30,
+    );
+    await tx.wait();
     // alice claims fees
+    tx = await ksuLockingContractAlice.claimFees();
+    await tx.wait();
+    // alice unlocks 800 KSU
+    // tx = await ksuLockingContractAlice.unlock(parseUnits('50', 'ether'), 0n);
+    // await tx.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
