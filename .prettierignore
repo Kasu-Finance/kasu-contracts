@@ -1,0 +1,7 @@
+lib
+deployments
+artifacts
+out
+typechain-types
+cache
+.vscode

@@ -89,9 +89,16 @@ interface IKSULocking is IERC20 {
     function setKSULockBonus(address ksuBonusTokens_) external;
 
     // Events
-    event UserLocked(address indexed user, uint256 indexed lockId, uint256 amount, uint256 ksuBonusAmount);
+    event UserLocked(
+        address indexed user,
+        uint256 indexed lockId,
+        uint256 indexed lockPeriod,
+        uint256 ksuAmount,
+        uint256 ksuBonusAmount,
+        uint256 rKSUMinted
+    );
 
-    event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 amount);
+    event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned);
 
     event FeesClaimed(address indexed user, uint256 amount);
 
@@ -100,6 +107,7 @@ interface IKSULocking is IERC20 {
     event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
 
     // Errors
+    error LockPeriodAlreadyExists(uint256 lockPeriod);
     error LockPeriodNotSupported(uint256 lockPeriod);
     error DepositLocked(uint256 lockPeriod);
     error InvalidUserDeposit(uint256 userLockId);

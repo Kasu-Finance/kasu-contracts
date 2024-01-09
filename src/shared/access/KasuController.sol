@@ -15,8 +15,8 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    function initialize(address admin) public initializer {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */

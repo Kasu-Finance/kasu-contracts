@@ -50,6 +50,10 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @dev See {IKSULocking-addLockPeriod}.
      */
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external onlyAdmin {
+        if (_lockDetails[lockPeriod].isActive) {
+            revert LockPeriodAlreadyExists(lockPeriod);
+        }
+
         _lockDetails[lockPeriod] = LockPeriodDetails(rKSUMultiplier, ksuBonusMultiplier, true);
         emit LockPeriodAdded(lockPeriod, rKSUMultiplier, ksuBonusMultiplier);
     }
@@ -102,8 +106,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // burn rKSU
         uint256 amountRemaining = userLock.amount - unlockAmount;
         uint256 rKSURemaining = amountRemaining * userLock.rKSUMultiplier / FULL_PERCENT;
-
-        _burn(msg.sender, userLock.rKSUAmount - rKSURemaining);
+        uint256 rKSUBurned = userLock.rKSUAmount - rKSURemaining;
+        _burn(msg.sender, rKSUBurned);
 
         // update reward details
         userLock.amount = amountRemaining;
@@ -117,7 +121,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewardDebt(msg.sender);
 
         // emit event
-        emit UserUnlocked(msg.sender, userLockId, unlockAmount);
+        emit UserUnlocked(msg.sender, userLockId, unlockAmount, rKSUBurned);
     }
 
     /**
@@ -197,7 +201,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewardDebt(msg.sender);
 
         // emit event
-        emit UserLocked(msg.sender, userLockId, amount, ksuBonusAmount);
+        emit UserLocked(msg.sender, userLockId, lockPeriod, amount, ksuBonusAmount, rKSUAmount);
     }
 
     function _updatePoolRewards(uint256 newRewards) private {

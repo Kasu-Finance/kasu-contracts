@@ -56,7 +56,7 @@ contract TestFixture is Test {
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
-        _kasuController.initialize();
+        _kasuController.initialize(admin);
 
         _KSULocking = new KSULocking(_kasuController);
         _KSULocking.initialize(_ksu, _usdc);

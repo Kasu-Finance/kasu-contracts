@@ -30,7 +30,6 @@ contract LockingTest is TestFixture {
         _addBonusKSU(300 ether);
         // Alice locks 100 KSU for 30d
         _lock(alice, 100 ether, lockPeriod30);
-        // KSU locked alice: 100
         assertApproxEqAbs(_ksu.balanceOf(address(alice)), 0, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 100 ether, 0);
         assertApproxEqAbs(_KSULocking.balanceOf(address(alice)), 5 ether, 0);

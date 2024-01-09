@@ -25,6 +25,12 @@ contract KSULockingTest is TestFixture {
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
     }
 
+    function testAddLockPeriod_WhenExists_ShouldRevert() public {
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.LockPeriodAlreadyExists.selector, lockPeriod30));
+        vm.prank(admin);
+        _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
+    }
+
     function testEmitFees() public {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
@@ -46,18 +52,18 @@ contract KSULockingTest is TestFixture {
         // ARRANGE
         uint256 aliceLockAmount = 100 ether;
 
-        // ACT
+        // ACT / ASSERT
+        uint256 aliceExpectedRksuAmount = aliceLockAmount * lockMultiplier30 / FULL_PERCENT;
         startHoax(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
-        vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit IKSULocking.UserLocked(address(alice), 0, aliceLockAmount, 0 ether);
+        vm.expectEmit(true, true, true, true, address(_KSULocking));
+        emit IKSULocking.UserLocked(address(alice), 0, lockPeriod30, aliceLockAmount, 0 ether, aliceExpectedRksuAmount);
         deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod30);
 
         // ASSERT
-        uint256 aliceExpectedLockAmount = aliceLockAmount * lockMultiplier30 / FULL_PERCENT;
         assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
-        assertEq(_KSULocking.balanceOf(alice), aliceExpectedLockAmount);
+        assertEq(_KSULocking.balanceOf(alice), aliceExpectedRksuAmount);
     }
 
     function testLockWithPermit() public {
@@ -106,10 +112,20 @@ contract KSULockingTest is TestFixture {
         uint256 expectedAliceBaseKSULockAmount = 100 ether;
         uint256 expectedAliceBonusKSULockAmount = 10 ether;
 
+        uint256 aliceExpectedLockedRKSUAmount =
+            (expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount) * lockMultiplier180 / FULL_PERCENT;
+
         vm.startPrank(alice);
         _ksu.approve(address(_KSULocking), aliceLockAmount);
-        vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit IKSULocking.UserLocked(address(alice), 0, expectedAliceBaseKSULockAmount, expectedAliceBonusKSULockAmount);
+        vm.expectEmit(true, true, true, true, address(_KSULocking));
+        emit IKSULocking.UserLocked(
+            address(alice),
+            0,
+            lockPeriod180,
+            expectedAliceBaseKSULockAmount,
+            expectedAliceBonusKSULockAmount,
+            aliceExpectedLockedRKSUAmount
+        );
         deal(address(_ksu), alice, aliceLockAmount, true);
         _KSULocking.lock(aliceLockAmount, lockPeriod180);
         vm.stopPrank();
@@ -118,21 +134,27 @@ contract KSULockingTest is TestFixture {
         uint256 expectedBobBaseKSULockAmount = 200 ether;
         uint256 expectedBobBonusKSULockAmount = 50 ether;
 
+        uint256 bobExpectedLockedRKSUAmount =
+            (expectedBobBaseKSULockAmount + expectedBobBonusKSULockAmount) * lockMultiplier360 / FULL_PERCENT;
         vm.startPrank(bob);
         _ksu.approve(address(_KSULocking), bobLockAmount);
-        vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit IKSULocking.UserLocked(address(bob), 0, expectedBobBaseKSULockAmount, expectedBobBonusKSULockAmount);
+        vm.expectEmit(true, true, true, true, address(_KSULocking));
+        emit IKSULocking.UserLocked(
+            address(bob),
+            0,
+            lockPeriod360,
+            expectedBobBaseKSULockAmount,
+            expectedBobBonusKSULockAmount,
+            bobExpectedLockedRKSUAmount
+        );
         deal(address(_ksu), bob, bobLockAmount, true);
         _KSULocking.lock(bobLockAmount, lockPeriod360);
         vm.stopPrank();
 
         // ASSERT
-        uint256 aliceExpectedLockedRKSUAmount =
-            (expectedAliceBaseKSULockAmount + expectedAliceBonusKSULockAmount) * lockMultiplier180 / FULL_PERCENT;
+
         assertEq(_KSULocking.balanceOf(alice), aliceExpectedLockedRKSUAmount);
 
-        uint256 bobExpectedLockedRKSUAmount =
-            (expectedBobBaseKSULockAmount + expectedBobBonusKSULockAmount) * lockMultiplier360 / FULL_PERCENT;
         assertEq(
             _ksu.balanceOf(address(_KSULocking)),
             expectedBobBaseKSULockAmount + expectedBobBonusKSULockAmount + expectedAliceBaseKSULockAmount
@@ -225,10 +247,11 @@ contract KSULockingTest is TestFixture {
 
         // ACT / ASSERT
         uint256 aliceUnLockAmount = 80 ether;
+        uint256 aliceExpectedBurnedRksu = 4 ether;
 
         vm.startPrank(alice);
-        vm.expectEmit(true, true, false, false, address(_KSULocking));
-        emit IKSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount);
+        vm.expectEmit(true, true, false, true, address(_KSULocking));
+        emit IKSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount, aliceExpectedBurnedRksu);
         _KSULocking.unlock(aliceUnLockAmount, 0);
         vm.stopPrank();
     }
