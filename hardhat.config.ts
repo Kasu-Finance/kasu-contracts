@@ -6,6 +6,8 @@ import 'hardhat-deploy-ethers';
 import { glob } from 'glob';
 import * as path from 'path';
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
@@ -48,9 +50,20 @@ const config: HardhatUserConfig = {
             saveDeployments: true,
             tags: ['local'],
         },
+        "base-testnet": {
+            url: 'https://goerli.base.org',
+            chainId: 84531,
+            live: true,
+            saveDeployments: true,
+            tags: ['baseGoerli'],
+            accounts: [process.env.DEPLOYER_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"],
+        },
     },
     namedAccounts: {
-        admin: 0,
+        admin: {
+            default: 0,
+            "base-testnet": 0,
+        },
         alice: 1,
         bob: 2,
     },

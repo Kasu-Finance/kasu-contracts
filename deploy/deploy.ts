@@ -1,6 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { KSULocking__factory } from '../typechain-types';
+import fs from 'fs';
+import path from 'path';
 
 export const SECONDS_IN_DAY = 86400n;
 
@@ -20,23 +22,41 @@ export const lockPeriod720 = 720n * SECONDS_IN_DAY;
 export const lockMultiplier720 = 100_00;
 export const ksuBonusMultiplier720 = 70_00;
 
+let deploymentPath = path.join("./deployment-addresses-none.json");
+let blockNumber = 0;
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = hre.deployments;
     const { admin } = await hre.getNamedAccounts();
+
+    if (!fs.existsSync(path.join(`./deployments/${hre.network.name}`))) {
+        fs.mkdirSync(path.join(`./deployments/${hre.network.name}`), { recursive: true });
+    }
+
+    deploymentPath = path.join(`./deployments/${hre.network.name}/addresses-${hre.network.name}.json`);
+    blockNumber = await hre.ethers.provider.getBlockNumber();
+
+    fs.writeFileSync(deploymentPath, JSON.stringify({
+        network: hre.network.name,
+        startBlock: blockNumber,
+    }));
 
     const proxyAdminDeployment = await deploy('ProxyAdmin', {
         deterministicDeployment: true,
         args: [admin],
         from: admin,
         log: true,
+        contract: 'ProxyAdmin',
     });
     const proxyAdmin = proxyAdminDeployment.address;
+
+    writeAddress('ProxyAdmin', proxyAdmin);
 
     const ksu = await deploy('KSU', {
         deterministicDeployment: true,
         from: admin,
         proxy: {
-            owner: proxyAdmin,
+            owner: admin,
             execute: {
                 init: {
                     methodName: 'initialize',
@@ -44,15 +64,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 },
             },
             proxyContract: 'OpenZeppelinTransparentProxy',
+            viaAdminContract: 'ProxyAdmin',
         },
         log: true,
     });
+
+    writeAddressProxy('KSU', ksu.address, ksu.implementation);
 
     const mockUsdc = await deploy('MockUSDC', {
         deterministicDeployment: true,
         from: admin,
         proxy: {
-            owner: proxyAdmin,
+            owner: admin,
             execute: {
                 init: {
                     methodName: 'initialize',
@@ -60,15 +83,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 },
             },
             proxyContract: 'OpenZeppelinTransparentProxy',
+            viaAdminContract: 'ProxyAdmin',
         },
         log: true,
     });
+
+    writeAddressProxy('USDC', mockUsdc.address, mockUsdc.implementation);
 
     const kasuController = await deploy('KasuController', {
         deterministicDeployment: true,
         from: admin,
         proxy: {
-            owner: proxyAdmin,
+            owner: admin,
             execute: {
                 init: {
                     methodName: 'initialize',
@@ -76,16 +102,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 },
             },
             proxyContract: 'OpenZeppelinTransparentProxy',
+            viaAdminContract: 'ProxyAdmin',
         },
         log: true,
     });
+
+    writeAddressProxy('KasuController', kasuController.address, kasuController.implementation);
 
     const ksuLockingResult = await deploy('KSULocking', {
         deterministicDeployment: true,
         from: admin,
         args: [kasuController.address],
         proxy: {
-            owner: proxyAdmin,
+            owner: admin,
             execute: {
                 init: {
                     methodName: 'initialize',
@@ -93,9 +122,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 },
             },
             proxyContract: 'OpenZeppelinTransparentProxy',
+            viaAdminContract: 'ProxyAdmin',
         },
         log: true,
     });
+
+    writeAddressProxy('KSULocking', ksuLockingResult.address, ksuLockingResult.implementation);
 
     // add lock periods
     const adminSigners = await hre.ethers.getNamedSigners();
@@ -129,5 +161,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     await tx.wait();
 };
+
+function writeAddressProxy(name: string, proxy: string, implementation: string | undefined = undefined) {
+    if (implementation) {
+        _writeAddress(name, implementation, proxy);
+    } else {
+        throw new Error(`Implementation address for ${name} is undefined`);
+    }
+}
+
+function writeAddress(name: string, implementation: string) {
+    _writeAddress(name, implementation);
+}
+
+function _writeAddress(name: string, implementation: string, proxy: string | undefined = undefined) {
+    const addresses = JSON.parse((fs.readFileSync(deploymentPath)).toString());
+
+    if (!proxy) {
+        addresses[name] = {
+            address: implementation,
+            startBlock: blockNumber,
+        };
+    } else {
+        addresses[name] = {
+            address: proxy,
+            implementation: implementation,
+            startBlock: blockNumber,
+        };
+    }
+
+    fs.writeFileSync(deploymentPath, JSON.stringify(addresses, null, 4));
+}
 
 export default func;

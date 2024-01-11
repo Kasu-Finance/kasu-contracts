@@ -20,4 +20,5 @@ out
 cache
 cache_hardhat
 
-deployments
+deployments/hardhat
+deployments/localhost
