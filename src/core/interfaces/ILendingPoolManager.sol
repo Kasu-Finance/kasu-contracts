@@ -7,12 +7,16 @@ interface ILendingPoolManager {
     /**
      * @dev Users
      */
-    function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 nftID);
+    function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);
 
     /**
      * @dev Users
      */
-    function requestWithdrawal(address lendingPool, address tranche, uint256 amount) external returns (uint256 nftID);
+    function requestWithdrawal(address lendingPool, address tranche, uint256 amount) external returns (uint256 wNftID);
+
+    function cancelDepositRequest(address lendingPool, address tranche, uint256 dNftID) external;
+
+    function cancelWithdrawalRequest(address lendingPool, address tranche, uint256 wNftID) external;
 
     /**
      * @dev Financing loans
