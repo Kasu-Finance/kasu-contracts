@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 /**
@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
  * - when deposits are cleared, users receive ERC20 receipt tokens
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
-interface ILendingPoolTranche is IERC20, IERC1155 {
+interface ILendingPoolTranche is IERC4626, IERC1155 {
     struct DepositNftDetails {
         uint256 assetAmount;
         uint256 priorityLevel;

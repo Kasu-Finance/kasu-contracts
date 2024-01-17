@@ -14,9 +14,15 @@ struct ForceWithdrawalResult {
     uint256 wNftID;
 }
 
+struct LendingPoolDeployment {
+    address pendingPool;
+}
+
 interface ILendingPoolManager {
+    function registerLendingPool(address lendingPool, LendingPoolDeployment calldata lendingPoolDeployment) external;
+
     // #### USER DEPOSITS #### //
-    function requestDeposit(address tranche, uint256 amount) external returns (uint256 dNftID);
+    function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);
 
     function cancelDepositRequest(address tranche, uint256 dNftID) external;
 
@@ -39,7 +45,7 @@ interface ILendingPoolManager {
 
     function updateLoanAmount(address lendingPool, uint256 amount) external;
 
-    function reportLoss(address lendingPool, uint256 amount) external;
+    function reportLoss(address lendingPool, uint256 amount) external returns (uint256 lossId);
 
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;
