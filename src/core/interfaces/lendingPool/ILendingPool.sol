@@ -39,13 +39,15 @@ interface ILendingPool {
     function acceptWithdrawalRequest(address tranche, uint256 wNftID) external;
 
     // #### POOL DELEGATE #### //
-    function borrowFunds(uint256 amount) external;
+    function borrowLoan(uint256 amount) external;
 
-    function repayFunds(uint256 amount) external;
+    function repayLoan(uint256 amount) external;
 
-    function forceRequestWithdrawal(address user, address tranche, uint256 amount) external returns (uint256 wNftID);
+    function updateLoanAmount(uint256 amount) external;
 
-    function forceImmediateWithdrawal(address user, address tranche, uint256 amount) external;
+    function reportLoss(uint256 amount) external returns (uint256 lossId);
+
+    function repayLoss(uint256 lossId, uint256 amount) external;
 
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;

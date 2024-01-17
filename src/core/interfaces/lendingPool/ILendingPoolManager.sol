@@ -33,15 +33,13 @@ interface ILendingPoolManager {
     function acceptWithdrawalRequest(address tranche, uint256 wNftID) external;
 
     // #### POOL DELEGATE #### //
-    function borrowFunds(uint256 amount) external;
+    function borrowLoan(address lendingPool, uint256 amount) external;
 
-    function repayFunds(uint256 amount) external;
+    function repayLoan(address lendingPool, uint256 amount) external;
 
-    function forceRequestWithdrawal(ForceWithdrawalDetails[] calldata details)
-        external
-        returns (ForceWithdrawalResult[] memory result);
+    function updateLoanAmount(address lendingPool, uint256 amount) external;
 
-    function forceImmediateWithdrawal(ForceWithdrawalDetails[] calldata details) external;
+    function reportLoss(address lendingPool, uint256 amount) external;
 
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;
