@@ -24,37 +24,10 @@ interface ILendingPoolTranche is IERC20, IERC1155 {
         uint256 priorityLevel;
         uint256 epochId;
     }
-
-    mint 1 WithdrawalNftDetails id 2
-    {
-        sharesAmount: 300
-        timestamp: 123
-        epochId: 1
-    }
-
-    1 WithdrawalNftDetails id 2
-    {
-        sharesAmount: 300
-        withdrawnShares: 100
-        timestamp: 123
-        epochId: 1
-    }
-
-    mint 300 WithdrawalNftDetails id 5
-    {
-        timestamp: 123
-        epochId: 1
-    }
-
-    200 WithdrawalNftDetails id 5
-    {
-        timestamp: 123
-        epochId: 1
-    }
-
     /**
      * @dev Deposits NFTs have ids from 0 to 2^255 - 1
      */
+
     function mintDepositNft(address user, uint256 amount) external returns (uint256 dNftID);
 
     /**

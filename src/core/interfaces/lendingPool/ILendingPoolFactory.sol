@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 struct PoolConfiguration {
     uint256 maxDepositAmount;
     uint256 poolCap;
+    // 0=junior, 1=mezzo, 3=senior
     uint256[] trancheRatio;
 }
 
