@@ -7,8 +7,8 @@ import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
 contract LendingPoolManager is ILendingPoolManager {
     mapping(address => LendingPoolDeployment) private lendingPools;
 
-    function registerLendingPool(address lendingPool, LendingPoolDeployment calldata lendingPoolDeployment) external {
-        lendingPools[lendingPool] = lendingPoolDeployment;
+    function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external {
+        lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
     }
 
     // #### USER DEPOSITS #### //

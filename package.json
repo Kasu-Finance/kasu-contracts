@@ -9,6 +9,7 @@
         "test": "forge test",
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
+        "build:solidity": "forge build",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts"
     },
     "repository": {

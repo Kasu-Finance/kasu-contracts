@@ -2,6 +2,7 @@
 pragma solidity 0.8.23;
 
 import {ILendingPool} from "./ILendingPool.sol";
+import "./ILendingPoolFactory.sol";
 
 struct ForceWithdrawalDetails {
     address user;
@@ -14,12 +15,8 @@ struct ForceWithdrawalResult {
     uint256 wNftID;
 }
 
-struct LendingPoolDeployment {
-    address pendingPool;
-}
-
 interface ILendingPoolManager {
-    function registerLendingPool(address lendingPool, LendingPoolDeployment calldata lendingPoolDeployment) external;
+    function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external;
 
     // #### USER DEPOSITS #### //
     function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);

@@ -19,6 +19,14 @@ struct Tranches {
     TrancheDetail senior;
 }
 
+struct LendingPoolDeployment {
+    address lendingPool;
+    address pendingPool;
+    address[] tranches;
+}
+
 interface ILendingPoolFactory {
-    function createPool(PoolConfiguration calldata poolConfiguration) external returns (address);
+    function createPool(PoolConfiguration calldata poolConfiguration)
+        external
+        returns (LendingPoolDeployment memory lendingPoolDeployment);
 }
