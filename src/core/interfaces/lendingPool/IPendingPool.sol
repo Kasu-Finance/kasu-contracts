@@ -35,4 +35,5 @@ interface IPendingPool {
     error UserIsNotOwnerOfNFT(address user, uint256 dNftID);
     error NoAssetsToCancelDepositRequest(uint256 dNftID);
     error NoSharesToCancelWithdrawalRequest(uint256 wNftID);
+    error TooManyAssetsRequested(uint256 dNftID, uint256 availableAmount, uint256 requestedAmount);
 }

@@ -18,6 +18,8 @@ struct ForceWithdrawalResult {
 interface ILendingPoolManager {
     function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external;
 
+    function ownLendingPool(address contractAddress) external view returns (address lendingPool);
+
     // #### USER DEPOSITS #### //
     function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);
 

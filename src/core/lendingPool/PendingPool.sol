@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
+import "../AssetFunctionsBase.sol";
 
 /**
  * @dev
@@ -11,7 +12,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
  * - when deposits are accepted, users burn their deposit NFTs
  * - when withdrawals are accepted, users burn their withdrawal NFTs
  */
-contract PendingPool is IPendingPool, ERC721Upgradeable {
+contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase {
     struct DepositNftDetails {
         uint256 assetAmount;
         uint256 priorityLevel;
@@ -56,6 +57,8 @@ contract PendingPool is IPendingPool, ERC721Upgradeable {
     // address: 2^160
     // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
+    constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
+
     function initialize(string memory name_, string memory symbol_, address lendingPool, address[] calldata tranches)
         public
         initializer
@@ -69,6 +72,8 @@ contract PendingPool is IPendingPool, ERC721Upgradeable {
         }
     }
 
+    // DEPOSIT/WITHDRAWAL REQUESTS
+
     /**
      * @notice Creates a pending deposit for the user. Transfers asset from user to lending pool
      * @dev Must approve asset token before calling this function
@@ -78,7 +83,9 @@ contract PendingPool is IPendingPool, ERC721Upgradeable {
      * @return dNftID The deposit NFT id that acts as a receipt for the pending deposit
      */
     function requestDeposit(address user, address tranche, uint256 amount) external returns (uint256 dNftID) {
-        // TODO: receive the asset from the user/lending pool manager
+        // receive the asset from the lending pool manager
+        _transferAssetsFrom(msg.sender, address(this), amount);
+
         dNftID = nextTrancheDepositNFTId[tranche];
         nextTrancheDepositNFTId[tranche] = dNftID + 1;
 
@@ -103,6 +110,9 @@ contract PendingPool is IPendingPool, ERC721Upgradeable {
         _update(address(0), dNftID, address(0));
 
         delete trancheDepositNftDetails[dNftID];
+
+        // return funds directly to the user
+        _transferAssets(user, depositNftDetails.assetAmount);
 
         // emit DepositRequestCancelled(user, tranche, dNftID);
     }
@@ -145,6 +155,30 @@ contract PendingPool is IPendingPool, ERC721Upgradeable {
         delete trancheWithdrawalNftDetails[wNftID];
 
         // emit WithdrawalRequestCancelled(user, tranche, wNftID);
+    }
+
+    // DEPOSIT/WITHDRAWAL ACCEPTANCE
+
+    // probably called by the lending pool
+    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
+        DepositNftDetails storage depositNftDetails = trancheDepositNftDetails[dNftID];
+
+        if (depositNftDetails.assetAmount < acceptedAmount) {
+            revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
+        }
+
+        depositNftDetails.assetAmount -= acceptedAmount;
+
+        if (depositNftDetails.assetAmount == 0) {
+            // Burn the deposit NFT
+            _update(address(0), dNftID, address(0));
+
+            delete trancheDepositNftDetails[dNftID];
+        }
+
+        // TODO: update accordingly
+        address lendingPool = msg.sender;
+        _transferAssets(lendingPool, acceptedAmount);
     }
 
     function composeDepositId(address tranche, uint256 id) internal pure returns (uint256) {

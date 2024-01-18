@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.23;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+abstract contract AssetFunctionsBase {
+    using SafeERC20 for IERC20;
+
+    IERC20 public immutable underlyingAsset;
+
+    constructor(address underlyingAsset_) {
+        underlyingAsset = IERC20(underlyingAsset_);
+    }
+
+    function _transferAssets(address recipient, uint256 amount) internal {
+        underlyingAsset.safeTransfer(recipient, amount);
+    }
+
+    function _transferAssetsFrom(address sender, address recipient, uint256 amount) internal {
+        underlyingAsset.safeTransferFrom(sender, recipient, amount);
+    }
+
+    function _approveAsset(address recipient, uint256 amount) internal {
+        underlyingAsset.safeIncreaseAllowance(recipient, amount);
+    }
+
+    function _approveAssetMax(address recipient) internal {
+        underlyingAsset.safeIncreaseAllowance(recipient, type(uint256).max);
+    }
+}

@@ -6,9 +6,15 @@ import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
 
 contract LendingPoolManager is ILendingPoolManager {
     mapping(address => LendingPoolDeployment) private lendingPools;
+    mapping(address => address) public ownLendingPool;
 
     function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
+
+        ownLendingPool[lendingPoolDeployment.pendingPool] = lendingPoolDeployment.lendingPool;
+        for (uint256 i = 0; i < lendingPoolDeployment.tranches.length; i++) {
+            ownLendingPool[lendingPoolDeployment.tranches[i]] = lendingPoolDeployment.lendingPool;
+        }
     }
 
     // #### USER DEPOSITS #### //

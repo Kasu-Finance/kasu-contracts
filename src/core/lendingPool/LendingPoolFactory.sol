@@ -71,7 +71,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
         internal
         returns (address)
     {
-        PendingPool pendingPoolIml = new PendingPool();
+        // TODO: update deployment
+        PendingPool pendingPoolIml = new PendingPool(address(0));
         TransparentUpgradeableProxy pendingPoolProxy =
             new TransparentUpgradeableProxy(address(pendingPoolIml), address(proxyAdmin), "");
         PendingPool pendingPool = PendingPool(address(pendingPoolProxy));
