@@ -199,7 +199,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase {
         withdrawalId = id << 160 - TRANCHE_START_WITHDRAWAL_NFT_ID;
     }
 
-    function _canBurnNft(address user, uint256 nftId) private {
+    function _canBurnNft(address user, uint256 nftId) private view {
         if (ownerOf(nftId) != user) {
             revert UserIsNotOwnerOfNFT(user, nftId);
         }

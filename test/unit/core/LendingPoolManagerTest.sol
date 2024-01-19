@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import {LendingPoolFactory} from "../../../src/core/lendingPool/LendingPoolFactory.sol";
 import "../../../src/core/lendingPool/LendingPoolManager.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "forge-std/Test.sol";
 import "../../shared/MockERC20Permit.sol";
-import "forge-std/console2.sol";
 
 contract LendingPoolManagerTest is Test {
     LendingPoolManager internal lendingPoolManager;
@@ -29,7 +29,12 @@ contract LendingPoolManagerTest is Test {
         tranches.senior = TrancheDetail(true, 70, 5);
         PoolConfiguration memory poolConfiguration =
             PoolConfiguration(address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches);
-        LendingPoolFactory lendingPoolFactory = new LendingPoolFactory();
+
+        PendingPool pendingPoolIml = new PendingPool(mockUsdc);
+        UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml));
+
+        LendingPoolFactory lendingPoolFactory = new LendingPoolFactory(address(pendingPoolBeacon));
+
         startHoax(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration);
 
