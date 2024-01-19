@@ -3,10 +3,14 @@ pragma solidity 0.8.23;
 
 import {ILendingPoolManager, LendingPoolDeployment} from "../interfaces/lendingPool/ILendingPoolManager.sol";
 import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
+import "../AssetFunctionsBase.sol";
+import {ILendingPoolErrors} from "../interfaces/lendingPool/ILendingPoolErrors.sol";
 
-contract LendingPoolManager is ILendingPoolManager {
+contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILendingPoolErrors {
     mapping(address => LendingPoolDeployment) private lendingPools;
     mapping(address => address) public ownLendingPool;
+
+    constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
 
     function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
@@ -24,7 +28,8 @@ contract LendingPoolManager is ILendingPoolManager {
         validTranche(lendingPool, tranche)
         returns (uint256 dNftID)
     {
-        // TODO: transfer user deposit funds
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
     }
 
@@ -76,13 +81,23 @@ contract LendingPoolManager is ILendingPoolManager {
         revert("0");
     }
 
+    // #### MODIFIERS #### //
+
     modifier validLendingPool(address lendingPool) {
-        // TODO: check if lending pool is valid
+        if (lendingPools[lendingPool].lendingPool == address(0)) {
+            revert InvalidLendingPool(lendingPool);
+        }
         _;
     }
 
     modifier validTranche(address lendingPool, address tranche) {
-        // TODO: check if the tranche addrees is valid
+        bool trancheExists = false;
+        for (uint256 i = 0; i < lendingPools[lendingPool].tranches.length; i++) {
+            if (lendingPools[lendingPool].tranches[i] == tranche) trancheExists = true;
+        }
+        if (!trancheExists) {
+            revert InvalidTranche(lendingPool, tranche);
+        }
         _;
     }
 }

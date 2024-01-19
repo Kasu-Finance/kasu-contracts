@@ -36,7 +36,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
                 _deployLendingPoolTranche(proxyAdmin, "Senior Tranche Token", "STT", lendingPoolAddress);
             tranches[2] = seniorTranche;
         }
-        address pendingPoolAddress = _deployPendingPool(proxyAdmin, lendingPoolAddress, tranches);
+        address pendingPoolAddress =
+            _deployPendingPool(proxyAdmin, poolConfiguration.usdcAddress, lendingPoolAddress, tranches);
 
         lendingPoolDeployment.lendingPool = lendingPoolAddress;
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
@@ -67,12 +68,13 @@ contract LendingPoolFactory is ILendingPoolFactory {
         return address(lendingPoolTranche);
     }
 
-    function _deployPendingPool(ProxyAdmin proxyAdmin, address lendingPoolAddress, address[] memory tranches)
-        internal
-        returns (address)
-    {
-        // TODO: update deployment
-        PendingPool pendingPoolIml = new PendingPool(address(0));
+    function _deployPendingPool(
+        ProxyAdmin proxyAdmin,
+        address usdcAddress,
+        address lendingPoolAddress,
+        address[] memory tranches
+    ) internal returns (address) {
+        PendingPool pendingPoolIml = new PendingPool(usdcAddress);
         TransparentUpgradeableProxy pendingPoolProxy =
             new TransparentUpgradeableProxy(address(pendingPoolIml), address(proxyAdmin), "");
         PendingPool pendingPool = PendingPool(address(pendingPoolProxy));
