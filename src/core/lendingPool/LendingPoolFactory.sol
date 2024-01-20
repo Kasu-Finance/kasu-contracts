@@ -14,9 +14,8 @@ import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
-
 contract LendingPoolFactory is ILendingPoolFactory {
-    address immutable pendingPoolBeacon; 
+    address immutable pendingPoolBeacon;
 
     constructor(address pendingPoolBeacon_) {
         pendingPoolBeacon = pendingPoolBeacon_;
@@ -46,8 +45,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
             tranches[2] = seniorTranche;
         }
 
-        address pendingPoolAddress =
-            _deployPendingPool(proxyAdmin, poolConfiguration.usdcAddress, lendingPoolAddress, tranches);
+        address pendingPoolAddress = _deployPendingPool(tranches);
 
         lendingPoolDeployment.lendingPool = lendingPoolAddress;
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
@@ -82,14 +80,11 @@ contract LendingPoolFactory is ILendingPoolFactory {
         return address(lendingPoolTranche);
     }
 
-    function _deployPendingPool(
-        address lendingPoolAddress,
-        address[] memory tranches
-    ) internal returns (address) {
+    function _deployPendingPool(address[] memory tranches) internal returns (address) {
         BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
         PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
 
-        pendingPool.initialize("Pending pool token", "PP", lendingPoolAddress, tranches);
+        pendingPool.initialize("Pending pool token", "PP", tranches);
 
         return address(pendingPool);
     }

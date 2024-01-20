@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../AssetFunctionsBase.sol";
+import "./LendingPoolHelpers.sol";
 
 /**
  * @dev
@@ -12,7 +13,7 @@ import "../AssetFunctionsBase.sol";
  * - when deposits are accepted, users burn their deposit NFTs
  * - when withdrawals are accepted, users burn their withdrawal NFTs
  */
-contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase {
+contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, LendingPoolHelpers {
     struct DepositNftDetails {
         uint256 assetAmount;
         uint256 priorityLevel;
@@ -57,12 +58,12 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase {
     // address: 2^160
     // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
-    constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
+    constructor(address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
+        AssetFunctionsBase(underlyingAsset_)
+        LendingPoolHelpers(lendingPoolManager_)
+    {}
 
-    function initialize(string memory name_, string memory symbol_, address lendingPool, address[] calldata tranches)
-        public
-        initializer
-    {
+    function initialize(string memory name_, string memory symbol_, address[] calldata tranches) public initializer {
         __ERC721_init(name_, symbol_);
 
         for (uint256 i; i < tranches.length; i++) {
@@ -176,9 +177,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase {
             delete trancheDepositNftDetails[dNftID];
         }
 
-        // TODO: update accordingly
-        address lendingPool = msg.sender;
-        _transferAssets(lendingPool, acceptedAmount);
+        _transferAssets(_getOwnLendingPool(), acceptedAmount);
     }
 
     function composeDepositId(address tranche, uint256 id) internal pure returns (uint256) {
