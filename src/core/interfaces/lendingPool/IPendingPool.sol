@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 struct DepositNftDetails {
     uint256 assetAmount;
     uint256 priorityLevel;
@@ -17,7 +19,7 @@ struct WithdrawalNftDetails {
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
  */
-interface IPendingPool {
+interface IPendingPool is IERC721 {
     // VIEWS
     function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
 
@@ -34,6 +36,8 @@ interface IPendingPool {
 
     function cancelDepositRequest(address user, uint256 dNftID) external;
 
+    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external;
+
     // #### USER WITHDRAWS #### //
     /**
      * @notice Creates a pending withdrawal for the user.
@@ -46,9 +50,12 @@ interface IPendingPool {
 
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
 
+    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external;
+
     // Errors
     error UserIsNotOwnerOfNFT(address user, uint256 dNftID);
     error NoAssetsToCancelDepositRequest(uint256 dNftID);
     error NoSharesToCancelWithdrawalRequest(uint256 wNftID);
     error TooManyAssetsRequested(uint256 dNftID, uint256 availableAmount, uint256 requestedAmount);
+    error TooSharesRequested(uint256 wNftID, uint256 availableShares, uint256 requestedShares);
 }

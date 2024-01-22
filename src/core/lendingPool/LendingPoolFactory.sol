@@ -34,30 +34,30 @@ contract LendingPoolFactory is ILendingPoolFactory {
         // lending pool deploy
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
-        address lendingPoolAddress = lendingPoolBeaconProxy;
+        address lendingPoolAddress = address(lendingPoolBeaconProxy);
+
         // tranches deploy
         address[] memory tranches = new address[](3);
         if (poolConfiguration.tranches.junior.isEnabled) {
             address juniorTranche = _deployLendingPoolTranche(
-                poolConfiguration.name, poolConfiguration.symbol, "Junior Tranche", "jr", lendingPoolAddress
+                poolConfiguration.name, poolConfiguration.symbol, "Junior Tranche", "jr", lendingPool
             );
             tranches[0] = juniorTranche;
         }
         if (poolConfiguration.tranches.mezzo.isEnabled) {
             address mezzoTranche = _deployLendingPoolTranche(
-                poolConfiguration.name, poolConfiguration.symbol, "Mezzo Tranche", "mz", lendingPoolAddress
+                poolConfiguration.name, poolConfiguration.symbol, "Mezzo Tranche", "mz", lendingPool
             );
             tranches[1] = mezzoTranche;
         }
         if (poolConfiguration.tranches.senior.isEnabled) {
             address seniorTranche = _deployLendingPoolTranche(
-                poolConfiguration.name, poolConfiguration.symbol, "Senior Tranche", "sr", lendingPoolAddress
+                poolConfiguration.name, poolConfiguration.symbol, "Senior Tranche", "sr", lendingPool
             );
             tranches[2] = seniorTranche;
         }
         // pending pool deploy
-        address pendingPoolAddress = _deployPendingPool(tranches);
-
+        address pendingPoolAddress = _deployPendingPool(lendingPool, tranches);
 
         LendingPoolInfo memory lendingPoolInfo;
         lendingPoolInfo.pendingPool = pendingPoolAddress;
@@ -71,31 +71,30 @@ contract LendingPoolFactory is ILendingPoolFactory {
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }
 
-
     function _deployLendingPoolTranche(
         string memory poolName,
         string memory poolSymbol,
         string memory trancheName,
         string memory trancheSymbol,
-        address lendingPoolAddress
+        ILendingPool lendingPool
     ) internal returns (address) {
         BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(lendingPoolTrancheBeacon, "");
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
 
-        IERC20 lpToken = IERC20(lendingPoolAddress);
         string memory fullTrancheName = string.concat(poolName, " - ", trancheName);
         string memory fullTrancheSymbol = string.concat(poolSymbol, "_", trancheSymbol);
 
-        lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lpToken);
+        lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
 
         return address(lendingPoolTranche);
     }
 
-    function _deployPendingPool(address[] memory tranches) internal returns (address) {
+    function _deployPendingPool(ILendingPool lendingPool, address[] memory tranches) internal returns (address) {
         BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
         PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
 
-        pendingPool.initialize("Pending pool nft", "PP", tranches);
+        // TODO: update pending NFT name and symbol
+        pendingPool.initialize("Pending pool nft", "PP", lendingPool, tranches);
 
         return address(pendingPool);
     }

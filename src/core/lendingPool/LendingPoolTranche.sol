@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import "../interfaces/lendingPool/ILendingPool.sol";
 import "../../shared/CommonErrors.sol";
 import "./LendingPoolHelpers.sol";
 
@@ -31,12 +32,13 @@ contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingP
     /**
      * @param name_ The name of the lending pool tranche token
      * @param symbol_ The symbol of the lending pool tranche token
-     * @param asset_ Lending pool token
+     * @param lendingPool_ Lending pool address
      */
-    function initialize(string memory name_, string memory symbol_, IERC20 asset_) public initializer {
+    function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC20_init(name_, symbol_);
-        __ERC4626_init(asset_);
+        __ERC4626_init(lendingPool_);
         __ERC1155_init("");
+        __LendingPoolHelpers_init(lendingPool_);
     }
 
     function deposit(uint256 assets, address receiver) public override onlyOwnLendingPool returns (uint256) {
@@ -70,5 +72,11 @@ contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingP
 
     function mint(uint256, address) public pure override returns (uint256) {
         revert NotSupported();
+    }
+
+    function _spendAllowance(address owner, address spender, uint256 value) internal override {
+        if (spender != _getPendingPool()) {
+            super._spendAllowance(owner, spender, value);
+        }
     }
 }

@@ -49,7 +49,7 @@ contract LendingPoolManagerTest is Test {
         PendingPool pendingPoolIml = new PendingPool(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
 
-        LendingPool lendingPoolImp = new LendingPool();
+        LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
 
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
