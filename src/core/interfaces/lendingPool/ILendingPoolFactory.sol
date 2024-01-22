@@ -21,6 +21,8 @@ struct Tranches {
 }
 
 struct LendingPoolDeployment {
+    // TODO: check when registering ?
+    address lendingPoolManager;
     address lendingPool;
     address pendingPool;
     address[] tranches;

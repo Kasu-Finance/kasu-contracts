@@ -10,15 +10,27 @@ import {
     LendingPoolDeployment
 } from "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import {LendingPool} from "./LendingPool.sol";
+import {LendingPoolManager} from "./LendingPoolManager.sol";
 import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 contract LendingPoolFactory is ILendingPoolFactory {
-    address immutable pendingPoolBeacon;
+    address private immutable pendingPoolBeacon;
+    address private immutable lendingPoolBeacon;
+    address private immutable lendingPoolManagerBeacon;
+    address private immutable lendingPoolTrancheBeacon;
 
-    constructor(address pendingPoolBeacon_) {
+    constructor(
+        address pendingPoolBeacon_,
+        address lendingPoolBeacon_,
+        address lendingPoolManagerBeacon_,
+        address lendingPoolTrancheBeacon_
+    ) {
         pendingPoolBeacon = pendingPoolBeacon_;
+        lendingPoolBeacon = lendingPoolBeacon_;
+        lendingPoolManagerBeacon = lendingPoolManagerBeacon_;
+        lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
     }
 
     function createPool(PoolConfiguration calldata poolConfiguration)
@@ -26,9 +38,10 @@ contract LendingPoolFactory is ILendingPoolFactory {
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
         ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
-        address lendingPoolAddress = _deployLendingPool(proxyAdmin);
-        address[] memory tranches = new address[](3);
+        address lendingPoolManagerAddress = _deployLendingPoolManager();
+        address lendingPoolAddress = _deployLendingPool();
 
+        address[] memory tranches = new address[](3);
         if (poolConfiguration.tranches.junior.isEnabled) {
             address juniorTranche =
                 _deployLendingPoolTranche(proxyAdmin, "Junior Tranche Token", "JTT", lendingPoolAddress);
@@ -47,18 +60,25 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         address pendingPoolAddress = _deployPendingPool(tranches);
 
+        lendingPoolDeployment.lendingPoolManager = lendingPoolManagerAddress;
         lendingPoolDeployment.lendingPool = lendingPoolAddress;
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
         lendingPoolDeployment.tranches = tranches;
 
-        // TODO: register lending pool to lending pool manager
+        LendingPoolManager lendingPoolManager = LendingPoolManager(lendingPoolManagerAddress);
+        lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }
 
-    function _deployLendingPool(ProxyAdmin proxyAdmin) internal returns (address) {
-        LendingPool lendingPoolIml = new LendingPool();
-        TransparentUpgradeableProxy lendingPoolProxy =
-            new TransparentUpgradeableProxy(address(lendingPoolIml), address(proxyAdmin), "");
-        LendingPool lendingPool = LendingPool(address(lendingPoolProxy));
+    function _deployLendingPoolManager() internal returns (address) {
+        BeaconProxy lendingPoolManagerBeaconProxy = new BeaconProxy(lendingPoolManagerBeacon, "");
+        LendingPoolManager lendingPoolManager = LendingPoolManager(address(lendingPoolManagerBeaconProxy));
+
+        return address(lendingPoolManager);
+    }
+
+    function _deployLendingPool() internal returns (address) {
+        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
+        LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
         lendingPool.initialize("Lending pool token", "LP");
 
         return address(lendingPool);
@@ -70,10 +90,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
         string memory symbol,
         address lendingPoolAddress
     ) internal returns (address) {
-        LendingPoolTranche lendingPoolTrancheImpl = new LendingPoolTranche();
-        TransparentUpgradeableProxy lendingPoolTrancheProxy =
-            new TransparentUpgradeableProxy(address(lendingPoolTrancheImpl), address(proxyAdmin), "");
-        LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheProxy));
+        BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(lendingPoolTrancheBeacon, "");
+        LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
         IERC20 lpToken = IERC20(lendingPoolAddress);
         lendingPoolTranche.initialize(name, symbol, lpToken, lendingPoolAddress);
 

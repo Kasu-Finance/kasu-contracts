@@ -5,6 +5,8 @@ import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import {LendingPoolFactory} from "../../../src/core/lendingPool/LendingPoolFactory.sol";
 import "../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../src/core/lendingPool/PendingPool.sol";
+import "../../../src/core/lendingPool/LendingPool.sol";
+import "../../../src/core/lendingPool/LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "forge-std/Test.sol";
 import "../../shared/MockERC20Permit.sol";
@@ -31,18 +33,29 @@ contract LendingPoolManagerTest is Test {
         PoolConfiguration memory poolConfiguration =
             PoolConfiguration(address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches);
 
-        lendingPoolManager = new LendingPoolManager(address(mockUsdc));
+        LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc));
+        UpgradeableBeacon lendingPoolManagerBeacon = new UpgradeableBeacon(address(lendingPoolManagerImpl), admin);
 
         PendingPool pendingPoolIml = new PendingPool(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
 
-        LendingPoolFactory lendingPoolFactory = new LendingPoolFactory(address(pendingPoolBeacon));
+        LendingPool lendingPoolImp = new LendingPool();
+        UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
+
+        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche();
+        UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
+
+        LendingPoolFactory lendingPoolFactory = new LendingPoolFactory(
+            address(pendingPoolBeacon),
+            address(lendingPoolBeacon),
+            address(lendingPoolManagerBeacon),
+            address(lendingPoolTrancheBeacon)
+        );
 
         startHoax(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration);
 
-        // lending pool manager
-        lendingPoolManager.registerLendingPool(lendingPoolDeployment);
+        lendingPoolManager = LendingPoolManager(lendingPoolDeployment.lendingPoolManager);
     }
 
     function test_when_alice_requests_deposit_then_funds_move_to_pending_pool() public {
