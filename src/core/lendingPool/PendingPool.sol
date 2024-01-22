@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";

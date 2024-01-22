@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 import "../interfaces/IKasuController.sol";
 import "./Roles.sol";
 
