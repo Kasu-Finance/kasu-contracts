@@ -57,7 +57,7 @@ contract LendingPool is ERC20Upgradeable {
             revert("LendingPool: invalid tranche");
         }
 
-        return ILendingPoolTranche(tranche).balance;
+        return ILendingPoolTranche(tranche).totalAssets();
     }
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
@@ -66,9 +66,9 @@ contract LendingPool is ERC20Upgradeable {
             revert("LendingPool: invalid tranche");
         }
 
-        ILendingPoolTranche lendingPoolTranche = ILendingPoolTranche(tranche);
+        IPendingPool pendingPool = IPendingPool(tranche);
 
-        address user = lendingPoolTranche.ownerOf(dNftID);
+        address user = pendingPool.ownerOf(dNftID);
 
         // accept deposit and receive assets from the pending pool
         IPendingPool(_lendingPoolInfo.pendingPool).acceptDepositRequest(dNftID, acceptedAmount);
@@ -76,7 +76,7 @@ contract LendingPool is ERC20Upgradeable {
         // mint the same amount as the accepted deposit
         _mint(address(this), acceptedAmount);
         // deposit the minted tokens to the tranche
-        lendingPoolTranche.deposit(acceptedAmount, user);
+        pendingPool.deposit(acceptedAmount, user);
     }
 
     function _acceptUserDeposit(address tranche, address user, uint256 amount) internal {

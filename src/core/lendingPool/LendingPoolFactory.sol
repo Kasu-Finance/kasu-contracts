@@ -31,8 +31,11 @@ contract LendingPoolFactory is ILendingPoolFactory {
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        // TODO: deploy lending pool proxy
-
+        // lending pool deploy
+        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
+        LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
+        address lendingPoolAddress = lendingPoolBeaconProxy;
+        // tranches deploy
         address[] memory tranches = new address[](3);
         if (poolConfiguration.tranches.junior.isEnabled) {
             address juniorTranche = _deployLendingPoolTranche(
@@ -52,16 +55,14 @@ contract LendingPoolFactory is ILendingPoolFactory {
             );
             tranches[2] = seniorTranche;
         }
-
+        // pending pool deploy
         address pendingPoolAddress = _deployPendingPool(tranches);
+
 
         LendingPoolInfo memory lendingPoolInfo;
         lendingPoolInfo.pendingPool = pendingPoolAddress;
 
-        address lendingPoolAddress =
-            _deployLendingPool(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo);
-
-        // TODO: initialize lending pool
+        lendingPool.initialize(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo);
 
         lendingPoolDeployment.lendingPool = lendingPoolAddress;
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
@@ -70,17 +71,6 @@ contract LendingPoolFactory is ILendingPoolFactory {
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }
 
-    function _deployLendingPool(string memory name, string memory symbol, LendingPoolInfo memory lendingPoolInfo)
-        internal
-        returns (address)
-    {
-        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
-        LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
-
-        lendingPool.initialize(name, symbol, lendingPoolInfo);
-
-        return address(lendingPool);
-    }
 
     function _deployLendingPoolTranche(
         string memory poolName,
