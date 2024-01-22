@@ -3,6 +3,22 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
+import "../interfaces/lendingPool/IPendingPool.sol";
+
+struct LendingPoolInfo {
+    TrancheData[] tranches;
+    address pendingPool;
+    uint256 firstLossCapital;
+    uint256 totalBalance;
+    uint256 excessFunds;
+    uint256 excessTargetLiquidity; // percentage of not borrowed funds (only as senior deposits)
+}
+
+struct TrancheData {
+    address trancheAddress;
+    uint256 balance;
+    uint256 interestRate;
+}
 
 /**
  * @dev
@@ -13,39 +29,55 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
 contract LendingPool is ERC20Upgradeable {
-    struct LendingPoolInfo {
-        TrancheData juniorTranche;
-        TrancheData mezzoTranche;
-        TrancheData seniorTranche;
-        uint256 firstLossCapital;
-        uint256 totalBalance;
-        uint256 excessFunds;
-        uint256 excessTargetLiquidity; // percentage of not borrowed funds (only as senior deposits)
-    }
 
-    struct TrancheData {
-        address trancheAddress;
-        uint256 balance;
-        uint256 interestRate;
-    }
+    LendingPoolInfo private _lendingPoolInfo;
+    mapping(address => bool) public isTranche;
 
-    function initialize(string memory name_, string memory symbol_) public initializer {
+    function initialize(string memory name_, string memory symbol_, LendingPoolInfo memory lendingPoolInfo_)
+        public
+        initializer
+    {
         __ERC20_init(name_, symbol_);
 
         // TODO: setup the lending pool and it's tranches
+        _lendingPoolInfo = lendingPoolInfo_;
     }
-
-    LendingPoolInfo public lendingPoolInfo;
 
     function decimals() public pure override returns (uint8) {
         return 6;
     }
 
-    function getTrancheBalance(address trancheAddress) external view returns (uint256) {
-        return lendingPoolInfo.juniorTranche.balance;
+    function lendingPoolInfo() external view returns (LendingPoolInfo memory) {
+        return _lendingPoolInfo;
     }
 
-    function acceptDepositRequest(address tranche, uint256 dNftID) external {}
+    // TODO: update accordingly
+    function getTrancheBalance(address tranche) external view returns (uint256) {
+        if (!isTranche[tranche]) {
+            revert("LendingPool: invalid tranche");
+        }
+
+        return ILendingPoolTranche(tranche).balance;
+    }
+
+    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
+        address tranche = address(uint160(dNftID));
+        if (!isTranche[tranche]) {
+            revert("LendingPool: invalid tranche");
+        }
+
+        ILendingPoolTranche lendingPoolTranche = ILendingPoolTranche(tranche);
+
+        address user = lendingPoolTranche.ownerOf(dNftID);
+
+        // accept deposit and receive assets from the pending pool
+        IPendingPool(_lendingPoolInfo.pendingPool).acceptDepositRequest(dNftID, acceptedAmount);
+
+        // mint the same amount as the accepted deposit
+        _mint(address(this), acceptedAmount);
+        // deposit the minted tokens to the tranche
+        lendingPoolTranche.deposit(acceptedAmount, user);
+    }
 
     function _acceptUserDeposit(address tranche, address user, uint256 amount) internal {
         // TODO: move deposit pending funds to the lending pool

@@ -8,7 +8,7 @@ import {
     PoolConfiguration,
     LendingPoolDeployment
 } from "../interfaces/lendingPool/ILendingPoolFactory.sol";
-import {LendingPool} from "./LendingPool.sol";
+import "./LendingPool.sol";
 import {LendingPoolManager} from "./LendingPoolManager.sol";
 import {ILendingPoolManager} from "../interfaces/lendingPool/ILendingPoolManager.sol";
 import {PendingPool} from "./PendingPool.sol";
@@ -31,7 +31,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        address lendingPoolAddress = _deployLendingPool(poolConfiguration.name, poolConfiguration.symbol);
+        // TODO: deploy lending pool proxy
 
         address[] memory tranches = new address[](3);
         if (poolConfiguration.tranches.junior.isEnabled) {
@@ -55,6 +55,14 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         address pendingPoolAddress = _deployPendingPool(tranches);
 
+        LendingPoolInfo memory lendingPoolInfo;
+        lendingPoolInfo.pendingPool = pendingPoolAddress;
+
+        address lendingPoolAddress =
+            _deployLendingPool(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo);
+
+        // TODO: initialize lending pool
+
         lendingPoolDeployment.lendingPool = lendingPoolAddress;
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
         lendingPoolDeployment.tranches = tranches;
@@ -62,10 +70,14 @@ contract LendingPoolFactory is ILendingPoolFactory {
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }
 
-    function _deployLendingPool(string memory name, string memory symbol) internal returns (address) {
+    function _deployLendingPool(string memory name, string memory symbol, LendingPoolInfo memory lendingPoolInfo)
+        internal
+        returns (address)
+    {
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
-        lendingPool.initialize(name, symbol);
+
+        lendingPool.initialize(name, symbol, lendingPoolInfo);
 
         return address(lendingPool);
     }
