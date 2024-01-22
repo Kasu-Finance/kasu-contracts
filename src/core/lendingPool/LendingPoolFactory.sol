@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
@@ -14,6 +13,7 @@ import {LendingPoolManager} from "./LendingPoolManager.sol";
 import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "forge-std/console2.sol";
 
 contract LendingPoolFactory is ILendingPoolFactory {
     address private immutable pendingPoolBeacon;
@@ -37,24 +37,23 @@ contract LendingPoolFactory is ILendingPoolFactory {
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
         address lendingPoolManagerAddress = _deployLendingPoolManager();
-        address lendingPoolAddress = _deployLendingPool();
+        address lendingPoolAddress = _deployLendingPool(poolConfiguration.name, poolConfiguration.symbol);
 
         address[] memory tranches = new address[](3);
         if (poolConfiguration.tranches.junior.isEnabled) {
             address juniorTranche =
-                _deployLendingPoolTranche(proxyAdmin, "Junior Tranche Token", "JTT", lendingPoolAddress);
+                _deployLendingPoolTranche(poolConfiguration.name, "Junior Tranche Token", "JTT", lendingPoolAddress);
             tranches[0] = juniorTranche;
         }
         if (poolConfiguration.tranches.mezzo.isEnabled) {
             address mezzoTranche =
-                _deployLendingPoolTranche(proxyAdmin, "Mezzo Tranche Token", "MTT", lendingPoolAddress);
+                _deployLendingPoolTranche(poolConfiguration.name, "Mezzo Tranche Token", "MTT", lendingPoolAddress);
             tranches[1] = mezzoTranche;
         }
         if (poolConfiguration.tranches.senior.isEnabled) {
             address seniorTranche =
-                _deployLendingPoolTranche(proxyAdmin, "Senior Tranche Token", "STT", lendingPoolAddress);
+                _deployLendingPoolTranche(poolConfiguration.name, "Senior Tranche Token", "STT", lendingPoolAddress);
             tranches[2] = seniorTranche;
         }
 
@@ -76,24 +75,28 @@ contract LendingPoolFactory is ILendingPoolFactory {
         return address(lendingPoolManager);
     }
 
-    function _deployLendingPool() internal returns (address) {
+    function _deployLendingPool(string memory name, string memory symbol) internal returns (address) {
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
-        lendingPool.initialize("Lending pool token", "LP");
+        lendingPool.initialize(name, symbol);
 
         return address(lendingPool);
     }
 
     function _deployLendingPoolTranche(
-        ProxyAdmin proxyAdmin,
-        string memory name,
-        string memory symbol,
+        string memory poolName,
+        string memory trancheName,
+        string memory trancheSymbol,
         address lendingPoolAddress
     ) internal returns (address) {
         BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(lendingPoolTrancheBeacon, "");
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
         IERC20 lpToken = IERC20(lendingPoolAddress);
-        lendingPoolTranche.initialize(name, symbol, lpToken, lendingPoolAddress);
+
+        string memory fullTrancheName = string.concat(poolName, " - ");
+        fullTrancheName = string.concat(fullTrancheName, trancheName);
+
+        lendingPoolTranche.initialize(fullTrancheName, trancheSymbol, lpToken, lendingPoolAddress);
 
         return address(lendingPoolTranche);
     }
@@ -102,7 +105,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
         PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
 
-        pendingPool.initialize("Pending pool token", "PP", tranches);
+        pendingPool.initialize("Pending pool nft", "PP", tranches);
 
         return address(pendingPool);
     }

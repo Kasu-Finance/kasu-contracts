@@ -30,8 +30,9 @@ contract LendingPoolManagerTest is Test {
         tranches.junior = TrancheDetail(true, 10, 20);
         tranches.mezzo = TrancheDetail(true, 20, 10);
         tranches.senior = TrancheDetail(true, 70, 5);
-        PoolConfiguration memory poolConfiguration =
-            PoolConfiguration(address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches);
+        PoolConfiguration memory poolConfiguration = PoolConfiguration(
+            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches
+        );
 
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc));
         UpgradeableBeacon lendingPoolManagerBeacon = new UpgradeableBeacon(address(lendingPoolManagerImpl), admin);

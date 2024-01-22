@@ -8,6 +8,8 @@ struct TrancheDetail {
 }
 
 struct PoolConfiguration {
+    string name;
+    string symbol;
     address usdcAddress;
     uint256 minDepositAmount;
     uint256 targetExcessLiquidity;
