@@ -10,6 +10,7 @@ import {
 } from "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import {LendingPool} from "./LendingPool.sol";
 import {LendingPoolManager} from "./LendingPoolManager.sol";
+import {ILendingPoolManager} from "../interfaces/lendingPool/ILendingPoolManager.sol";
 import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -18,26 +19,18 @@ import "forge-std/console2.sol";
 contract LendingPoolFactory is ILendingPoolFactory {
     address private immutable pendingPoolBeacon;
     address private immutable lendingPoolBeacon;
-    address private immutable lendingPoolManagerBeacon;
     address private immutable lendingPoolTrancheBeacon;
 
-    constructor(
-        address pendingPoolBeacon_,
-        address lendingPoolBeacon_,
-        address lendingPoolManagerBeacon_,
-        address lendingPoolTrancheBeacon_
-    ) {
+    constructor(address pendingPoolBeacon_, address lendingPoolBeacon_, address lendingPoolTrancheBeacon_) {
         pendingPoolBeacon = pendingPoolBeacon_;
         lendingPoolBeacon = lendingPoolBeacon_;
-        lendingPoolManagerBeacon = lendingPoolManagerBeacon_;
         lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
     }
 
-    function createPool(PoolConfiguration calldata poolConfiguration)
+    function createPool(PoolConfiguration calldata poolConfiguration, ILendingPoolManager lendingPoolManager)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        address lendingPoolManagerAddress = _deployLendingPoolManager();
         address lendingPoolAddress = _deployLendingPool(poolConfiguration.name, poolConfiguration.symbol);
 
         address[] memory tranches = new address[](3);
@@ -59,20 +52,11 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         address pendingPoolAddress = _deployPendingPool(tranches);
 
-        lendingPoolDeployment.lendingPoolManager = lendingPoolManagerAddress;
         lendingPoolDeployment.lendingPool = lendingPoolAddress;
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
         lendingPoolDeployment.tranches = tranches;
 
-        LendingPoolManager lendingPoolManager = LendingPoolManager(lendingPoolManagerAddress);
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
-    }
-
-    function _deployLendingPoolManager() internal returns (address) {
-        BeaconProxy lendingPoolManagerBeaconProxy = new BeaconProxy(lendingPoolManagerBeacon, "");
-        LendingPoolManager lendingPoolManager = LendingPoolManager(address(lendingPoolManagerBeaconProxy));
-
-        return address(lendingPoolManager);
     }
 
     function _deployLendingPool(string memory name, string memory symbol) internal returns (address) {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "./ILendingPoolManager.sol";
+
 struct TrancheDetail {
     bool isEnabled;
     uint256 ratio;
@@ -23,15 +25,13 @@ struct Tranches {
 }
 
 struct LendingPoolDeployment {
-    // TODO: check when registering ?
-    address lendingPoolManager;
     address lendingPool;
     address pendingPool;
     address[] tranches;
 }
 
 interface ILendingPoolFactory {
-    function createPool(PoolConfiguration calldata poolConfiguration)
+    function createPool(PoolConfiguration calldata poolConfiguration, ILendingPoolManager lendingPoolManager)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 }

@@ -8,6 +8,8 @@ import "../../../src/core/lendingPool/PendingPool.sol";
 import "../../../src/core/lendingPool/LendingPool.sol";
 import "../../../src/core/lendingPool/LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "forge-std/Test.sol";
 import "../../shared/MockERC20Permit.sol";
 
@@ -20,8 +22,17 @@ contract LendingPoolManagerTest is Test {
     address internal alice = address(0xaaa);
 
     function setUp() public {
+        // proxy admin
+        ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
+
         // usdc
         mockUsdc = new MockERC20Permit("USDC", "USDC", 6);
+
+        // lending pool manager
+        LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc));
+        TransparentUpgradeableProxy lendingPoolManagerProxy =
+            new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
+        lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
 
         // lending pool
         uint256 minDepositAmount = 1 ether;
@@ -34,9 +45,6 @@ contract LendingPoolManagerTest is Test {
             "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches
         );
 
-        LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc));
-        UpgradeableBeacon lendingPoolManagerBeacon = new UpgradeableBeacon(address(lendingPoolManagerImpl), admin);
-
         PendingPool pendingPoolIml = new PendingPool(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
 
@@ -47,16 +55,11 @@ contract LendingPoolManagerTest is Test {
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
 
         LendingPoolFactory lendingPoolFactory = new LendingPoolFactory(
-            address(pendingPoolBeacon),
-            address(lendingPoolBeacon),
-            address(lendingPoolManagerBeacon),
-            address(lendingPoolTrancheBeacon)
+            address(pendingPoolBeacon), address(lendingPoolBeacon), address(lendingPoolTrancheBeacon)
         );
 
         startHoax(admin);
-        lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration);
-
-        lendingPoolManager = LendingPoolManager(lendingPoolDeployment.lendingPoolManager);
+        lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
     }
 
     function test_when_alice_requests_deposit_then_funds_move_to_pending_pool() public {
@@ -73,5 +76,7 @@ contract LendingPoolManagerTest is Test {
         // assert
         assertApproxEqAbs(mockUsdc.balanceOf(alice), 0, 0);
         assertApproxEqAbs(mockUsdc.balanceOf(address(lendingPoolDeployment.pendingPool)), requestDepositAmount, 0);
+
+        PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
     }
 }
