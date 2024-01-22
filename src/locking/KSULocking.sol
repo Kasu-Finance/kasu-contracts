@@ -38,7 +38,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     // ### Public Interface ###
 
-    function userLocks(address user, uint256 userLockId) external view returns (UserLock memory) {
+    function userLock(address user, uint256 userLockId) external view returns (UserLock memory) {
         return _userLocks[user][userLockId];
     }
 
@@ -165,7 +165,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @dev See {IKSULocking-getRewards}.
      */
     function getRewards(address user) external view returns (uint256) {
-        return rewards[user] + _getUserRewards(msg.sender);
+        return rewards[user] + _getUserRewards(user);
     }
 
     // ### Private Functions ###

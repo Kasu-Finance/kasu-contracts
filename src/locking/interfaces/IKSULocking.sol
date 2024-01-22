@@ -28,7 +28,7 @@ interface IKSULocking is IERC20 {
 
     function userTotalDeposits(address) external view returns (uint256);
 
-    function userLocks(address, uint256) external view returns (UserLock memory);
+    function userLock(address, uint256) external view returns (UserLock memory);
 
     function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory);
 

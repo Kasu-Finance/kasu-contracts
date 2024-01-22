@@ -96,7 +96,7 @@ contract TestFixture is Test {
     }
 
     function _unlockAll(address sender, uint256 userLockId) internal prank(sender) returns (uint256 totalAmount) {
-        totalAmount = _KSULocking.userLocks(sender, userLockId).amount;
+        totalAmount = _KSULocking.userLock(sender, userLockId).amount;
         _KSULocking.unlock(totalAmount, userLockId);
     }
 
