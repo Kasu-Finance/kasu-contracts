@@ -1,11 +1,26 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+struct DepositNftDetails {
+    uint256 assetAmount;
+    uint256 priorityLevel;
+    uint256 epochId;
+}
+
+struct WithdrawalNftDetails {
+    uint256 sharesAmount;
+    uint256 priorityLevel;
+    uint256 epochId;
+}
+
 /**
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
  */
 interface IPendingPool {
+    // VIEWS
+    function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
+
     // #### USER DEPOSITS #### //
     /**
      * @notice Creates a pending deposit for the user. Transfers asset from user to lending pool

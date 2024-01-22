@@ -14,28 +14,16 @@ import "./LendingPoolHelpers.sol";
  * - when withdrawals are accepted, users burn their withdrawal NFTs
  */
 contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, LendingPoolHelpers {
-    struct DepositNftDetails {
-        uint256 assetAmount;
-        uint256 priorityLevel;
-        uint256 epochId;
-    }
-
-    struct WithdrawalNftDetails {
-        uint256 sharesAmount;
-        uint256 priorityLevel;
-        uint256 epochId;
-    }
-
     /// @dev tranche => nftIDs[]
-    mapping(address => uint256[]) private trancheDepositNFTs;
-    mapping(address => uint256) private nextTrancheDepositNFTId;
+    mapping(address => uint256[]) private _trancheDepositNFTs;
+    mapping(address => uint256) private _nextTrancheDepositNFTId;
     /// @notice deposit NFT id => DepositNftDetails
-    mapping(uint256 => DepositNftDetails) private trancheDepositNftDetails;
+    mapping(uint256 => DepositNftDetails) private _trancheDepositNftDetails;
 
     /// @dev tranche => nftIDs[]
-    mapping(address => uint256[]) private trancheWithdrawalNFTs;
-    mapping(address => uint256) private nextTrancheWithdrawalNFTId;
-    mapping(uint256 => WithdrawalNftDetails) private trancheWithdrawalNftDetails;
+    mapping(address => uint256[]) private _trancheWithdrawalNFTs;
+    mapping(address => uint256) private _nextTrancheWithdrawalNFTId;
+    mapping(uint256 => WithdrawalNftDetails) private _trancheWithdrawalNftDetails;
 
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
@@ -68,9 +56,14 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
 
         for (uint256 i; i < tranches.length; i++) {
             address tranche = tranches[i];
-            nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
-            nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
+            _nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
+            _nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
         }
+    }
+
+    // VIEW
+    function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails) {
+        return _trancheDepositNftDetails[dNftId];
     }
 
     // DEPOSIT/WITHDRAWAL REQUESTS
@@ -87,21 +80,21 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        dNftID = nextTrancheDepositNFTId[tranche];
-        nextTrancheDepositNFTId[tranche] = dNftID + 1;
+        dNftID = _nextTrancheDepositNFTId[tranche];
+        _nextTrancheDepositNFTId[tranche] = dNftID + 1;
 
-        trancheDepositNFTs[tranche].push(dNftID);
+        _trancheDepositNFTs[tranche].push(dNftID);
 
         _mint(user, dNftID);
 
         // TODO: get epoch id
-        trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
+        _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
 
         // emit DepositRequested(user, tranche, dNftID, amount);
     }
 
     function cancelDepositRequest(address user, uint256 dNftID) external canCancel canBurnNft(user, dNftID) {
-        DepositNftDetails storage depositNftDetails = trancheDepositNftDetails[dNftID];
+        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
         if (depositNftDetails.assetAmount > 0) {
             revert NoAssetsToCancelDepositRequest(dNftID);
@@ -110,7 +103,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // Burn the deposit NFT
         _update(address(0), dNftID, address(0));
 
-        delete trancheDepositNftDetails[dNftID];
+        delete _trancheDepositNftDetails[dNftID];
 
         // return funds directly to the user
         _transferAssets(user, depositNftDetails.assetAmount);
@@ -130,21 +123,21 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         returns (uint256 wNftID)
     {
         // TODO: receive the tranche shares from the user/lending pool manager
-        wNftID = nextTrancheWithdrawalNFTId[tranche];
-        nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
+        wNftID = _nextTrancheWithdrawalNFTId[tranche];
+        _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
 
-        trancheWithdrawalNFTs[tranche].push(wNftID);
+        _trancheWithdrawalNFTs[tranche].push(wNftID);
 
         _mint(user, wNftID);
 
         // TODO: get epoch id
-        trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, 0, 0);
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, 0, 0);
 
         // emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
     }
 
     function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel canBurnNft(user, wNftID) {
-        WithdrawalNftDetails storage withdrawalNftDetails = trancheWithdrawalNftDetails[wNftID];
+        WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount > 0) {
             revert NoSharesToCancelWithdrawalRequest(wNftID);
@@ -153,7 +146,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // Burn the withdrawal NFT
         _update(address(0), wNftID, address(0));
 
-        delete trancheWithdrawalNftDetails[wNftID];
+        delete _trancheWithdrawalNftDetails[wNftID];
 
         // emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
@@ -162,7 +155,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
 
     // probably called by the lending pool
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
-        DepositNftDetails storage depositNftDetails = trancheDepositNftDetails[dNftID];
+        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
@@ -174,7 +167,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             // Burn the deposit NFT
             _update(address(0), dNftID, address(0));
 
-            delete trancheDepositNftDetails[dNftID];
+            delete _trancheDepositNftDetails[dNftID];
         }
 
         _transferAssets(_getOwnLendingPool(), acceptedAmount);
@@ -203,6 +196,8 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             revert UserIsNotOwnerOfNFT(user, nftId);
         }
     }
+
+    // MODIFIERS
 
     modifier canCancel() {
         // TODO: Check if the time is right to cancel deposit request (if it's not clearing period time)

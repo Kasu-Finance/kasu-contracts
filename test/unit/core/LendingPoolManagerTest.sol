@@ -7,6 +7,7 @@ import "../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../src/core/lendingPool/PendingPool.sol";
 import "../../../src/core/lendingPool/LendingPool.sol";
 import "../../../src/core/lendingPool/LendingPoolTranche.sol";
+import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
@@ -68,7 +69,7 @@ contract LendingPoolManagerTest is Test {
         deal(address(mockUsdc), alice, requestDepositAmount, true);
         vm.startPrank(alice);
         mockUsdc.approve(address(lendingPoolManager), requestDepositAmount);
-        lendingPoolManager.requestDeposit(
+        uint256 dNftId = lendingPoolManager.requestDeposit(
             lendingPoolDeployment.lendingPool, lendingPoolDeployment.tranches[0], requestDepositAmount
         );
         vm.stopPrank();
@@ -78,5 +79,10 @@ contract LendingPoolManagerTest is Test {
         assertApproxEqAbs(mockUsdc.balanceOf(address(lendingPoolDeployment.pendingPool)), requestDepositAmount, 0);
 
         PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
+        assertEq(pendingPool.ownerOf(dNftId), alice);
+
+        DepositNftDetails memory depositNftDetails = pendingPool.trancheDepositNftDetails(dNftId);
+        assertEq(depositNftDetails.assetAmount, requestDepositAmount);
+        // TODO: assert epochId, priorityLevel
     }
 }
