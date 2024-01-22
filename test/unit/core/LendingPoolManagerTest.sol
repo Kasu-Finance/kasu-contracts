@@ -51,7 +51,7 @@ contract LendingPoolManagerTest is Test {
         LendingPool lendingPoolImp = new LendingPool();
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
 
-        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche();
+        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
 
         LendingPoolFactory lendingPoolFactory = new LendingPoolFactory(

@@ -35,18 +35,21 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         address[] memory tranches = new address[](3);
         if (poolConfiguration.tranches.junior.isEnabled) {
-            address juniorTranche =
-                _deployLendingPoolTranche(poolConfiguration.name, "Junior Tranche Token", "JTT", lendingPoolAddress);
+            address juniorTranche = _deployLendingPoolTranche(
+                poolConfiguration.name, poolConfiguration.symbol, "Junior Tranche", "jr", lendingPoolAddress
+            );
             tranches[0] = juniorTranche;
         }
         if (poolConfiguration.tranches.mezzo.isEnabled) {
-            address mezzoTranche =
-                _deployLendingPoolTranche(poolConfiguration.name, "Mezzo Tranche Token", "MTT", lendingPoolAddress);
+            address mezzoTranche = _deployLendingPoolTranche(
+                poolConfiguration.name, poolConfiguration.symbol, "Mezzo Tranche", "mz", lendingPoolAddress
+            );
             tranches[1] = mezzoTranche;
         }
         if (poolConfiguration.tranches.senior.isEnabled) {
-            address seniorTranche =
-                _deployLendingPoolTranche(poolConfiguration.name, "Senior Tranche Token", "STT", lendingPoolAddress);
+            address seniorTranche = _deployLendingPoolTranche(
+                poolConfiguration.name, poolConfiguration.symbol, "Senior Tranche", "sr", lendingPoolAddress
+            );
             tranches[2] = seniorTranche;
         }
 
@@ -69,18 +72,19 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
     function _deployLendingPoolTranche(
         string memory poolName,
+        string memory poolSymbol,
         string memory trancheName,
         string memory trancheSymbol,
         address lendingPoolAddress
     ) internal returns (address) {
         BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(lendingPoolTrancheBeacon, "");
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
+
         IERC20 lpToken = IERC20(lendingPoolAddress);
+        string memory fullTrancheName = string.concat(poolName, " - ", trancheName);
+        string memory fullTrancheSymbol = string.concat(poolSymbol, "_", trancheSymbol);
 
-        string memory fullTrancheName = string.concat(poolName, " - ");
-        fullTrancheName = string.concat(fullTrancheName, trancheName);
-
-        lendingPoolTranche.initialize(fullTrancheName, trancheSymbol, lpToken, lendingPoolAddress);
+        lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lpToken);
 
         return address(lendingPoolTranche);
     }
