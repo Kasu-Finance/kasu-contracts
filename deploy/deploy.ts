@@ -129,6 +129,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     writeAddressProxy('KSULocking', ksuLockingResult.address, ksuLockingResult.implementation);
 
+    const ksuBonusResult = await deploy('KSULockBonus', {
+        deterministicDeployment: true,
+        from: admin,
+        args: [],
+        proxy: {
+            owner: admin,
+            execute: {
+                init: {
+                    methodName: 'initialize',
+                    args: [ksuLockingResult.address, ksu.address],
+                },
+            },
+            proxyContract: 'OpenZeppelinTransparentProxy',
+            viaAdminContract: 'ProxyAdmin',
+        },
+        log: true,
+    });
+
+    writeAddressProxy('KSULockBonus', ksuBonusResult.address, ksuBonusResult.implementation);
+
     // add lock periods
     const adminSigners = await hre.ethers.getNamedSigners();
     const adminSigner = adminSigners['admin'];
@@ -136,7 +156,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ksuLockingResult.address,
         adminSigner,
     );
-    let tx = await ksuLocking.addLockPeriod(
+
+    let tx = await ksuLocking.setKSULockBonus(ksuBonusResult.address);
+    await tx.wait();
+
+    tx = await ksuLocking.addLockPeriod(
         lockPeriod30,
         lockMultiplier30,
         ksuBonusMultiplier30,
