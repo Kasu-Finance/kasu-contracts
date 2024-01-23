@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {LendingPoolTestUtils} from "./LendingPoolTestUtils.sol";
 import "../../../src/core/lendingPool/PendingPool.sol";
 
-contract LendingPoolManagerTest is LendingPoolTestUtils {
+contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
         __lendingPool_setUp();
     }
