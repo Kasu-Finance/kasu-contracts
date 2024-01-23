@@ -2,10 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "./utils/LendingPoolTestUtils.sol";
-import {
-    Tranches,
-    TrancheDetail
-} from "../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
+import {Tranches, TrancheDetail} from "../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {

@@ -35,7 +35,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
             address tranche = lendingPoolInfo_.tranches[i].trancheAddress;
             isTranche[tranche] = true;
 
-            approve(tranche, type(uint256).max);
+            _approve(address(this), tranche, type(uint256).max);
         }
     }
 

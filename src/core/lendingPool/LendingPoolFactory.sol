@@ -54,7 +54,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         }
 
         // tranches deploy
-        address[] memory tranches = new address[](trancheCount);
+        TrancheData[] memory tranches = new TrancheData[](trancheCount);
         if (poolConfiguration.tranches.junior.isEnabled) {
             if (trancheCount < 2) {
                 revert("LendingPoolFactory: junior tranche cannot be enabled without senior tranche");
@@ -63,7 +63,9 @@ contract LendingPoolFactory is ILendingPoolFactory {
             address juniorTranche = _deployLendingPoolTranche(
                 poolConfiguration.name, poolConfiguration.symbol, "Junior Tranche", "jr", lendingPool
             );
-            tranches[0] = juniorTranche;
+            tranches[0] = TrancheData(
+                juniorTranche, poolConfiguration.tranches.junior.ratio, poolConfiguration.tranches.junior.interestRate
+            );
         }
         if (poolConfiguration.tranches.mezzo.isEnabled) {
             if (trancheCount < 3) {
@@ -73,25 +75,35 @@ contract LendingPoolFactory is ILendingPoolFactory {
             address mezzoTranche = _deployLendingPoolTranche(
                 poolConfiguration.name, poolConfiguration.symbol, "Mezzo Tranche", "mz", lendingPool
             );
-            tranches[1] = mezzoTranche;
+            tranches[1] = TrancheData(
+                mezzoTranche, poolConfiguration.tranches.mezzo.ratio, poolConfiguration.tranches.mezzo.interestRate
+            );
         }
         if (poolConfiguration.tranches.senior.isEnabled) {
             address seniorTranche = _deployLendingPoolTranche(
                 poolConfiguration.name, poolConfiguration.symbol, "Senior Tranche", "sr", lendingPool
             );
-            tranches[trancheCount - 1] = seniorTranche;
+            tranches[trancheCount - 1] = TrancheData(
+                seniorTranche, poolConfiguration.tranches.senior.ratio, poolConfiguration.tranches.senior.interestRate
+            );
         }
-        // pending pool deploy
-        address pendingPoolAddress = _deployPendingPool(lendingPool, tranches);
 
         LendingPoolInfo memory lendingPoolInfo;
+        lendingPoolDeployment.lendingPool = lendingPoolAddress;
+        lendingPoolDeployment.tranches = new address[](trancheCount);
+        for (uint256 i; i < tranches.length; i++) {
+            lendingPoolDeployment.tranches[i] = tranches[i].trancheAddress;
+        }
+
+        // pending pool deploy
+        address pendingPoolAddress = _deployPendingPool(lendingPool, lendingPoolDeployment.tranches);
+
+        lendingPoolDeployment.pendingPool = pendingPoolAddress;
+
         lendingPoolInfo.pendingPool = pendingPoolAddress;
+        lendingPoolInfo.tranches = tranches;
 
         lendingPool.initialize(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo);
-
-        lendingPoolDeployment.lendingPool = lendingPoolAddress;
-        lendingPoolDeployment.pendingPool = pendingPoolAddress;
-        lendingPoolDeployment.tranches = tranches;
 
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }

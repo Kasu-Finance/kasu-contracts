@@ -74,6 +74,10 @@ contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingP
         revert NotSupported();
     }
 
+    function _decimalsOffset() internal view override returns (uint8) {
+        return 12;
+    }
+
     function _spendAllowance(address owner, address spender, uint256 value) internal override {
         if (spender != _getPendingPool()) {
             super._spendAllowance(owner, spender, value);

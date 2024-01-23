@@ -14,7 +14,7 @@ struct LendingPoolInfo {
 
 struct TrancheData {
     address trancheAddress;
-    uint256 balance;
+    uint256 ratio;
     uint256 interestRate;
 }
 

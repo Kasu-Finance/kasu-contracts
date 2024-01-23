@@ -2,10 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "./utils/LendingPoolTestUtils.sol";
-import {
-Tranches,
-TrancheDetail
-} from "../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -66,5 +63,44 @@ contract LendingPoolTest is LendingPoolTestUtils {
             PoolConfiguration("Test Lending Pool2", "TLP2", address(mockUsdc), 1 ether, 20_000 * 1e6, tranches2);
         LendingPoolDeployment memory lendingPoolDeployment2 = createLendingPool(poolConfiguration2);
         // ### ACT ###
+    }
+
+    function test_acceptDeposit_acceptAliceDeposit() public {
+        // arrange
+        uint256 minDepositAmount = 1 ether;
+        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        Tranches memory tranches;
+        tranches.junior = TrancheDetail(true, 10, 20);
+        tranches.mezzo = TrancheDetail(true, 20, 10);
+        tranches.senior = TrancheDetail(true, 70, 5);
+        PoolConfiguration memory poolConfiguration = PoolConfiguration(
+            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches
+        );
+        LendingPoolDeployment memory lendingPoolDeployment = createLendingPool(poolConfiguration);
+
+        // request deposit
+        uint256 requestDepositAmount = 100 * 1e6;
+        deal(address(mockUsdc), alice, requestDepositAmount, true);
+        vm.startPrank(alice);
+        mockUsdc.approve(address(lendingPoolManager), requestDepositAmount);
+        uint256 dNftId = lendingPoolManager.requestDeposit(
+            lendingPoolDeployment.lendingPool, lendingPoolDeployment.tranches[0], requestDepositAmount
+        );
+        vm.stopPrank();
+
+        // act
+        ILendingPool lendingPool = ILendingPool(lendingPoolDeployment.lendingPool);
+
+        startHoax(lendingPoolDeployment.pendingPool);
+        mockUsdc.approve(address(lendingPool), requestDepositAmount);
+        lendingPool.acceptDeposit(lendingPoolDeployment.tranches[0], alice, requestDepositAmount);
+        vm.stopPrank();
+
+        // assert
+        assertEq(lendingPool.balanceOf(lendingPoolDeployment.tranches[0]), requestDepositAmount);
+        assertEq(lendingPool.totalSupply(), requestDepositAmount);
+        assertEq(
+            ILendingPoolTranche(lendingPoolDeployment.tranches[0]).balanceOf(alice), requestDepositAmount * 10 ** 12
+        );
     }
 }
