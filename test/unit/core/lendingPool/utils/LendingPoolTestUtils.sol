@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
-import {LendingPoolFactory} from "../../../src/core/lendingPool/LendingPoolFactory.sol";
-import "../../../src/core/lendingPool/LendingPoolManager.sol";
-import "../../../src/core/lendingPool/PendingPool.sol";
-import "../../../src/core/lendingPool/LendingPool.sol";
-import "../../../src/core/lendingPool/LendingPoolTranche.sol";
-import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "forge-std/Test.sol";
-import "../../shared/MockERC20Permit.sol";
+import "../../../../shared/MockUSDC.sol";
+import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
+import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
 
 contract LendingPoolTestUtils is Test {
     LendingPoolManager internal lendingPoolManager;
-    MockERC20Permit internal mockUsdc;
+    MockUSDC internal mockUsdc;
 
     LendingPoolFactory private lendingPoolFactory;
 
@@ -24,13 +19,16 @@ contract LendingPoolTestUtils is Test {
     address internal alice = address(0xaaa);
 
     function __lendingPool_setUp() internal {
+        // admin
+        vm.deal(admin, 1 << 128);
         // proxy admin
         ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
         // usdc
-        MockERC20Permit mockUsdcIml = new MockERC20Permit("USDC", "USDC", 6);
+        MockUSDC mockUsdcIml = new MockUSDC();
         TransparentUpgradeableProxy mockUsdcProxy =
-                    new TransparentUpgradeableProxy(address(mockUsdcIml), address(proxyAdmin), "");
-        mockUsdc = MockERC20Permit(address(mockUsdcProxy));
+            new TransparentUpgradeableProxy(address(mockUsdcIml), address(proxyAdmin), "");
+        mockUsdc = MockUSDC(address(mockUsdcProxy));
+        mockUsdc.initialize(admin);
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc));
         TransparentUpgradeableProxy lendingPoolManagerProxy =
@@ -50,7 +48,7 @@ contract LendingPoolTestUtils is Test {
             address(pendingPoolBeacon), address(lendingPoolBeacon), address(lendingPoolTrancheBeacon)
         );
         TransparentUpgradeableProxy lendingPoolFactoryProxy =
-                    new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
+            new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
     }
 
@@ -58,7 +56,7 @@ contract LendingPoolTestUtils is Test {
         internal
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        startHoax(admin);
+        vm.prank(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
     }
 }
