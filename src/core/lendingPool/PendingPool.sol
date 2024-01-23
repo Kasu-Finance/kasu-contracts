@@ -167,14 +167,16 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
 
     // probably called by the lending pool
-    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external onlyOwnLendingPool {
+    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
         }
 
-        depositNftDetails.assetAmount -= acceptedAmount;
+        unchecked {
+            depositNftDetails.assetAmount -= acceptedAmount;
+        }
 
         if (depositNftDetails.assetAmount == 0) {
             // Burn the deposit NFT
@@ -183,17 +185,26 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             delete _trancheDepositNftDetails[dNftID];
         }
 
-        _transferAssets(msg.sender, acceptedAmount);
+        (address tranche,) = decomposeDepositId(dNftID);
+        address user = ownerOf(dNftID);
+
+        ILendingPool lendingPool = _getOwnLendingPool();
+
+        _approveAsset(address(lendingPool), acceptedAmount);
+
+        lendingPool.acceptDeposit(tranche, user, acceptedAmount);
     }
 
-    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external onlyOwnLendingPool {
+    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount < acceptedShares) {
-            revert TooSharesRequested(wNftID, withdrawalNftDetails.sharesAmount, acceptedShares);
+            revert TooManySharesRequested(wNftID, withdrawalNftDetails.sharesAmount, acceptedShares);
         }
 
-        withdrawalNftDetails.sharesAmount -= acceptedShares;
+        unchecked {
+            withdrawalNftDetails.sharesAmount -= acceptedShares;
+        }
 
         if (withdrawalNftDetails.sharesAmount == 0) {
             // Burn the deposit NFT
@@ -203,8 +214,10 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         }
 
         (address tranche,) = decomposeWithdrawalId(wNftID);
+        address user = ownerOf(wNftID);
 
-        IERC20(tranche).transfer(msg.sender, acceptedShares);
+        ILendingPool lendingPool = _getOwnLendingPool();
+        lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
     }
 
     function composeDepositId(address tranche, uint256 id) internal pure returns (uint256) {

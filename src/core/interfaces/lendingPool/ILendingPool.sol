@@ -26,11 +26,9 @@ interface ILendingPool is IERC20 {
     function getPendingPool() external view returns (address);
 
     // #### CLEARING #### //
-    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external;
+    function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
 
-    // function declineDepositRequest(address tranche, uint256 dNftID) external;
-
-    // function acceptWithdrawalRequest(address tranche, uint256 wNftID) external;
+    function acceptWithdrawal(address tranche, address user, uint256 acceptedShares) external;
 
     // #### POOL DELEGATE #### //
     //     function borrowLoan(uint256 amount) external;

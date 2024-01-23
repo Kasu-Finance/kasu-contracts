@@ -20,8 +20,8 @@ abstract contract LendingPoolHelpers is Initializable {
         _lendingPool = lendingPool_;
     }
 
-    function _getOwnLendingPool() internal view returns (address) {
-        return lendingPoolManager.ownLendingPool(address(this));
+    function _getOwnLendingPool() internal view returns (ILendingPool) {
+        return _lendingPool;
     }
 
     function _getLendingPoolManager() internal view returns (address) {

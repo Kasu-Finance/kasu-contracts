@@ -59,16 +59,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         return ILendingPoolTranche(tranche).totalAssets();
     }
 
-    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
-        address tranche = address(uint160(dNftID));
+    function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external onlyPendingPool {
         if (!isTranche[tranche]) {
             revert("LendingPool: invalid tranche");
         }
 
-        address user = IPendingPool(_lendingPoolInfo.pendingPool).ownerOf(dNftID);
-
-        // accept deposit and receive assets from the pending pool
-        IPendingPool(_lendingPoolInfo.pendingPool).acceptDepositRequest(dNftID, acceptedAmount);
+        _transferAssetsFrom(msg.sender, address(this), acceptedAmount);
 
         // mint the same amount as the accepted deposit
         _mint(address(this), acceptedAmount);
@@ -77,16 +73,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
     }
 
-    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external {
-        address tranche = address(uint160(wNftID));
+    function acceptWithdrawal(address tranche, address user, uint256 acceptedShares) external onlyPendingPool {
         if (!isTranche[tranche]) {
             revert("LendingPool: invalid tranche");
         }
-
-        address user = IPendingPool(_lendingPoolInfo.pendingPool).ownerOf(wNftID);
-
-        // accept deposit and receive assets from the pending pool
-        IPendingPool(_lendingPoolInfo.pendingPool).acceptWithdrawalRequest(wNftID, acceptedShares);
 
         // deposit the minted tokens to the tranche
         uint256 lendingPoolToken = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), address(this));
@@ -103,5 +93,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         _burn(address(this), assets);
 
         // TODO: move withdrawn assets to the user
+    }
+
+    function _onlyPendingPool() private view {
+        if (msg.sender != _lendingPoolInfo.pendingPool) {
+            revert("LendingPool: only pending pool");
+        }
+    }
+
+    modifier onlyPendingPool() {
+        _onlyPendingPool();
+        _;
     }
 }
