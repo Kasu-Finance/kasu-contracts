@@ -5,6 +5,7 @@ import "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../AssetFunctionsBase.sol";
 
 /**
@@ -15,7 +16,7 @@ import "../AssetFunctionsBase.sol";
  * - when deposits are cleared, users receive ERC20 receipt tokens
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
-contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
+contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors {
     LendingPoolInfo private _lendingPoolInfo;
     mapping(address => bool) public isTranche;
 
@@ -51,19 +52,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         return _lendingPoolInfo.pendingPool;
     }
 
-    function getTrancheBalance(address tranche) external view returns (uint256) {
-        if (!isTranche[tranche]) {
-            revert("LendingPool: invalid tranche");
-        }
-
-        return ILendingPoolTranche(tranche).totalAssets();
+    function getTrancheBalance(address tranche) external view verifyTranche(tranche) returns (uint256) {
+        return balanceOf(tranche);
     }
 
-    function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external onlyPendingPool {
-        if (!isTranche[tranche]) {
-            revert("LendingPool: invalid tranche");
-        }
-
+    function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
+        external
+        onlyPendingPool
+        verifyTranche(tranche)
+    {
         _transferAssetsFrom(msg.sender, address(this), acceptedAmount);
 
         // mint the same amount as the accepted deposit
@@ -73,11 +70,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
     }
 
-    function acceptWithdrawal(address tranche, address user, uint256 acceptedShares) external onlyPendingPool {
-        if (!isTranche[tranche]) {
-            revert("LendingPool: invalid tranche");
-        }
-
+    function acceptWithdrawal(address tranche, address user, uint256 acceptedShares)
+        external
+        onlyPendingPool
+        verifyTranche(tranche)
+    {
         // deposit the minted tokens to the tranche
         uint256 lendingPoolToken = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), address(this));
 
@@ -88,11 +85,33 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         _burn(address(this), lendingPoolToken);
     }
 
-    function _acceptUserWithdrawal(address tranche, address user, uint256 shares) internal {
-        uint256 assets = ILendingPoolTranche(tranche).redeem(shares, address(this), user);
-        _burn(address(this), assets);
+    function reportLoss(uint256 lossAmount) external returns (uint256 lossId) {
+        // verify caller
 
-        // TODO: move withdrawn assets to the user
+        // verify input
+        if (lossAmount > 0) {
+            revert LossAmountShouldBeGreaterThanZero(lossAmount);
+        }
+
+        // verify the amount is not greater than total balance
+        if (lossAmount > totalSupply()) {
+            revert LossAmountCantBeGreaterThanSupply(lossAmount, totalSupply());
+        }
+
+        // TODO: remove the amount from the first loss capital
+
+        // remove the funds from the tranches and mint loss tokens if first loss capital is not enough
+        for (uint256 i; i < _lendingPoolInfo.tranches.length; ++i) {
+            if (lossAmount > 0) {
+                uint256 lossApplied =
+                    ILendingPoolTranche(_lendingPoolInfo.tranches[i].trancheAddress).reportTrancheLoss(lossAmount);
+                _burn(_lendingPoolInfo.tranches[i].trancheAddress, lossApplied);
+
+                lossAmount -= lossApplied;
+            } else {
+                break;
+            }
+        }
     }
 
     function _onlyPendingPool() private view {
@@ -101,8 +120,19 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase {
         }
     }
 
+    function _verifyTranche(address tranche) private view {
+        if (!isTranche[tranche]) {
+            revert InvalidTranche(address(this), tranche);
+        }
+    }
+
     modifier onlyPendingPool() {
         _onlyPendingPool();
+        _;
+    }
+
+    modifier verifyTranche(address tranche) {
+        _verifyTranche(tranche);
         _;
     }
 }

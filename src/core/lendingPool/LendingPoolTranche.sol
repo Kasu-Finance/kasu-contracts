@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../../shared/CommonErrors.sol";
@@ -16,13 +17,13 @@ import "./LendingPoolHelpers.sol";
  * - when deposits are cleared, users receive ERC20 receipt tokens
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
-contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingPoolErrors, LendingPoolHelpers {
-    /// @dev user => nftIDs[]
-    mapping(address => uint256[]) private userDepositNFTs;
-
-    /// @dev user => nftIDs[]
-    mapping(address => uint256[]) private userWithdrawalNFTs;
-
+contract LendingPoolTranche is
+    ILendingPoolTranche,
+    ERC4626Upgradeable,
+    ERC1155Upgradeable,
+    ILendingPoolErrors,
+    LendingPoolHelpers
+{
     mapping(address => bool) private isTrancheUser;
 
     address[] private trancheUsers;
@@ -41,7 +42,12 @@ contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingP
         __LendingPoolHelpers_init(lendingPool_);
     }
 
-    function deposit(uint256 assets, address receiver) public override onlyOwnLendingPool returns (uint256) {
+    function deposit(uint256 assets, address receiver)
+        public
+        override(ERC4626Upgradeable, IERC4626)
+        onlyOwnLendingPool
+        returns (uint256)
+    {
         if (isTrancheUser[receiver] == false) {
             isTrancheUser[receiver] = true;
             trancheUsers.push(receiver);
@@ -52,7 +58,7 @@ contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingP
 
     function redeem(uint256 shares, address receiver, address owner)
         public
-        override
+        override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
         returns (uint256)
     {
@@ -66,15 +72,38 @@ contract LendingPoolTranche is ERC4626Upgradeable, ERC1155Upgradeable, ILendingP
         return super.redeem(shares, receiver, owner);
     }
 
-    function withdraw(uint256, address, address) public pure override returns (uint256) {
+    function reportTrancheLoss(uint256 lossAmount) external onlyOwnLendingPool returns (uint256 lossApplied) {
+        uint256 totalAssets_ = totalAssets();
+        if (totalAssets_ > 0) {
+            // check if total assets can cover the loss
+            if (totalAssets_ >= lossAmount) {
+                lossApplied = lossAmount;
+            } else {
+                lossApplied = totalAssets_;
+            }
+
+            // TODO: mint loss tokens to all users
+
+            unchecked {
+                totalAssets_ -= lossApplied;
+            }
+
+            // TODO: if tranche assets are 0, then burn all share tokens
+            if (totalAssets_ == 0) {
+                // burn all shares from all users
+            }
+        }
+    }
+
+    function withdraw(uint256, address, address) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {
         revert NotSupported();
     }
 
-    function mint(uint256, address) public pure override returns (uint256) {
+    function mint(uint256, address) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {
         revert NotSupported();
     }
 
-    function _decimalsOffset() internal view override returns (uint8) {
+    function _decimalsOffset() internal pure override returns (uint8) {
         return 12;
     }
 

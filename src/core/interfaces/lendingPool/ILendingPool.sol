@@ -43,4 +43,7 @@ interface ILendingPool is IERC20 {
 
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
+
+    error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
+    error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
 }
