@@ -227,22 +227,22 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
     }
 
-    function composeDepositId(address tranche, uint256 id) internal pure returns (uint256) {
-        return uint256(uint160(tranche)) + (id >> 160);
+    function composeDepositId(address tranche, uint256 id) public pure returns (uint256) {
+        return uint256(uint160(tranche)) | (id << 160);
     }
 
-    function decomposeDepositId(uint256 id) internal pure returns (address tranche, uint256 depositId) {
-        tranche = address(uint160(id >> 96 << 96));
-        depositId = id << 160;
+    function decomposeDepositId(uint256 id) public pure returns (address tranche, uint256 depositId) {
+        tranche = address(uint160(id << 96 >> 96));
+        depositId = id >> 160;
     }
 
-    function composeWithdrawalId(address tranche, uint256 id) internal pure returns (uint256) {
-        return uint256(uint160(tranche)) + (id >> 160 + TRANCHE_START_WITHDRAWAL_NFT_ID);
+    function composeWithdrawalId(address tranche, uint256 id) public pure returns (uint256) {
+        return uint256(uint160(tranche)) | ((id + TRANCHE_START_WITHDRAWAL_NFT_ID) << 160);
     }
 
-    function decomposeWithdrawalId(uint256 id) internal pure returns (address tranche, uint256 withdrawalId) {
-        tranche = address(uint160(id >> 96 << 96));
-        withdrawalId = id << 160 - TRANCHE_START_WITHDRAWAL_NFT_ID;
+    function decomposeWithdrawalId(uint256 id) public pure returns (address tranche, uint256 withdrawalId) {
+        tranche = address(uint160(id << 96 >> 96));
+        withdrawalId = (id >> 160) - TRANCHE_START_WITHDRAWAL_NFT_ID;
     }
 
     function _canBurnNft(address user, uint256 nftId) private view {
