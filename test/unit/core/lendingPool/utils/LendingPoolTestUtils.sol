@@ -8,6 +8,7 @@ import "forge-std/Test.sol";
 import "../../../../shared/MockUSDC.sol";
 import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
+import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 
 contract LendingPoolTestUtils is BaseTestUtils {
@@ -64,6 +65,19 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     // ###  Helper Functions ###
 
+    function _createDefaultLendingPool() internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
+        uint256 minDepositAmount = 1 ether;
+        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        Tranches memory tranches;
+        tranches.junior = TrancheDetail(true, 10, 20);
+        tranches.mezzo = TrancheDetail(true, 20, 10);
+        tranches.senior = TrancheDetail(true, 70, 5);
+        PoolConfiguration memory poolConfiguration = PoolConfiguration(
+            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches
+        );
+        lendingPoolDeployment = createLendingPool(poolConfiguration);
+    }
+
     function _requestDeposit(address sender, address lendingPool, address tranche, uint256 amount)
         internal
         prank(sender)
@@ -74,11 +88,19 @@ contract LendingPoolTestUtils is BaseTestUtils {
         return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
     }
 
-    function _acceptDeposit(address pendingPool, address lendingPool, address tranche, uint256 amount)
+    function _acceptDeposit(address sender, address lendingPool, uint256 dNftID, uint256 amount)
         internal
-        prank(pendingPool)
+        prank(sender)
     {
         mockUsdc.approve(address(lendingPool), amount);
-        ILendingPool(lendingPool).acceptDeposit(tranche, alice, amount);
+        lendingPoolManager.acceptDepositRequest(lendingPool, dNftID, amount);
+    }
+
+    function _requestWithdrawal(address sender, address lendingPool, address tranche, uint256 amount)
+        internal
+        prank(sender)
+        returns (uint256 dNftId)
+    {
+        return lendingPoolManager.requestWithdrawal(lendingPool, tranche, amount);
     }
 }

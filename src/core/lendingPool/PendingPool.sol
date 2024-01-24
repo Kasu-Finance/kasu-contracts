@@ -74,6 +74,13 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         return _trancheDepositNftDetails[dNftId];
     }
 
+    function trancheWithdrawalNftDetails(uint256 wNftId)
+        external
+        returns (WithdrawalNftDetails memory withdrawalNftDetails)
+    {
+        return _trancheWithdrawalNftDetails[wNftId];
+    }
+
     // DEPOSIT/WITHDRAWAL REQUESTS
 
     /**

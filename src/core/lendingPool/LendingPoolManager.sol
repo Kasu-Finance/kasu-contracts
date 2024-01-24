@@ -38,8 +38,11 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
     }
 
     // #### USER WITHDRAWS #### //
-    function requestWithdrawal(address tranche, uint256 amount) external returns (uint256 wNftID) {
-        revert("0");
+    function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
+        external
+        returns (uint256 wNftID)
+    {
+        wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
     function cancelWithdrawalRequest(address tranche, uint256 wNftID) external {
@@ -47,8 +50,8 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
     }
 
     // #### CLEARING #### //
-    function acceptDepositRequest(address tranche, uint256 dNftID) external {
-        revert("0");
+    function acceptDepositRequest(address lendingPool, uint256 dNftID, uint256 amount) external {
+        IPendingPool(lendingPools[lendingPool].pendingPool).acceptDepositRequest(dNftID, amount);
     }
 
     function declineDepositRequest(address tranche, uint256 dNftID) external {

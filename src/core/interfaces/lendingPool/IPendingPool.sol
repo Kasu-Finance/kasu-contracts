@@ -22,6 +22,9 @@ struct WithdrawalNftDetails {
 interface IPendingPool is IERC721 {
     // VIEWS
     function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
+    function trancheWithdrawalNftDetails(uint256 wNftId)
+        external
+        returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
     // #### USER DEPOSITS #### //
     /**
