@@ -19,12 +19,6 @@ contract LockingTestUtils is BaseTestUtils {
     KSULocking internal _KSULocking;
     KSULockBonus internal _KSULockBonus;
 
-    address internal admin = address(0xad);
-    address internal alice = address(0xaaa);
-    address internal bob = address(0xbbb);
-    address internal carol = address(0xccc);
-    address internal david = address(0xddd);
-
     uint256 internal lockPeriod30 = 30 days;
     uint256 internal lockMultiplier30 = 5_00;
     uint256 internal ksuBonusMultiplier30 = 0;

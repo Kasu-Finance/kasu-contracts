@@ -8,19 +8,19 @@ import "forge-std/Test.sol";
 import "../../../../shared/MockUSDC.sol";
 import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
+import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 
-contract LendingPoolTestUtils is Test {
+contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
     MockUSDC internal mockUsdc;
 
     LendingPoolFactory private lendingPoolFactory;
 
-    address internal admin = address(0xad);
-    address internal alice = address(0xaaa);
-
     function __lendingPool_setUp() internal {
-        // admin
+        // fund accounts
         vm.deal(admin, 1 << 128);
+        vm.deal(alice, 1 << 128);
+        vm.deal(bob, 1 << 128);
         // proxy admin
         ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
         // usdc
@@ -58,5 +58,27 @@ contract LendingPoolTestUtils is Test {
     {
         vm.prank(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
+        // fund lending pool
+        vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
+    }
+
+    // ###  Helper Functions ###
+
+    function _requestDeposit(address sender, address lendingPool, address tranche, uint256 amount)
+        internal
+        prank(sender)
+        returns (uint256 dNftId)
+    {
+        deal(address(mockUsdc), sender, amount, true);
+        mockUsdc.approve(address(lendingPoolManager), amount);
+        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
+    }
+
+    function _acceptDeposit(address pendingPool, address lendingPool, address tranche, uint256 amount)
+        internal
+        prank(pendingPool)
+    {
+        mockUsdc.approve(address(lendingPool), amount);
+        ILendingPool(lendingPool).acceptDeposit(tranche, alice, amount);
     }
 }
