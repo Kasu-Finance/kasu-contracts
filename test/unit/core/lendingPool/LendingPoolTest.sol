@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "./utils/LendingPoolTestUtils.sol";
+import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -66,10 +67,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(ILendingPoolTranche(mezzoTrancheAddress).totalSupply(), acceptedDepositAmount_bob * 10 ** 12);
 
         PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
+        assertEq(mockUsdc.balanceOf(address(pendingPool)), requestDepositAmount_alice - acceptDepositAmount_alice);
+
         assertEq(pendingPool.ownerOf(dNftId_alice), alice);
         DepositNftDetails memory depositNftDetails_alice = pendingPool.trancheDepositNftDetails(dNftId_alice);
         assertEq(depositNftDetails_alice.assetAmount, requestDepositAmount_alice - acceptDepositAmount_alice);
 
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
         assertEq(pendingPool.ownerOf(dNftId_bob), address(0));
     }
 
