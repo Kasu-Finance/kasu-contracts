@@ -92,13 +92,6 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
         _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IPendingPool.TooManyAssetsRequested.selector, dNftId_alice, 60 * 10 ** 6, 61 * 10 ** 6
-            )
-        );
-        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, 61 * 10 ** 6);
-
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
 
@@ -110,6 +103,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // incorrect owner
         vm.expectRevert(abi.encodeWithSelector(IPendingPool.UserIsNotOwnerOfNFT.selector, bob, dNftId_alice));
         _acceptDeposit(bob, lendingPoolAddress, dNftId_alice, acceptedDepositAmount_bob);
+
+        // too many assets
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.TooManyAssetsRequested.selector, dNftId_alice, 60 * 10 ** 6, 61 * 10 ** 6
+            )
+        );
+        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, 61 * 10 ** 6);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
