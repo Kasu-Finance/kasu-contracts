@@ -78,7 +78,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             _nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
             _nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
 
-            IERC20(tranche).approve(lendingPool, type(uint256).max);
+            IERC20(tranche).approve(address(lendingPool_), type(uint256).max);
         }
     }
 
@@ -136,7 +136,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
      * @param user The user cancelling the deposit.
      * @param dNftID The deposit id to cancel.
      */
-    function cancelDepositRequest(address user, uint256 dNftID) external canCancel canBurnNft(user, dNftID) {
+    function cancelDepositRequest(address user, uint256 dNftID) external canCancel isNftOwner(user, dNftID) {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
         // Burn the deposit NFT
@@ -186,7 +186,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
      * @param user The user cancelling the withdrawal request.
      * @param wNftID The withdrawal id to cancel.
      */
-    function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel canBurnNft(user, wNftID) {
+    function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount > 0) {
