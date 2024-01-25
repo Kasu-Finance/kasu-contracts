@@ -10,18 +10,24 @@ import "../AssetFunctionsBase.sol";
 
 /**
  * @dev
- * - assuming lower tier tranches cannot be used to exit higher level tranches
- * - when depositing, users receive IERC1155 deposit NFTs
- * - when withdrawing, users receive IERC1155 withdrawal NFTs
- * - when deposits are cleared, users receive ERC20 receipt tokens
- * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
+ * This contract is the ledger of the lending pool balances.
+ * The lending pool is also a ERC20 token. This token always represents
+ * the total balance of the lending pool against the underlying asset.
  */
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors {
+    /// @dev Lending pool configuration.
     LendingPoolInfo private _lendingPoolInfo;
+    /// @notice Is the address a lending pool tranche.
     mapping(address => bool) public isTranche;
 
     constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
 
+    /**
+     * @notice Initializes the lending pool.
+     * @param name_ The name of the lending pool token.
+     * @param symbol_ The symbol of the lending pool token.
+     * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
+     */
     function initialize(string memory name_, string memory symbol_, LendingPoolInfo memory lendingPoolInfo_)
         public
         initializer
@@ -40,6 +46,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    /**
+     * @notice Decimals of the lending pool token.
+     */
     function decimals() public pure override returns (uint8) {
         return 6;
     }
@@ -48,14 +57,34 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _lendingPoolInfo;
     }
 
+    /**
+     * @notice Returns the pending pool address.
+     * @return The pending pool address.
+     */
     function getPendingPool() external view returns (address) {
         return _lendingPoolInfo.pendingPool;
     }
 
+    /**
+     * @notice Returns the balance of the tranche.
+     * @param tranche The tranche address.
+     * @return Balance of the tranche in the underlying asset.
+     */
     function getTrancheBalance(address tranche) external view verifyTranche(tranche) returns (uint256) {
         return balanceOf(tranche);
     }
 
+    /**
+     * @notice Accepts the deposit of the user.
+     * @dev
+     * This function is called by the pending pool.
+     * Transfers the assets from the pending pool to the lending pool.
+     * Mints the lending pool token.
+     * Mints tranche shares to the user.
+     * @param tranche The tranche address the deposit is accepted to.
+     * @param user The user address.
+     * @param acceptedAmount The amount of the deposit that is accepted.
+     */
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
         external
         onlyPendingPool
@@ -70,21 +99,45 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
     }
 
+    /**
+     * @notice Accepts the withdrawal of the user from a tranche.
+     * @dev
+     * This function is called by the pending pool.
+     * Burns tranche shares from the user.
+     * Burns the lending pool token.
+     * Transfers the assets from the tranche to the user.
+     * @param tranche The tranche address.
+     * @param user The user address.
+     * @param acceptedShares The amount of the withdrawal that is accepted.
+     * @return assetAmount The amount of the underlying asset that is withdrawn and transferred to the user.
+     */
     function acceptWithdrawal(address tranche, address user, uint256 acceptedShares)
         external
         onlyPendingPool
         verifyTranche(tranche)
+        returns (uint256 assetAmount)
     {
         // deposit the minted tokens to the tranche
-        uint256 lendingPoolToken = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), address(this));
-
-        // transfer assets to the user
-        _transferAssets(user, lendingPoolToken);
+        assetAmount = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), address(this));
 
         // burn the lending pool token
-        _burn(address(this), lendingPoolToken);
+        _burn(address(this), assetAmount);
+
+        // transfer assets to the user
+        _transferAssets(user, assetAmount);
     }
 
+    /**
+     * @notice Reports the loss of the lending pool.
+     * @dev
+     * Applies the loss first to the first loss capital.
+     * If there is no more first loss capital,
+     * the loss is applied to the tranches in order from the junior to the senior.
+     * Burns tranche shares if needed.
+     * Burns the lending pool token.
+     * @param lossAmount The amount of the loss.
+     * @return lossId The id of the loss.
+     */
     function reportLoss(uint256 lossAmount) external returns (uint256 lossId) {
         // verify caller
 
@@ -94,6 +147,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         // verify the amount is not greater than total balance
+        // TODO: the amount should not be greater than the borrowed amount (less than total balance)
         if (lossAmount > totalSupply()) {
             revert LossAmountCantBeGreaterThanSupply(lossAmount, totalSupply());
         }

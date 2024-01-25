@@ -20,7 +20,6 @@ struct TrancheData {
 
 /**
  * @notice Interface for the LendingPool contract.
- * @dev Can only be called by the LendingPoolManager contract.
  */
 interface ILendingPool is IERC20 {
     function getPendingPool() external view returns (address);
@@ -28,7 +27,9 @@ interface ILendingPool is IERC20 {
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
 
-    function acceptWithdrawal(address tranche, address user, uint256 acceptedShares) external;
+    function acceptWithdrawal(address tranche, address user, uint256 acceptedShares)
+        external
+        returns (uint256 assetAmount);
 
     // #### POOL DELEGATE #### //
     //     function borrowLoan(uint256 amount) external;
