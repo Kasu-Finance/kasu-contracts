@@ -37,7 +37,7 @@ interface ILendingPoolManager {
 
     function declineDepositRequest(address tranche, uint256 dNftID) external;
 
-    function acceptWithdrawalRequest(address tranche, uint256 wNftID) external;
+    function acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) external;
 
     // #### POOL DELEGATE #### //
     function borrowLoan(address lendingPool, uint256 amount) external;

@@ -59,8 +59,8 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         revert("0");
     }
 
-    function acceptWithdrawalRequest(address, uint256) external pure {
-        revert("0");
+    function acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) external {
+        IPendingPool(lendingPools[lendingPool].pendingPool).acceptWithdrawalRequest(wNftID, acceptedShares);
     }
 
     // #### POOL DELEGATE #### //

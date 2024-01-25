@@ -242,7 +242,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         lendingPool.acceptDeposit(tranche, user, acceptedAmount);
     }
 
-    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external {
+    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external nftExists(wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount < acceptedShares) {
@@ -253,6 +253,8 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             withdrawalNftDetails.sharesAmount -= acceptedShares;
         }
 
+        address user = ownerOf(wNftID);
+
         if (withdrawalNftDetails.sharesAmount == 0) {
             // Burn the deposit NFT
             _update(address(0), wNftID, address(0));
@@ -261,7 +263,6 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         }
 
         (address tranche,) = decomposeWithdrawalId(wNftID);
-        address user = ownerOf(wNftID);
 
         ILendingPool lendingPool = _getOwnLendingPool();
         lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
@@ -300,6 +301,14 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
 
     modifier isNftOwner(address user, uint256 nftId) {
         _isNftOwner(user, nftId);
+        _;
+    }
+
+    modifier nftExists(uint256 nftId) {
+        if (_trancheDepositNftDetails[nftId].assetAmount == 0 && _trancheWithdrawalNftDetails[nftId].sharesAmount == 0)
+        {
+            revert IERC721Errors.ERC721NonexistentToken(nftId);
+        }
         _;
     }
 }
