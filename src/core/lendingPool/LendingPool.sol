@@ -98,6 +98,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert LossAmountCantBeGreaterThanSupply(lossAmount, totalSupply());
         }
 
+        // get the loss id
+        lossId = 0;
+
         // TODO: remove the amount from the first loss capital
 
         // remove the funds from the tranches and mint loss tokens if first loss capital is not enough

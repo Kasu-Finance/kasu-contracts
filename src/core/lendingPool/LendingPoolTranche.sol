@@ -72,7 +72,7 @@ contract LendingPoolTranche is
         return super.redeem(shares, receiver, owner);
     }
 
-    function reportTrancheLoss(uint256 lossAmount) external onlyOwnLendingPool returns (uint256 lossApplied) {
+    function reportTrancheLoss(uint256 lossAmount) external view onlyOwnLendingPool returns (uint256 lossApplied) {
         uint256 totalAssets_ = totalAssets();
         if (totalAssets_ > 0) {
             // check if total assets can cover the loss

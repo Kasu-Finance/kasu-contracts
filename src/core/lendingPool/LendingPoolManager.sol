@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import {ILendingPoolManager, LendingPoolDeployment} from "../interfaces/lendingPool/ILendingPoolManager.sol";
 import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
+import {ILendingPool} from "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import {ILendingPoolErrors} from "../interfaces/lendingPool/ILendingPoolErrors.sol";
 
@@ -33,7 +34,7 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
     }
 
-    function cancelDepositRequest(address tranche, uint256 dNftID) external {
+    function cancelDepositRequest(address, uint256) external pure {
         revert("0");
     }
 
@@ -45,7 +46,7 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
-    function cancelWithdrawalRequest(address tranche, uint256 wNftID) external {
+    function cancelWithdrawalRequest(address, uint256) external pure {
         revert("0");
     }
 
@@ -54,33 +55,33 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         IPendingPool(lendingPools[lendingPool].pendingPool).acceptDepositRequest(dNftID, amount);
     }
 
-    function declineDepositRequest(address tranche, uint256 dNftID) external {
+    function declineDepositRequest(address, uint256) external pure{
         revert("0");
     }
 
-    function acceptWithdrawalRequest(address tranche, uint256 wNftID) external {
+    function acceptWithdrawalRequest(address, uint256) external pure {
         revert("0");
     }
 
     // #### POOL DELEGATE #### //
-    function borrowLoan(address lendingPool, uint256 amount) external {
+    function borrowLoan(address, uint256) external pure {
         revert("0");
     }
 
-    function repayLoan(address lendingPool, uint256 amount) external {
+    function repayLoan(address, uint256) external pure {
         revert("0");
     }
 
-    function updateLoanAmount(address lendingPool, uint256 amount) external {
+    function updateLoanAmount(address, uint256) external pure {
         revert("0");
     }
 
-    function reportLoss(address lendingPool, uint256 amount) external returns (uint256 lossId) {
-        revert("0");
+    function reportLoss(address lendingPool, uint256 amount) external returns (uint256) {
+        return ILendingPool(lendingPool).reportLoss(amount);
     }
 
     // #### PROTOCOL FEES #### //
-    function withdrawProtocolFees() external {
+    function withdrawProtocolFees() external pure {
         revert("0");
     }
 
