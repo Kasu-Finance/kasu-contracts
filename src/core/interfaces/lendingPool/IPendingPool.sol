@@ -66,4 +66,7 @@ interface IPendingPool is IERC721 {
     error NoSharesToCancelWithdrawalRequest(uint256 wNftID);
     error TooManyAssetsRequested(uint256 dNftID, uint256 availableAmount, uint256 requestedAmount);
     error TooManySharesRequested(uint256 wNftID, uint256 availableShares, uint256 requestedShares);
+    error InsufficientSharesBalance(
+        address user, address lendingPool, address tranche, uint256 availableShares, uint256 requestedShares
+    );
 }

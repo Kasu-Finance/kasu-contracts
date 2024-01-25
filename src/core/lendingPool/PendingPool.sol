@@ -154,6 +154,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         emit DepositRequestCancelled(user, tranche, dNftID);
     }
 
+    // TODO: check valid tranche with modifier
     /**
      * @notice Creates a pending withdrawal for the user.
      * @param user The user making withdrawal request.
@@ -165,6 +166,13 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         external
         returns (uint256 wNftID)
     {
+        uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
+        if (remainingUserShares < trancheShares) {
+            revert InsufficientSharesBalance(
+                user, address(_getOwnLendingPool()), tranche, remainingUserShares, trancheShares
+            );
+        }
+
         IERC20(tranche).transferFrom(user, address(this), trancheShares);
 
         wNftID = _nextTrancheWithdrawalNFTId[tranche];
