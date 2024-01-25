@@ -117,6 +117,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         verifyTranche(tranche)
         returns (uint256 assetAmount)
     {
+        // transfer tranche shares from the pending pool to the lending pool
+        ILendingPoolTranche(tranche).transferFrom(msg.sender, address(this), acceptedShares);
+
         // deposit the minted tokens to the tranche
         assetAmount = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), address(this));
 

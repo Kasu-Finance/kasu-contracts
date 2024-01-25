@@ -77,6 +77,8 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             address tranche = tranches[i];
             _nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
             _nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
+
+            IERC20(tranche).approve(lendingPool, type(uint256).max);
         }
     }
 
