@@ -54,6 +54,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
 
         // ### ACT ###
+        vm.expectRevert(abi.encodeWithSelector(IPendingPool.UserIsNotOwnerOfNFT.selector, bob, dNftId_alice));
+        _cancelDepositRequest(bob, lendingPoolAddress, dNftId_alice);
+
         _cancelDepositRequest(alice, lendingPoolAddress, dNftId_alice);
         _cancelDepositRequest(bob, lendingPoolAddress, dNftId_bob);
 
@@ -189,7 +192,52 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(withdrawalNftDetails_bob.sharesAmount, requestWithdrawalSharesAmount_bob);
     }
 
-    function test_acceptWithdrawal() public {}
+    function test_cancelWithdrawalRequest() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
-    function test_cancelWithdrawalRequest() public {}
+        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+
+        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        _acceptDeposit(alice, lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+
+        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        _acceptDeposit(bob, lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
+        uint256 wNftId_alice =
+            _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice);
+
+        uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
+        uint256 wNftId_bob =
+            _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob);
+
+        // ### ACT ###
+        // incorrect owner
+        vm.expectRevert(abi.encodeWithSelector(IPendingPool.UserIsNotOwnerOfNFT.selector, bob, wNftId_alice));
+        _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_alice);
+
+        _cancelWithdrawalRequest(alice, lpd.lendingPool, wNftId_alice);
+        _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_bob);
+
+        // non existing dNftId
+        uint256 wNftId_nonExistent = 888;
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_nonExistent));
+        _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_nonExistent);
+
+        // ### ASSERT ###
+        // wNft burned
+        IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_alice));
+        assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
+
+        // wNft burned
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_bob));
+        assertEq(pendingPool.ownerOf(wNftId_bob), address(0));
+    }
+
+    function test_acceptWithdrawal() public {}
 }

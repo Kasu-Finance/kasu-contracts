@@ -197,10 +197,6 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
-        if (withdrawalNftDetails.sharesAmount > 0) {
-            revert NoSharesToCancelWithdrawalRequest(wNftID);
-        }
-
         (address tranche,) = decomposeWithdrawalId(wNftID);
 
         // Burn the withdrawal NFT

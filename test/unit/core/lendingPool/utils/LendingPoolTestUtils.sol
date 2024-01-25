@@ -106,4 +106,8 @@ contract LendingPoolTestUtils is BaseTestUtils {
     {
         return lendingPoolManager.requestWithdrawal(lendingPool, tranche, amount);
     }
+
+    function _cancelWithdrawalRequest(address sender, address lendingPool, uint256 wNftId) internal prank(sender) {
+        lendingPoolManager.cancelWithdrawalRequest(lendingPool, wNftId);
+    }
 }

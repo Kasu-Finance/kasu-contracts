@@ -46,8 +46,8 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
-    function cancelWithdrawalRequest(address, uint256) external pure {
-        revert("0");
+    function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external {
+        IPendingPool(lendingPools[lendingPool].pendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
     // #### CLEARING #### //
