@@ -96,7 +96,6 @@ contract LendingPoolTestUtils is BaseTestUtils {
         internal
         prank(sender)
     {
-        mockUsdc.approve(address(lendingPool), amount);
         lendingPoolManager.acceptDepositRequest(lendingPool, dNftID, amount);
     }
 

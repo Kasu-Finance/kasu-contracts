@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import "./utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import "../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -61,22 +62,20 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_nonExistent));
         _cancelDepositRequest(bob, lendingPoolAddress, dNftId_nonExistent);
 
-        // incorrect owner
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
-        _cancelDepositRequest(alice, lendingPoolAddress, dNftId_bob);
-
         // ### ASSERT ###
         PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
 
+        // dNft burned
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_alice));
         assertEq(pendingPool.ownerOf(dNftId_alice), address(0));
 
+        // dNft burned
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
         assertEq(pendingPool.ownerOf(dNftId_bob), address(0));
     }
 
     function test_acceptDeposit() public {
-        // ARRANGE
+        // ### ARRANGE ###
         LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
         address lendingPoolAddress = lendingPoolDeployment.lendingPool;
         address juniorTrancheAddress = lendingPoolDeployment.tranches[0];
@@ -89,14 +88,23 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 requestDepositAmount_bob = 250 * 10 ** 6;
         uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
 
-        // ACT
+        // ### ACT ###
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
         _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
 
-        // ASSERT
+        // non existing dNftId
+        uint256 dNftId_nonExistent = 888;
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_nonExistent));
+        _acceptDeposit(bob, lendingPoolAddress, dNftId_nonExistent, acceptedDepositAmount_bob);
+
+        // incorrect owner
+        vm.expectRevert(abi.encodeWithSelector(IPendingPool.UserIsNotOwnerOfNFT.selector, bob, dNftId_alice));
+        _acceptDeposit(bob, lendingPoolAddress, dNftId_alice, acceptedDepositAmount_bob);
+
+        // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
         assertEq(lendingPool.totalSupply(), acceptDepositAmount_alice + acceptedDepositAmount_bob);
         assertEq(ILendingPoolTranche(juniorTrancheAddress).totalSupply(), acceptDepositAmount_alice * 10 ** 12);

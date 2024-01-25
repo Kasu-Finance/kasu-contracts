@@ -39,7 +39,7 @@ interface IPendingPool is IERC721 {
 
     function cancelDepositRequest(address user, uint256 dNftID) external;
 
-    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external;
+    function acceptDepositRequest(address user, uint256 dNftID, uint256 amount) external;
 
     // #### USER WITHDRAWS #### //
     /**
