@@ -55,7 +55,7 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         IPendingPool(lendingPools[lendingPool].pendingPool).acceptDepositRequest(dNftID, amount);
     }
 
-    function declineDepositRequest(address, uint256) external pure{
+    function declineDepositRequest(address, uint256) external pure {
         revert("0");
     }
 
