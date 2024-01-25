@@ -38,6 +38,43 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(depositNftDetails_bob.assetAmount, requestDepositAmount_bob);
     }
 
+    function test_cancelDeposit() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
+        address lendingPoolAddress = lendingPoolDeployment.lendingPool;
+        address juniorTrancheAddress = lendingPoolDeployment.tranches[0];
+        address mezzoTrancheAddress = lendingPoolDeployment.tranches[1];
+
+        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        uint256 dNftId_alice =
+            _requestDeposit(alice, lendingPoolAddress, juniorTrancheAddress, requestDepositAmount_alice);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
+
+        // ### ACT ###
+        _cancelDepositRequest(alice, lendingPoolAddress, dNftId_alice);
+        _cancelDepositRequest(bob, lendingPoolAddress, dNftId_bob);
+
+        // non existing dNftId
+        uint256 dNftId_nonExistent = 888;
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_nonExistent));
+        _cancelDepositRequest(bob, lendingPoolAddress, dNftId_nonExistent);
+
+        // incorrect owner
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
+        _cancelDepositRequest(alice, lendingPoolAddress, dNftId_bob);
+
+        // ### ASSERT ###
+        PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_alice));
+        assertEq(pendingPool.ownerOf(dNftId_alice), address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
+        assertEq(pendingPool.ownerOf(dNftId_bob), address(0));
+    }
+
     function test_acceptDeposit() public {
         // ARRANGE
         LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
@@ -54,7 +91,6 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ACT
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        console2.log(juniorTrancheAddress);
         _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
@@ -78,50 +114,31 @@ contract LendingPoolTest is LendingPoolTestUtils {
     }
 
     function test_requestWithdrawal() public {
-        //        // arrange
+        //        // ARRANGE
         //        LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
+        //        address lendingPoolAddress = lendingPoolDeployment.lendingPool;
+        //        address juniorTrancheAddress = lendingPoolDeployment.tranches[0];
+        //        address mezzoTrancheAddress = lendingPoolDeployment.tranches[1];
         //
-        //        uint256 requestDepositAmount_alice = 100 * 1e6;
-        //        uint256 dNftId = _requestDeposit(
-        //            alice, lendingPoolDeployment.lendingPool, lendingPoolDeployment.tranches[0], requestDepositAmount_alice
-        //        );
+        //        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        //        uint256 dNftId_alice =
+        //            _requestDeposit(alice, lendingPoolAddress, juniorTrancheAddress, requestDepositAmount_alice);
         //
-        //        uint256 requestDepositAmount_bob = 250 * 1e6;
-        //        uint256 dNftId_bob = _requestDeposit(
-        //            bob, lendingPoolDeployment.lendingPool, lendingPoolDeployment.tranches[1], requestDepositAmount_bob
-        //        );
+        //        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        //        uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
         //
-        //        _acceptDeposit(
-        //            lendingPoolDeployment.pendingPool,
-        //            lendingPoolDeployment.lendingPool,
-        //            lendingPoolDeployment.tranches[0],
-        //            requestDepositAmount_alice
-        //        );
+        //        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        //        console2.log(juniorTrancheAddress);
+        //        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
         //
-        //        // act
-        //        uint256 requestWithdrawalAmount_alice = 50 * 1e6;
-        //        uint256 wNftId_alice = _requestWithdrawal(
-        //            alice, lendingPoolDeployment.lendingPool, lendingPoolDeployment.tranches[0], requestWithdrawalAmount_alice
-        //        );
+        //        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        //        _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
+        //        // ACT
         //
-        //        uint256 requestWithdrawalAmount_bob = 250 * 1e6;
-        //        uint256 wNftId_bob = _requestWithdrawal(
-        //            bob, lendingPoolDeployment.lendingPool, lendingPoolDeployment.tranches[0], requestWithdrawalAmount_bob
-        //        );
-        //
-        //        // assert
-        //        PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
-        //        assertEq(pendingPool.ownerOf(wNftId_alice), alice);
-        //        assertEq(pendingPool.ownerOf(wNftId_bob), alice);
-        //        assertEq(depositNftDetails_alice.assetAmount, requestDepositAmount_alice);
-        //
-        //        //        DepositNftDetails memory depositNftDetails_bob = pendingPool.trancheDepositNftDetails(dNftId_bob);
-        //        //        assertEq(depositNftDetails_bob.assetAmount, requestDepositAmount_bob);
+        //        // ASSERT
     }
 
     function test_acceptWithdrawal() public {}
-
-    function test_cancelDeposit() public {}
 
     function test_cancelWithdrawalRequest() public {}
 }

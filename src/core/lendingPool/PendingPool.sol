@@ -120,10 +120,6 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     function cancelDepositRequest(address user, uint256 dNftID) external canCancel canBurnNft(user, dNftID) {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
-        if (depositNftDetails.assetAmount > 0) {
-            revert NoAssetsToCancelDepositRequest(dNftID);
-        }
-
         // Burn the deposit NFT
         _update(address(0), dNftID, address(0));
 

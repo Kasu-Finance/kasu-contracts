@@ -34,8 +34,8 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
     }
 
-    function cancelDepositRequest(address, uint256) external pure {
-        revert("0");
+    function cancelDepositRequest(address lendingPool, uint256 dNftID) external {
+        IPendingPool(lendingPools[lendingPool].pendingPool).cancelDepositRequest(msg.sender, dNftID);
     }
 
     // #### USER WITHDRAWS #### //

@@ -88,6 +88,10 @@ contract LendingPoolTestUtils is BaseTestUtils {
         return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
     }
 
+    function _cancelDepositRequest(address sender, address lendingPool, uint256 dNftId) internal prank(sender) {
+        lendingPoolManager.cancelDepositRequest(lendingPool, dNftId);
+    }
+
     function _acceptDeposit(address sender, address lendingPool, uint256 dNftID, uint256 amount)
         internal
         prank(sender)
