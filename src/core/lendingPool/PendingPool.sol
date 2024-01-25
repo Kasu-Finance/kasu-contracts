@@ -222,8 +222,6 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             depositNftDetails.assetAmount -= acceptedAmount;
         }
 
-        address user = ownerOf(dNftID);
-
         if (depositNftDetails.assetAmount == 0) {
             // Burn the deposit NFT
             _update(address(0), dNftID, address(0));

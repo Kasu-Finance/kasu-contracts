@@ -92,6 +92,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
         _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
 
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.TooManyAssetsRequested.selector, dNftId_alice, 60 * 10 ** 6, 61 * 10 ** 6
+            )
+        );
+        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, 61 * 10 ** 6);
+
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
 
@@ -122,28 +129,30 @@ contract LendingPoolTest is LendingPoolTestUtils {
     }
 
     function test_requestWithdrawal() public {
-        //        // ARRANGE
-        //        LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
-        //        address lendingPoolAddress = lendingPoolDeployment.lendingPool;
-        //        address juniorTrancheAddress = lendingPoolDeployment.tranches[0];
-        //        address mezzoTrancheAddress = lendingPoolDeployment.tranches[1];
-        //
-        //        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-        //        uint256 dNftId_alice =
-        //            _requestDeposit(alice, lendingPoolAddress, juniorTrancheAddress, requestDepositAmount_alice);
-        //
-        //        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-        //        uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
-        //
-        //        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        //        console2.log(juniorTrancheAddress);
-        //        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
-        //
-        //        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        //        _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
-        //        // ACT
-        //
-        //        // ASSERT
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
+        address lendingPoolAddress = lendingPoolDeployment.lendingPool;
+        address juniorTrancheAddress = lendingPoolDeployment.tranches[0];
+        address mezzoTrancheAddress = lendingPoolDeployment.tranches[1];
+
+        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        uint256 dNftId_alice =
+            _requestDeposit(alice, lendingPoolAddress, juniorTrancheAddress, requestDepositAmount_alice);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
+
+        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
+
+        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
+
+        // ### ACT ###
+        uint256 wNftId_alice = _requestWithdrawal(alice, lendingPoolAddress, juniorTrancheAddress, 40 * 10 ** 6);
+        uint256 wNftId_bob = _requestWithdrawal(bob, lendingPoolAddress, mezzoTrancheAddress, 200 * 10 ** 6);
+
+        // ### ASSERT ###
     }
 
     function test_acceptWithdrawal() public {}
