@@ -36,7 +36,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
         // pending pool
-        PendingPool pendingPoolIml = new PendingPool(address(mockUsdc), lendingPoolManager);
+        PendingPool pendingPoolIml = new PendingPool(address(mockUsdc), lendingPoolManager); // TODO: Harness
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
@@ -92,10 +92,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager.cancelDepositRequest(lendingPool, dNftId);
     }
 
-    function _acceptDeposit(address sender, address lendingPool, uint256 dNftID, uint256 amount)
-        internal
-        prank(sender)
-    {
+    function _acceptDeposit(address lendingPool, uint256 dNftID, uint256 amount) internal {
         lendingPoolManager.acceptDepositRequest(lendingPool, dNftID, amount);
     }
 

@@ -211,12 +211,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
-
-    // probably called by the lending pool
-    function acceptDepositRequest(address user, uint256 dNftID, uint256 acceptedAmount)
-        external
-        isNftOwner(user, dNftID)
-    {
+    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external nftExists(dNftID) {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
@@ -225,6 +220,8 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         unchecked {
             depositNftDetails.assetAmount -= acceptedAmount;
         }
+
+        address user = ownerOf(dNftID);
 
         if (depositNftDetails.assetAmount == 0) {
             // Burn the deposit NFT

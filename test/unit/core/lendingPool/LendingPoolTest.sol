@@ -93,19 +93,15 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
+        _acceptDeposit(lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDeposit(bob, lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
+        _acceptDeposit(lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
 
         // non existing dNftId
         uint256 dNftId_nonExistent = 888;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_nonExistent));
-        _acceptDeposit(bob, lendingPoolAddress, dNftId_nonExistent, acceptedDepositAmount_bob);
-
-        // incorrect owner
-        vm.expectRevert(abi.encodeWithSelector(IPendingPool.UserIsNotOwnerOfNFT.selector, bob, dNftId_alice));
-        _acceptDeposit(bob, lendingPoolAddress, dNftId_alice, acceptedDepositAmount_bob);
+        _acceptDeposit(lendingPoolAddress, dNftId_nonExistent, acceptedDepositAmount_bob);
 
         // accept more assets than requests
         vm.expectRevert(
@@ -113,7 +109,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 IPendingPool.TooManyAssetsRequested.selector, dNftId_alice, 60 * 10 ** 6, 61 * 10 ** 6
             )
         );
-        _acceptDeposit(alice, lendingPoolAddress, dNftId_alice, 61 * 10 ** 6);
+        _acceptDeposit(lendingPoolAddress, dNftId_alice, 61 * 10 ** 6);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
@@ -143,10 +139,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
 
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDeposit(alice, lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+        _acceptDeposit(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDeposit(bob, lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        _acceptDeposit(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
         // ### ACT ###
         uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
@@ -203,10 +199,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
 
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDeposit(alice, lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+        _acceptDeposit(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDeposit(bob, lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        _acceptDeposit(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
         uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
         uint256 wNftId_alice =
@@ -251,10 +247,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
 
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDeposit(alice, lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+        _acceptDeposit(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDeposit(bob, lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        _acceptDeposit(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
         uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
         uint256 wNftId_alice =
