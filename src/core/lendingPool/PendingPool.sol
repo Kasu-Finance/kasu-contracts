@@ -18,13 +18,17 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheDepositNFTs;
     mapping(address => uint256) private _nextTrancheDepositNFTId;
-    /// @notice deposit NFT id => DepositNftDetails
+
+    /// @dev deposit NFT id => DepositNftDetails
     mapping(uint256 => DepositNftDetails) private _trancheDepositNftDetails;
 
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheWithdrawalNFTs;
     mapping(address => uint256) private _nextTrancheWithdrawalNFTId;
+
+    /// @dev withdrawal NFT id => WithdrawalNftDetails.
     mapping(uint256 => WithdrawalNftDetails) private _trancheWithdrawalNftDetails;
+    /// @dev user total requested withdrawal tranche shares.
     mapping(address => uint256) private _userRequestedWithdrawalShares;
 
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
@@ -53,6 +57,13 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         LendingPoolHelpers(lendingPoolManager_)
     {}
 
+    /**
+     * @notice Initializes the pending pool.
+     * @param name_ The name of the pending NFT.
+     * @param symbol_ The symbol of the pending NFT.
+     * @param lendingPool_ The address of the lending pool.
+     * @param tranches The addresses of the tranches.
+     */
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -89,12 +100,12 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     // DEPOSIT/WITHDRAWAL REQUESTS
 
     /**
-     * @notice Creates a pending deposit for the user. Transfers asset from user to lending pool
-     * @dev Must approve asset token before calling this function
-     * @param user The user making the pending deposit
-     * @param tranche The user's desired tranche for the pending deposit
-     * @param amount The amount that will be transferred to the pending deposit
-     * @return dNftID The deposit NFT id that acts as a receipt for the pending deposit
+     * @notice Creates a pending deposit for the user.
+     * @dev Transfers asset from lending pool manager to the pending pool.
+     * @param user The user requesting the deposit.
+     * @param tranche The user's desired tranche for the pending deposit.
+     * @param amount The requested deposit amount.
+     * @return dNftID The deposit NFT id that acts as a receipt for the pending deposit.
      */
     function requestDeposit(address user, address tranche, uint256 amount)
         external
@@ -114,29 +125,39 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // TODO: get epoch id
         _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
 
-        // emit DepositRequested(user, tranche, dNftID, amount);
+        emit DepositRequested(user, tranche, dNftID, amount);
     }
 
+    /**
+     * @notice Cancels a pending deposit for the user.
+     * @dev Transfers asset from the pending pool to the user.
+     * @param user The user cancelling the deposit.
+     * @param dNftID The deposit id to cancel.
+     */
     function cancelDepositRequest(address user, uint256 dNftID) external canCancel canBurnNft(user, dNftID) {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
         // Burn the deposit NFT
         _update(address(0), dNftID, address(0));
 
-        delete _trancheDepositNftDetails[dNftID];
-
         // return funds directly to the user
+        // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
         _transferAssets(user, depositNftDetails.assetAmount);
 
-        // emit DepositRequestCancelled(user, tranche, dNftID);
+        // delete nft storage
+        delete _trancheDepositNftDetails[dNftID];
+
+        (address tranche,) = decomposeDepositId(dNftID);
+
+        emit DepositRequestCancelled(user, tranche, dNftID);
     }
 
     /**
      * @notice Creates a pending withdrawal for the user.
-     * @param user The user making the pending withdraw
-     * @param tranche The pending withdrawal tranche
-     * @param trancheShares tranche shares amount to withdraw
-     * @return wNftID the withdrawal NFT id that acts as a receipt for the pending withdrawal
+     * @param user The user making withdrawal request.
+     * @param tranche The tranche user is withdrawing from.
+     * @param trancheShares amount of tranche shares to withdraw.
+     * @return wNftID The withdrawal NFT id that acts as a receipt for the pending withdrawal.
      */
     function requestWithdrawal(address user, address tranche, uint256 trancheShares)
         external
@@ -154,9 +175,15 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // TODO: get epoch id
         _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, 0, 0);
 
-        // emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
+        emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
     }
 
+    /**
+     * @notice Cancels a pending withdrawal request for the user.
+     * @dev Transfers tranche shares from the pending pool back to the user.
+     * @param user The user cancelling the withdrawal request.
+     * @param wNftID The withdrawal id to cancel.
+     */
     function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel canBurnNft(user, wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
@@ -164,12 +191,17 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
             revert NoSharesToCancelWithdrawalRequest(wNftID);
         }
 
+        (address tranche,) = decomposeWithdrawalId(wNftID);
+
         // Burn the withdrawal NFT
         _update(address(0), wNftID, address(0));
 
+        IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
+
+        // delete nft storage
         delete _trancheWithdrawalNftDetails[wNftID];
 
-        // emit WithdrawalRequestCancelled(user, tranche, wNftID);
+        emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE

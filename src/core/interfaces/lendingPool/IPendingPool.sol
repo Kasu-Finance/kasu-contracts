@@ -55,6 +55,12 @@ interface IPendingPool is IERC721 {
 
     function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external;
 
+    // Events
+    event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);
+    event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
+    event WithdrawalRequested(address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 amount);
+    event WithdrawalRequestCancelled(address indexed user, address indexed tranche, uint256 indexed wNftID);
+
     // Errors
     error UserIsNotOwnerOfNFT(address user, uint256 dNftID);
     error NoSharesToCancelWithdrawalRequest(uint256 wNftID);
