@@ -211,7 +211,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
-    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external nftExists(dNftID) {
+    function _acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) internal nftExists(dNftID) {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
@@ -239,7 +239,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         lendingPool.acceptDeposit(tranche, user, acceptedAmount);
     }
 
-    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external nftExists(wNftID) {
+    function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal nftExists(wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount < acceptedShares) {
@@ -302,8 +302,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     }
 
     modifier nftExists(uint256 nftId) {
-        if (_trancheDepositNftDetails[nftId].assetAmount == 0 && _trancheWithdrawalNftDetails[nftId].sharesAmount == 0)
-        {
+        if (ownerOf(nftId) == address(0)) {
             revert IERC721Errors.ERC721NonexistentToken(nftId);
         }
         _;

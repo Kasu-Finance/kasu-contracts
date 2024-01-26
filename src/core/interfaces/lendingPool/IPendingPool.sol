@@ -39,8 +39,6 @@ interface IPendingPool is IERC721 {
 
     function cancelDepositRequest(address user, uint256 dNftID) external;
 
-    function acceptDepositRequest(uint256 dNftID, uint256 amount) external;
-
     // #### USER WITHDRAWS #### //
     /**
      * @notice Creates a pending withdrawal for the user.
@@ -52,8 +50,6 @@ interface IPendingPool is IERC721 {
     function requestWithdrawal(address user, address tranche, uint256 amount) external returns (uint256 wNftID);
 
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
-
-    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external;
 
     // Events
     event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);

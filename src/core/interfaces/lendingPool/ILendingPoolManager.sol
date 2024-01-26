@@ -20,24 +20,16 @@ interface ILendingPoolManager {
 
     function ownLendingPool(address contractAddress) external view returns (address lendingPool);
 
-    // #### USER DEPOSITS #### //
+    // #### USER #### //
     function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);
 
     function cancelDepositRequest(address lendingPool, uint256 dNftID) external;
 
-    // #### USER WITHDRAWS #### //
     function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
         external
         returns (uint256 wNftID);
 
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
-
-    // #### CLEARING #### //
-    function acceptDepositRequest(address lendingPool, uint256 dNftID, uint256 amount) external;
-
-    function declineDepositRequest(address tranche, uint256 dNftID) external;
-
-    function acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) external;
 
     // #### POOL DELEGATE #### //
     function borrowLoan(address lendingPool, uint256 amount) external;

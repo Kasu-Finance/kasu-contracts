@@ -9,11 +9,13 @@ import "../../../../shared/MockUSDC.sol";
 import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 
 contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
     MockUSDC internal mockUsdc;
+    PendingPoolHarness pendingPool;
 
     LendingPoolFactory private lendingPoolFactory;
 
@@ -36,7 +38,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
         // pending pool
-        PendingPool pendingPoolIml = new PendingPool(address(mockUsdc), lendingPoolManager); // TODO: Harness
+        PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager); // TODO: Harness
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
@@ -59,6 +61,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
     {
         vm.prank(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
+        pendingPool = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
     }
@@ -78,6 +81,8 @@ contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolDeployment = createLendingPool(poolConfiguration);
     }
 
+    // USER
+
     function _requestDeposit(address sender, address lendingPool, address tranche, uint256 amount)
         internal
         prank(sender)
@@ -92,10 +97,6 @@ contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager.cancelDepositRequest(lendingPool, dNftId);
     }
 
-    function _acceptDeposit(address lendingPool, uint256 dNftID, uint256 amount) internal {
-        lendingPoolManager.acceptDepositRequest(lendingPool, dNftID, amount);
-    }
-
     function _requestWithdrawal(address sender, address lendingPool, address tranche, uint256 amount)
         internal
         prank(sender)
@@ -108,7 +109,27 @@ contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager.cancelWithdrawalRequest(lendingPool, wNftId);
     }
 
-    function _acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 amount) internal {
-        lendingPoolManager.acceptWithdrawalRequest(lendingPool, wNftID, amount);
+    // CLEARING
+
+    function _acceptDepositRequest(address lendingPool, uint256 dNftID, uint256 acceptedShares) internal {
+        pendingPool.acceptDepositRequest(dNftID, acceptedShares);
+    }
+
+    function _acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) internal {
+        pendingPool.acceptWithdrawalRequest(wNftID, acceptedShares);
+    }
+}
+
+contract PendingPoolHarness is PendingPool {
+    constructor(address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
+        PendingPool(underlyingAsset_, lendingPoolManager_)
+    {}
+
+    function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
+        return _acceptDepositRequest(dNftID, acceptedAmount);
+    }
+
+    function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external {
+        return _acceptWithdrawalRequest(wNftID, acceptedShares);
     }
 }
