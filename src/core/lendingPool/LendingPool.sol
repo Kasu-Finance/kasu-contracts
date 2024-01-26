@@ -20,6 +20,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     /// @notice Is the address a lending pool tranche.
     mapping(address => bool) public isTranche;
 
+    uint256 borrowedAmount;
+
     constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
 
     /**
@@ -130,6 +132,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _transferAssets(user, assetAmount);
     }
 
+    function _applyInterest(address tranche) internal verifyTranche(tranche) {
+        uint256 trancheBalance = balanceOf(tranche);
+
+        uint256 yieldAmount = trancheBalance * epochInterestRate / fullPercent;
+
+        _mint(tranche, yieldAmount);
+
+        borrowedAmount += yieldAmount;
+    }
+
     /**
      * @notice Reports the loss of the lending pool.
      * @dev
@@ -151,9 +163,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // verify the amount is not greater than total balance
         // TODO: the amount should not be greater than the borrowed amount (less than total balance)
-        if (lossAmount > totalSupply()) {
-            revert LossAmountCantBeGreaterThanSupply(lossAmount, totalSupply());
+        if (lossAmount > borrowedAmount) {
+            revert LossAmountCantBeGreaterThanSupply(lossAmount, borrowedAmount);
         }
+
+        borrowedAmount -= lossAmount;
 
         // get the loss id
         lossId = 0;
