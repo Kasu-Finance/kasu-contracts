@@ -15,7 +15,8 @@ import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
     MockUSDC internal mockUsdc;
-    PendingPoolHarness pendingPool;
+    // lendingPoolAddress => PendingPoolHarness
+    mapping(address => PendingPoolHarness) internal pendingPools;
 
     LendingPoolFactory private lendingPoolFactory;
 
@@ -61,7 +62,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
     {
         vm.prank(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
-        pendingPool = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
+        pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
     }
@@ -112,11 +113,11 @@ contract LendingPoolTestUtils is BaseTestUtils {
     // CLEARING
 
     function _acceptDepositRequest(address lendingPool, uint256 dNftID, uint256 acceptedShares) internal {
-        pendingPool.acceptDepositRequest(dNftID, acceptedShares);
+        pendingPools[lendingPool].acceptDepositRequest(dNftID, acceptedShares);
     }
 
     function _acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) internal {
-        pendingPool.acceptWithdrawalRequest(wNftID, acceptedShares);
+        pendingPools[lendingPool].acceptWithdrawalRequest(wNftID, acceptedShares);
     }
 }
 
