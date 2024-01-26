@@ -2,13 +2,11 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../../shared/TestFixture.sol";
 import "../../../src/token/KSU.sol";
-import "../../shared/MockERC20Permit.sol";
-import "../../../src/locking/KSULockBonus.sol";
-import "forge-std/console2.sol";
+import {MockUSDC} from "../../shared/MockUSDC.sol";
+import "./utils/LockingTestUtils.sol";
 
-contract LockingTest is TestFixture {
+contract LockingWorkflowTest is LockingTestUtils {
     function setUp() public {
         ProxyAdmin proxy = new ProxyAdmin(admin);
         KSU ksuImpl = new KSU();
@@ -17,14 +15,45 @@ contract LockingTest is TestFixture {
         KSU ksu_ = KSU(address(ksuProxy));
         ksu_.initialize(address(admin));
 
-        MockERC20Permit usdc_ = new MockERC20Permit("USDC", "USDC", 6);
-        setupBase(ERC20Permit(address(ksu_)), usdc_);
+        MockUSDC usdc_ = new MockUSDC();
+        __locking_setUp(ERC20Permit(address(ksu_)), usdc_);
 
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
     }
 
+    /*
+     *  ### Test Case 1
+     *
+     *  Description
+     *  Four users in two years period lock KSU, claim their rewards and unlock.
+     *
+     *  Steps:
+     *  -   Admin adds 300 KSU to Lock Bonus Contract
+     *  -   Alice locks 100 KSU for 30d
+     *  -   Bob locks 400 KSU for 180d
+     *  -   A reward of 500 USC is emitted to Lock Contract
+     *  -   30d pass
+     *  -   Carol locks 500 KSU for 720d
+     *  -   Alice collect her rewards - USDC
+     *  -   Alice unlocks 50 KSU of her locked amount - KSU
+     *  -   A reward of 200 USC is emitted to Lock Contract
+     *  -   David locks 500 KSU for 360d
+     *  -   Alice locks 800 KSU for 180d
+     *  -   A reward of 600 USC is emitted to Lock Contract
+     *  -   180d pass
+     *  -   Bob collect his rewards - USDC
+     *  -   Bob unlocks 200 KSU of his locked amount - KSU
+     *  -   A reward of 400 USC is emitted to Lock Contract
+     *  -   360d pass
+     *  -   David collect his rewards - USDC
+     *  -   David unlocks all of his locked amount - KSU
+     *  -   360d pass
+     *  -   Carol collects her rewards - USDC
+     *  -   Everyone unlocks
+     *  -   Everyone claims
+     */
     function testCase1() public {
         // Admin adds 300 KSU to Lock Bonus Contract
         _addBonusKSU(300 ether);

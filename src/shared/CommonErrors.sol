@@ -21,3 +21,8 @@ error InvalidConfiguration();
  * @param address_ Address of the contract
  */
 error AddressNotContract(address address_);
+
+/**
+ * @notice Used when the external call is not supported.
+ */
+error NotSupported();

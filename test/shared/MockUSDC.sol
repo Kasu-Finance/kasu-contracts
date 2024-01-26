@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import "@openzeppelin-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 contract MockUSDC is ERC20PermitUpgradeable {
     uint256 private constant TOTAL_SUPPLY = 1_000_000_000 ether;
@@ -13,7 +13,7 @@ contract MockUSDC is ERC20PermitUpgradeable {
         _mint(recipient, TOTAL_SUPPLY);
     }
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 6;
     }
 }

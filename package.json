@@ -7,8 +7,10 @@
         "node:local": "hardhat node --no-deploy",
         "deploy:local": "hardhat --network localhost deploy --export-all deployments/localhost/export.json",
         "test": "forge test",
+        "test:coverage": "forge coverage --report lcov",
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
+        "build:solidity": "forge build",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts"
     },
     "repository": {

@@ -3,25 +3,21 @@ pragma solidity 0.8.23;
 
 import "forge-std/console2.sol";
 import "forge-std/Test.sol";
-import "../../src/shared/access/KasuController.sol";
-import "../../src/locking/KSULocking.sol";
-import "../../src/locking/KSULockBonus.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "./MockERC20Permit.sol";
+import "../../../shared/MockERC20Permit.sol";
+import "../../../shared/BaseTestUtils.sol";
+import "../../../../src/locking/KSULockBonus.sol";
+import "../../../../src/locking/KSULocking.sol";
+import "../../../../src/shared/access/KasuController.sol";
+import "../../../shared/MockUSDC.sol";
 
-contract TestFixture is Test {
+contract LockingTestUtils is BaseTestUtils {
     ERC20Permit internal _ksu;
     IERC20 internal _usdc;
 
     KasuController internal _kasuController;
     KSULocking internal _KSULocking;
     KSULockBonus internal _KSULockBonus;
-
-    address internal admin = address(0xad);
-    address internal alice = address(0xaaa);
-    address internal bob = address(0xbbb);
-    address internal carol = address(0xccc);
-    address internal david = address(0xddd);
 
     uint256 internal lockPeriod30 = 30 days;
     uint256 internal lockMultiplier30 = 5_00;
@@ -39,13 +35,13 @@ contract TestFixture is Test {
     uint256 internal lockMultiplier720 = 100_00;
     uint256 internal ksuBonusMultiplier720 = 70_00;
 
-    function setupBase() internal virtual {
+    function __locking_setUp() internal virtual {
         MockERC20Permit mockKsu = new MockERC20Permit("KSU", "KSU", 18);
-        MockERC20Permit mockUsdc = new MockERC20Permit("USDC", "USDC", 6);
-        setupBase(mockKsu, mockUsdc);
+        MockUSDC mockUsdc = new MockUSDC();
+        __locking_setUp(mockKsu, mockUsdc);
     }
 
-    function setupBase(ERC20Permit ksu, IERC20 usdc) internal virtual {
+    function __locking_setUp(ERC20Permit ksu, IERC20 usdc) internal virtual {
         _ksu = ksu;
         _usdc = usdc;
         ProxyAdmin proxy = new ProxyAdmin(admin);
@@ -70,10 +66,6 @@ contract TestFixture is Test {
     }
 
     // ###  Helper Functions ###
-
-    function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {
-        token.approve(spender, amount);
-    }
 
     function _lock(address sender, uint256 amount, uint256 lockPeriod_)
         internal
@@ -107,19 +99,5 @@ contract TestFixture is Test {
     function _addBonusKSU(uint256 amount) internal prank(admin) {
         deal(address(_ksu), admin, amount, true);
         _ksu.transfer(address(_KSULockBonus), amount);
-    }
-
-    function _prank(address executor) internal {
-        if (executor.balance > 0) {
-            vm.startPrank(executor);
-        } else {
-            startHoax(executor);
-        }
-    }
-
-    modifier prank(address executor) {
-        _prank(executor);
-        _;
-        vm.stopPrank();
     }
 }
