@@ -11,11 +11,9 @@ import "./LendingPoolHelpers.sol";
 
 /**
  * @dev
- * - assuming lower tier tranches cannot be used to exit higher level tranches
- * - when depositing, users receive IERC1155 deposit NFTs
- * - when withdrawing, users receive IERC1155 withdrawal NFTs
- * - when deposits are cleared, users receive ERC20 receipt tokens
- * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
+ * - when deposits are cleared, users receive ERC20 receipt tranche tokens
+ * - when withdrawals are cleared, assets are sent to the lending pool
+ * - when impairment happens, users receive ERC1155 impairment receipt tokens
  */
 contract LendingPoolTranche is
     ILendingPoolTranche,
@@ -111,5 +109,5 @@ contract LendingPoolTranche is
         if (spender != _getPendingPool()) {
             super._spendAllowance(owner, spender, value);
         }
-    }
+}
 }
