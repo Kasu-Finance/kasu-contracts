@@ -20,7 +20,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     /// @notice Is the address a lending pool tranche.
     mapping(address => bool) public isTranche;
 
-    uint256 borrowedAmount;
+    uint256 public borrowedAmount;
+    address public poolOwner;
 
     constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
 
@@ -30,10 +31,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param symbol_ The symbol of the lending pool token.
      * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
      */
-    function initialize(string memory name_, string memory symbol_, LendingPoolInfo memory lendingPoolInfo_)
-        public
-        initializer
-    {
+    function initialize(
+        string memory name_,
+        string memory symbol_,
+        LendingPoolInfo memory lendingPoolInfo_,
+        address poolOwner_
+    ) public initializer {
         __ERC20_init(name_, symbol_);
 
         // TODO: setup the lending pool and it's tranches
@@ -46,6 +49,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
             _approve(address(this), tranche, type(uint256).max);
         }
+
+        poolOwner = poolOwner_;
     }
 
     /**
@@ -133,13 +138,29 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function _applyInterest(address tranche) internal verifyTranche(tranche) {
-        uint256 trancheBalance = balanceOf(tranche);
+        //        uint256 trancheBalance = balanceOf(tranche);
+        //
+        //        uint256 yieldAmount = trancheBalance * epochInterestRate / fullPercent;
+        //
+        //        _mint(tranche, yieldAmount);
+        //
+        //        borrowedAmount += yieldAmount;
+    }
 
-        uint256 yieldAmount = trancheBalance * epochInterestRate / fullPercent;
-
-        _mint(tranche, yieldAmount);
-
-        borrowedAmount += yieldAmount;
+    /**
+     * @notice Transfers USDC from lending pool to pool delegate
+     * @param amount the amount that the pool delegate requests
+     */
+    function borrowLoan(uint256 amount) external {
+        if (amount < 0) {
+            revert BorrowAmountShouldBeGreaterThanZero(amount);
+        }
+        uint256 availableAmount = underlyingAsset.balanceOf(address(this));
+        if (availableAmount < amount) {
+            revert BorrowAmountCantBeGreaterThanAvailableAmount(amount, availableAmount);
+        }
+        borrowedAmount += amount;
+        _transferAssets(poolOwner, amount);
     }
 
     /**

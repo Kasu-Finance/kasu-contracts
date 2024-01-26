@@ -39,7 +39,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
         // pending pool
-        PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager); // TODO: Harness
+        PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
@@ -60,7 +60,6 @@ contract LendingPoolTestUtils is BaseTestUtils {
         internal
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        vm.prank(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
         pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
@@ -69,7 +68,11 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     // ###  Helper Functions ###
 
-    function _createDefaultLendingPool() internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
+    function _createDefaultLendingPool()
+        internal
+        prank(admin)
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
+    {
         uint256 minDepositAmount = 1 ether;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
         Tranches memory tranches;
@@ -118,6 +121,12 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     function _acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) internal {
         pendingPools[lendingPool].acceptWithdrawalRequest(wNftID, acceptedShares);
+    }
+
+    // POOL DELEGATE
+
+    function _borrowLoan(address lendingPool, uint256 amount) internal prank(admin) {
+        lendingPoolManager.borrowLoan(lendingPool, amount);
     }
 }
 

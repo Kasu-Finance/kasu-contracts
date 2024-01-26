@@ -103,7 +103,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         lendingPoolInfo.pendingPool = pendingPoolAddress;
         lendingPoolInfo.tranches = tranches;
 
-        lendingPool.initialize(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo);
+        lendingPool.initialize(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo, msg.sender);
 
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }

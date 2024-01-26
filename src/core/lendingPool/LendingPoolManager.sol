@@ -50,8 +50,8 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
     }
 
     // #### POOL DELEGATE #### //
-    function borrowLoan(address, uint256) external pure {
-        revert("0");
+    function borrowLoan(address lendingPool, uint256 amount) external {
+        ILendingPool(lendingPool).borrowLoan(amount);
     }
 
     function repayLoan(address, uint256) external pure {
