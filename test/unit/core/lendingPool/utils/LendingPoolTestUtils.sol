@@ -93,6 +93,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         returns (uint256 dNftId)
     {
         deal(address(mockUsdc), sender, amount, true);
+        // TODO: approve pendingPool, even though we cannot query it ?? gas
         mockUsdc.approve(address(lendingPoolManager), amount);
         return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
     }
@@ -127,6 +128,11 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     function _borrowLoan(address lendingPool, uint256 amount) internal prank(admin) {
         lendingPoolManager.borrowLoan(lendingPool, amount);
+    }
+
+    function _repayLoan(address lendingPool, uint256 amount) internal prank(admin) {
+        mockUsdc.approve(lendingPool, amount);
+        lendingPoolManager.repayLoan(lendingPool, amount);
     }
 }
 

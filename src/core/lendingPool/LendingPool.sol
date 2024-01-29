@@ -152,15 +152,30 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param amount the amount that the pool delegate requests
      */
     function borrowLoan(uint256 amount) external {
-        if (amount < 0) {
-            revert BorrowAmountShouldBeGreaterThanZero(amount);
+        if (amount == 0) {
+            revert BorrowAmountShouldBeGreaterThanZero();
         }
         uint256 availableAmount = underlyingAsset.balanceOf(address(this));
         if (availableAmount < amount) {
             revert BorrowAmountCantBeGreaterThanAvailableAmount(amount, availableAmount);
         }
+
         borrowedAmount += amount;
         _transferAssets(poolOwner, amount);
+        // TODO: emit event
+    }
+
+    function repayLoan(uint256 amount) external {
+        if (amount == 0) {
+            revert RepayAmountShouldBeGreaterThanZero();
+        }
+        if (amount > borrowedAmount) {
+            revert RepayAmountCantBeGreaterThanBorrowedAmount(amount, borrowedAmount);
+        }
+
+        borrowedAmount -= amount;
+        _transferAssetsFrom(poolOwner, address(this), amount);
+        // TODO: emit event
     }
 
     /**

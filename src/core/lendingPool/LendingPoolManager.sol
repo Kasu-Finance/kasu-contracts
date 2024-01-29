@@ -54,8 +54,8 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
         ILendingPool(lendingPool).borrowLoan(amount);
     }
 
-    function repayLoan(address, uint256) external pure {
-        revert("0");
+    function repayLoan(address lendingPool, uint256 amount) external {
+        ILendingPool(lendingPool).repayLoan(amount);
     }
 
     function updateLoanAmount(address, uint256) external pure {
