@@ -15,7 +15,6 @@ import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
     MockUSDC internal mockUsdc;
-    // lendingPoolAddress => PendingPoolHarness
     mapping(address => PendingPoolHarness) internal pendingPools;
 
     LendingPoolFactory private lendingPoolFactory;

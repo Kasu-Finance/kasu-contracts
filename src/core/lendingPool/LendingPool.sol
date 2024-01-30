@@ -22,6 +22,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     uint256 public borrowedAmount;
     address public poolOwner;
+    address public lendingPoolManager;
 
     constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
 
@@ -35,7 +36,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         string memory name_,
         string memory symbol_,
         LendingPoolInfo memory lendingPoolInfo_,
-        address poolOwner_
+        address poolOwner_,
+        address lendingPoolManager_
     ) public initializer {
         __ERC20_init(name_, symbol_);
 
@@ -51,6 +53,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         poolOwner = poolOwner_;
+        lendingPoolManager = lendingPoolManager_;
     }
 
     /**
@@ -151,7 +154,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Transfers USDC from lending pool to pool delegate
      * @param amount the amount that the pool delegate requests
      */
-    function borrowLoan(uint256 amount) external {
+    function borrowLoan(uint256 amount) external onlyLendingPoolManager {
         if (amount == 0) {
             revert BorrowAmountShouldBeGreaterThanZero();
         }
@@ -165,7 +168,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // TODO: emit event
     }
 
-    function repayLoan(uint256 amount) external {
+    function repayLoan(uint256 amount) external onlyLendingPoolManager {
         if (amount == 0) {
             revert RepayAmountShouldBeGreaterThanZero();
         }
@@ -230,6 +233,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function _onlyLendingPoolManager() private view {
+        if (msg.sender != lendingPoolManager) {
+            revert("LendingPool: only pending pool manager");
+        }
+    }
+
     function _verifyTranche(address tranche) private view {
         if (!isTranche[tranche]) {
             revert InvalidTranche(address(this), tranche);
@@ -238,6 +247,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     modifier onlyPendingPool() {
         _onlyPendingPool();
+        _;
+    }
+
+    modifier onlyLendingPoolManager() {
+        _onlyLendingPoolManager();
         _;
     }
 

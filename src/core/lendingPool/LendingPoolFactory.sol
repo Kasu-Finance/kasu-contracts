@@ -34,7 +34,6 @@ contract LendingPoolFactory is ILendingPoolFactory {
         // lending pool deploy
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
-        address lendingPoolAddress = address(lendingPoolBeaconProxy);
 
         uint256 trancheCount;
         if (poolConfiguration.tranches.junior.isEnabled) {
@@ -88,8 +87,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
             );
         }
 
-        LendingPoolInfo memory lendingPoolInfo;
-        lendingPoolDeployment.lendingPool = lendingPoolAddress;
+        lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
         lendingPoolDeployment.tranches = new address[](trancheCount);
         for (uint256 i; i < tranches.length; i++) {
             lendingPoolDeployment.tranches[i] = tranches[i].trancheAddress;
@@ -100,10 +98,13 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
 
+        LendingPoolInfo memory lendingPoolInfo;
         lendingPoolInfo.pendingPool = pendingPoolAddress;
         lendingPoolInfo.tranches = tranches;
 
-        lendingPool.initialize(poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo, msg.sender);
+        lendingPool.initialize(
+            poolConfiguration.name, poolConfiguration.symbol, lendingPoolInfo, msg.sender, address(lendingPoolManager)
+        );
 
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
     }
