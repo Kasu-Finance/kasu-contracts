@@ -90,6 +90,10 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             revert InvalidUserDeposit(userLockId);
         }
 
+        if (unlockAmount == 0) {
+            revert UnlockAmountShouldBeMoreThanZero();
+        }
+
         if (userLock.amount < unlockAmount) {
             revert UserUnlockAmountTooHigh(userLockId, userLock.amount, unlockAmount);
         }
@@ -173,6 +177,10 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     function _lock(uint256 amount, uint256 lockPeriod) private returns (uint256 userLockId) {
         if (!_lockDetails[lockPeriod].isActive) {
             revert LockPeriodNotSupported(lockPeriod);
+        }
+
+        if (amount == 0) {
+            revert LockAmountShouldBeMoreThanZero();
         }
 
         // transfer KSU token from user
