@@ -15,7 +15,7 @@ import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
     MockUSDC internal mockUsdc;
-    PendingPoolHarness pendingPool;
+    mapping(address => PendingPoolHarness) internal pendingPools;
 
     LendingPoolFactory private lendingPoolFactory;
 
@@ -38,7 +38,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
         // pending pool
-        PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager); // TODO: Harness
+        PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
@@ -59,16 +59,19 @@ contract LendingPoolTestUtils is BaseTestUtils {
         internal
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        vm.prank(admin);
         lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
-        pendingPool = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
+        pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
     }
 
     // ###  Helper Functions ###
 
-    function _createDefaultLendingPool() internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
+    function _createDefaultLendingPool()
+        internal
+        prank(admin)
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
+    {
         uint256 minDepositAmount = 1 ether;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
         Tranches memory tranches;
@@ -89,6 +92,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         returns (uint256 dNftId)
     {
         deal(address(mockUsdc), sender, amount, true);
+        // TODO: approve pendingPool, even though we cannot query it ?? gas
         mockUsdc.approve(address(lendingPoolManager), amount);
         return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
     }
@@ -112,11 +116,22 @@ contract LendingPoolTestUtils is BaseTestUtils {
     // CLEARING
 
     function _acceptDepositRequest(address lendingPool, uint256 dNftID, uint256 acceptedShares) internal {
-        pendingPool.acceptDepositRequest(dNftID, acceptedShares);
+        pendingPools[lendingPool].acceptDepositRequest(dNftID, acceptedShares);
     }
 
     function _acceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares) internal {
-        pendingPool.acceptWithdrawalRequest(wNftID, acceptedShares);
+        pendingPools[lendingPool].acceptWithdrawalRequest(wNftID, acceptedShares);
+    }
+
+    // POOL DELEGATE
+
+    function _borrowLoan(address lendingPool, uint256 amount) internal prank(admin) {
+        lendingPoolManager.borrowLoan(lendingPool, amount);
+    }
+
+    function _repayLoan(address lendingPool, uint256 amount) internal prank(admin) {
+        mockUsdc.approve(lendingPool, amount);
+        lendingPoolManager.repayLoan(lendingPool, amount);
     }
 }
 

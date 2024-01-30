@@ -284,4 +284,67 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_alice));
         assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
     }
+
+    function test_borrowAmount() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+
+        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+
+        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+
+        uint256 adminUsdcBalanceBefore = mockUsdc.balanceOf(admin);
+        uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
+
+        // ### ACT ###
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.BorrowAmountCantBeGreaterThanAvailableAmount.selector, 291 * 10 ** 6, 290 * 10 ** 6
+            )
+        );
+        _borrowLoan(lpd.lendingPool, 291 * 10 ** 6);
+        _borrowLoan(lpd.lendingPool, 200 * 10 ** 6);
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), 90 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(admin), adminUsdcBalanceBefore + 200 * 10 ** 6);
+        assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
+    }
+
+    function test_repayLoan() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+
+        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+
+        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        _borrowLoan(lpd.lendingPool, 200 * 10 ** 6);
+
+        // ### ACT ###
+        uint256 adminUsdcBalanceBefore = mockUsdc.balanceOf(admin);
+        uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
+
+        _repayLoan(lpd.lendingPool, 100 * 10 ** 6);
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(admin), adminUsdcBalanceBefore - 100 * 10 ** 6);
+        assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
+    }
 }

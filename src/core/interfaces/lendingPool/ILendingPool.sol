@@ -32,9 +32,9 @@ interface ILendingPool is IERC20 {
         returns (uint256 assetAmount);
 
     // #### POOL DELEGATE #### //
-    //     function borrowLoan(uint256 amount) external;
+    function borrowLoan(uint256 amount) external;
 
-    //     function repayLoan(uint256 amount) external;
+    function repayLoan(uint256 amount) external;
 
     //     function updateLoanAmount(uint256 amount) external;
 
@@ -45,6 +45,10 @@ interface ILendingPool is IERC20 {
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
 
+    error BorrowAmountShouldBeGreaterThanZero();
+    error BorrowAmountCantBeGreaterThanAvailableAmount(uint256 borrowAmount, uint256 availableAmount);
+    error RepayAmountCantBeGreaterThanBorrowedAmount(uint256 repayAmount, uint256 borrowedAmount);
+    error RepayAmountShouldBeGreaterThanZero();
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
 }
