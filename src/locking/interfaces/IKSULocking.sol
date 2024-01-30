@@ -111,5 +111,7 @@ interface IKSULocking is IERC20 {
     error LockPeriodNotSupported(uint256 lockPeriod);
     error DepositLocked(uint256 lockPeriod);
     error InvalidUserDeposit(uint256 userLockId);
+    error LockAmountShouldBeMoreThanZero();
+    error UnlockAmountShouldBeMoreThanZero();
     error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
 }
