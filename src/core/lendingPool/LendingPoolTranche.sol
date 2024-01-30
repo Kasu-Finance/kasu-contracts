@@ -109,5 +109,5 @@ contract LendingPoolTranche is
         if (spender != _getPendingPool()) {
             super._spendAllowance(owner, spender, value);
         }
-}
+    }
 }
