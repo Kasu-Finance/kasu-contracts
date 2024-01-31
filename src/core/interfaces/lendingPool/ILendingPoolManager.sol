@@ -34,7 +34,7 @@ interface ILendingPoolManager {
     // #### POOL DELEGATE #### //
     function borrowLoan(address lendingPool, uint256 amount) external;
 
-    function repayLoan(address lendingPool, uint256 amount) external;
+    function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
     function updateLoanAmount(address lendingPool, uint256 amount) external;
 

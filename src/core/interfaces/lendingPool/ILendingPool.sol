@@ -34,7 +34,7 @@ interface ILendingPool is IERC20 {
     // #### POOL DELEGATE #### //
     function borrowLoan(uint256 amount) external;
 
-    function repayLoan(uint256 amount) external;
+    function repayLoan(uint256 amount, address repaymentAddress) external;
 
     //     function updateLoanAmount(uint256 amount) external;
 

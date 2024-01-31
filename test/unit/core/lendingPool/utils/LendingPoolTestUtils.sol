@@ -21,6 +21,11 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     LendingPoolFactory private lendingPoolFactory;
 
+    address internal lendingPoolLoanAdmin = address(0xad2);
+    address internal admin3 = address(0xad3);
+    address internal admin4 = address(0xad4);
+    address internal admin5 = address(0xad4);
+
     function __lendingPool_setUp() internal {
         // fund accounts
         vm.deal(admin, 1 << 128);
@@ -96,9 +101,23 @@ contract LendingPoolTestUtils is BaseTestUtils {
         tranches.mezzo = TrancheDetail(true, 20, 10);
         tranches.senior = TrancheDetail(true, 70, 5);
         PoolConfiguration memory poolConfiguration = PoolConfiguration(
-            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches, admin
+            "Test Lending Pool",
+            "TLP",
+            address(mockUsdc),
+            minDepositAmount,
+            targetExcessLiquidity,
+            tranches,
+            admin,
+            admin
         );
         lendingPoolDeployment = createLendingPool(poolConfiguration);
+
+        // access control - grant
+        vm.startPrank(admin);
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, lendingPoolLoanAdmin
+        );
+        vm.stopPrank();
     }
 
     // USER
@@ -142,13 +161,16 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     // POOL DELEGATE
 
-    function _borrowLoan(address lendingPool, uint256 amount) internal prank(admin) {
+    function _borrowLoan(address caller, address lendingPool, uint256 amount) internal prank(caller) {
         lendingPoolManager.borrowLoan(lendingPool, amount);
     }
 
-    function _repayLoan(address lendingPool, uint256 amount) internal prank(admin) {
+    function _repayLoan(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
+        deal(address(mockUsdc), repaymentAddress, amount, true);
+        vm.prank(repaymentAddress);
         mockUsdc.approve(lendingPool, amount);
-        lendingPoolManager.repayLoan(lendingPool, amount);
+        vm.prank(caller);
+        lendingPoolManager.repayLoan(lendingPool, amount, repaymentAddress);
     }
 }
 
