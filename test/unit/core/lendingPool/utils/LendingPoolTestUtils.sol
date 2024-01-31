@@ -96,7 +96,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         tranches.mezzo = TrancheDetail(true, 20, 10);
         tranches.senior = TrancheDetail(true, 70, 5);
         PoolConfiguration memory poolConfiguration = PoolConfiguration(
-            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches
+            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches, admin
         );
         lendingPoolDeployment = createLendingPool(poolConfiguration);
     }

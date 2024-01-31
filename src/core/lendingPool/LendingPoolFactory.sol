@@ -118,7 +118,9 @@ contract LendingPoolFactory is ILendingPoolFactory {
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
 
         // access control
-        kasuController.grantLendingPoolRole(lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender);
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, poolConfiguration.poolAdmin
+        );
     }
 
     function _deployLendingPoolTranche(
