@@ -11,6 +11,8 @@ import {
 import "./LendingPool.sol";
 import {LendingPoolManager} from "./LendingPoolManager.sol";
 import {ILendingPoolManager} from "../interfaces/lendingPool/ILendingPoolManager.sol";
+import {IKasuController} from "../../shared/interfaces/IKasuController.sol";
+import "../../shared/access/Roles.sol";
 import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -20,11 +22,18 @@ contract LendingPoolFactory is ILendingPoolFactory {
     address private immutable pendingPoolBeacon;
     address private immutable lendingPoolBeacon;
     address private immutable lendingPoolTrancheBeacon;
+    IKasuController private immutable kasuController;
 
-    constructor(address pendingPoolBeacon_, address lendingPoolBeacon_, address lendingPoolTrancheBeacon_) {
+    constructor(
+        address pendingPoolBeacon_,
+        address lendingPoolBeacon_,
+        address lendingPoolTrancheBeacon_,
+        IKasuController kasuController_
+    ) {
         pendingPoolBeacon = pendingPoolBeacon_;
         lendingPoolBeacon = lendingPoolBeacon_;
         lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
+        kasuController = kasuController_;
     }
 
     function createPool(PoolConfiguration calldata poolConfiguration, ILendingPoolManager lendingPoolManager)
@@ -107,6 +116,9 @@ contract LendingPoolFactory is ILendingPoolFactory {
         );
 
         lendingPoolManager.registerLendingPool(lendingPoolDeployment);
+
+        // access control
+        kasuController.grantLendingPoolRole(lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender);
     }
 
     function _deployLendingPoolTranche(

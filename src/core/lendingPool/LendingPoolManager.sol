@@ -6,12 +6,17 @@ import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
 import {ILendingPool} from "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import {ILendingPoolErrors} from "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import {KasuAccessControllable} from "../../shared/access/KasuAccessControllable.sol";
+import {IKasuController} from "../../shared/interfaces/IKasuController.sol";
 
-contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILendingPoolErrors {
+contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILendingPoolErrors, KasuAccessControllable {
     mapping(address => LendingPoolDeployment) private lendingPools;
     mapping(address => address) public ownLendingPool;
 
-    constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
+    constructor(address underlyingAsset_, IKasuController controller_)
+        AssetFunctionsBase(underlyingAsset_)
+        KasuAccessControllable(controller_)
+    {}
 
     function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;

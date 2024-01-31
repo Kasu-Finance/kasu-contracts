@@ -15,13 +15,14 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
         _disableInitializers();
     }
 
-    function initialize(address admin) public initializer {
+    function initialize(address admin, address factory) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(ROLE_LENDING_POOL_FACTORY, factory);
     }
 
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
-    function hasLendingPoolRole(address lendingPool, bytes32 role, address account) external view returns (bool) {
+    function hasLendingPoolRole(address lendingPool, bytes32 role, address account) public view returns (bool) {
         return hasRole(_getLendingPoolRole(lendingPool, role), account);
     }
 
@@ -33,7 +34,7 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     function grantLendingPoolRole(address lendingPool, bytes32 role, address account)
         external
-        onlyAdminOrVaultAdmin(lendingPool, msg.sender)
+        onlyPoolAdminOrFactory(lendingPool, msg.sender)
     {
         _grantRole(_getLendingPoolRole(lendingPool, role), account);
         emit LendingPoolRoleGranted(lendingPool, role, account);
@@ -41,13 +42,16 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     function revokeLendingPoolRole(address lendingPool, bytes32 role, address account)
         external
-        onlyAdminOrVaultAdmin(lendingPool, msg.sender)
+        onlyPoolAdmin(lendingPool, msg.sender)
     {
         _revokeRole(_getLendingPoolRole(lendingPool, role), account);
         emit LendingPoolRoleRevoked(lendingPool, role, account);
     }
 
-    function renounceLendingPoolRole(address lendingPool, bytes32 role) external {
+    function renounceLendingPoolRole(address lendingPool, bytes32 role)
+        external
+        onlyPoolAdmin(lendingPool, msg.sender)
+    {
         renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
         emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
     }
@@ -75,6 +79,24 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     modifier onlyAdminOrVaultAdmin(address lendingPool, address account) {
         _onlyAdminOrVaultAdmin(lendingPool, account);
+        _;
+    }
+
+    modifier onlyPoolAdminOrFactory(address lendingPool, address account) {
+        if (
+            !hasRole(ROLE_LENDING_POOL_FACTORY, account)
+                && !hasLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, account)
+        ) {
+            // TODO: ROLE_LENDING_POOL_FACTORY not reported
+            revert MissingRole(ROLE_LENDING_POOL_ADMIN, account);
+        }
+        _;
+    }
+
+    modifier onlyPoolAdmin(address lendingPool, address account) {
+        if (!hasLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, account)) {
+            revert MissingRole(ROLE_LENDING_POOL_ADMIN, account);
+        }
         _;
     }
 }

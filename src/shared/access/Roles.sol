@@ -10,3 +10,4 @@ pragma solidity 0.8.23;
 bytes32 constant ROLE_KASU_ADMIN = 0x00;
 
 bytes32 constant ROLE_LENDING_POOL_ADMIN = keccak256("ROLE_LENDING_POOL_ADMIN");
+bytes32 constant ROLE_LENDING_POOL_FACTORY = keccak256("ROLE_LENDING_POOL_FACTORY");
