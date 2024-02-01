@@ -22,8 +22,8 @@ contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolFactory private lendingPoolFactory;
 
     address internal lendingPoolLoanAdmin = address(0xad2);
-    address internal admin3 = address(0xad3);
-    address internal admin4 = address(0xad4);
+    address internal lendingPoolCreator = address(0xad3);
+    address internal lendingPoolAdmin = address(0xad4);
     address internal admin5 = address(0xad4);
 
     function __lendingPool_setUp() internal {
@@ -67,7 +67,11 @@ contract LendingPoolTestUtils is BaseTestUtils {
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
         // lending pool factory
         LendingPoolFactory lendingPoolFactoryImpl = new LendingPoolFactory(
-            address(pendingPoolBeacon), address(lendingPoolBeacon), address(lendingPoolTrancheBeacon), kasuController
+            address(pendingPoolBeacon),
+            address(lendingPoolBeacon),
+            address(lendingPoolTrancheBeacon),
+            kasuController,
+            lendingPoolManager
         );
         TransparentUpgradeableProxy lendingPoolFactoryProxy =
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
@@ -75,13 +79,14 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
+        lendingPoolManager.initialize(lendingPoolFactory);
     }
 
     function createLendingPool(PoolConfiguration memory poolConfiguration)
         internal
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration, lendingPoolManager);
+        lendingPoolDeployment = lendingPoolManager.createPool(poolConfiguration);
         pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
@@ -89,11 +94,11 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     // ###  Helper Functions ###
 
-    function _createDefaultLendingPool()
-        internal
-        prank(admin)
-        returns (LendingPoolDeployment memory lendingPoolDeployment)
-    {
+    function _createDefaultLendingPool() internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
+        // access control - grant
+        vm.prank(admin);
+        kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreator);
+        // create lending
         uint256 minDepositAmount = 1 ether;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
         Tranches memory tranches;
@@ -107,17 +112,16 @@ contract LendingPoolTestUtils is BaseTestUtils {
             minDepositAmount,
             targetExcessLiquidity,
             tranches,
-            admin,
-            admin
+            lendingPoolAdmin,
+            lendingPoolLoanAdmin
         );
+        vm.prank(lendingPoolCreator);
         lendingPoolDeployment = createLendingPool(poolConfiguration);
-
         // access control - grant
-        vm.startPrank(admin);
+        vm.prank(lendingPoolAdmin);
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, lendingPoolLoanAdmin
         );
-        vm.stopPrank();
     }
 
     // USER

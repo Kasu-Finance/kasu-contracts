@@ -8,6 +8,7 @@ import {
     PoolConfiguration,
     LendingPoolDeployment
 } from "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../lendingPool/LendingPoolHelpers.sol";
 import "./LendingPool.sol";
 import {LendingPoolManager} from "./LendingPoolManager.sol";
 import {ILendingPoolManager} from "../interfaces/lendingPool/ILendingPoolManager.sol";
@@ -18,7 +19,7 @@ import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "forge-std/console2.sol";
 
-contract LendingPoolFactory is ILendingPoolFactory {
+contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;
     address private immutable lendingPoolBeacon;
     address private immutable lendingPoolTrancheBeacon;
@@ -28,16 +29,18 @@ contract LendingPoolFactory is ILendingPoolFactory {
         address pendingPoolBeacon_,
         address lendingPoolBeacon_,
         address lendingPoolTrancheBeacon_,
-        IKasuController kasuController_
-    ) {
+        IKasuController kasuController_,
+        ILendingPoolManager lendingPoolManager_
+    ) LendingPoolHelpers(lendingPoolManager_) {
         pendingPoolBeacon = pendingPoolBeacon_;
         lendingPoolBeacon = lendingPoolBeacon_;
         lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
         kasuController = kasuController_;
     }
 
-    function createPool(PoolConfiguration calldata poolConfiguration, ILendingPoolManager lendingPoolManager)
+    function createPool(PoolConfiguration calldata poolConfiguration)
         external
+        onlyLendingPoolManager
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
         // lending pool deploy
@@ -112,8 +115,6 @@ contract LendingPoolFactory is ILendingPoolFactory {
         lendingPoolInfo.tranches = tranches;
 
         lendingPool.initialize(poolConfiguration, lendingPoolInfo, address(lendingPoolManager));
-
-        lendingPoolManager.registerLendingPool(lendingPoolDeployment);
 
         // access control
         kasuController.grantLendingPoolRole(

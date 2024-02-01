@@ -33,7 +33,7 @@ struct LendingPoolDeployment {
 }
 
 interface ILendingPoolFactory {
-    function createPool(PoolConfiguration calldata poolConfiguration, ILendingPoolManager lendingPoolManager)
+    function createPool(PoolConfiguration calldata poolConfiguration)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 }
