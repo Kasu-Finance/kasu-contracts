@@ -6,6 +6,7 @@ interface IGlobalVariables {
     function updateKsuTokenPrice() external;
 
     function getCurrentEpochNumber() external view returns (uint256);
+    function getCurrentRequestEpoch() external view returns (uint256 requestEpoch);
     function getEpochStartTimestamp(uint256 epoch) external view returns (uint256);
     function getEpochDuration() external view returns (uint256);
     function getNextEpochStartTimestamp() external view returns (uint256);

@@ -8,14 +8,19 @@ import "forge-std/Test.sol";
 import "../../../../shared/MockUSDC.sol";
 import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
+import "../../../../../src/core/KsuPrice.sol";
+import "../../../../../src/core/GlobalVariables.sol";
 import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 import "../../../../../src/shared/access/KasuController.sol";
 
 contract LendingPoolTestUtils is BaseTestUtils {
+    ProxyAdmin internal proxyAdmin;
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
+    KsuPrice internal ksuPrice;
+    GlobalVariables internal globalVariables;
     MockUSDC internal mockUsdc;
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -33,13 +38,13 @@ contract LendingPoolTestUtils is BaseTestUtils {
         vm.deal(bob, 1 << 128);
 
         // proxy admin
-        ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
+        proxyAdmin = new ProxyAdmin(admin);
 
         // usdc
         {
-            MockUSDC mockUsdcIml = new MockUSDC();
+            MockUSDC mockUsdcImpl = new MockUSDC();
             TransparentUpgradeableProxy mockUsdcProxy =
-                new TransparentUpgradeableProxy(address(mockUsdcIml), address(proxyAdmin), "");
+                new TransparentUpgradeableProxy(address(mockUsdcImpl), address(proxyAdmin), "");
             mockUsdc = MockUSDC(address(mockUsdcProxy));
             mockUsdc.initialize(admin);
         }
@@ -49,6 +54,12 @@ contract LendingPoolTestUtils is BaseTestUtils {
         TransparentUpgradeableProxy kasuControllerProxy =
             new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
         kasuController = KasuController(address(kasuControllerProxy));
+
+        // ksu price
+        _deployKsuPrice();
+
+        // global variables
+        _deployGlobalVariables();
 
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
@@ -60,7 +71,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
+        LendingPool lendingPoolImp = new LendingPool(globalVariables, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
@@ -75,6 +86,25 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
+    }
+
+    function _deployKsuPrice() internal {
+        KsuPrice ksuPriceImpl = new KsuPrice();
+        TransparentUpgradeableProxy ksuPriceProxy =
+            new TransparentUpgradeableProxy(address(ksuPriceImpl), address(proxyAdmin), "");
+        ksuPrice = KsuPrice(address(ksuPriceProxy));
+    }
+
+    function _deployGlobalVariables() internal {
+        GlobalVariables globalVariablesImpl = new GlobalVariables(ksuPrice, kasuController);
+        TransparentUpgradeableProxy globalVariablesProxy =
+            new TransparentUpgradeableProxy(address(globalVariablesImpl), address(proxyAdmin), "");
+        globalVariables = GlobalVariables(address(globalVariablesProxy));
+
+        // initialize
+        GlobalVariablesSetup memory globalVariablesSetup =
+            GlobalVariablesSetup(block.timestamp - 1 weeks + 1, 1 days, 10_00);
+        globalVariables.initialize(globalVariablesSetup);
     }
 
     function createLendingPool(PoolConfiguration memory poolConfiguration)

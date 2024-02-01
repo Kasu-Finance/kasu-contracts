@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/IGlobalVariables.sol";
 import "./interfaces/IKsuPrice.sol";
+import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/Constants.sol";
 
@@ -25,7 +26,7 @@ struct GlobalVariablesSetup {
  * It stores epoch, KSU epoch price and platform fee.
  * Kasu epoch number always starts from 1.
  */
-abstract contract GlobalVariables is IGlobalVariables, Initializable {
+contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializable {
     IKsuPrice public immutable ksuPrice;
 
     uint256 private constant _epochDuration = 1 weeks;
@@ -37,11 +38,12 @@ abstract contract GlobalVariables is IGlobalVariables, Initializable {
 
     uint256 private _protocolFee;
 
-    constructor(IKsuPrice ksuPrice_) {
+    constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
         ksuPrice = ksuPrice_;
+        _disableInitializers();
     }
 
-    function __GlobalVariables_init(GlobalVariablesSetup memory globalVariablesSetup) internal onlyInitializing {
+    function initialize(GlobalVariablesSetup memory globalVariablesSetup) external initializer {
         if (
             globalVariablesSetup.firstEpochStartTimestamp > block.timestamp
                 || globalVariablesSetup.firstEpochStartTimestamp + _epochDuration < block.timestamp
@@ -102,13 +104,26 @@ abstract contract GlobalVariables is IGlobalVariables, Initializable {
         return _firstEpochStartTimestamp + (getCurrentEpochNumber() + 1) * _epochDuration;
     }
 
+    /**
+     * @notice Returns the current epoch request number.
+     * @dev If the current epoch is in the clearing period, the next epoch number is returned.
+     * @return requestEpoch The current epoch request number.
+     */
+    function getCurrentRequestEpoch() external view returns (uint256 requestEpoch) {
+        requestEpoch = getCurrentEpochNumber();
+
+        if (isClearingTime()) {
+            requestEpoch++;
+        }
+    }
+
     // CLEARING PERIOD
 
     /**
      * @notice Checks if the current epoch is in the clearing period.
      * @return True if the current epoch is in the clearing period, false otherwise.
      */
-    function isClearingTime() external view returns (bool) {
+    function isClearingTime() public view returns (bool) {
         return getNextEpochStartTimestamp() - block.timestamp <= _clearingPeriodLength;
     }
 
@@ -151,6 +166,10 @@ abstract contract GlobalVariables is IGlobalVariables, Initializable {
      * @dev Sets the protocol fee.
      * @param protocolFee_ The new protocol fee.
      */
+    function setProtocolFee(uint256 protocolFee_) external onlyAdmin {
+        _setProtocolFee(protocolFee_);
+    }
+
     function _setProtocolFee(uint256 protocolFee_) internal {
         if (protocolFee_ > FULL_PERCENT) {
             revert InvalidConfiguration();
