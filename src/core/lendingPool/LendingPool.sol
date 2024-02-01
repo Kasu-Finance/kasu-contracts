@@ -6,7 +6,7 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
-import "../interfaces/IGlobalVariables.sol";
+import "../interfaces/ISystemVariables.sol";
 import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
@@ -18,7 +18,7 @@ import "../interfaces/lendingPool/ILendingPoolFactory.sol";
  * the total balance of the lending pool against the underlying asset.
  */
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors {
-    IGlobalVariables public immutable globalVariables;
+    ISystemVariables public immutable systemVariables;
 
     /// @dev Lending pool configuration.
     LendingPoolInfo private _lendingPoolInfo;
@@ -29,8 +29,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     address public borrowRecipient;
     address public lendingPoolManager;
 
-    constructor(IGlobalVariables globalVariables_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
-        globalVariables = globalVariables_;
+    constructor(ISystemVariables systemVariables_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
+        systemVariables = systemVariables_;
     }
 
     /**

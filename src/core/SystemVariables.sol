@@ -2,31 +2,31 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
-import "./interfaces/IGlobalVariables.sol";
+import "./interfaces/ISystemVariables.sol";
 import "./interfaces/IKsuPrice.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/Constants.sol";
 
 /**
- * @notice Kasu global variables contract setup structure.
+ * @notice Kasu system variables contract setup structure.
  * @custom:member firstEpochStartTimestamp The timestamp of the start of the first epoch. Should be in the past.
  * @custom:member clearingPeriodLength The length of the clearing period.
  * @custom:member protocolFee The protocol fee.
  */
-struct GlobalVariablesSetup {
+struct SystemVariablesSetup {
     uint256 firstEpochStartTimestamp;
     uint256 clearingPeriodLength;
     uint256 protocolFee;
 }
 
 /**
- * @notice Kasu global variables contract.
- * @dev This contract is used to store and manage Kasu global variables.
+ * @notice Kasu system variables contract.
+ * @dev This contract is used to store and manage Kasu system variables.
  * It stores epoch, KSU epoch price and platform fee.
  * Kasu epoch number always starts from 0.
  */
-contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializable {
+contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializable {
     IKsuPrice public immutable ksuPrice;
 
     uint256 private constant _epochDuration = 1 weeks;
@@ -43,25 +43,25 @@ contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializa
         _disableInitializers();
     }
 
-    function initialize(GlobalVariablesSetup memory globalVariablesSetup) external initializer {
+    function initialize(SystemVariablesSetup memory systemVariablesSetup) external initializer {
         if (
-            globalVariablesSetup.firstEpochStartTimestamp < block.timestamp
-                || globalVariablesSetup.firstEpochStartTimestamp >= block.timestamp + _epochDuration
+            systemVariablesSetup.firstEpochStartTimestamp < block.timestamp
+                || systemVariablesSetup.firstEpochStartTimestamp >= block.timestamp + _epochDuration
         ) {
             revert InvalidConfiguration();
         }
 
         if (
-            globalVariablesSetup.clearingPeriodLength == 0
-                || globalVariablesSetup.clearingPeriodLength >= _epochDuration
+            systemVariablesSetup.clearingPeriodLength == 0
+                || systemVariablesSetup.clearingPeriodLength >= _epochDuration
         ) {
             revert InvalidConfiguration();
         }
 
-        _firstEpochStartTimestamp = globalVariablesSetup.firstEpochStartTimestamp;
-        _clearingPeriodLength = globalVariablesSetup.clearingPeriodLength;
+        _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
+        _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
-        _setProtocolFee(globalVariablesSetup.protocolFee);
+        _setProtocolFee(systemVariablesSetup.protocolFee);
 
         _updateKsuTokenPrice();
     }

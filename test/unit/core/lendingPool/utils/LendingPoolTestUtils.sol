@@ -9,7 +9,7 @@ import "../../../../shared/MockUSDC.sol";
 import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
 import "../../../../../src/core/KsuPrice.sol";
-import "../../../../../src/core/GlobalVariables.sol";
+import "../../../../../src/core/SystemVariables.sol";
 import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
@@ -20,7 +20,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
     KsuPrice internal ksuPrice;
-    GlobalVariables internal globalVariables;
+    SystemVariables internal systemVariables;
     MockUSDC internal mockUsdc;
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -58,8 +58,8 @@ contract LendingPoolTestUtils is BaseTestUtils {
         // ksu price
         _deployKsuPrice();
 
-        // global variables
-        _deployGlobalVariables();
+        // system variables
+        _deploySystemVariables();
 
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
@@ -71,7 +71,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp = new LendingPool(globalVariables, address(mockUsdc));
+        LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
@@ -95,16 +95,16 @@ contract LendingPoolTestUtils is BaseTestUtils {
         ksuPrice = KsuPrice(address(ksuPriceProxy));
     }
 
-    function _deployGlobalVariables() internal {
-        GlobalVariables globalVariablesImpl = new GlobalVariables(ksuPrice, kasuController);
-        TransparentUpgradeableProxy globalVariablesProxy =
-            new TransparentUpgradeableProxy(address(globalVariablesImpl), address(proxyAdmin), "");
-        globalVariables = GlobalVariables(address(globalVariablesProxy));
+    function _deploySystemVariables() internal {
+        SystemVariables systemVariablesImpl = new SystemVariables(ksuPrice, kasuController);
+        TransparentUpgradeableProxy systemVariablesProxy =
+            new TransparentUpgradeableProxy(address(systemVariablesImpl), address(proxyAdmin), "");
+        systemVariables = SystemVariables(address(systemVariablesProxy));
 
         // initialize
-        GlobalVariablesSetup memory globalVariablesSetup = GlobalVariablesSetup(block.timestamp, 1 days, 10_00);
+        SystemVariablesSetup memory systemVariablesSetup = SystemVariablesSetup(block.timestamp, 1 days, 10_00);
 
-        globalVariables.initialize(globalVariablesSetup);
+        systemVariables.initialize(systemVariablesSetup);
     }
 
     function createLendingPool(PoolConfiguration memory poolConfiguration)
