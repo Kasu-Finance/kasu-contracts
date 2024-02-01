@@ -34,7 +34,7 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     function grantLendingPoolRole(address lendingPool, bytes32 role, address account)
         external
-        onlySuperAdminPoolAdminOrFactory(lendingPool, msg.sender)
+        onlyPoolAdminOrFactory(lendingPool, msg.sender)
     {
         _grantRole(_getLendingPoolRole(lendingPool, role), account);
         emit LendingPoolRoleGranted(lendingPool, role, account);
@@ -82,9 +82,9 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
         _;
     }
 
-    modifier onlySuperAdminPoolAdminOrFactory(address lendingPool, address account) {
+    modifier onlyPoolAdminOrFactory(address lendingPool, address account) {
         if (
-            !hasRole(DEFAULT_ADMIN_ROLE, account) && !hasRole(ROLE_LENDING_POOL_FACTORY, account)
+            !hasRole(ROLE_LENDING_POOL_FACTORY, account)
                 && !hasLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, account)
         ) {
             // TODO: ROLE_LENDING_POOL_FACTORY not reported
