@@ -16,6 +16,8 @@ struct PoolConfiguration {
     uint256 minDepositAmount;
     uint256 targetExcessLiquidity;
     Tranches tranches;
+    address poolAdmin;
+    address borrowRecipient;
 }
 
 struct Tranches {

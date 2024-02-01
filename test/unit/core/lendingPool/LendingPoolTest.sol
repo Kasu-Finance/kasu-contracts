@@ -285,7 +285,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
     }
 
-    function test_borrowAmount() public {
+    function test_borrowLoan() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -310,8 +310,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 ILendingPool.BorrowAmountCantBeGreaterThanAvailableAmount.selector, 291 * 10 ** 6, 290 * 10 ** 6
             )
         );
-        _borrowLoan(lpd.lendingPool, 291 * 10 ** 6);
-        _borrowLoan(lpd.lendingPool, 200 * 10 ** 6);
+        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 291 * 10 ** 6);
+        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 90 * 10 ** 6);
@@ -334,17 +334,16 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
-        _borrowLoan(lpd.lendingPool, 200 * 10 ** 6);
+        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ACT ###
-        uint256 adminUsdcBalanceBefore = mockUsdc.balanceOf(admin);
         uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
 
-        _repayLoan(lpd.lendingPool, 100 * 10 ** 6);
+        _repayLoan(lendingPoolLoanAdmin, lendingPoolLoanAdmin, lpd.lendingPool, 100 * 10 ** 6);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
-        assertEq(mockUsdc.balanceOf(admin), adminUsdcBalanceBefore - 100 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(lendingPoolLoanAdmin), 0);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
     }
 }

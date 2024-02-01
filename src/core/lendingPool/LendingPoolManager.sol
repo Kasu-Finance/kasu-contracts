@@ -6,14 +6,23 @@ import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
 import {ILendingPool} from "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import {ILendingPoolErrors} from "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import {KasuAccessControllable} from "../../shared/access/KasuAccessControllable.sol";
+import "../../shared/access/Roles.sol";
+import {IKasuController} from "../../shared/interfaces/IKasuController.sol";
 
-contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILendingPoolErrors {
+contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILendingPoolErrors, KasuAccessControllable {
     mapping(address => LendingPoolDeployment) private lendingPools;
     mapping(address => address) public ownLendingPool;
 
-    constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
+    constructor(address underlyingAsset_, IKasuController controller_)
+        AssetFunctionsBase(underlyingAsset_)
+        KasuAccessControllable(controller_)
+    {}
 
-    function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external {
+    function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment)
+        external
+        onlyRole(ROLE_LENDING_POOL_FACTORY, msg.sender)
+    {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
 
         ownLendingPool[lendingPoolDeployment.pendingPool] = lendingPoolDeployment.lendingPool;
@@ -50,19 +59,29 @@ contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILending
     }
 
     // #### POOL DELEGATE #### //
-    function borrowLoan(address lendingPool, uint256 amount) external {
+    function borrowLoan(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+    {
         ILendingPool(lendingPool).borrowLoan(amount);
     }
 
-    function repayLoan(address lendingPool, uint256 amount) external {
-        ILendingPool(lendingPool).repayLoan(amount);
+    function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
     function updateLoanAmount(address, uint256) external pure {
         revert("0");
     }
 
-    function reportLoss(address lendingPool, uint256 amount) external returns (uint256) {
+    function reportLoss(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        returns (uint256)
+    {
         return ILendingPool(lendingPool).reportLoss(amount);
     }
 

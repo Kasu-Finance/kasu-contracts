@@ -11,32 +11,51 @@ import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
+import "../../../../../src/shared/access/KasuController.sol";
 
 contract LendingPoolTestUtils is BaseTestUtils {
     LendingPoolManager internal lendingPoolManager;
+    KasuController internal kasuController;
     MockUSDC internal mockUsdc;
     mapping(address => PendingPoolHarness) internal pendingPools;
 
     LendingPoolFactory private lendingPoolFactory;
+
+    address internal lendingPoolLoanAdmin = address(0xad2);
+    address internal admin3 = address(0xad3);
+    address internal admin4 = address(0xad4);
+    address internal admin5 = address(0xad4);
 
     function __lendingPool_setUp() internal {
         // fund accounts
         vm.deal(admin, 1 << 128);
         vm.deal(alice, 1 << 128);
         vm.deal(bob, 1 << 128);
+
         // proxy admin
         ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
+
         // usdc
-        MockUSDC mockUsdcIml = new MockUSDC();
-        TransparentUpgradeableProxy mockUsdcProxy =
-            new TransparentUpgradeableProxy(address(mockUsdcIml), address(proxyAdmin), "");
-        mockUsdc = MockUSDC(address(mockUsdcProxy));
-        mockUsdc.initialize(admin);
+        {
+            MockUSDC mockUsdcIml = new MockUSDC();
+            TransparentUpgradeableProxy mockUsdcProxy =
+                new TransparentUpgradeableProxy(address(mockUsdcIml), address(proxyAdmin), "");
+            mockUsdc = MockUSDC(address(mockUsdcProxy));
+            mockUsdc.initialize(admin);
+        }
+
+        // access control - setup
+        KasuController kasuControllerImpl = new KasuController();
+        TransparentUpgradeableProxy kasuControllerProxy =
+            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
+        kasuController = KasuController(address(kasuControllerProxy));
+
         // lending pool manager
-        LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc));
+        LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
         TransparentUpgradeableProxy lendingPoolManagerProxy =
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
+
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
@@ -48,11 +67,14 @@ contract LendingPoolTestUtils is BaseTestUtils {
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
         // lending pool factory
         LendingPoolFactory lendingPoolFactoryImpl = new LendingPoolFactory(
-            address(pendingPoolBeacon), address(lendingPoolBeacon), address(lendingPoolTrancheBeacon)
+            address(pendingPoolBeacon), address(lendingPoolBeacon), address(lendingPoolTrancheBeacon), kasuController
         );
         TransparentUpgradeableProxy lendingPoolFactoryProxy =
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
+
+        // access control - init
+        kasuController.initialize(admin, address(lendingPoolFactory));
     }
 
     function createLendingPool(PoolConfiguration memory poolConfiguration)
@@ -79,9 +101,23 @@ contract LendingPoolTestUtils is BaseTestUtils {
         tranches.mezzo = TrancheDetail(true, 20, 10);
         tranches.senior = TrancheDetail(true, 70, 5);
         PoolConfiguration memory poolConfiguration = PoolConfiguration(
-            "Test Lending Pool", "TLP", address(mockUsdc), minDepositAmount, targetExcessLiquidity, tranches
+            "Test Lending Pool",
+            "TLP",
+            address(mockUsdc),
+            minDepositAmount,
+            targetExcessLiquidity,
+            tranches,
+            admin,
+            admin
         );
         lendingPoolDeployment = createLendingPool(poolConfiguration);
+
+        // access control - grant
+        vm.startPrank(admin);
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, lendingPoolLoanAdmin
+        );
+        vm.stopPrank();
     }
 
     // USER
@@ -125,13 +161,16 @@ contract LendingPoolTestUtils is BaseTestUtils {
 
     // POOL DELEGATE
 
-    function _borrowLoan(address lendingPool, uint256 amount) internal prank(admin) {
+    function _borrowLoan(address caller, address lendingPool, uint256 amount) internal prank(caller) {
         lendingPoolManager.borrowLoan(lendingPool, amount);
     }
 
-    function _repayLoan(address lendingPool, uint256 amount) internal prank(admin) {
+    function _repayLoan(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
+        deal(address(mockUsdc), repaymentAddress, amount, true);
+        vm.prank(repaymentAddress);
         mockUsdc.approve(lendingPool, amount);
-        lendingPoolManager.repayLoan(lendingPool, amount);
+        vm.prank(caller);
+        lendingPoolManager.repayLoan(lendingPool, amount, repaymentAddress);
     }
 }
 

@@ -7,6 +7,8 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../AssetFunctionsBase.sol";
+import "../../shared/CommonErrors.sol";
+import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 
 /**
  * @dev
@@ -21,25 +23,30 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     mapping(address => bool) public isTranche;
 
     uint256 public borrowedAmount;
-    address public poolOwner;
+    address public borrowRecipient;
     address public lendingPoolManager;
 
     constructor(address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {}
 
     /**
      * @notice Initializes the lending pool.
-     * @param name_ The name of the lending pool token.
-     * @param symbol_ The symbol of the lending pool token.
+     * @param poolConfiguration_ Lending pool configuration.
      * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
      */
     function initialize(
-        string memory name_,
-        string memory symbol_,
+        PoolConfiguration memory poolConfiguration_,
         LendingPoolInfo memory lendingPoolInfo_,
-        address poolOwner_,
         address lendingPoolManager_
     ) public initializer {
-        __ERC20_init(name_, symbol_);
+        if (lendingPoolManager_ == address(0)) {
+            revert ConfigurationAddressZero();
+        }
+
+        if (poolConfiguration_.borrowRecipient == address(0)) {
+            revert ConfigurationAddressZero();
+        }
+
+        __ERC20_init(poolConfiguration_.name, poolConfiguration_.symbol);
 
         // TODO: setup the lending pool and it's tranches
         _lendingPoolInfo.pendingPool = lendingPoolInfo_.pendingPool;
@@ -52,7 +59,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _approve(address(this), tranche, type(uint256).max);
         }
 
-        poolOwner = poolOwner_;
+        borrowRecipient = poolConfiguration_.borrowRecipient;
         lendingPoolManager = lendingPoolManager_;
     }
 
@@ -158,26 +165,29 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         if (amount == 0) {
             revert BorrowAmountShouldBeGreaterThanZero();
         }
+
         uint256 availableAmount = underlyingAsset.balanceOf(address(this));
         if (availableAmount < amount) {
             revert BorrowAmountCantBeGreaterThanAvailableAmount(amount, availableAmount);
         }
 
         borrowedAmount += amount;
-        _transferAssets(poolOwner, amount);
+        _transferAssets(borrowRecipient, amount);
         // TODO: emit event
     }
 
-    function repayLoan(uint256 amount) external onlyLendingPoolManager {
+    function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
         if (amount == 0) {
             revert RepayAmountShouldBeGreaterThanZero();
         }
+
         if (amount > borrowedAmount) {
             revert RepayAmountCantBeGreaterThanBorrowedAmount(amount, borrowedAmount);
         }
 
+        _transferAssetsFrom(repaymentAddress, address(this), amount);
+
         borrowedAmount -= amount;
-        _transferAssetsFrom(poolOwner, address(this), amount);
         // TODO: emit event
     }
 
