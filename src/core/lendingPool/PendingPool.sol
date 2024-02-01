@@ -127,7 +127,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // TODO: get epoch id
         _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
 
-        emit DepositRequested(user, tranche, dNftID, amount);
+        emit DepositRequested(user, tranche, dNftID, address(_getOwnLendingPool()), amount);
     }
 
     /**
@@ -151,7 +151,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
 
         (address tranche,) = decomposeDepositId(dNftID);
 
-        emit DepositRequestCancelled(user, tranche, dNftID);
+        emit DepositRequestCancelled(user, tranche, address(_getOwnLendingPool()), dNftID);
     }
 
     // TODO: check valid tranche with modifier
@@ -185,7 +185,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // TODO: get epoch id
         _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, 0, 0);
 
-        emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
+        emit WithdrawalRequested(user, tranche, wNftID, address(_getOwnLendingPool()), trancheShares);
     }
 
     /**
@@ -207,7 +207,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         // delete nft storage
         delete _trancheWithdrawalNftDetails[wNftID];
 
-        emit WithdrawalRequestCancelled(user, tranche, wNftID);
+        emit WithdrawalRequestCancelled(user, tranche, wNftID, address(_getOwnLendingPool()));
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
