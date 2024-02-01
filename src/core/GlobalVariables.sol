@@ -24,7 +24,7 @@ struct GlobalVariablesSetup {
  * @notice Kasu global variables contract.
  * @dev This contract is used to store and manage Kasu global variables.
  * It stores epoch, KSU epoch price and platform fee.
- * Kasu epoch number always starts from 1.
+ * Kasu epoch number always starts from 0.
  */
 contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializable {
     IKsuPrice public immutable ksuPrice;
@@ -45,14 +45,15 @@ contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializa
 
     function initialize(GlobalVariablesSetup memory globalVariablesSetup) external initializer {
         if (
-            globalVariablesSetup.firstEpochStartTimestamp > block.timestamp
-                || globalVariablesSetup.firstEpochStartTimestamp + _epochDuration < block.timestamp
+            globalVariablesSetup.firstEpochStartTimestamp < block.timestamp
+                || globalVariablesSetup.firstEpochStartTimestamp >= block.timestamp + _epochDuration
         ) {
             revert InvalidConfiguration();
         }
 
         if (
-            globalVariablesSetup.clearingPeriodLength == 0 || globalVariablesSetup.clearingPeriodLength > _epochDuration
+            globalVariablesSetup.clearingPeriodLength == 0
+                || globalVariablesSetup.clearingPeriodLength >= _epochDuration
         ) {
             revert InvalidConfiguration();
         }
@@ -61,6 +62,8 @@ contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializa
         _clearingPeriodLength = globalVariablesSetup.clearingPeriodLength;
 
         _setProtocolFee(globalVariablesSetup.protocolFee);
+
+        _updateKsuTokenPrice();
     }
 
     // EPOCH
@@ -71,7 +74,7 @@ contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializa
      */
     function getCurrentEpochNumber() public view returns (uint256) {
         unchecked {
-            return (block.timestamp - _firstEpochStartTimestamp) / _epochDuration + 1;
+            return (block.timestamp - _firstEpochStartTimestamp) / _epochDuration;
         }
     }
 
@@ -85,7 +88,7 @@ contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializa
             revert InvalidEpochNumber();
         }
 
-        return _firstEpochStartTimestamp + (epoch - 1) * _epochDuration;
+        return _firstEpochStartTimestamp + epoch * _epochDuration;
     }
 
     /**
@@ -152,12 +155,16 @@ contract GlobalVariables is IGlobalVariables, KasuAccessControllable, Initializa
      */
     function updateKsuTokenPrice() external {
         if (getCurrentEpochNumber() > _priceUpdateEpoch) {
-            _priceUpdateEpoch = getCurrentEpochNumber();
-
-            _ksuTokenPrice = ksuPrice.getKsuTokenPrice();
-
-            emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
+            _updateKsuTokenPrice();
         }
+    }
+
+    function _updateKsuTokenPrice() internal {
+        _priceUpdateEpoch = getCurrentEpochNumber();
+
+        _ksuTokenPrice = ksuPrice.getKsuTokenPrice();
+
+        emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
     }
 
     // PROTOCOL FEE

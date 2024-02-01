@@ -102,8 +102,8 @@ contract LendingPoolTestUtils is BaseTestUtils {
         globalVariables = GlobalVariables(address(globalVariablesProxy));
 
         // initialize
-        GlobalVariablesSetup memory globalVariablesSetup =
-            GlobalVariablesSetup(block.timestamp - 1 weeks + 1, 1 days, 10_00);
+        GlobalVariablesSetup memory globalVariablesSetup = GlobalVariablesSetup(block.timestamp, 1 days, 10_00);
+
         globalVariables.initialize(globalVariablesSetup);
     }
 
