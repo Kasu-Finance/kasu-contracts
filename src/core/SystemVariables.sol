@@ -84,10 +84,6 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The timestamp of the start of the given epoch.
      */
     function getEpochStartTimestamp(uint256 epoch) external view returns (uint256) {
-        if (epoch == 0) {
-            revert InvalidEpochNumber();
-        }
-
         return _firstEpochStartTimestamp + epoch * _epochDuration;
     }
 
@@ -141,19 +137,27 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     // TOKEN PRICE
 
     /**
-     * @notice Returns the price of the KSU token.
+     * @notice Returns the price of the KSU token for the epoch.
      * @dev The price is locked for the duration of the epoch.
-     * @return The price of the KSU token.
+     * @return The epoch price of the KSU token.
      */
-    function ksuTokenPrice() external view returns (uint256) {
+    function ksuEpochTokenPrice() external view returns (uint256) {
         return _ksuTokenPrice;
     }
 
     /**
-     * @notice Updates the price of the KSU token.
+     * @notice Returns the epoch number when the price was last updated.
+     * @return The epoch number when the price was last updated.
+     */
+    function getPriceUpdateEpoch() external view returns (uint256) {
+        return _priceUpdateEpoch;
+    }
+
+    /**
+     * @notice Updates the price of the KSU token at the start of the epoch.
      * @dev This function should be called at the start of each epoch.
      */
-    function updateKsuTokenPrice() external {
+    function updateKsuEpochTokenPrice() external {
         if (getCurrentEpochNumber() > _priceUpdateEpoch) {
             _updateKsuTokenPrice();
         }

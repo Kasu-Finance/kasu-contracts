@@ -14,8 +14,9 @@ import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 import "../../../../../src/shared/access/KasuController.sol";
+import "../../../../shared/MockKsuPrice.sol";
 
-contract LendingPoolTestUtils is BaseTestUtils {
+abstract contract LendingPoolTestUtils is BaseTestUtils {
     ProxyAdmin internal proxyAdmin;
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
@@ -89,10 +90,12 @@ contract LendingPoolTestUtils is BaseTestUtils {
     }
 
     function _deployKsuPrice() internal {
-        KsuPrice ksuPriceImpl = new KsuPrice();
+        MockKsuPrice ksuPriceImpl = new MockKsuPrice();
         TransparentUpgradeableProxy ksuPriceProxy =
             new TransparentUpgradeableProxy(address(ksuPriceImpl), address(proxyAdmin), "");
         ksuPrice = KsuPrice(address(ksuPriceProxy));
+
+        ksuPrice.initialize();
     }
 
     function _deploySystemVariables() internal {
