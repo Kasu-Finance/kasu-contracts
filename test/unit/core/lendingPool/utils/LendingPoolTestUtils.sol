@@ -105,7 +105,13 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         systemVariables = SystemVariables(address(systemVariablesProxy));
 
         // initialize
-        SystemVariablesSetup memory systemVariablesSetup = SystemVariablesSetup(block.timestamp, 1 days, 10_00);
+        SystemVariablesSetup memory systemVariablesSetup;
+        systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
+        systemVariablesSetup.clearingPeriodLength = 1 days;
+        systemVariablesSetup.protocolFee = 10_00;
+        systemVariablesSetup.loyaltyThresholds = new uint256[](2);
+        systemVariablesSetup.loyaltyThresholds[0] = 1_00;
+        systemVariablesSetup.loyaltyThresholds[1] = 3_00;
 
         systemVariables.initialize(systemVariablesSetup);
     }

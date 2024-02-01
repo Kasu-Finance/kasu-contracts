@@ -18,6 +18,7 @@ struct SystemVariablesSetup {
     uint256 firstEpochStartTimestamp;
     uint256 clearingPeriodLength;
     uint256 protocolFee;
+    uint256[] loyaltyThresholds;
 }
 
 /**
@@ -37,6 +38,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _ksuTokenPrice;
 
     uint256 private _protocolFee;
+
+    uint256[] private _loyaltyThresholds;
 
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
         ksuPrice = ksuPrice_;
@@ -62,6 +65,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
         _setProtocolFee(systemVariablesSetup.protocolFee);
+        _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
 
         _updateKsuTokenPrice();
     }
@@ -197,5 +201,43 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function protocolFee() external view returns (uint256) {
         return _protocolFee;
+    }
+
+    // LOYALTY THRESHOLDS
+
+    /**
+     * @notice Returns the loyalty thresholds.
+     * @return The loyalty thresholds.
+     */
+    function loyaltyThresholds() external view returns (uint256[] memory) {
+        return _loyaltyThresholds;
+    }
+
+    /**
+     * @notice Sets the loyalty thresholds.
+     * @param loyaltyThresholds_ The new loyalty thresholds array.
+     */
+    function setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) external onlyAdmin {
+        if (isClearingTime()) {
+            revert CannotConfigureDuringClearingPeriod();
+        }
+
+        _setLoyaltyThresholds(loyaltyThresholds_);
+    }
+
+    function _setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) internal {
+        if (loyaltyThresholds_.length > 10) {
+            revert InvalidConfiguration();
+        }
+
+        if (loyaltyThresholds_.length > 1) {
+            for (uint256 i; i < loyaltyThresholds_.length - 1; ++i) {
+                if (loyaltyThresholds_[i] > loyaltyThresholds_[i + 1]) {
+                    revert InvalidConfiguration();
+                }
+            }
+        }
+
+        _loyaltyThresholds = loyaltyThresholds_;
     }
 }

@@ -22,7 +22,14 @@ interface ISystemVariables {
     function setProtocolFee(uint256 protocolFee) external;
     function protocolFee() external view returns (uint256);
 
+    // LOYALTY THRESHOLD
+    function loyaltyThresholds() external view returns (uint256[] memory loyaltyThresholds);
+    function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds) external;
+
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);
+
+    // ERRORS
+    error CannotConfigureDuringClearingPeriod();
 }

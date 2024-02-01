@@ -190,8 +190,67 @@ contract SystemVariablesTest is BaseTestUtils {
         systemVariables.setProtocolFee(newProtocolFee);
     }
 
+    function test_loyaltyThresholds() public {
+        SystemVariablesSetup memory systemVariablesSetup = _initalize();
+
+        uint256[] memory loyaltyThresholds = systemVariables.loyaltyThresholds();
+        assertEq(loyaltyThresholds[0], systemVariablesSetup.loyaltyThresholds[0]);
+        assertEq(loyaltyThresholds[1], systemVariablesSetup.loyaltyThresholds[1]);
+    }
+
+    function test_setLoyaltyThreshold() public {
+        _initalize();
+
+        uint256[] memory newLoyaltyThresholds = new uint256[](3);
+        newLoyaltyThresholds[0] = 2_00;
+        newLoyaltyThresholds[1] = 4_00;
+        newLoyaltyThresholds[2] = 6_00;
+
+        hoax(admin);
+        systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
+
+        uint256[] memory loyaltyThresholds = systemVariables.loyaltyThresholds();
+        assertEq(loyaltyThresholds.length, newLoyaltyThresholds.length);
+        assertEq(loyaltyThresholds[0], newLoyaltyThresholds[0]);
+        assertEq(loyaltyThresholds[1], newLoyaltyThresholds[1]);
+        assertEq(loyaltyThresholds[2], newLoyaltyThresholds[2]);
+
+        // test revert lower threshold than previous
+        newLoyaltyThresholds[2] = 3_00;
+
+        hoax(admin);
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfiguration.selector));
+        systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
+
+        // test revert too many thresholds
+        newLoyaltyThresholds = new uint256[](11);
+        hoax(admin);
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfiguration.selector));
+        systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
+
+        // test revert no role
+        hoax(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
+        systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
+
+        // test revert - configure during clearing period
+        skip(6 days);
+        newLoyaltyThresholds = new uint256[](0);
+        hoax(admin);
+        vm.expectRevert(abi.encodeWithSelector(ISystemVariables.CannotConfigureDuringClearingPeriod.selector));
+        systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
+    }
+
     function _initalize() internal returns (SystemVariablesSetup memory systemVariablesSetup) {
-        systemVariablesSetup = SystemVariablesSetup(block.timestamp, 1 days, 10_00);
+        systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
+        systemVariablesSetup.clearingPeriodLength = 1 days;
+        systemVariablesSetup.protocolFee = 10_00;
+        systemVariablesSetup.loyaltyThresholds = new uint256[](2);
+        systemVariablesSetup.loyaltyThresholds[0] = 1_00;
+        systemVariablesSetup.loyaltyThresholds[1] = 3_00;
+
         systemVariables.initialize(systemVariablesSetup);
     }
 }
