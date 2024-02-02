@@ -16,7 +16,9 @@ struct ForceWithdrawalResult {
 }
 
 interface ILendingPoolManager {
-    function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment) external;
+    function createPool(PoolConfiguration calldata poolConfiguration)
+        external
+        returns (LendingPoolDeployment memory lendingPoolDeployment);
 
     function ownLendingPool(address contractAddress) external view returns (address lendingPool);
 

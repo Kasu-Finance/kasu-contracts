@@ -301,7 +301,6 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
-        uint256 adminUsdcBalanceBefore = mockUsdc.balanceOf(admin);
         uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
 
         // ### ACT ###
@@ -315,7 +314,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 90 * 10 ** 6);
-        assertEq(mockUsdc.balanceOf(admin), adminUsdcBalanceBefore + 200 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(lendingPoolLoanAdmin), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
     }
 

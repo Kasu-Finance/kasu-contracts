@@ -1,28 +1,50 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPoolManager, LendingPoolDeployment} from "../interfaces/lendingPool/ILendingPoolManager.sol";
-import {IPendingPool} from "../interfaces/lendingPool/IPendingPool.sol";
-import {ILendingPool} from "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/ILendingPoolManager.sol";
+import "../interfaces/lendingPool/IPendingPool.sol";
+import "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
-import {ILendingPoolErrors} from "../interfaces/lendingPool/ILendingPoolErrors.sol";
-import {KasuAccessControllable} from "../../shared/access/KasuAccessControllable.sol";
+import "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
-import {IKasuController} from "../../shared/interfaces/IKasuController.sol";
+import "../../shared/interfaces/IKasuController.sol";
+import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-contract LendingPoolManager is ILendingPoolManager, AssetFunctionsBase, ILendingPoolErrors, KasuAccessControllable {
-    mapping(address => LendingPoolDeployment) private lendingPools;
+contract LendingPoolManager is
+    ILendingPoolManager,
+    AssetFunctionsBase,
+    ILendingPoolErrors,
+    KasuAccessControllable,
+    Initializable
+{
     mapping(address => address) public ownLendingPool;
+
+    mapping(address => LendingPoolDeployment) private lendingPools;
+    ILendingPoolFactory private lendingPoolFactory;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
         KasuAccessControllable(controller_)
     {}
 
-    function registerLendingPool(LendingPoolDeployment calldata lendingPoolDeployment)
+    function initialize(ILendingPoolFactory lendingPoolFactory_) public initializer {
+        lendingPoolFactory = lendingPoolFactory_;
+    }
+
+    // #### CREATE POOL #### //
+
+    function createPool(PoolConfiguration calldata poolConfiguration)
         external
-        onlyRole(ROLE_LENDING_POOL_FACTORY, msg.sender)
+        onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
+        lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration);
+        registerLendingPool(lendingPoolDeployment);
+    }
+
+    function registerLendingPool(LendingPoolDeployment memory lendingPoolDeployment) internal {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
 
         ownLendingPool[lendingPoolDeployment.pendingPool] = lendingPoolDeployment.lendingPool;
