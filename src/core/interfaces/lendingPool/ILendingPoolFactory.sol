@@ -32,6 +32,8 @@ struct LendingPoolDeployment {
     address[] tranches;
 }
 
+event PoolCreated(address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment);
+
 interface ILendingPoolFactory {
     function createPool(PoolConfiguration calldata poolConfiguration)
         external

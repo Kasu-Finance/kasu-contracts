@@ -120,6 +120,8 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, poolConfiguration.poolAdmin
         );
+
+        emit PoolCreated(lendingPoolDeployment.lendingPool, lendingPoolDeployment);
     }
 
     function _deployLendingPoolTranche(
