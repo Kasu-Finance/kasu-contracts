@@ -115,7 +115,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // deposit the minted tokens to the tranche
         ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
 
-        emit DepositAccepted(user, tranche, address(this), acceptedAmount);
+        emit DepositAccepted(user, tranche, acceptedAmount);
     }
 
     /**
@@ -148,7 +148,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // transfer assets to the user
         _transferAssets(user, assetAmount);
 
-        emit WithdrawalAccepted(user, tranche, address(this), acceptedShares);
+        emit WithdrawalAccepted(user, tranche, acceptedShares);
     }
 
     function _applyInterest(address tranche) internal verifyTranche(tranche) {
@@ -178,7 +178,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         borrowedAmount += amount;
         _transferAssets(borrowRecipient, amount);
 
-        emit LoanBorrowed(address(this), amount);
+        emit LoanBorrowed(amount);
     }
 
     function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
@@ -194,7 +194,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         borrowedAmount -= amount;
 
-        emit LoanRepaid(address(this), amount);
+        emit LoanRepaid(amount);
     }
 
     /**
@@ -242,7 +242,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             }
         }
 
-        emit LossReported(address(this), lossAmount);
+        emit LossReported(lossAmount);
     }
 
     function _onlyPendingPool() private view {

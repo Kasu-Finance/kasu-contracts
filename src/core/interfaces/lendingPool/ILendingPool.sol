@@ -46,17 +46,15 @@ interface ILendingPool is IERC20 {
     //     function withdrawProtocolFees() external;
 
     // Events
-    event DepositAccepted(address indexed user, address indexed tranche, address indexed lendingPool, uint256 amount);
+    event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 
-    event WithdrawalAccepted(
-        address indexed user, address indexed tranche, address indexed lendingPool, uint256 shares
-    );
+    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
 
-    event LoanBorrowed(address indexed lendingPool, uint256 amount);
+    event LoanBorrowed(uint256 amount);
 
-    event LoanRepaid(address indexed lendingPool, uint256 amount);
+    event LoanRepaid(uint256 amount);
 
-    event LossReported(address indexed lendingPool, uint256 amount);
+    event LossReported(uint256 amount);
 
     // Errors
 
