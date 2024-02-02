@@ -45,6 +45,21 @@ interface ILendingPool is IERC20 {
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
 
+    // Events
+    event DepositAccepted(address indexed user, address indexed tranche, address indexed lendingPool, uint256 amount);
+
+    event WithdrawalAccepted(
+        address indexed user, address indexed tranche, address indexed lendingPool, uint256 shares
+    );
+
+    event LoanBorrowed(address indexed lendingPool, uint256 amount);
+
+    event LoanRepaid(address indexed lendingPool, uint256 amount);
+
+    event LossReported(address indexed lendingPool, uint256 amount);
+
+    // Errors
+
     error BorrowAmountShouldBeGreaterThanZero();
     error BorrowAmountCantBeGreaterThanAvailableAmount(uint256 borrowAmount, uint256 availableAmount);
     error RepayAmountCantBeGreaterThanBorrowedAmount(uint256 repayAmount, uint256 borrowedAmount);
