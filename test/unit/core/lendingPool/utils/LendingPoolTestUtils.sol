@@ -8,14 +8,20 @@ import "forge-std/Test.sol";
 import "../../../../shared/MockUSDC.sol";
 import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
+import "../../../../../src/core/KsuPrice.sol";
+import "../../../../../src/core/SystemVariables.sol";
 import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 import "../../../../../src/shared/access/KasuController.sol";
+import "../../../../shared/MockKsuPrice.sol";
 
-contract LendingPoolTestUtils is BaseTestUtils {
+abstract contract LendingPoolTestUtils is BaseTestUtils {
+    ProxyAdmin internal proxyAdmin;
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
+    KsuPrice internal ksuPrice;
+    SystemVariables internal systemVariables;
     MockUSDC internal mockUsdc;
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -33,13 +39,13 @@ contract LendingPoolTestUtils is BaseTestUtils {
         vm.deal(bob, 1 << 128);
 
         // proxy admin
-        ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
+        proxyAdmin = new ProxyAdmin(admin);
 
         // usdc
         {
-            MockUSDC mockUsdcIml = new MockUSDC();
+            MockUSDC mockUsdcImpl = new MockUSDC();
             TransparentUpgradeableProxy mockUsdcProxy =
-                new TransparentUpgradeableProxy(address(mockUsdcIml), address(proxyAdmin), "");
+                new TransparentUpgradeableProxy(address(mockUsdcImpl), address(proxyAdmin), "");
             mockUsdc = MockUSDC(address(mockUsdcProxy));
             mockUsdc.initialize(admin);
         }
@@ -49,6 +55,12 @@ contract LendingPoolTestUtils is BaseTestUtils {
         TransparentUpgradeableProxy kasuControllerProxy =
             new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
         kasuController = KasuController(address(kasuControllerProxy));
+
+        // ksu price
+        _deployKsuPrice();
+
+        // system variables
+        _deploySystemVariables();
 
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
@@ -60,7 +72,7 @@ contract LendingPoolTestUtils is BaseTestUtils {
         PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp = new LendingPool(address(mockUsdc));
+        LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
@@ -80,6 +92,33 @@ contract LendingPoolTestUtils is BaseTestUtils {
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
         lendingPoolManager.initialize(lendingPoolFactory);
+    }
+
+    function _deployKsuPrice() internal {
+        MockKsuPrice ksuPriceImpl = new MockKsuPrice();
+        TransparentUpgradeableProxy ksuPriceProxy =
+            new TransparentUpgradeableProxy(address(ksuPriceImpl), address(proxyAdmin), "");
+        ksuPrice = KsuPrice(address(ksuPriceProxy));
+
+        ksuPrice.initialize();
+    }
+
+    function _deploySystemVariables() internal {
+        SystemVariables systemVariablesImpl = new SystemVariables(ksuPrice, kasuController);
+        TransparentUpgradeableProxy systemVariablesProxy =
+            new TransparentUpgradeableProxy(address(systemVariablesImpl), address(proxyAdmin), "");
+        systemVariables = SystemVariables(address(systemVariablesProxy));
+
+        // initialize
+        SystemVariablesSetup memory systemVariablesSetup;
+        systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
+        systemVariablesSetup.clearingPeriodLength = 1 days;
+        systemVariablesSetup.protocolFee = 10_00;
+        systemVariablesSetup.loyaltyThresholds = new uint256[](2);
+        systemVariablesSetup.loyaltyThresholds[0] = 1_00;
+        systemVariablesSetup.loyaltyThresholds[1] = 3_00;
+
+        systemVariables.initialize(systemVariablesSetup);
     }
 
     function createLendingPool(PoolConfiguration memory poolConfiguration)
