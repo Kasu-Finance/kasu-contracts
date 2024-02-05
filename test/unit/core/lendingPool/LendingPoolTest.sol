@@ -332,10 +332,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ACT ###
         vm.expectRevert(
             abi.encodeWithSelector(
-                ILendingPool.BorrowAmountCantBeGreaterThanAvailableAmount.selector, 291 * 10 ** 6, 290 * 10 ** 6
+                ILendingPool.BorrowAmountCantBeGreaterThanAvailableAmount.selector, 341 * 10 ** 6, 340 * 10 ** 6
             )
         );
-        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 291 * 10 ** 6);
+        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 341 * 10 ** 6);
         _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ASSERT ###
