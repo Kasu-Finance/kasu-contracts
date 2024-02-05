@@ -26,3 +26,5 @@ error AddressNotContract(address address_);
  * @notice Used when the external call is not supported.
  */
 error NotSupported();
+
+error AmountShouldBeGreaterThanZero();

@@ -215,6 +215,12 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         vm.prank(caller);
         lendingPoolManager.repayLoan(lendingPool, amount, repaymentAddress);
     }
+
+    function _depositFirstLossCapital(address caller, address lendingPool, uint256 amount) internal prank(caller) {
+        deal(address(mockUsdc), caller, amount, true);
+        mockUsdc.approve(address(lendingPoolManager), amount);
+        lendingPoolManager.depositFirstLossCapital(lendingPool, amount);
+    }
 }
 
 contract PendingPoolHarness is PendingPool {

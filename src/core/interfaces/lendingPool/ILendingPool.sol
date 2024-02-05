@@ -42,6 +42,8 @@ interface ILendingPool is IERC20 {
 
     //     function repayLoss(uint256 lossId, uint256 amount) external;
 
+    function depositFirstLossCapital(uint256 amount) external;
+
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
 
@@ -56,12 +58,12 @@ interface ILendingPool is IERC20 {
 
     event LossReported(uint256 amount);
 
+    event FirstLossCapitalAdded(uint256 amount);
+
     // Errors
 
-    error BorrowAmountShouldBeGreaterThanZero();
     error BorrowAmountCantBeGreaterThanAvailableAmount(uint256 borrowAmount, uint256 availableAmount);
     error RepayAmountCantBeGreaterThanBorrowedAmount(uint256 repayAmount, uint256 borrowedAmount);
-    error RepayAmountShouldBeGreaterThanZero();
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
 }
