@@ -44,6 +44,8 @@ interface ILendingPoolManager {
 
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 
+    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress) external;
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;
 }

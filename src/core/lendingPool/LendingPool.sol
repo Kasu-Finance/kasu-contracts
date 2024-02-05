@@ -262,7 +262,25 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         firstLossCapital += amount;
 
-        emit FirstLossCapitalAdded(amount);
+        emit FirstLossCapitalAdded(amount, firstLossCapital);
+    }
+
+    function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) external {
+        if (withdrawAmount == 0) {
+            revert AmountShouldBeGreaterThanZero();
+        }
+
+        if (withdrawAmount > firstLossCapital) {
+            revert WithdrawAmountCantBeGreaterThanFirstLostCapital(withdrawAmount, firstLossCapital);
+        }
+
+        _transferAssets(withdrawAddress, withdrawAmount);
+
+        _burn(address(this), withdrawAmount);
+
+        firstLossCapital -= withdrawAmount;
+
+        emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
     }
 
     function _onlyPendingPool() private view {

@@ -306,6 +306,35 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _depositFirstLossCapital(lendingPoolLoanAdmin, lpd.lendingPool, 10 * 10 ** 6);
 
         // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), 350 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), ILendingPool(lpd.lendingPool).totalSupply());
+    }
+
+    function test_withdrawFirstLossCapital() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+
+        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+
+        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+
+        _depositFirstLossCapital(lendingPoolLoanAdmin, lpd.lendingPool, 50 * 10 ** 6);
+        _depositFirstLossCapital(lendingPoolLoanAdmin, lpd.lendingPool, 10 * 10 ** 6);
+
+        // ### ACT ###
+        _withdrawFirstLossCapital(lendingPoolLoanAdmin, lendingPoolLoanAdmin, lpd.lendingPool, 20 * 10 ** 6);
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lendingPoolLoanAdmin), 20 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), 330 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), ILendingPool(lpd.lendingPool).totalSupply());
     }
 
