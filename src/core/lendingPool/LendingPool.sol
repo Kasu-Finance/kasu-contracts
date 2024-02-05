@@ -258,6 +258,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         _transferAssetsFrom(msg.sender, address(this), amount);
 
+        _mint(address(this), amount);
+
         firstLossCapital += amount;
 
         emit FirstLossCapitalAdded(amount);
@@ -265,13 +267,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPool) {
+            // TODO: Type Error
             revert("LendingPool: only pending pool");
         }
     }
 
     function _onlyLendingPoolManager() private view {
         if (msg.sender != lendingPoolManager) {
-            revert("LendingPool: only pending pool manager");
+            // TODO: Type Error
+            revert("LendingPool: only lending pool manager");
         }
     }
 

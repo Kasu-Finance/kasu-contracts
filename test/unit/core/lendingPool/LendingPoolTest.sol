@@ -306,7 +306,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _depositFirstLossCapital(lendingPoolLoanAdmin, lpd.lendingPool, 10 * 10 ** 6);
 
         // ### ASSERT ###
-        assertEq(mockUsdc.balanceOf(lpd.lendingPool) - ILendingPool(lpd.lendingPool).totalSupply(), 60 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), ILendingPool(lpd.lendingPool).totalSupply());
     }
 
     function test_borrowLoan() public {
