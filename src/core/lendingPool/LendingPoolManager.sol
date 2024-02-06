@@ -107,6 +107,22 @@ contract LendingPoolManager is
         return ILendingPool(lendingPool).reportLoss(amount);
     }
 
+    function depositFirstLossCapital(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+    {
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(lendingPool, amount);
+        ILendingPool(lendingPool).depositFirstLossCapital(amount);
+    }
+
+    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
+    }
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external pure {
         revert("0");

@@ -28,6 +28,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     uint256 public borrowedAmount;
     address public borrowRecipient;
     address public lendingPoolManager;
+    uint256 public firstLossCapital;
 
     constructor(ISystemVariables systemVariables_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
         systemVariables = systemVariables_;
@@ -168,27 +169,27 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Transfers USDC from lending pool to pool delegate
-     * @param amount the amount that the pool delegate requests
+     * @param borrowAmount the amount that the pool delegate requests
      */
-    function borrowLoan(uint256 amount) external onlyLendingPoolManager {
-        if (amount == 0) {
-            revert BorrowAmountShouldBeGreaterThanZero();
+    function borrowLoan(uint256 borrowAmount) external onlyLendingPoolManager {
+        if (borrowAmount == 0) {
+            revert AmountShouldBeGreaterThanZero();
         }
 
         uint256 availableAmount = underlyingAsset.balanceOf(address(this));
-        if (availableAmount < amount) {
-            revert BorrowAmountCantBeGreaterThanAvailableAmount(amount, availableAmount);
+        if (availableAmount < borrowAmount) {
+            revert BorrowAmountCantBeGreaterThanAvailableAmount(borrowAmount, availableAmount);
         }
 
-        borrowedAmount += amount;
-        _transferAssets(borrowRecipient, amount);
+        borrowedAmount += borrowAmount;
+        _transferAssets(borrowRecipient, borrowAmount);
 
-        emit LoanBorrowed(amount);
+        emit LoanBorrowed(borrowAmount);
     }
 
     function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
         if (amount == 0) {
-            revert RepayAmountShouldBeGreaterThanZero();
+            revert AmountShouldBeGreaterThanZero();
         }
 
         if (amount > borrowedAmount) {
@@ -250,15 +251,52 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit LossReported(lossAmount);
     }
 
+    function depositFirstLossCapital(uint256 amount) external onlyLendingPoolManager {
+        if (amount == 0) {
+            revert AmountShouldBeGreaterThanZero();
+        }
+
+        _transferAssetsFrom(msg.sender, address(this), amount);
+
+        _mint(address(this), amount);
+
+        firstLossCapital += amount;
+
+        emit FirstLossCapitalAdded(amount, firstLossCapital);
+    }
+
+    function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress)
+        external
+        onlyLendingPoolManager
+    {
+        if (withdrawAmount == 0) {
+            revert AmountShouldBeGreaterThanZero();
+        }
+
+        if (withdrawAmount > firstLossCapital) {
+            revert WithdrawAmountCantBeGreaterThanFirstLostCapital(withdrawAmount, firstLossCapital);
+        }
+
+        _transferAssets(withdrawAddress, withdrawAmount);
+
+        _burn(address(this), withdrawAmount);
+
+        firstLossCapital -= withdrawAmount;
+
+        emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
+    }
+
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPool) {
+            // TODO: Type Error
             revert("LendingPool: only pending pool");
         }
     }
 
     function _onlyLendingPoolManager() private view {
         if (msg.sender != lendingPoolManager) {
-            revert("LendingPool: only pending pool manager");
+            // TODO: Type Error
+            revert("LendingPool: only lending pool manager");
         }
     }
 
