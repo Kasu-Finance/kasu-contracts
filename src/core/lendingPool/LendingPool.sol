@@ -265,7 +265,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FirstLossCapitalAdded(amount, firstLossCapital);
     }
 
-    function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) external {
+    function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress)
+        external
+        onlyLendingPoolManager
+    {
         if (withdrawAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
