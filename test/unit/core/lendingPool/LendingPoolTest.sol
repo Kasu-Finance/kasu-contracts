@@ -330,6 +330,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _depositFirstLossCapital(lendingPoolLoanAdmin, lpd.lendingPool, 10 * 10 ** 6);
 
         // ### ACT ###
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.WithdrawAmountCantBeGreaterThanFirstLostCapital.selector, 61 * 10 ** 6, 60 * 10 ** 6
+            )
+        );
+        _withdrawFirstLossCapital(lendingPoolLoanAdmin, lendingPoolLoanAdmin, lpd.lendingPool, 61 * 10 ** 6);
         _withdrawFirstLossCapital(lendingPoolLoanAdmin, lendingPoolLoanAdmin, lpd.lendingPool, 20 * 10 ** 6);
 
         // ### ASSERT ###
