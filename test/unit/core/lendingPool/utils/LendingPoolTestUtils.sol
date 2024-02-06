@@ -228,6 +228,16 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
     {
         lendingPoolManager.withdrawFirstLossCapital(lendingPool, amount, withdrawAddress);
     }
+
+    function _forceImmediateWithdrawal(
+        address caller,
+        address lendingPool,
+        address tranche,
+        address user,
+        uint256 shares
+    ) internal prank(caller) {
+        lendingPoolManager.forceImmediateWithdrawal(lendingPool, tranche, user, shares);
+    }
 }
 
 contract PendingPoolHarness is PendingPool {

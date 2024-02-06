@@ -123,6 +123,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
     }
 
+    function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
+    }
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external pure {
         revert("0");

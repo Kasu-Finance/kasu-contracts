@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import "./utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
@@ -405,5 +406,31 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(lendingPoolLoanAdmin), 0);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
+    }
+
+    function test_forceImmediateWithdrawal() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
+
+        // ### ACT ###
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxRedeem.selector, alice, 50 * 10 ** 18, 40 * 10 ** 18)
+        );
+        _forceImmediateWithdrawal(lendingPoolAdmin, lpd.lendingPool, lpd.tranches[0], alice, 50 * 10 ** 18);
+        _forceImmediateWithdrawal(lendingPoolAdmin, lpd.lendingPool, lpd.tranches[0], alice, 40 * 10 ** 18);
+        _forceImmediateWithdrawal(lendingPoolAdmin, lpd.lendingPool, lpd.tranches[1], bob, 200 * 10 ** 18);
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), 50 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(alice), 40 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(bob), 200 * 10 ** 6);
     }
 }
