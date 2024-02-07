@@ -290,6 +290,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     // TODO: cannot be run during clearing time
     function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
         external
+        onlyLendingPoolManager
         verifyTranche(tranche)
         returns (uint256 assetAmount)
     {
@@ -304,6 +305,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         emit ImmediateWithdrawalForces(user, tranche, sharesToWithdraw, assetAmount);
     }
+
+    // Helper functions
 
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPool) {
@@ -324,6 +327,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert InvalidTranche(address(this), tranche);
         }
     }
+
+    // Modifiers
 
     modifier onlyPendingPool() {
         _onlyPendingPool();
