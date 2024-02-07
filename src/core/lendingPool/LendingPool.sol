@@ -10,6 +10,7 @@ import "../interfaces/ISystemVariables.sol";
 import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../../shared/Stoppable.sol";
 
 /**
  * @dev
@@ -17,7 +18,7 @@ import "../interfaces/lendingPool/ILendingPoolFactory.sol";
  * The lending pool is also a ERC20 token. This token always represents
  * the total balance of the lending pool against the underlying asset.
  */
-contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors {
+contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, Stoppable {
     ISystemVariables public immutable systemVariables;
 
     /// @dev Lending pool configuration.
@@ -110,6 +111,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      */
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
         external
+        shouldNotBeStopped
         onlyPendingPool
         verifyTranche(tranche)
     {
@@ -172,7 +174,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Transfers USDC from lending pool to pool delegate
      * @param borrowAmount the amount that the pool delegate requests
      */
-    function borrowLoan(uint256 borrowAmount) external onlyLendingPoolManager {
+    function borrowLoan(uint256 borrowAmount) external shouldNotBeStopped onlyLendingPoolManager {
         if (borrowAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -252,7 +254,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit LossReported(lossAmount);
     }
 
-    function depositFirstLossCapital(uint256 amount) external onlyLendingPoolManager {
+    function depositFirstLossCapital(uint256 amount) external shouldNotBeStopped onlyLendingPoolManager {
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -270,6 +272,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
     {
+        _withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
+    }
+
+    function _withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) internal {
         if (withdrawAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -304,6 +310,20 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _transferAssets(user, assetAmount);
 
         emit ImmediateWithdrawalForces(user, tranche, sharesToWithdraw, assetAmount);
+    }
+
+    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
+        if (borrowedAmount > 0) {
+            revert BorrowedAmountIsGreaterThnZero(borrowedAmount);
+        }
+
+        if (firstLossCapital > 0) {
+            _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
+        }
+
+        IPendingPool(getPendingPool()).stop();
+
+        _stop();
     }
 
     // Helper functions

@@ -5,6 +5,7 @@ import "./utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
+import "../../../../src/shared/Stoppable.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -504,5 +505,56 @@ contract LendingPoolTest is LendingPoolTestUtils {
         WithdrawalNftDetails memory withdrawalNftDetails_bob = pendingPool.trancheWithdrawalNftDetails(wNftId_bob);
         assertEq(withdrawalNftDetails_bob.sharesAmount, requestWithdrawalSharesAmount_bob);
         assertEq(withdrawalNftDetails_bob.priorityLevel, type(uint256).max);
+    }
+
+    function test_stop() external {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+        uint256 dNftId_carol = _requestDeposit(carol, lpd.lendingPool, lpd.tranches[2], 10 * 10 ** 6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
+
+        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 200 * 10 ** 6);
+
+        _depositFirstLossCapital(lendingPoolLoanAdmin, lpd.lendingPool, 50 * 10 ** 6);
+
+        // ### ACT / ASSERT ###
+
+        // stop without repaying all borrowed loan
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.BorrowedAmountIsGreaterThnZero.selector, 200 * 10 ** 6));
+        _stop(lendingPoolAdmin, lpd.lendingPool, lendingPoolAdmin);
+
+        _repayLoan(lendingPoolLoanAdmin, lendingPoolLoanAdmin, lpd.lendingPool, 200 * 10 ** 6);
+
+        _stop(lendingPoolAdmin, lpd.lendingPool, lendingPoolAdmin);
+        assertEq(mockUsdc.balanceOf(lendingPoolAdmin), 50 * 10 ** 6);
+
+        // request deposit after stop - not allowed
+        vm.startPrank(bob);
+        deal(address(mockUsdc), bob, 10 * 10 ** 6, true);
+        mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
+        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6);
+        vm.stopPrank();
+
+        // deposit first lost capital after stop - not allowed
+        vm.startPrank(lendingPoolLoanAdmin);
+        deal(address(mockUsdc), lendingPoolLoanAdmin, 10 * 10 ** 6, true);
+        mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
+        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        lendingPoolManager.depositFirstLossCapital(lpd.lendingPool, 10 * 10 ** 6);
+        vm.stopPrank();
+
+        // borrow loan after stop - even though balance is zero not allowed
+        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 10 * 10 ** 6);
+
+        // accept deposit after stop - not allowed
+        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        _acceptDepositRequest(lpd.lendingPool, dNftId_carol, 10 * 10 ** 6);
     }
 }

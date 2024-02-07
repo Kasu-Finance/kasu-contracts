@@ -248,6 +248,10 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
     ) internal prank(caller) returns (uint256 wNftId) {
         return lendingPoolManager.forceWithdrawal(lendingPool, tranche, user, sharesToWithdraw);
     }
+
+    function _stop(address caller, address lendingPool, address firstLostCapitalReceiver) internal prank(caller) {
+        lendingPoolManager.stopLendingPool(lendingPool, firstLostCapitalReceiver);
+    }
 }
 
 contract PendingPoolHarness is PendingPool {

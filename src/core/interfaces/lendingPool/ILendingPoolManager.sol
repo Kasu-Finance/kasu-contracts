@@ -53,6 +53,8 @@ interface ILendingPoolManager {
         external
         returns (uint256 wNftID);
 
+    function stopLendingPool(address lendingPool, address firstLossCapitalReceiver) external;
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;
 }

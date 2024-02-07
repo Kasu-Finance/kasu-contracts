@@ -138,6 +138,13 @@ contract LendingPoolManager is
         return IPendingPool(ILendingPool(lendingPool).getPendingPool()).forceWithdrawal(user, tranche, sharesToWithdraw);
     }
 
+    function stopLendingPool(address lendingPool, address firstLossCapitalReceiver)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
+    }
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external pure {
         revert("0");

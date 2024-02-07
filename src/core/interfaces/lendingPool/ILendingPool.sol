@@ -50,6 +50,8 @@ interface ILendingPool is IERC20 {
         external
         returns (uint256 assetAmount);
 
+    function stop(address firstLossCapitalReceiver) external;
+
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
 
@@ -77,4 +79,5 @@ interface ILendingPool is IERC20 {
     error WithdrawAmountCantBeGreaterThanFirstLostCapital(uint256 withdrawAmount, uint256 firstLostCapital);
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
+    error BorrowedAmountIsGreaterThnZero(uint256 borrowedAmoun);
 }

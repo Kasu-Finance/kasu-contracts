@@ -55,6 +55,8 @@ interface IPendingPool is IERC721 {
 
     function forceWithdrawal(address user, address tranche, uint256 amount) external returns (uint256 wNftID);
 
+    function stop() external;
+
     // Events
     event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
