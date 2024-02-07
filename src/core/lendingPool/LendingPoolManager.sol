@@ -130,6 +130,14 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
     }
 
+    function forceWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+        returns (uint256 wNftID)
+    {
+        return IPendingPool(ILendingPool(lendingPool).getPendingPool()).forceWithdrawal(user, tranche, sharesToWithdraw);
+    }
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external pure {
         revert("0");

@@ -183,7 +183,7 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
     function _requestWithdrawal(address sender, address lendingPool, address tranche, uint256 amount)
         internal
         prank(sender)
-        returns (uint256 dNftId)
+        returns (uint256 wNftId)
     {
         return lendingPoolManager.requestWithdrawal(lendingPool, tranche, amount);
     }
@@ -237,6 +237,16 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         uint256 shares
     ) internal prank(caller) {
         lendingPoolManager.forceImmediateWithdrawal(lendingPool, tranche, user, shares);
+    }
+
+    function _forceWithdrawal(
+        address caller,
+        address user,
+        address lendingPool,
+        address tranche,
+        uint256 sharesToWithdraw
+    ) internal prank(caller) returns (uint256 wNftId) {
+        return lendingPoolManager.forceWithdrawal(lendingPool, tranche, user, sharesToWithdraw);
     }
 }
 

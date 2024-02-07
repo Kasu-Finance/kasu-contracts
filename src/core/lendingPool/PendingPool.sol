@@ -166,6 +166,51 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         external
         returns (uint256 wNftID)
     {
+        wNftID = _requestWithdrawal(user, tranche, trancheShares, 0);
+
+        emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
+    }
+
+    /**
+     * @notice Cancels a pending withdrawal request for the user.
+     * @dev Transfers tranche shares from the pending pool back to the user.
+     * @param user The user cancelling the withdrawal request.
+     * @param wNftID The withdrawal id to cancel.
+     */
+    function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
+        WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
+
+        if (withdrawalNftDetails.priorityLevel == type(uint256).max) {
+            revert WithdrawalRequestIsForced(user, address(_getOwnLendingPool()), wNftID);
+        }
+
+        (address tranche,) = decomposeWithdrawalId(wNftID);
+
+        // Burn the withdrawal NFT
+        _update(address(0), wNftID, address(0));
+
+        IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
+
+        // delete nft storage
+        delete _trancheWithdrawalNftDetails[wNftID];
+
+        emit WithdrawalRequestCancelled(user, tranche, wNftID);
+    }
+
+    function forceWithdrawal(address user, address tranche, uint256 trancheShares)
+        external
+        onlyLendingPoolManager
+        returns (uint256 wNftID)
+    {
+        wNftID = _requestWithdrawal(user, tranche, trancheShares, type(uint256).max);
+
+        emit ForceWithdrawalRequested(user, tranche, wNftID, trancheShares);
+    }
+
+    function _requestWithdrawal(address user, address tranche, uint256 trancheShares, uint256 priority)
+        internal
+        returns (uint256 wNftID)
+    {
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < trancheShares) {
             revert InsufficientSharesBalance(
@@ -183,31 +228,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         _mint(user, wNftID);
 
         // TODO: get epoch id
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, 0, 0);
-
-        emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
-    }
-
-    /**
-     * @notice Cancels a pending withdrawal request for the user.
-     * @dev Transfers tranche shares from the pending pool back to the user.
-     * @param user The user cancelling the withdrawal request.
-     * @param wNftID The withdrawal id to cancel.
-     */
-    function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
-        WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
-
-        (address tranche,) = decomposeWithdrawalId(wNftID);
-
-        // Burn the withdrawal NFT
-        _update(address(0), wNftID, address(0));
-
-        IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
-
-        // delete nft storage
-        delete _trancheWithdrawalNftDetails[wNftID];
-
-        emit WithdrawalRequestCancelled(user, tranche, wNftID);
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, priority, 0);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE

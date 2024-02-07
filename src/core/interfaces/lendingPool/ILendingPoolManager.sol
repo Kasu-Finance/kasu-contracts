@@ -49,6 +49,10 @@ interface ILendingPoolManager {
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external;
 
+    function forceWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
+        external
+        returns (uint256 wNftID);
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;
 }

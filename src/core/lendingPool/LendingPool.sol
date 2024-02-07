@@ -287,6 +287,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
     }
 
+    // TODO: cannot be run during clearing time
     function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
         external
         verifyTranche(tranche)
