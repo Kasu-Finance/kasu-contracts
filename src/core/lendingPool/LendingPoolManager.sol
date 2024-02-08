@@ -11,6 +11,7 @@ import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
 import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "forge-std/console2.sol";
 
 contract LendingPoolManager is
     ILendingPoolManager,
@@ -130,12 +131,14 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
     }
 
-    function forceWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
+    function forceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
-        returns (uint256 wNftID)
+        returns (uint256[] memory wNftIDs)
     {
-        return IPendingPool(ILendingPool(lendingPool).getPendingPool()).forceWithdrawal(user, tranche, sharesToWithdraw);
+        uint256[] memory result = IPendingPool(ILendingPool(lendingPool).getPendingPool()).forceWithdrawals(input);
+        console2.log("LendingPoolManager.forceWithdrawals: result.length", result.length);
+        wNftIDs = result;
     }
 
     // #### PROTOCOL FEES #### //

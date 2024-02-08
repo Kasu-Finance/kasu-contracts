@@ -6,6 +6,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
+import "forge-std/console2.sol";
 
 /**
  * @dev
@@ -197,28 +198,31 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
 
-    function forceWithdrawal(address user, address tranche, uint256 trancheShares)
+    function forceWithdrawals(ForceWithdrawalInput[] calldata input)
         external
         onlyLendingPoolManager
-        returns (uint256 wNftID)
+        returns (uint256[] memory wNftIDs)
     {
-        wNftID = _requestWithdrawal(user, tranche, trancheShares, type(uint256).max);
-
-        emit ForceWithdrawalRequested(user, tranche, wNftID, trancheShares);
+        wNftIDs = new uint256[](input.length);
+        for (uint256 i = 0; i < input.length; i++) {
+            wNftIDs[i] =
+                _requestWithdrawal(input[i].user, input[i].tranche, input[i].sharesToWithdraw, type(uint256).max);
+            emit ForceWithdrawalRequested(input[i].user, input[i].tranche, wNftIDs[i], input[i].sharesToWithdraw);
+        }
     }
 
-    function _requestWithdrawal(address user, address tranche, uint256 trancheShares, uint256 priority)
+    function _requestWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 priority)
         internal
         returns (uint256 wNftID)
     {
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
-        if (remainingUserShares < trancheShares) {
+        if (remainingUserShares < sharesToWithdraw) {
             revert InsufficientSharesBalance(
-                user, address(_getOwnLendingPool()), tranche, remainingUserShares, trancheShares
+                user, address(_getOwnLendingPool()), tranche, remainingUserShares, sharesToWithdraw
             );
         }
 
-        IERC20(tranche).transferFrom(user, address(this), trancheShares);
+        IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
         wNftID = _nextTrancheWithdrawalNFTId[tranche];
         _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
@@ -228,7 +232,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         _mint(user, wNftID);
 
         // TODO: get epoch id
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, priority, 0);
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, 0);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE

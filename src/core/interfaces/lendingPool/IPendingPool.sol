@@ -15,6 +15,12 @@ struct WithdrawalNftDetails {
     uint256 epochId;
 }
 
+struct ForceWithdrawalInput {
+    address tranche;
+    address user;
+    uint256 sharesToWithdraw;
+}
+
 /**
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
@@ -53,7 +59,7 @@ interface IPendingPool is IERC721 {
 
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
 
-    function forceWithdrawal(address user, address tranche, uint256 amount) external returns (uint256 wNftID);
+    function forceWithdrawals(ForceWithdrawalInput[] calldata input) external returns (uint256[] memory wNftIDs);
 
     // Events
     event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);

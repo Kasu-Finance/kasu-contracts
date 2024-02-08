@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import "forge-std/console2.sol";
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "../../../shared/MockERC20Permit.sol";
