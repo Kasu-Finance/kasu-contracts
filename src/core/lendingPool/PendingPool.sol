@@ -216,7 +216,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         _stop();
     }
 
-    function _requestWithdrawal(address user, address tranche, uint256 trancheShares, uint256 priority)
+    function _requestWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 priority)
         internal
         returns (uint256 wNftID)
     {
