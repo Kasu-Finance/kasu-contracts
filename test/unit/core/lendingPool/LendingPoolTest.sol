@@ -210,7 +210,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 wNftId_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
         uint256 wNftId_carol =
-            _forceWithdrawal(lendingPoolAdmin, carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 18);
+            _forceWithdrawal(lendingPoolAdmin, carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 18)[0];
 
         // ### ACT ###
         // incorrect owner
@@ -463,11 +463,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
         uint256 wNftId_alice = _forceWithdrawal(
             lendingPoolAdmin, alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice
-        );
+        )[0];
 
         uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
-        uint256 wNftId_bob =
-            _forceWithdrawal(lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob);
+        uint256 wNftId_bob = _forceWithdrawal(
+            lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob
+        )[0];
 
         // request more assets to withdraw than user has in its balance
         vm.expectRevert(

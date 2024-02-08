@@ -246,13 +246,10 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         address lendingPool,
         address tranche,
         uint256 sharesToWithdraw
-    ) internal prank(caller) returns (uint256) {
+    ) internal prank(caller) returns (uint256[] memory) {
         ForceWithdrawalInput[] memory input = new ForceWithdrawalInput[](1);
         input[0] = ForceWithdrawalInput(tranche, user, sharesToWithdraw);
-        console2.log("LendingPoolTestUtils._forceWithdrawal: input.length", input.length);
-        uint256[] memory result = lendingPoolManager.forceWithdrawals(lendingPool, input);
-        console2.log("LendingPoolTestUtils._forceWithdrawal: result.length", result.length);
-        return result[0];
+        return lendingPoolManager.forceWithdrawals(lendingPool, input);
     }
 }
 
