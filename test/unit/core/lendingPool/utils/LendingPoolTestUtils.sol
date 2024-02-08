@@ -240,7 +240,7 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager.forceImmediateWithdrawal(lendingPool, tranche, user, shares);
     }
 
-    function _forceWithdrawal(
+    function _batchForceWithdrawals(
         address caller,
         address user,
         address lendingPool,
@@ -249,7 +249,7 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
     ) internal prank(caller) returns (uint256[] memory) {
         ForceWithdrawalInput[] memory input = new ForceWithdrawalInput[](1);
         input[0] = ForceWithdrawalInput(tranche, user, sharesToWithdraw);
-        return lendingPoolManager.forceWithdrawals(lendingPool, input);
+        return lendingPoolManager.batchForceWithdrawals(lendingPool, input);
     }
 }
 

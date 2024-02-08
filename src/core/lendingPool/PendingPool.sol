@@ -198,7 +198,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
 
-    function forceWithdrawals(ForceWithdrawalInput[] calldata input)
+    function batchForceWithdrawals(ForceWithdrawalInput[] calldata input)
         external
         onlyLendingPoolManager
         returns (uint256[] memory wNftIDs)

@@ -210,7 +210,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 wNftId_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
         uint256 wNftId_carol =
-            _forceWithdrawal(lendingPoolAdmin, carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 18)[0];
+            _batchForceWithdrawals(lendingPoolAdmin, carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 18)[0];
 
         // ### ACT ###
         // incorrect owner
@@ -443,7 +443,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(bob), 200 * 10 ** 6);
     }
 
-    function test_forceWithdrawal() public {
+    function test_batchForceWithdrawals() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -461,12 +461,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
-        uint256 wNftId_alice = _forceWithdrawal(
+        uint256 wNftId_alice = _batchForceWithdrawals(
             lendingPoolAdmin, alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice
         )[0];
 
         uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
-        uint256 wNftId_bob = _forceWithdrawal(
+        uint256 wNftId_bob = _batchForceWithdrawals(
             lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob
         )[0];
 
@@ -481,7 +481,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 51 * 10 ** 18
             )
         );
-        _forceWithdrawal(lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], 51 * 10 ** 18);
+        _batchForceWithdrawals(lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], 51 * 10 ** 18);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
