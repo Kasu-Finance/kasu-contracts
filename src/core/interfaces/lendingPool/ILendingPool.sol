@@ -60,7 +60,7 @@ interface ILendingPool is IERC20 {
 
     event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
 
-    event ImmediateWithdrawalForces(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
+    event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
 
     event LoanBorrowed(uint256 amount);
 

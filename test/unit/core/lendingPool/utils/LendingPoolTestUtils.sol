@@ -15,6 +15,7 @@ import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
 import "../../../../../src/shared/access/KasuController.sol";
 import "../../../../shared/MockKsuPrice.sol";
+import "../../../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
 
 abstract contract LendingPoolTestUtils is BaseTestUtils {
     ProxyAdmin internal proxyAdmin;
@@ -239,14 +240,12 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager.forceImmediateWithdrawal(lendingPool, tranche, user, shares);
     }
 
-    function _forceWithdrawal(
-        address caller,
-        address user,
-        address lendingPool,
-        address tranche,
-        uint256 sharesToWithdraw
-    ) internal prank(caller) returns (uint256 wNftId) {
-        return lendingPoolManager.forceWithdrawal(lendingPool, tranche, user, sharesToWithdraw);
+    function _batchForceWithdrawals(address caller, address lendingPool, ForceWithdrawalInput[] memory input)
+        internal
+        prank(caller)
+        returns (uint256[] memory)
+    {
+        return lendingPoolManager.batchForceWithdrawals(lendingPool, input);
     }
 
     function _stop(address caller, address lendingPool, address firstLostCapitalReceiver) internal prank(caller) {
