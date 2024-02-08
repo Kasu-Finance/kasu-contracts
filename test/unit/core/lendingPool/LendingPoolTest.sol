@@ -209,8 +209,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 wNftId_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
-        uint256 wNftId_carol =
-            _batchForceWithdrawals(lendingPoolAdmin, carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 18)[0];
+        ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
+        input1[0] = ForceWithdrawalInput(lpd.tranches[2], carol, 50 * 10 ** 18);
+        uint256 wNftId_carol = _batchForceWithdrawals(lendingPoolAdmin, lpd.lendingPool, input1)[0];
 
         // ### ACT ###
         // incorrect owner
@@ -447,11 +448,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
-        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
 
-        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
 
         uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
@@ -460,15 +459,15 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
         // ### ACT ###
+        ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](2);
         uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
-        uint256 wNftId_alice = _batchForceWithdrawals(
-            lendingPoolAdmin, alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice
-        )[0];
-
+        input1[0] = ForceWithdrawalInput(lpd.tranches[0], alice, requestWithdrawalSharesAmount_alice);
         uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
-        uint256 wNftId_bob = _batchForceWithdrawals(
-            lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob
-        )[0];
+        input1[1] = ForceWithdrawalInput(lpd.tranches[1], bob, requestWithdrawalSharesAmount_bob);
+
+        uint256[] memory result = _batchForceWithdrawals(lendingPoolAdmin, lpd.lendingPool, input1);
+        uint256 wNftId_alice = result[0];
+        uint256 wNftId_bob = result[1];
 
         // request more assets to withdraw than user has in its balance
         vm.expectRevert(
@@ -481,7 +480,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 51 * 10 ** 18
             )
         );
-        _batchForceWithdrawals(lendingPoolAdmin, bob, lpd.lendingPool, lpd.tranches[1], 51 * 10 ** 18);
+        ForceWithdrawalInput[] memory input2 = new ForceWithdrawalInput[](1);
+        input2[0] = ForceWithdrawalInput(lpd.tranches[1], bob, 51 * 10 ** 18);
+        _batchForceWithdrawals(lendingPoolAdmin, lpd.lendingPool, input2);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
