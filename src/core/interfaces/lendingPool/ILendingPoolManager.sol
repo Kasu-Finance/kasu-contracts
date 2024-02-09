@@ -33,7 +33,7 @@ interface ILendingPoolManager {
 
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
-    // #### POOL DELEGATE #### //
+    // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoan(address lendingPool, uint256 amount) external;
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
@@ -41,6 +41,8 @@ interface ILendingPoolManager {
     function updateLoanAmount(address lendingPool, uint256 amount) external;
 
     function reportLoss(address lendingPool, uint256 amount) external returns (uint256 lossId);
+
+    function repayLoss(address lendingPool, uint256 lossId, uint256 amount) external;
 
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 

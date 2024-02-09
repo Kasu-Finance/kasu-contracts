@@ -95,7 +95,10 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function updateLoanAmount(address, uint256) external pure {
+    function updateLoanAmount(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
         revert("0");
     }
 
@@ -105,6 +108,13 @@ contract LendingPoolManager is
         returns (uint256)
     {
         return ILendingPool(lendingPool).reportLoss(amount);
+    }
+
+    function repayLoss(address lendingPool, uint256 lossId, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        revert("0");
     }
 
     function depositFirstLossCapital(address lendingPool, uint256 amount)
