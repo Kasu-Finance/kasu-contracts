@@ -3,10 +3,13 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// TODO: should I add most lending pool data here?
 struct LendingPoolInfo {
     TrancheData[] tranches;
     address pendingPool;
+    // TODO: should I update this instead of LendingPool.firstLossCapital ?
     uint256 firstLossCapital;
+    // TODO: should I update this ?
     uint256 totalBalance;
     uint256 excessFunds;
     uint256 excessTargetLiquidity; // percentage of not borrowed funds (only as senior deposits)
@@ -23,6 +26,8 @@ struct TrancheData {
  */
 interface ILendingPool is IERC20 {
     function getPendingPool() external view returns (address);
+
+    function lendingPoolInfo() external view returns (LendingPoolInfo memory);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;

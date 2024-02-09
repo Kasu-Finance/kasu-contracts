@@ -558,5 +558,11 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // accept deposit after stop - not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         _acceptDepositRequest(lpd.lendingPool, dNftId_carol, 10 * 10 ** 6);
+
+        // check tranches interest rate is zero
+        LendingPoolInfo memory lendingPoolInfo = ILendingPool(lpd.lendingPool).lendingPoolInfo();
+        for (uint256 i = 0; i < lendingPoolInfo.tranches.length; i++) {
+            assertEq(lendingPoolInfo.tranches[i].interestRate, 0);
+        }
     }
 }
