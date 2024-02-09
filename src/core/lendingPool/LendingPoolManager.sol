@@ -83,14 +83,14 @@ contract LendingPoolManager is
     // #### POOL DELEGATE #### //
     function borrowLoan(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).borrowLoan(amount);
     }
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
@@ -101,7 +101,7 @@ contract LendingPoolManager is
 
     function reportLoss(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         returns (uint256)
     {
         return ILendingPool(lendingPool).reportLoss(amount);
@@ -109,7 +109,7 @@ contract LendingPoolManager is
 
     function depositFirstLossCapital(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPool, amount);
@@ -118,7 +118,7 @@ contract LendingPoolManager is
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
     }

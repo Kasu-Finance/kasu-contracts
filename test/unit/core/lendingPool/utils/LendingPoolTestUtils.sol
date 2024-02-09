@@ -160,7 +160,7 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         // access control - grant
         vm.prank(lendingPoolAdmin);
         kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, lendingPoolLoanAdmin
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, lendingPoolLoanAdmin
         );
     }
 
