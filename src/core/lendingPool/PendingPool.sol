@@ -6,7 +6,6 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
-import "forge-std/console2.sol";
 
 /**
  * @dev
