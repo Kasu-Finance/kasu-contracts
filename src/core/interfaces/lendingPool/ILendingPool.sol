@@ -80,4 +80,5 @@ interface ILendingPool is IERC20 {
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
     error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
+    error LendingPoolIsStopped();
 }

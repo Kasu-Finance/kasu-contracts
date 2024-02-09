@@ -5,7 +5,7 @@ import "./utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
-import "../../../../src/shared/Stoppable.sol";
+import "../../../../src/core/lendingPool/LendingPoolStoppable.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -539,7 +539,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(bob);
         deal(address(mockUsdc), bob, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
-        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6);
         vm.stopPrank();
 
@@ -547,16 +547,16 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(lendingPoolLoanAdmin);
         deal(address(mockUsdc), lendingPoolLoanAdmin, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
-        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         lendingPoolManager.depositFirstLossCapital(lpd.lendingPool, 10 * 10 ** 6);
         vm.stopPrank();
 
         // borrow loan after stop - even though balance is zero not allowed
-        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         _borrowLoan(lendingPoolLoanAdmin, lpd.lendingPool, 10 * 10 ** 6);
 
         // accept deposit after stop - not allowed
-        vm.expectRevert(abi.encodeWithSelector(Stoppable.ContractIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         _acceptDepositRequest(lpd.lendingPool, dNftId_carol, 10 * 10 ** 6);
     }
 }

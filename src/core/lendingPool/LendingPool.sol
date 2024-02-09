@@ -10,7 +10,7 @@ import "../interfaces/ISystemVariables.sol";
 import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
-import "../../shared/Stoppable.sol";
+import "./LendingPoolStoppable.sol";
 
 /**
  * @dev
@@ -18,7 +18,7 @@ import "../../shared/Stoppable.sol";
  * The lending pool is also a ERC20 token. This token always represents
  * the total balance of the lending pool against the underlying asset.
  */
-contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, Stoppable {
+contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     ISystemVariables public immutable systemVariables;
 
     /// @dev Lending pool configuration.
@@ -111,7 +111,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      */
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
         external
-        shouldNotBeStopped
+        lendingPoolShouldNotBeStopped
         onlyPendingPool
         verifyTranche(tranche)
     {
@@ -174,7 +174,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Transfers USDC from lending pool to pool delegate
      * @param borrowAmount the amount that the pool delegate requests
      */
-    function borrowLoan(uint256 borrowAmount) external shouldNotBeStopped onlyLendingPoolManager {
+    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
         if (borrowAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -254,7 +254,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit LossReported(lossAmount);
     }
 
-    function depositFirstLossCapital(uint256 amount) external shouldNotBeStopped onlyLendingPoolManager {
+    function depositFirstLossCapital(uint256 amount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -323,7 +323,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         IPendingPool(getPendingPool()).stop();
 
-        _stop();
+        _stopLendingPool();
     }
 
     // Helper functions
