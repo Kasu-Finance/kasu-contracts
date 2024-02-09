@@ -106,8 +106,8 @@ contract LendingPoolTranche is
     }
 
     function _spendAllowance(address owner, address spender, uint256 value) internal override {
-        if (spender != _getPendingPool()) {
-            super._spendAllowance(owner, spender, value);
-        }
+        if (spender == _getPendingPool()) return;
+        if (spender == address(_getOwnLendingPool())) return;
+        super._spendAllowance(owner, spender, value);
     }
 }

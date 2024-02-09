@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPool} from "./ILendingPool.sol";
+import "./IPendingPool.sol";
 import "./ILendingPoolFactory.sol";
 
 struct ForceWithdrawalDetails {
@@ -45,6 +45,13 @@ interface ILendingPoolManager {
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress) external;
+
+    function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
+        external;
+
+    function batchForceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
+        external
+        returns (uint256[] memory);
 
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external;

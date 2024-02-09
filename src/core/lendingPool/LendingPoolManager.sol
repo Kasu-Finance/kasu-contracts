@@ -123,6 +123,21 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
     }
 
+    function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
+    }
+
+    function batchForceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+        returns (uint256[] memory wNftIDs)
+    {
+        wNftIDs = IPendingPool(ILendingPool(lendingPool).getPendingPool()).batchForceWithdrawals(input);
+    }
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external pure {
         revert("0");

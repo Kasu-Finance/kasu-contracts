@@ -46,6 +46,10 @@ interface ILendingPool is IERC20 {
 
     function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) external;
 
+    function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
+        external
+        returns (uint256 assetAmount);
+
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
 
@@ -53,6 +57,8 @@ interface ILendingPool is IERC20 {
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 
     event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
+
+    event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
 
     event LoanBorrowed(uint256 amount);
 

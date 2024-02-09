@@ -15,6 +15,12 @@ struct WithdrawalNftDetails {
     uint256 epochId;
 }
 
+struct ForceWithdrawalInput {
+    address tranche;
+    address user;
+    uint256 sharesToWithdraw;
+}
+
 /**
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
@@ -44,18 +50,25 @@ interface IPendingPool is IERC721 {
      * @notice Creates a pending withdrawal for the user.
      * @param user The user making the pending withdraw
      * @param tranche The pending withdrawal tranche
-     * @param amount the amount that will added in the pending withdrawal
+     * @param trancheShares the amount of shares that will added in the pending withdrawal
      * @return wNftID the withdrawal NFT id that acts as a receipt for the pending withdrawal
      */
-    function requestWithdrawal(address user, address tranche, uint256 amount) external returns (uint256 wNftID);
+    function requestWithdrawal(address user, address tranche, uint256 trancheShares)
+        external
+        returns (uint256 wNftID);
 
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
+
+    function batchForceWithdrawals(ForceWithdrawalInput[] calldata input) external returns (uint256[] memory wNftIDs);
 
     // Events
     event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
     event WithdrawalRequested(address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 amount);
     event WithdrawalRequestCancelled(address indexed user, address indexed tranche, uint256 indexed wNftID);
+    event ForceWithdrawalRequested(
+        address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 amount
+    );
 
     // Errors
     error UserIsNotOwnerOfNFT(address user, uint256 dNftID);
@@ -64,4 +77,5 @@ interface IPendingPool is IERC721 {
     error InsufficientSharesBalance(
         address user, address lendingPool, address tranche, uint256 availableShares, uint256 requestedShares
     );
+    error WithdrawalRequestIsForced(address user, address lendingPool, uint256 wNftID);
 }

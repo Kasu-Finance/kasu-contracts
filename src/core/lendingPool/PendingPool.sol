@@ -166,24 +166,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         external
         returns (uint256 wNftID)
     {
-        uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
-        if (remainingUserShares < trancheShares) {
-            revert InsufficientSharesBalance(
-                user, address(_getOwnLendingPool()), tranche, remainingUserShares, trancheShares
-            );
-        }
-
-        IERC20(tranche).transferFrom(user, address(this), trancheShares);
-
-        wNftID = _nextTrancheWithdrawalNFTId[tranche];
-        _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
-
-        _trancheWithdrawalNFTs[tranche].push(wNftID);
-
-        _mint(user, wNftID);
-
-        // TODO: get epoch id
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(trancheShares, 0, 0);
+        wNftID = _requestWithdrawal(user, tranche, trancheShares, 0);
 
         emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
     }
@@ -197,6 +180,10 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
     function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
+        if (withdrawalNftDetails.priorityLevel == type(uint256).max) {
+            revert WithdrawalRequestIsForced(user, address(_getOwnLendingPool()), wNftID);
+        }
+
         (address tranche,) = decomposeWithdrawalId(wNftID);
 
         // Burn the withdrawal NFT
@@ -208,6 +195,43 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
         delete _trancheWithdrawalNftDetails[wNftID];
 
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
+    }
+
+    function batchForceWithdrawals(ForceWithdrawalInput[] calldata input)
+        external
+        onlyLendingPoolManager
+        returns (uint256[] memory wNftIDs)
+    {
+        wNftIDs = new uint256[](input.length);
+        for (uint256 i = 0; i < input.length; i++) {
+            wNftIDs[i] =
+                _requestWithdrawal(input[i].user, input[i].tranche, input[i].sharesToWithdraw, type(uint256).max);
+            emit ForceWithdrawalRequested(input[i].user, input[i].tranche, wNftIDs[i], input[i].sharesToWithdraw);
+        }
+    }
+
+    function _requestWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 priority)
+        internal
+        returns (uint256 wNftID)
+    {
+        uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
+        if (remainingUserShares < sharesToWithdraw) {
+            revert InsufficientSharesBalance(
+                user, address(_getOwnLendingPool()), tranche, remainingUserShares, sharesToWithdraw
+            );
+        }
+
+        IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
+
+        wNftID = _nextTrancheWithdrawalNFTId[tranche];
+        _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
+
+        _trancheWithdrawalNFTs[tranche].push(wNftID);
+
+        _mint(user, wNftID);
+
+        // TODO: get epoch id
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, 0);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE

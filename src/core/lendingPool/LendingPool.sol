@@ -84,7 +84,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Returns the pending pool address.
      * @return The pending pool address.
      */
-    function getPendingPool() external view returns (address) {
+    function getPendingPool() public view returns (address) {
         return _lendingPoolInfo.pendingPool;
     }
 
@@ -113,12 +113,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         onlyPendingPool
         verifyTranche(tranche)
     {
+        // transfer usdc from pending pool to lending pool - pre-approved
         _transferAssetsFrom(msg.sender, address(this), acceptedAmount);
 
-        // mint the same amount as the accepted deposit
+        // mint lending pool tokens, the same amount as the accepted usdc deposit
         _mint(address(this), acceptedAmount);
 
-        // deposit the minted tokens to the tranche
+        // transfer lending pool tokens from lending pool to the user in tranche - creates tranche shares for user
         ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
 
         emit DepositAccepted(user, tranche, acceptedAmount);
@@ -143,15 +144,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         returns (uint256 assetAmount)
     {
         // transfer tranche shares from the pending pool to the lending pool
-        ILendingPoolTranche(tranche).transferFrom(msg.sender, address(this), acceptedShares);
+        // ILendingPoolTranche(tranche).transferFrom(msg.sender, address(this), acceptedShares);
 
-        // deposit the minted tokens to the tranche
-        assetAmount = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), address(this));
+        // transfer lending pool tokens from tranche to lending pool and burn tranche shares
+        assetAmount = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), msg.sender);
 
         // burn the lending pool token
         _burn(address(this), assetAmount);
 
-        // transfer assets to the user
+        // transfer usdc to the user
         _transferAssets(user, assetAmount);
 
         emit WithdrawalAccepted(user, tranche, acceptedShares);
@@ -286,6 +287,27 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
     }
 
+    // TODO: cannot be run during clearing time
+    function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+        returns (uint256 assetAmount)
+    {
+        // transfer lending pool tokens from tranche to lending pool and burn tranche user shares
+        assetAmount = ILendingPoolTranche(tranche).redeem(sharesToWithdraw, address(this), user);
+
+        // burn the lending pool token
+        _burn(address(this), assetAmount);
+
+        // transfer usdc to the user
+        _transferAssets(user, assetAmount);
+
+        emit ImmediateWithdrawal(user, tranche, sharesToWithdraw, assetAmount);
+    }
+
+    // Helper functions
+
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPool) {
             // TODO: Type Error
@@ -305,6 +327,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert InvalidTranche(address(this), tranche);
         }
     }
+
+    // Modifiers
 
     modifier onlyPendingPool() {
         _onlyPendingPool();

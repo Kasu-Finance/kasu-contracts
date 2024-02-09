@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import "./utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
@@ -192,25 +193,25 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
-        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
 
-        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
 
-        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+        uint256 dNftId_carol = _requestDeposit(carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 6);
 
-        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
 
-        uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
-        uint256 wNftId_alice =
-            _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
 
-        uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
-        uint256 wNftId_bob =
-            _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_carol, 50 * 10 ** 6);
+
+        uint256 wNftId_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 40 * 10 ** 18);
+
+        uint256 wNftId_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
+
+        ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
+        input1[0] = ForceWithdrawalInput(lpd.tranches[2], carol, 50 * 10 ** 18);
+        uint256 wNftId_carol = _batchForceWithdrawals(lendingPoolAdmin, lpd.lendingPool, input1)[0];
 
         // ### ACT ###
         // incorrect owner
@@ -220,10 +221,20 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _cancelWithdrawalRequest(alice, lpd.lendingPool, wNftId_alice);
         _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_bob);
 
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.WithdrawalRequestIsForced.selector, carol, lpd.lendingPool, wNftId_carol
+            )
+        );
+        _cancelWithdrawalRequest(carol, lpd.lendingPool, wNftId_carol);
+
         // non existing dNftId
-        uint256 wNftId_nonExistent = 888;
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_nonExistent));
-        _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_nonExistent);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.WithdrawalRequestIsForced.selector, carol, lpd.lendingPool, wNftId_carol
+            )
+        );
+        _cancelWithdrawalRequest(carol, lpd.lendingPool, wNftId_carol);
 
         // ### ASSERT ###
         // wNft burned
@@ -405,5 +416,95 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(lendingPoolLoanAdmin), 0);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
+    }
+
+    function test_forceImmediateWithdrawal() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
+
+        // ### ACT ###
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxRedeem.selector, alice, 50 * 10 ** 18, 40 * 10 ** 18)
+        );
+        _forceImmediateWithdrawal(lendingPoolAdmin, lpd.lendingPool, lpd.tranches[0], alice, 50 * 10 ** 18);
+        _forceImmediateWithdrawal(lendingPoolAdmin, lpd.lendingPool, lpd.tranches[0], alice, 40 * 10 ** 18);
+        _forceImmediateWithdrawal(lendingPoolAdmin, lpd.lendingPool, lpd.tranches[1], bob, 200 * 10 ** 18);
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), 50 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(alice), 40 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(bob), 200 * 10 ** 6);
+    }
+
+    function test_batchForceWithdrawals() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+
+        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+
+        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+
+        // ### ACT ###
+        ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](2);
+        uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
+        input1[0] = ForceWithdrawalInput(lpd.tranches[0], alice, requestWithdrawalSharesAmount_alice);
+        uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
+        input1[1] = ForceWithdrawalInput(lpd.tranches[1], bob, requestWithdrawalSharesAmount_bob);
+
+        uint256[] memory result = _batchForceWithdrawals(lendingPoolAdmin, lpd.lendingPool, input1);
+        uint256 wNftId_alice = result[0];
+        uint256 wNftId_bob = result[1];
+
+        // request more assets to withdraw than user has in its balance
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.InsufficientSharesBalance.selector,
+                bob,
+                lpd.lendingPool,
+                lpd.tranches[1],
+                50 * 10 ** 18,
+                51 * 10 ** 18
+            )
+        );
+        ForceWithdrawalInput[] memory input2 = new ForceWithdrawalInput[](1);
+        input2[0] = ForceWithdrawalInput(lpd.tranches[1], bob, 51 * 10 ** 18);
+        _batchForceWithdrawals(lendingPoolAdmin, lpd.lendingPool, input2);
+
+        // ### ASSERT ###
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+        assertEq(lendingPool.totalSupply(), acceptDepositAmount_alice + acceptedDepositAmount_bob);
+        assertEq(ILendingPoolTranche(lpd.tranches[0]).totalSupply(), acceptDepositAmount_alice * 10 ** 12);
+        assertEq(ILendingPoolTranche(lpd.tranches[1]).totalSupply(), acceptedDepositAmount_bob * 10 ** 12);
+
+        address pendingPoolAddress = lendingPool.getPendingPool();
+        assertEq(
+            ILendingPoolTranche(lpd.tranches[0]).balanceOf(pendingPoolAddress), requestWithdrawalSharesAmount_alice
+        );
+        assertEq(ILendingPoolTranche(lpd.tranches[1]).balanceOf(pendingPoolAddress), requestWithdrawalSharesAmount_bob);
+
+        IPendingPool pendingPool = IPendingPool(pendingPoolAddress);
+        assertEq(pendingPool.ownerOf(wNftId_alice), alice);
+        WithdrawalNftDetails memory withdrawalNftDetails_alice = pendingPool.trancheWithdrawalNftDetails(wNftId_alice);
+        assertEq(withdrawalNftDetails_alice.sharesAmount, requestWithdrawalSharesAmount_alice);
+        assertEq(withdrawalNftDetails_alice.priorityLevel, type(uint256).max);
+
+        assertEq(pendingPool.ownerOf(wNftId_bob), bob);
+        WithdrawalNftDetails memory withdrawalNftDetails_bob = pendingPool.trancheWithdrawalNftDetails(wNftId_bob);
+        assertEq(withdrawalNftDetails_bob.sharesAmount, requestWithdrawalSharesAmount_bob);
+        assertEq(withdrawalNftDetails_bob.priorityLevel, type(uint256).max);
     }
 }
