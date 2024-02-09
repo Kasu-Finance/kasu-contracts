@@ -6,10 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 struct LendingPoolInfo {
     TrancheData[] tranches;
     address pendingPool;
-    uint256 firstLossCapital;
-    uint256 totalBalance;
-    uint256 excessFunds;
-    uint256 excessTargetLiquidity; // percentage of not borrowed funds (only as senior deposits)
 }
 
 struct TrancheData {
@@ -23,6 +19,8 @@ struct TrancheData {
  */
 interface ILendingPool is IERC20 {
     function getPendingPool() external view returns (address);
+
+    function lendingPoolInfo() external view returns (LendingPoolInfo memory);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
@@ -49,6 +47,8 @@ interface ILendingPool is IERC20 {
     function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
         external
         returns (uint256 assetAmount);
+
+    function stop(address firstLossCapitalReceiver) external;
 
     //     // #### PROTOCOL FEES #### //
     //     function withdrawProtocolFees() external;
@@ -77,4 +77,6 @@ interface ILendingPool is IERC20 {
     error WithdrawAmountCantBeGreaterThanFirstLostCapital(uint256 withdrawAmount, uint256 firstLostCapital);
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
+    error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
+    error LendingPoolIsStopped();
 }

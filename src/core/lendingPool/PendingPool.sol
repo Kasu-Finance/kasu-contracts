@@ -6,6 +6,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
+import "./LendingPoolStoppable.sol";
 
 /**
  * @dev
@@ -14,7 +15,13 @@ import "./LendingPoolHelpers.sol";
  * - when deposits are accepted, users burn their deposit NFTs
  * - when withdrawals are accepted, users burn their withdrawal NFTs
  */
-contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, LendingPoolHelpers {
+contract PendingPool is
+    IPendingPool,
+    ERC721Upgradeable,
+    AssetFunctionsBase,
+    LendingPoolHelpers,
+    LendingPoolStoppable
+{
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheDepositNFTs;
     mapping(address => uint256) private _nextTrancheDepositNFTId;
@@ -111,6 +118,7 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
      */
     function requestDeposit(address user, address tranche, uint256 amount)
         external
+        lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
         returns (uint256 dNftID)
     {
@@ -208,6 +216,10 @@ contract PendingPool is IPendingPool, ERC721Upgradeable, AssetFunctionsBase, Len
                 _requestWithdrawal(input[i].user, input[i].tranche, input[i].sharesToWithdraw, type(uint256).max);
             emit ForceWithdrawalRequested(input[i].user, input[i].tranche, wNftIDs[i], input[i].sharesToWithdraw);
         }
+    }
+
+    function stop() external onlyOwnLendingPool {
+        _stopLendingPool();
     }
 
     function _requestWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 priority)

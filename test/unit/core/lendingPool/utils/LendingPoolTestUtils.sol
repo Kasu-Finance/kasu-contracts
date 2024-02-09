@@ -247,6 +247,10 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
     {
         return lendingPoolManager.batchForceWithdrawals(lendingPool, input);
     }
+
+    function _stop(address caller, address lendingPool, address firstLostCapitalReceiver) internal prank(caller) {
+        lendingPoolManager.stopLendingPool(lendingPool, firstLostCapitalReceiver);
+    }
 }
 
 contract PendingPoolHarness is PendingPool {

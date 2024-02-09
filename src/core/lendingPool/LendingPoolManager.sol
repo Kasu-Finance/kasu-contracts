@@ -138,6 +138,13 @@ contract LendingPoolManager is
         wNftIDs = IPendingPool(ILendingPool(lendingPool).getPendingPool()).batchForceWithdrawals(input);
     }
 
+    function stopLendingPool(address lendingPool, address firstLossCapitalReceiver)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
+    }
+
     // #### PROTOCOL FEES #### //
     function withdrawProtocolFees() external pure {
         revert("0");
