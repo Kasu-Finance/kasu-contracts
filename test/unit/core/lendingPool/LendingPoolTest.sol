@@ -527,7 +527,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ACT / ASSERT ###
 
         // stop without repaying all borrowed loan
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.BorrowedAmountIsGreaterThnZero.selector, 200 * 10 ** 6));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.BorrowedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
         _stop(lendingPoolAdmin, lpd.lendingPool, lendingPoolAdmin);
 
         _repayLoan(lendingPoolLoanAdmin, lendingPoolLoanAdmin, lpd.lendingPool, 200 * 10 ** 6);

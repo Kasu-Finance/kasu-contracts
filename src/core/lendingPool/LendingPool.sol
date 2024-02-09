@@ -314,7 +314,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
         if (borrowedAmount > 0) {
-            revert BorrowedAmountIsGreaterThnZero(borrowedAmount);
+            revert BorrowedAmountIsGreaterThanZero(borrowedAmount);
         }
 
         if (firstLossCapital > 0) {

@@ -79,5 +79,5 @@ interface ILendingPool is IERC20 {
     error WithdrawAmountCantBeGreaterThanFirstLostCapital(uint256 withdrawAmount, uint256 firstLostCapital);
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
-    error BorrowedAmountIsGreaterThnZero(uint256 borrowedAmoun);
+    error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
 }
