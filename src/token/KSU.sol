@@ -13,4 +13,6 @@ contract KSU is ERC20PermitUpgradeable {
 
         _mint(recipient, TOTAL_SUPPLY);
     }
+
+    // TODO: add burn function
 }

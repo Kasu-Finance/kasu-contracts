@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 struct DepositNftDetails {
     uint256 assetAmount;
-    uint256 priorityLevel;
     uint256 epochId;
+    uint256 priorityLevel;
 }
 
 struct WithdrawalNftDetails {
     uint256 sharesAmount;
-    uint256 priorityLevel;
     uint256 epochId;
+    uint256 priorityLevel;
 }
 
 struct ForceWithdrawalInput {
@@ -31,6 +31,11 @@ interface IPendingPool is IERC721 {
     function trancheWithdrawalNftDetails(uint256 wNftId)
         external
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
+
+    function getUserPendingAmounts(address user, uint256 depositEpochId)
+        external
+        view
+        returns (uint256 pendingDepositAmount, uint256 pendingWithdrawalAmount);
 
     // #### USER DEPOSITS #### //
     /**
@@ -64,12 +69,16 @@ interface IPendingPool is IERC721 {
     function stop() external;
 
     // Events
-    event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);
+    event DepositRequested(
+        address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 epochId, uint256 amount
+    );
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
-    event WithdrawalRequested(address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 amount);
+    event WithdrawalRequested(
+        address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 epochId, uint256 amount
+    );
     event WithdrawalRequestCancelled(address indexed user, address indexed tranche, uint256 indexed wNftID);
     event ForceWithdrawalRequested(
-        address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 amount
+        address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 epochId, uint256 amount
     );
 
     // Errors
@@ -80,4 +89,5 @@ interface IPendingPool is IERC721 {
         address user, address lendingPool, address tranche, uint256 availableShares, uint256 requestedShares
     );
     error WithdrawalRequestIsForced(address user, address lendingPool, uint256 wNftID);
+    error CannotCancelDepositDuringClearingPeriod();
 }

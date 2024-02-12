@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin-upgradeable/contracts/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/ILendingPoolTranche.sol";
+import "../interfaces/ISystemVariables.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
@@ -17,11 +20,13 @@ import "./LendingPoolStoppable.sol";
  */
 contract PendingPool is
     IPendingPool,
-    ERC721Upgradeable,
+    ERC721EnumerableUpgradeable,
     AssetFunctionsBase,
     LendingPoolHelpers,
     LendingPoolStoppable
 {
+    ISystemVariables public immutable systemVariables;
+
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheDepositNFTs;
     mapping(address => uint256) private _nextTrancheDepositNFTId;
@@ -59,10 +64,13 @@ contract PendingPool is
     // address: 2^160
     // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
-    constructor(address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
+    constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
         LendingPoolHelpers(lendingPoolManager_)
-    {}
+    {
+        systemVariables = systemVariables_;
+        _disableInitializers();
+    }
 
     /**
      * @notice Initializes the pending pool.
@@ -126,16 +134,16 @@ contract PendingPool is
         _transferAssetsFrom(msg.sender, address(this), amount);
 
         dNftID = _nextTrancheDepositNFTId[tranche];
-        _nextTrancheDepositNFTId[tranche] = dNftID + 1;
+        _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
 
         _trancheDepositNFTs[tranche].push(dNftID);
 
         _mint(user, dNftID);
 
-        // TODO: get epoch id
-        _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
+        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
+        _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, requestEpochId, 0);
 
-        emit DepositRequested(user, tranche, dNftID, amount);
+        emit DepositRequested(user, tranche, dNftID, requestEpochId, amount);
     }
 
     /**
@@ -174,9 +182,10 @@ contract PendingPool is
         external
         returns (uint256 wNftID)
     {
-        wNftID = _requestWithdrawal(user, tranche, trancheShares, 0);
+        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
+        wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, 0);
 
-        emit WithdrawalRequested(user, tranche, wNftID, trancheShares);
+        emit WithdrawalRequested(user, tranche, wNftID, requestEpochId, trancheShares);
     }
 
     /**
@@ -210,11 +219,15 @@ contract PendingPool is
         onlyLendingPoolManager
         returns (uint256[] memory wNftIDs)
     {
+        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
         wNftIDs = new uint256[](input.length);
         for (uint256 i = 0; i < input.length; i++) {
-            wNftIDs[i] =
-                _requestWithdrawal(input[i].user, input[i].tranche, input[i].sharesToWithdraw, type(uint256).max);
-            emit ForceWithdrawalRequested(input[i].user, input[i].tranche, wNftIDs[i], input[i].sharesToWithdraw);
+            wNftIDs[i] = _requestWithdrawal(
+                input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, type(uint256).max
+            );
+            emit ForceWithdrawalRequested(
+                input[i].user, input[i].tranche, wNftIDs[i], requestEpochId, input[i].sharesToWithdraw
+            );
         }
     }
 
@@ -222,10 +235,13 @@ contract PendingPool is
         _stopLendingPool();
     }
 
-    function _requestWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 priority)
-        internal
-        returns (uint256 wNftID)
-    {
+    function _requestWithdrawal(
+        address user,
+        address tranche,
+        uint256 sharesToWithdraw,
+        uint256 requestEpochId,
+        uint256 priority
+    ) internal returns (uint256 wNftID) {
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
             revert InsufficientSharesBalance(
@@ -236,14 +252,14 @@ contract PendingPool is
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
         wNftID = _nextTrancheWithdrawalNFTId[tranche];
-        _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
+        _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
 
         _trancheWithdrawalNFTs[tranche].push(wNftID);
 
         _mint(user, wNftID);
 
         // TODO: get epoch id
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, 0);
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, requestEpochId, priority);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
@@ -301,6 +317,30 @@ contract PendingPool is
         lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
     }
 
+    function getUserPendingAmounts(address user, uint256 depositEpochId)
+        external
+        view
+        returns (uint256 pendingDepositAmount, uint256 pendingWithdrawalAmount)
+    {
+        uint256 ownerNftCount = balanceOf(user);
+
+        for (uint256 i; i < ownerNftCount; ++i) {
+            uint256 nftId = tokenOfOwnerByIndex(user, i);
+            if (isDepositNft(nftId)) {
+                DepositNftDetails memory depositNftDetails = _trancheDepositNftDetails[nftId];
+                if (depositNftDetails.epochId <= depositEpochId) {
+                    pendingDepositAmount += depositNftDetails.assetAmount;
+                }
+            } else {
+                WithdrawalNftDetails memory withdrawalNftDetails = _trancheWithdrawalNftDetails[nftId];
+                (address tranche,) = decomposeWithdrawalId(nftId);
+                ILendingPoolTranche lendingPoolTranche = ILendingPoolTranche(tranche);
+
+                pendingWithdrawalAmount += lendingPoolTranche.convertToAssets(withdrawalNftDetails.sharesAmount);
+            }
+        }
+    }
+
     function composeDepositId(address tranche, uint256 id) public pure returns (uint256) {
         return uint256(uint160(tranche)) | (id << 160);
     }
@@ -319,16 +359,32 @@ contract PendingPool is
         withdrawalId = (id >> 160) - TRANCHE_START_WITHDRAWAL_NFT_ID;
     }
 
+    function isDepositNft(uint256 nftId) public pure returns (bool) {
+        return (nftId >> 160) < TRANCHE_START_WITHDRAWAL_NFT_ID;
+    }
+
     function _isNftOwner(address user, uint256 nftId) private view {
         if (ownerOf(nftId) != user) {
             revert UserIsNotOwnerOfNFT(user, nftId);
         }
     }
 
+    function _incrementDepositRequestId(uint256 id) private pure returns (uint256 incrementedId) {
+        (address tranche, uint256 depositId) = decomposeDepositId(id);
+        incrementedId = composeDepositId(tranche, depositId + 1);
+    }
+
+    function _incrementWithdrawalRequestId(uint256 id) private pure returns (uint256 incrementedId) {
+        (address tranche, uint256 withdrawalId) = decomposeWithdrawalId(id);
+        incrementedId = composeWithdrawalId(tranche, withdrawalId + 1);
+    }
+
     // MODIFIERS
 
     modifier canCancel() {
-        // TODO: Check if the time is right to cancel deposit request (if it's not clearing period time)
+        if (systemVariables.isClearingTime()) {
+            revert CannotCancelDepositDuringClearingPeriod();
+        }
         _;
     }
 

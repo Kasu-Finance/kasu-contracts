@@ -70,7 +70,7 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
 
         // pending pool
-        PendingPool pendingPoolIml = new PendingPoolHarness(address(mockUsdc), lendingPoolManager);
+        PendingPool pendingPoolIml = new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
@@ -258,8 +258,8 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
 }
 
 contract PendingPoolHarness is PendingPool {
-    constructor(address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
-        PendingPool(underlyingAsset_, lendingPoolManager_)
+    constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
+        PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_)
     {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
