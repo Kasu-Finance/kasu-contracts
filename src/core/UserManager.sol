@@ -91,18 +91,21 @@ contract UserManager is IUserManager {
         // get user rKSU balance
         uint256 userRKSU = ksuLocking.balanceOf(user);
 
-        // calculate rKSU in asset
-        uint256 rKSUInUSD = userRKSU * params.ksuPrice / KSU_PRICE_MULTIPLIER;
+        // calculate rKSU in asset (USDC)
+        uint256 rKSUInUSDC = userRKSU * params.ksuPrice / KSU_PRICE_MULTIPLIER;
 
         // calculate user rKSU vs user deposit amount
-        uint256 rKSUDepositRato = rKSUInUSD * FULL_PERCENT;
+        uint256 rKSUDepositRatio;
         if (userDepositAmount > 0) {
-            rKSUDepositRato = rKSUDepositRato / userDepositAmount;
+            rKSUDepositRatio = rKSUInUSDC * FULL_PERCENT / userDepositAmount;
+        } else if (userRKSU > 0) {
+            // if user has rKSU and no deposit amount his loyalty level is max
+            rKSUDepositRatio = type(uint256).max;
         }
 
         // calculate userloyalty level
         for (uint256 i; i < params.loyaltyThresholds.length; ++i) {
-            if (rKSUDepositRato >= params.loyaltyThresholds[i]) {
+            if (rKSUDepositRatio >= params.loyaltyThresholds[i]) {
                 loyaltyLevel++;
             } else {
                 break;

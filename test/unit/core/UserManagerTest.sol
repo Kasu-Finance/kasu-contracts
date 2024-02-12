@@ -111,7 +111,7 @@ contract UserManagerTest is BaseTestUtils {
 
         // ASSERT
         // 1000 USDC deposits
-        // 10 USDC dorth of rKSU
+        // 10 USDC worth of rKSU
         // ratio = 1%
 
         assertEq(currentEpoch, 0);
@@ -135,7 +135,7 @@ contract UserManagerTest is BaseTestUtils {
 
         // ASSERT
         // 1000 USDC deposits
-        // 30 USDC dorth of rKSU
+        // 30 USDC worth of rKSU
         // ratio = 3%
 
         assertEq(currentEpoch, 0);
