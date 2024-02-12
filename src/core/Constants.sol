@@ -9,3 +9,6 @@ uint256 constant FULL_PERCENT = 100_00;
 
 /// @dev Represents 100%.
 int256 constant FULL_PERCENT_INT = 100_00;
+
+// TODO: update this value when the price oracle is known
+uint256 constant KSU_PRICE_MULTIPLIER = 1e18;
