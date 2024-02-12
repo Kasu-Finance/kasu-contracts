@@ -575,4 +575,70 @@ contract LendingPoolTest is LendingPoolTestUtils {
             assertEq(lendingPoolInfo.tranches[i].interestRate, 0);
         }
     }
+
+    function test_getUserAvailableBalance() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 requestDepositAmount_alice0 = 100 * 10 ** 6;
+        uint256 requestDepositAmount_alice1 = 200 * 10 ** 6;
+        uint256 requestDepositAmount_alice2 = 300 * 10 ** 6;
+        uint256 dNftId_alice0 = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice0);
+        uint256 dNftId_alice1 = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_alice1);
+        uint256 dNftId_alice2 = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[2], requestDepositAmount_alice2);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice0, requestDepositAmount_alice0);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice1, requestDepositAmount_alice1);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice2, requestDepositAmount_alice2);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, requestDepositAmount_bob);
+
+        // ### ACT ###
+        uint256 userAvailableBalance_alice = ILendingPool(lpd.lendingPool).getUserAvailableBalance(alice);
+        uint256 userAvailableBalance_bob = ILendingPool(lpd.lendingPool).getUserAvailableBalance(bob);
+
+        // ### ASSERT ###
+        assertEq(
+            userAvailableBalance_alice,
+            requestDepositAmount_alice0 + requestDepositAmount_alice1 + requestDepositAmount_alice2
+        );
+        assertEq(userAvailableBalance_bob, requestDepositAmount_bob);
+    }
+
+    function test_getUserPendingAmounts() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // request depoists
+        uint256 requestDepositAmount_alice0 = 100 * 10 ** 6;
+        uint256 requestDepositAmount_alice1 = 200 * 10 ** 6;
+        uint256 requestDepositAmount_alice2 = 300 * 10 ** 6;
+        uint256 dNftId_alice0 = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice0);
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_alice1);
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[2], requestDepositAmount_alice2);
+
+        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
+        _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+
+        // request withdrawals
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice0, requestDepositAmount_alice0);
+
+        uint256 requestWithdrawalSharesAmount_alice = ILendingPoolTranche(lpd.tranches[0]).balanceOf(alice);
+        _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice);
+
+        // ### ACT ###
+        skip(6 days + 1);
+        uint256 epochId = systemVariables.getCurrentEpochNumber();
+        (uint256 userPendingDepositBalance_alice, uint256 userPendingWithdrawalBalance_alice) =
+            IPendingPool(lpd.pendingPool).getUserPendingAmounts(alice, epochId);
+        (uint256 userPendingDepositBalance_bob,) = IPendingPool(lpd.pendingPool).getUserPendingAmounts(bob, epochId);
+
+        // ### ASSERT ###
+        assertEq(userPendingDepositBalance_alice, requestDepositAmount_alice1 + requestDepositAmount_alice2);
+        assertEq(userPendingWithdrawalBalance_alice, requestDepositAmount_alice0);
+        assertEq(userPendingDepositBalance_bob, requestDepositAmount_bob);
+    }
 }
