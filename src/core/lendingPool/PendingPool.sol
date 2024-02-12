@@ -7,6 +7,7 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
+import "../interfaces/ISystemVariables.sol";
 
 /**
  * @dev
@@ -22,6 +23,8 @@ contract PendingPool is
     LendingPoolHelpers,
     LendingPoolStoppable
 {
+    ISystemVariables public immutable systemVariables;
+
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheDepositNFTs;
     mapping(address => uint256) private _nextTrancheDepositNFTId;
@@ -41,28 +44,16 @@ contract PendingPool is
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
-    // id: 256 bits
-    // id: tranche address + deposit id
-    // id: tranche address + withdrawal id
+    mapping(address => mapping(uint256 => uint256)) private dNftPerUserPerEpoch;
+    mapping(address => mapping(uint256 => uint256)) private wNftPerUserPerEpoch;
+    mapping(address => mapping(uint256 => uint256)) private wNftForcedPerUserPerEpoch;
 
-    // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
-    // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
-    // id: tranche address + withdrawal id
-
-    // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
-    // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
-    // id: tranche address + withdrawal id
-
-    // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
-    // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
-
-    // address: 2^160
-    // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
-
-    constructor(address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
+    constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
         LendingPoolHelpers(lendingPoolManager_)
-    {}
+    {
+        systemVariables = systemVariables_;
+    }
 
     /**
      * @notice Initializes the pending pool.
@@ -125,14 +116,15 @@ contract PendingPool is
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
+        // TODO: get epoch id
+
+        // get dNftID
         dNftID = _nextTrancheDepositNFTId[tranche];
         _nextTrancheDepositNFTId[tranche] = dNftID + 1;
 
         _trancheDepositNFTs[tranche].push(dNftID);
 
         _mint(user, dNftID);
-
-        // TODO: get epoch id
         _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
 
         emit DepositRequested(user, tranche, dNftID, amount);
@@ -300,6 +292,26 @@ contract PendingPool is
         ILendingPool lendingPool = _getOwnLendingPool();
         lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
     }
+
+    // ID
+
+    // id: 256 bits
+    // id: tranche address + deposit id
+    // id: tranche address + withdrawal id
+
+    // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
+    // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
+    // id: tranche address + withdrawal id
+
+    // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
+    // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
+    // id: tranche address + withdrawal id
+
+    // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
+    // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
+
+    // address: 2^160
+    // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
     function composeDepositId(address tranche, uint256 id) public pure returns (uint256) {
         return uint256(uint160(tranche)) | (id << 160);
