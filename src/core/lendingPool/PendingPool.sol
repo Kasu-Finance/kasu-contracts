@@ -49,6 +49,10 @@ contract PendingPool is
     // user => epoch => tranche => dNftId
     mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftIdPerUserPerEpochPerTranche;
 
+    // user => epoch => tranche => priority => wNftId
+    mapping(address => mapping(uint256 => mapping(address => mapping(Priority => uint256)))) private
+        _wNftIdPerUserPerEpochPerTranchePerPriority;
+
     constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
         LendingPoolHelpers(lendingPoolManager_)
@@ -131,7 +135,7 @@ contract PendingPool is
             _trancheDepositNFTs[tranche].push(dNftID);
             _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, requestEpochId, 0);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, requestEpochId, Priority.USER);
 
             _mint(user, dNftID);
         } else {
@@ -178,7 +182,7 @@ contract PendingPool is
         returns (uint256 wNftID)
     {
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
-        wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, 0);
+        wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, Priority.USER);
 
         emit WithdrawalRequested(user, tranche, wNftID, requestEpochId, trancheShares);
     }
@@ -192,7 +196,7 @@ contract PendingPool is
     function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
-        if (withdrawalNftDetails.priorityLevel == type(uint256).max) {
+        if (withdrawalNftDetails.priorityLevel == Priority.SYSTEM) {
             revert WithdrawalRequestIsForced(user, address(_getOwnLendingPool()), wNftID);
         }
 
@@ -218,7 +222,7 @@ contract PendingPool is
         wNftIDs = new uint256[](input.length);
         for (uint256 i = 0; i < input.length; i++) {
             wNftIDs[i] = _requestWithdrawal(
-                input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, type(uint256).max
+                input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, Priority.SYSTEM
             );
             emit ForceWithdrawalRequested(
                 input[i].user, input[i].tranche, wNftIDs[i], requestEpochId, input[i].sharesToWithdraw
@@ -235,7 +239,7 @@ contract PendingPool is
         address tranche,
         uint256 sharesToWithdraw,
         uint256 requestEpochId,
-        uint256 priority
+        Priority priority
     ) internal returns (uint256 wNftID) {
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {

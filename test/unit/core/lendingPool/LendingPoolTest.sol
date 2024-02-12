@@ -511,12 +511,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(pendingPool.ownerOf(wNftId_alice), alice);
         WithdrawalNftDetails memory withdrawalNftDetails_alice = pendingPool.trancheWithdrawalNftDetails(wNftId_alice);
         assertEq(withdrawalNftDetails_alice.sharesAmount, requestWithdrawalSharesAmount_alice);
-        assertEq(withdrawalNftDetails_alice.priorityLevel, type(uint256).max);
+        assertTrue(withdrawalNftDetails_alice.priorityLevel == Priority.SYSTEM);
 
         assertEq(pendingPool.ownerOf(wNftId_bob), bob);
         WithdrawalNftDetails memory withdrawalNftDetails_bob = pendingPool.trancheWithdrawalNftDetails(wNftId_bob);
         assertEq(withdrawalNftDetails_bob.sharesAmount, requestWithdrawalSharesAmount_bob);
-        assertEq(withdrawalNftDetails_bob.priorityLevel, type(uint256).max);
+        assertTrue(withdrawalNftDetails_bob.priorityLevel == Priority.SYSTEM);
     }
 
     function test_stop() external {
