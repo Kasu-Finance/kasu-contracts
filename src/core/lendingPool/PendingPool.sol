@@ -44,10 +44,8 @@ contract PendingPool is
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
-    // user => epoch => nftId
-    mapping(address => mapping(uint256 => uint256)) private dNftPerUserPerEpoch;
-    mapping(address => mapping(uint256 => uint256)) private wNftPerUserPerEpoch;
-    mapping(address => mapping(uint256 => uint256)) private wNftForcedPerUserPerEpoch;
+    // user => epoch => tranche => nftId
+    mapping(address => mapping(uint256 => mapping(address => uint256))) private dNftPerUserPerEpochPerTranche;
 
     constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
@@ -120,7 +118,7 @@ contract PendingPool is
         uint256 epoch = systemVariables.getCurrentEpochNumber();
 
         // get user's dNftID for current epoch
-        dNftID = dNftPerUserPerEpoch[user][epoch];
+        dNftID = dNftPerUserPerEpochPerTranche[user][epoch][tranche];
 
         if (dNftID == 0) {
             // create new dNft
@@ -128,9 +126,9 @@ contract PendingPool is
             _nextTrancheDepositNFTId[tranche] = dNftID + 1;
 
             _trancheDepositNFTs[tranche].push(dNftID);
-            dNftPerUserPerEpoch[user][epoch] = dNftID;
+            dNftPerUserPerEpochPerTranche[user][epoch][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, epoch);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, epoch);
 
             _mint(user, dNftID);
         } else {
@@ -158,9 +156,9 @@ contract PendingPool is
         _transferAssets(user, depositNftDetails.assetAmount);
 
         // delete nft storage
+        DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
+        delete dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
         delete _trancheDepositNftDetails[dNftID];
-        uint256 epoch = systemVariables.getCurrentEpochNumber();
-        delete dNftPerUserPerEpoch[user][epoch];
 
         (address tranche,) = decomposeDepositId(dNftID);
 
@@ -240,6 +238,8 @@ contract PendingPool is
 
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
+        uint256 epoch = systemVariables.getCurrentEpochNumber();
+
         wNftID = _nextTrancheWithdrawalNFTId[tranche];
         _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
 
@@ -247,8 +247,7 @@ contract PendingPool is
 
         _mint(user, wNftID);
 
-        // TODO: get epoch id
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, 0);
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, epoch);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE

@@ -32,9 +32,11 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         DepositNftDetails memory depositNftDetails_alice = pendingPool.trancheDepositNftDetails(dNftId_alice);
         assertEq(depositNftDetails_alice.assetAmount, 100 * 10 ** 6);
+        assertEq(depositNftDetails_alice.tranche, lpd.tranches[0]);
 
         DepositNftDetails memory depositNftDetails_bob = pendingPool.trancheDepositNftDetails(dNftId1_bob);
         assertEq(depositNftDetails_bob.assetAmount, 250 * 10 ** 6);
+        assertEq(depositNftDetails_bob.tranche, lpd.tranches[1]);
     }
 
     function test_cancelDeposit() public {
