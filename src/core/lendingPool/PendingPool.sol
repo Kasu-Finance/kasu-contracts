@@ -121,7 +121,7 @@ contract PendingPool is
         uint256 requestEpochId = systemVariables.getCurrentEpochNumber();
 
         // get user's dNftID for current epoch
-        dNftID = dNftPerUserPerEpochPerTranche[user][epochId][tranche];
+        dNftID = dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche];
 
         if (dNftID == 0) {
             // create new dNft
@@ -129,9 +129,9 @@ contract PendingPool is
             _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
 
             _trancheDepositNFTs[tranche].push(dNftID);
-            dNftPerUserPerEpochPerTranche[user][epochId][tranche] = dNftID;
+            dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, epochId);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, requestEpochId);
 
             _mint(user, dNftID);
         } else {
