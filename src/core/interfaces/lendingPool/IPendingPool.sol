@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 struct DepositNftDetails {
     uint256 assetAmount;
     uint256 priorityLevel;
-    uint256 epochId;
+    uint256 epoch;
 }
 
 struct WithdrawalNftDetails {
@@ -64,7 +64,9 @@ interface IPendingPool is IERC721 {
     function stop() external;
 
     // Events
-    event DepositRequested(address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 amount);
+    event DepositRequested(
+        address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 epoch, uint256 amount
+    );
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
     event WithdrawalRequested(address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 amount);
     event WithdrawalRequestCancelled(address indexed user, address indexed tranche, uint256 indexed wNftID);

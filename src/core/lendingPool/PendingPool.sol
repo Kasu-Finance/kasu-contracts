@@ -44,6 +44,7 @@ contract PendingPool is
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
+    // user => epoch => nftId
     mapping(address => mapping(uint256 => uint256)) private dNftPerUserPerEpoch;
     mapping(address => mapping(uint256 => uint256)) private wNftPerUserPerEpoch;
     mapping(address => mapping(uint256 => uint256)) private wNftForcedPerUserPerEpoch;
@@ -116,18 +117,28 @@ contract PendingPool is
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        // TODO: get epoch id
+        uint256 epoch = systemVariables.getCurrentEpochNumber();
 
-        // get dNftID
-        dNftID = _nextTrancheDepositNFTId[tranche];
-        _nextTrancheDepositNFTId[tranche] = dNftID + 1;
+        // get user's dNftID for current epoch
+        dNftID = dNftPerUserPerEpoch[user][epoch];
 
-        _trancheDepositNFTs[tranche].push(dNftID);
+        if (dNftID == 0) {
+            // create new dNft
+            dNftID = _nextTrancheDepositNFTId[tranche];
+            _nextTrancheDepositNFTId[tranche] = dNftID + 1;
 
-        _mint(user, dNftID);
-        _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, 0);
+            _trancheDepositNFTs[tranche].push(dNftID);
+            dNftPerUserPerEpoch[user][epoch] = dNftID;
 
-        emit DepositRequested(user, tranche, dNftID, amount);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, 0, epoch);
+
+            _mint(user, dNftID);
+        } else {
+            // update existing dNft
+            _trancheDepositNftDetails[dNftID].assetAmount += amount;
+        }
+
+        emit DepositRequested(user, tranche, dNftID, epoch, amount);
     }
 
     /**
@@ -148,6 +159,8 @@ contract PendingPool is
 
         // delete nft storage
         delete _trancheDepositNftDetails[dNftID];
+        uint256 epoch = systemVariables.getCurrentEpochNumber();
+        delete dNftPerUserPerEpoch[user][epoch];
 
         (address tranche,) = decomposeDepositId(dNftID);
 
