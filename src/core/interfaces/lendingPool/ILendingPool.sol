@@ -52,9 +52,6 @@ interface ILendingPool is IERC20 {
 
     function stop(address firstLossCapitalReceiver) external;
 
-    //     // #### PROTOCOL FEES #### //
-    //     function withdrawProtocolFees() external;
-
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 

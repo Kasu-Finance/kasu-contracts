@@ -60,6 +60,8 @@ interface IKasuController is IAccessControl {
      */
     function checkIsAdminOrVaultAdmin(address lendingPool, address account) external view;
 
+    function paused() external view returns (bool);
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
@@ -81,6 +83,10 @@ interface IKasuController is IAccessControl {
      * @param account Account to revoke the role from.
      */
     function revokeLendingPoolRole(address lendingPool, bytes32 role, address account) external;
+
+    function pause() external;
+
+    function unpause() external;
 
     /**
      * @notice Renounce role for a lending pool.
