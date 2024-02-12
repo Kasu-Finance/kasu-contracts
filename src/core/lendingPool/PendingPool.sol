@@ -131,7 +131,7 @@ contract PendingPool is
             _trancheDepositNFTs[tranche].push(dNftID);
             _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, requestEpochId);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, requestEpochId, 0);
 
             _mint(user, dNftID);
         } else {
