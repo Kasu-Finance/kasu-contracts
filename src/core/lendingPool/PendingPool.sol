@@ -47,7 +47,7 @@ contract PendingPool is
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
     // user => epoch => tranche => nftId
-    mapping(address => mapping(uint256 => mapping(address => uint256))) private dNftPerUserPerEpochPerTranche;
+    mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftPerUserPerEpochPerTranche;
 
     constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
@@ -121,7 +121,7 @@ contract PendingPool is
         uint256 requestEpochId = systemVariables.getCurrentEpochNumber();
 
         // get user's dNftID for current epoch
-        dNftID = dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche];
+        dNftID = _dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche];
 
         if (dNftID == 0) {
             // create new dNft
@@ -129,7 +129,7 @@ contract PendingPool is
             _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
 
             _trancheDepositNFTs[tranche].push(dNftID);
-            dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
+            _dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
             _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, requestEpochId);
 
@@ -313,7 +313,7 @@ contract PendingPool is
 
     function _deleteDNftDetails(address user, uint256 dNftID) private {
         DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
-        delete dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
+        delete _dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
         delete _trancheDepositNftDetails[dNftID];
     }
 
