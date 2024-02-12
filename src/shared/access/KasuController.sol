@@ -42,7 +42,7 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     function revokeLendingPoolRole(address lendingPool, bytes32 role, address account)
         external
-        onlyPoolAdmin(lendingPool, msg.sender)
+        onlyAdminOrPoolAdmin(lendingPool, msg.sender)
     {
         _revokeRole(_getLendingPoolRole(lendingPool, role), account);
         emit LendingPoolRoleRevoked(lendingPool, role, account);
@@ -50,7 +50,7 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     function renounceLendingPoolRole(address lendingPool, bytes32 role)
         external
-        onlyPoolAdmin(lendingPool, msg.sender)
+        onlyAdminOrPoolAdmin(lendingPool, msg.sender)
     {
         renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
         emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
@@ -61,6 +61,7 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
     function _onlyAdminOrVaultAdmin(address lendingPool, address account) private view {
         bytes32 vaultAdminRole = _getLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN);
         if (!hasRole(DEFAULT_ADMIN_ROLE, account) && !hasRole(vaultAdminRole, account)) {
+            // TODO: DEFAULT_ADMIN_ROLE not reported
             revert MissingRole(vaultAdminRole, account);
         }
     }
@@ -77,7 +78,7 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
 
     /* ========== MODIFIERS ========== */
 
-    modifier onlyAdminOrVaultAdmin(address lendingPool, address account) {
+    modifier onlyAdminOrPoolAdmin(address lendingPool, address account) {
         _onlyAdminOrVaultAdmin(lendingPool, account);
         _;
     }
@@ -88,13 +89,6 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
                 && !hasLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, account)
         ) {
             // TODO: ROLE_LENDING_POOL_FACTORY not reported
-            revert MissingRole(ROLE_LENDING_POOL_ADMIN, account);
-        }
-        _;
-    }
-
-    modifier onlyPoolAdmin(address lendingPool, address account) {
-        if (!hasLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, account)) {
             revert MissingRole(ROLE_LENDING_POOL_ADMIN, account);
         }
         _;

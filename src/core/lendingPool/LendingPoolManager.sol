@@ -80,36 +80,46 @@ contract LendingPoolManager is
         IPendingPool(lendingPools[lendingPool].pendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
-    // #### POOL DELEGATE #### //
+    // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoan(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).borrowLoan(amount);
     }
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function updateLoanAmount(address, uint256) external pure {
+    function updateLoanAmount(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
         revert("0");
     }
 
     function reportLoss(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         returns (uint256)
     {
         return ILendingPool(lendingPool).reportLoss(amount);
     }
 
+    function repayLoss(address lendingPool, uint256 lossId, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        revert("0");
+    }
+
     function depositFirstLossCapital(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPool, amount);
@@ -118,21 +128,23 @@ contract LendingPoolManager is
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
     }
 
+    // #### LENDING POOL MANAGER #### //
+
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
     }
 
     function batchForceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         returns (uint256[] memory wNftIDs)
     {
         wNftIDs = IPendingPool(ILendingPool(lendingPool).getPendingPool()).batchForceWithdrawals(input);
@@ -140,7 +152,7 @@ contract LendingPoolManager is
 
     function stopLendingPool(address lendingPool, address firstLossCapitalReceiver)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
     }
