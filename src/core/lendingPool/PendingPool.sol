@@ -115,10 +115,10 @@ contract PendingPool is
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        uint256 epoch = systemVariables.getCurrentEpochNumber();
+        uint256 epochId = systemVariables.getCurrentEpochNumber();
 
         // get user's dNftID for current epoch
-        dNftID = dNftPerUserPerEpochPerTranche[user][epoch][tranche];
+        dNftID = dNftPerUserPerEpochPerTranche[user][epochId][tranche];
 
         if (dNftID == 0) {
             // create new dNft
@@ -126,9 +126,9 @@ contract PendingPool is
             _nextTrancheDepositNFTId[tranche] = dNftID + 1;
 
             _trancheDepositNFTs[tranche].push(dNftID);
-            dNftPerUserPerEpochPerTranche[user][epoch][tranche] = dNftID;
+            dNftPerUserPerEpochPerTranche[user][epochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, epoch);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, epochId);
 
             _mint(user, dNftID);
         } else {
@@ -136,7 +136,7 @@ contract PendingPool is
             _trancheDepositNftDetails[dNftID].assetAmount += amount;
         }
 
-        emit DepositRequested(user, tranche, dNftID, epoch, amount);
+        emit DepositRequested(user, tranche, dNftID, epochId, amount);
     }
 
     /**
@@ -238,7 +238,7 @@ contract PendingPool is
 
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
-        uint256 epoch = systemVariables.getCurrentEpochNumber();
+        uint256 epochId = systemVariables.getCurrentEpochNumber();
 
         wNftID = _nextTrancheWithdrawalNFTId[tranche];
         _nextTrancheWithdrawalNFTId[tranche] = wNftID + 1;
@@ -247,7 +247,7 @@ contract PendingPool is
 
         _mint(user, wNftID);
 
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, epoch);
+        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, priority, epochId);
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
