@@ -316,11 +316,11 @@ contract PendingPool is
 
     // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
     // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
-    // id: tranche address + withdrawal id
+    // id: withdrawal id (12 bytes), tranche address (20bytes)
+    // 000000000000000000000000 0000000000000000000000000000000000000000
 
     // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
     // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
-    // id: tranche address + withdrawal id
 
     // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
     // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
