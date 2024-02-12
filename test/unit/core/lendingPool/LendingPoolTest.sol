@@ -86,48 +86,54 @@ contract LendingPoolTest is LendingPoolTestUtils {
         address juniorTrancheAddress = lendingPoolDeployment.tranches[0];
         address mezzoTrancheAddress = lendingPoolDeployment.tranches[1];
 
-        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-        uint256 dNftId_alice =
-            _requestDeposit(alice, lendingPoolAddress, juniorTrancheAddress, requestDepositAmount_alice);
+        uint256 dNftId1_alice = _requestDeposit(alice, lendingPoolAddress, juniorTrancheAddress, 100 * 10 ** 6);
 
-        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-        uint256 dNftId_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, requestDepositAmount_bob);
+        uint256 dNftId1_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, 250 * 10 ** 6);
 
         // ### ACT ###
-        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDepositRequest(lendingPoolAddress, dNftId_alice, acceptDepositAmount_alice);
+        // accept more assets than requested in total
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.TooManyAssetsRequested.selector, dNftId1_alice, 100 * 10 ** 6, 101 * 10 ** 6
+            )
+        );
+        _acceptDepositRequest(lendingPoolAddress, dNftId1_alice, 101 * 10 ** 6);
 
-        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDepositRequest(lendingPoolAddress, dNftId_bob, acceptedDepositAmount_bob);
+        _acceptDepositRequest(lendingPoolAddress, dNftId1_alice, 40 * 10 ** 6);
+
+        // accept more assets than are available to be requested
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.TooManyAssetsRequested.selector, dNftId1_alice, 60 * 10 ** 6, 61 * 10 ** 6
+            )
+        );
+        _acceptDepositRequest(lendingPoolAddress, dNftId1_alice, 61 * 10 ** 6);
+
+        _acceptDepositRequest(lendingPoolAddress, dNftId1_bob, 250 * 10 ** 6);
 
         // non existing dNftId
         uint256 dNftId_nonExistent = 888;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_nonExistent));
-        _acceptDepositRequest(lendingPoolAddress, dNftId_nonExistent, acceptedDepositAmount_bob);
-
-        // accept more assets than requests
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IPendingPool.TooManyAssetsRequested.selector, dNftId_alice, 60 * 10 ** 6, 61 * 10 ** 6
-            )
-        );
-        _acceptDepositRequest(lendingPoolAddress, dNftId_alice, 61 * 10 ** 6);
+        _acceptDepositRequest(lendingPoolAddress, dNftId_nonExistent, 50 * 10 ** 6);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
-        assertEq(lendingPool.totalSupply(), acceptDepositAmount_alice + acceptedDepositAmount_bob);
-        assertEq(ILendingPoolTranche(juniorTrancheAddress).totalSupply(), acceptDepositAmount_alice * 10 ** 12);
-        assertEq(ILendingPoolTranche(mezzoTrancheAddress).totalSupply(), acceptedDepositAmount_bob * 10 ** 12);
+        assertEq(lendingPool.totalSupply(), 290 * 10 ** 6);
+        assertEq(ILendingPoolTranche(juniorTrancheAddress).totalSupply(), 40 * 10 ** 18);
+        assertEq(ILendingPoolTranche(mezzoTrancheAddress).totalSupply(), 250 * 10 ** 18);
 
         PendingPool pendingPool = PendingPool(lendingPoolDeployment.pendingPool);
-        assertEq(mockUsdc.balanceOf(address(pendingPool)), requestDepositAmount_alice - acceptDepositAmount_alice);
+        assertEq(mockUsdc.balanceOf(address(pendingPool)), 60 * 10 ** 6);
 
-        assertEq(pendingPool.ownerOf(dNftId_alice), alice);
-        DepositNftDetails memory depositNftDetails_alice = pendingPool.trancheDepositNftDetails(dNftId_alice);
-        assertEq(depositNftDetails_alice.assetAmount, requestDepositAmount_alice - acceptDepositAmount_alice);
+        assertEq(pendingPool.ownerOf(dNftId1_alice), alice);
+        DepositNftDetails memory depositNftDetails_alice = pendingPool.trancheDepositNftDetails(dNftId1_alice);
+        assertEq(depositNftDetails_alice.assetAmount, 60 * 10 ** 6);
 
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
-        assertEq(pendingPool.ownerOf(dNftId_bob), address(0));
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId1_bob));
+        assertEq(pendingPool.ownerOf(dNftId1_bob), address(0));
+
+        uint256 dNftId2_bob = _requestDeposit(bob, lendingPoolAddress, mezzoTrancheAddress, 250 * 10 ** 6);
+        assertFalse(dNftId1_bob == dNftId2_bob);
     }
 
     function test_requestWithdrawal() public {

@@ -155,10 +155,7 @@ contract PendingPool is
         // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
         _transferAssets(user, depositNftDetails.assetAmount);
 
-        // delete nft storage
-        DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
-        delete dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
-        delete _trancheDepositNftDetails[dNftID];
+        _deleteDNftDetails(user, dNftID);
 
         (address tranche,) = decomposeDepositId(dNftID);
 
@@ -267,7 +264,7 @@ contract PendingPool is
             // Burn the deposit NFT
             _update(address(0), dNftID, address(0));
 
-            delete _trancheDepositNftDetails[dNftID];
+            _deleteDNftDetails(user, dNftID);
         }
 
         (address tranche,) = decomposeDepositId(dNftID);
@@ -303,6 +300,12 @@ contract PendingPool is
 
         ILendingPool lendingPool = _getOwnLendingPool();
         lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
+    }
+
+    function _deleteDNftDetails(address user, uint256 dNftID) private {
+        DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
+        delete dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
+        delete _trancheDepositNftDetails[dNftID];
     }
 
     // ID
