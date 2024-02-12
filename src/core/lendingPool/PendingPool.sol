@@ -46,23 +46,8 @@ contract PendingPool is
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
-    // id: 256 bits
-    // id: tranche address + deposit id
-    // id: tranche address + withdrawal id
-
-    // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
-    // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
-    // id: tranche address + withdrawal id
-
-    // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
-    // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
-    // id: tranche address + withdrawal id
-
-    // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
-    // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
-
-    // address: 2^160
-    // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
+    // user => epoch => tranche => nftId
+    mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftPerUserPerEpochPerTranche;
 
     constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
@@ -133,15 +118,26 @@ contract PendingPool is
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        dNftID = _nextTrancheDepositNFTId[tranche];
-        _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
+        uint256 requestEpochId = systemVariables.getCurrentEpochNumber();
 
-        _trancheDepositNFTs[tranche].push(dNftID);
+        // get user's dNftID for current epoch
+        dNftID = _dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche];
 
-        _mint(user, dNftID);
+        if (dNftID == 0) {
+            // create new dNft
+            dNftID = _nextTrancheDepositNFTId[tranche];
+            _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
 
-        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
-        _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, requestEpochId, 0);
+            _trancheDepositNFTs[tranche].push(dNftID);
+            _dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
+
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, requestEpochId);
+
+            _mint(user, dNftID);
+        } else {
+            // update existing dNft
+            _trancheDepositNftDetails[dNftID].assetAmount += amount;
+        }
 
         emit DepositRequested(user, tranche, dNftID, requestEpochId, amount);
     }
@@ -162,8 +158,7 @@ contract PendingPool is
         // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
         _transferAssets(user, depositNftDetails.assetAmount);
 
-        // delete nft storage
-        delete _trancheDepositNftDetails[dNftID];
+        _deleteDNftDetails(user, dNftID);
 
         (address tranche,) = decomposeDepositId(dNftID);
 
@@ -258,7 +253,6 @@ contract PendingPool is
 
         _mint(user, wNftID);
 
-        // TODO: get epoch id
         _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, requestEpochId, priority);
     }
 
@@ -279,7 +273,7 @@ contract PendingPool is
             // Burn the deposit NFT
             _update(address(0), dNftID, address(0));
 
-            delete _trancheDepositNftDetails[dNftID];
+            _deleteDNftDetails(user, dNftID);
         }
 
         (address tranche,) = decomposeDepositId(dNftID);
@@ -316,6 +310,32 @@ contract PendingPool is
         ILendingPool lendingPool = _getOwnLendingPool();
         lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
     }
+
+    function _deleteDNftDetails(address user, uint256 dNftID) private {
+        DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
+        delete _dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
+        delete _trancheDepositNftDetails[dNftID];
+    }
+
+    // ID
+
+    // id: 256 bits
+    // id: tranche address + deposit id
+    // id: tranche address + withdrawal id
+
+    // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
+    // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
+    // id: withdrawal id (12 bytes), tranche address (20bytes)
+    // 000000000000000000000000 0000000000000000000000000000000000000000
+
+    // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
+    // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
+
+    // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
+    // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
+
+    // address: 2^160
+    // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
     function getUserPendingAmounts(address user, uint256 depositEpochId)
         external

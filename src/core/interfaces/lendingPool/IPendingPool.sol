@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 struct DepositNftDetails {
     uint256 assetAmount;
+    address tranche;
     uint256 epochId;
     uint256 priorityLevel;
 }
