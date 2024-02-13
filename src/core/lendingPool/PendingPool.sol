@@ -250,14 +250,24 @@ contract PendingPool is
 
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
-        wNftID = _nextTrancheWithdrawalNFTId[tranche];
-        _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
+        // get user's dNftID for current epoch
+        wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][priority];
 
-        _trancheWithdrawalNFTs[tranche].push(wNftID);
+        if (wNftID == 0) {
+            // create new wNft
+            wNftID = _nextTrancheWithdrawalNFTId[tranche];
+            _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
 
-        _mint(user, wNftID);
+            _trancheWithdrawalNFTs[tranche].push(wNftID);
+            _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][priority] = wNftID;
 
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, requestEpochId, priority);
+            _mint(user, wNftID);
+
+            _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, requestEpochId, priority);
+        } else {
+            // update existing wNft
+            _trancheWithdrawalNftDetails[wNftID].sharesAmount += sharesToWithdraw;
+        }
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
