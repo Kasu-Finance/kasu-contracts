@@ -16,10 +16,6 @@ struct ForceWithdrawalResult {
 }
 
 interface ILendingPoolManager {
-    function createPool(PoolConfiguration calldata poolConfiguration)
-        external
-        returns (LendingPoolDeployment memory lendingPoolDeployment);
-
     function ownLendingPool(address contractAddress) external view returns (address lendingPool);
 
     // #### USER #### //
@@ -33,12 +29,17 @@ interface ILendingPoolManager {
 
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
+    // #### LENDING POOL CREATOR #### //
+    function createPool(PoolConfiguration calldata poolConfiguration)
+        external
+        returns (LendingPoolDeployment memory lendingPoolDeployment);
+
     // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoan(address lendingPool, uint256 amount) external;
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
-    function updateLoanAmount(address lendingPool, uint256 amount) external;
+    function updateDesiredLoanAmount(address lendingPool, uint256 amount) external;
 
     function reportLoss(address lendingPool, uint256 amount) external returns (uint256 lossId);
 
@@ -47,6 +48,8 @@ interface ILendingPoolManager {
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress) external;
+
+    // #### LENDING POOL MANAGER #### //
 
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external;
@@ -57,6 +60,19 @@ interface ILendingPoolManager {
 
     function stopLendingPool(address lendingPool, address firstLossCapitalReceiver) external;
 
-    // #### PROTOCOL FEES #### //
-    function withdrawProtocolFees() external;
+    function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate) external;
+
+    function updateTrancheDesiredRatios(
+        address lendingPool,
+        address[] calldata tranches,
+        uint256[] calldata desiredRatios
+    ) external;
+
+    function updateMinimumDepositAmount(address lendingPool, uint256 minimumDepositAmount) external;
+
+    function updateMaximumDepositAmount(address lendingPool, uint256 maximumDepositAmount) external;
+
+    function forceCancelDepositRequest(address lendingPool, uint256 dNftID) external;
+
+    function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 }

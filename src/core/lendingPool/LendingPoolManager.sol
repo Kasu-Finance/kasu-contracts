@@ -95,7 +95,7 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function updateLoanAmount(address lendingPool, uint256 amount)
+    function updateDesiredLoanAmount(address lendingPool, uint256 amount)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
@@ -157,8 +157,46 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
     }
 
-    // #### PROTOCOL FEES #### //
-    function withdrawProtocolFees() external pure {
+    function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        revert("0");
+    }
+
+    function updateTrancheDesiredRatios(
+        address lendingPool,
+        address[] calldata tranches,
+        uint256[] calldata desiredRatios
+    ) external onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender) {
+        revert("0");
+    }
+
+    function updateMinimumDepositAmount(address lendingPool, uint256 minimumDepositAmount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        revert("0");
+    }
+
+    function updateMaximumDepositAmount(address lendingPool, uint256 maximumDepositAmount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        revert("0");
+    }
+
+    function forceCancelDepositRequest(address lendingPool, uint256 dNftID)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        revert("0");
+    }
+
+    function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
         revert("0");
     }
 

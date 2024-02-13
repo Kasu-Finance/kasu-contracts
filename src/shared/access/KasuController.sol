@@ -2,13 +2,14 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
 import "../interfaces/IKasuController.sol";
 import "./Roles.sol";
 
 /**
  * @notice Kasu access control management
  */
-contract KasuController is AccessControlUpgradeable, IKasuController {
+contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuController {
     /* ========== CONSTRUCTOR ========== */
 
     constructor() {
@@ -30,6 +31,10 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
         _onlyAdminOrVaultAdmin(lendingPool, account);
     }
 
+    function paused() public view override(IKasuController, PausableUpgradeable) returns (bool) {
+        return super.paused();
+    }
+
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function grantLendingPoolRole(address lendingPool, bytes32 role, address account)
@@ -46,6 +51,14 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
     {
         _revokeRole(_getLendingPoolRole(lendingPool, role), account);
         emit LendingPoolRoleRevoked(lendingPool, role, account);
+    }
+
+    function pause() external whenNotPaused checkRole(ROLE_KASU_ADMIN) {
+        _pause();
+    }
+
+    function unpause() external whenPaused checkRole(ROLE_KASU_ADMIN) {
+        _unpause();
     }
 
     function renounceLendingPoolRole(address lendingPool, bytes32 role)
@@ -91,6 +104,11 @@ contract KasuController is AccessControlUpgradeable, IKasuController {
             // TODO: ROLE_LENDING_POOL_FACTORY not reported
             revert MissingRole(ROLE_LENDING_POOL_ADMIN, account);
         }
+        _;
+    }
+
+    modifier checkRole(bytes32 role) {
+        _checkRole(role);
         _;
     }
 }
