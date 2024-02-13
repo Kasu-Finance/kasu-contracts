@@ -190,20 +190,15 @@ contract LendingPoolTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
-
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
-
         uint256 dNftId_carol = _requestDeposit(carol, lpd.lendingPool, lpd.tranches[2], 50 * 10 ** 6);
 
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
-
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
-
         _acceptDepositRequest(lpd.lendingPool, dNftId_carol, 50 * 10 ** 6);
 
         uint256 wNftId_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 40 * 10 ** 18);
-
-        uint256 wNftId_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
+        uint256 wNftId1_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
         ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
         input1[0] = ForceWithdrawalInput(lpd.tranches[2], carol, 50 * 10 ** 18);
@@ -215,8 +210,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_alice);
 
         _cancelWithdrawalRequest(alice, lpd.lendingPool, wNftId_alice);
-        _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_bob);
+        _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId1_bob);
 
+        // try to cancel forced withdrawal request
         vm.expectRevert(
             abi.encodeWithSelector(
                 IPendingPool.WithdrawalRequestIsForced.selector, carol, lpd.lendingPool, wNftId_carol
@@ -232,6 +228,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         );
         _cancelWithdrawalRequest(carol, lpd.lendingPool, wNftId_carol);
 
+        uint256 wNftId2_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 18);
+
         // ### ASSERT ###
         // wNft burned
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
@@ -239,8 +237,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
 
         // wNft burned
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_bob));
-        assertEq(pendingPool.ownerOf(wNftId_bob), address(0));
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId1_bob));
+        assertEq(pendingPool.ownerOf(wNftId1_bob), address(0));
+
+        assertFalse(wNftId1_bob == wNftId2_bob);
     }
 
     function test_acceptWithdrawal() public {

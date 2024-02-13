@@ -17,7 +17,6 @@ import "../../shared/access/Roles.sol";
 import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
-import "forge-std/console2.sol";
 
 contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;

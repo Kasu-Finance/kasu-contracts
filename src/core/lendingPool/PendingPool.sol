@@ -208,7 +208,7 @@ contract PendingPool is
         IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
 
         // delete nft storage
-        delete _trancheWithdrawalNftDetails[wNftID];
+        _deleteWNftDetails(user, wNftID);
 
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
@@ -263,7 +263,8 @@ contract PendingPool is
 
             _mint(user, wNftID);
 
-            _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, requestEpochId, priority);
+            _trancheWithdrawalNftDetails[wNftID] =
+                WithdrawalNftDetails(sharesToWithdraw, tranche, requestEpochId, priority);
         } else {
             // update existing wNft
             _trancheWithdrawalNftDetails[wNftID].sharesAmount += sharesToWithdraw;
@@ -329,6 +330,12 @@ contract PendingPool is
         DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
         delete _dNftIdPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
         delete _trancheDepositNftDetails[dNftID];
+    }
+
+    function _deleteWNftDetails(address user, uint256 wNftID) private {
+        WithdrawalNftDetails storage wNftDetails = _trancheWithdrawalNftDetails[wNftID];
+        delete _wNftIdPerUserPerEpochPerTranchePerPriority[user][wNftDetails.epochId][wNftDetails.tranche][wNftDetails.priorityLevel];
+        delete _trancheWithdrawalNftDetails[wNftID];
     }
 
     // ID
