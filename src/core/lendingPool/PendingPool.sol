@@ -317,7 +317,7 @@ contract PendingPool is
             // Burn the deposit NFT
             _update(address(0), wNftID, address(0));
 
-            delete _trancheWithdrawalNftDetails[wNftID];
+            _deleteWNftDetails(user, wNftID);
         }
 
         (address tranche,) = decomposeWithdrawalId(wNftID);

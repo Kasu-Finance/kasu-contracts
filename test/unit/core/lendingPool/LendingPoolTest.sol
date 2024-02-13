@@ -247,49 +247,37 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
-        uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+        uint256 dNftId1_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
 
-        uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+        _acceptDepositRequest(lpd.lendingPool, dNftId1_alice, 40 * 10 ** 6);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
 
-        uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
-
-        uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
-
-        uint256 requestWithdrawalSharesAmount_alice = 40 * 10 ** 18;
-        uint256 wNftId_alice =
-            _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], requestWithdrawalSharesAmount_alice);
-
-        uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
-        uint256 wNftId_bob =
-            _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], requestWithdrawalSharesAmount_bob);
+        uint256 wNftId1_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 40 * 10 ** 18);
+        uint256 wNftId_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
         // ### ACT ###
-        uint256 acceptedWithdrawalSharesAmount_alice = 40 * 10 ** 18;
-        _acceptWithdrawalRequest(lpd.lendingPool, wNftId_alice, acceptedWithdrawalSharesAmount_alice);
-
-        uint256 acceptedWithdrawalSharesAmount_bob = 160 * 10 ** 18;
-        _acceptWithdrawalRequest(lpd.lendingPool, wNftId_bob, acceptedWithdrawalSharesAmount_bob);
+        _acceptWithdrawalRequest(lpd.lendingPool, wNftId1_alice, 40 * 10 ** 18);
+        _acceptWithdrawalRequest(lpd.lendingPool, wNftId_bob, 160 * 10 ** 18);
 
         // non existing dNftId
         uint256 wNftId_nonExistent = 888;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_nonExistent));
-        _acceptWithdrawalRequest(lpd.lendingPool, wNftId_nonExistent, acceptedWithdrawalSharesAmount_bob);
+        _acceptWithdrawalRequest(lpd.lendingPool, wNftId_nonExistent, 50 * 10 ** 18);
 
         // ### ASSERT ###
         PendingPool pendingPool = PendingPool(lpd.pendingPool);
-        assertEq(pendingPool.ownerOf(dNftId_alice), alice);
-        WithdrawalNftDetails memory withdrawalNftDetails_bob = pendingPool.trancheWithdrawalNftDetails(wNftId_bob);
-        assertEq(
-            withdrawalNftDetails_bob.sharesAmount,
-            requestWithdrawalSharesAmount_bob - acceptedWithdrawalSharesAmount_bob
-        );
 
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_alice));
-        assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
+        WithdrawalNftDetails memory withdrawalNftDetails_bob = pendingPool.trancheWithdrawalNftDetails(wNftId_bob);
+        assertEq(withdrawalNftDetails_bob.sharesAmount, 40 * 10 ** 18);
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId1_alice));
+        assertEq(pendingPool.ownerOf(wNftId1_alice), address(0));
+
+        uint256 dNftId2_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        _acceptDepositRequest(lpd.lendingPool, dNftId2_alice, 40 * 10 ** 6);
+        uint256 wNftId2_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 20 * 10 ** 18);
+        assertFalse(wNftId1_alice == wNftId2_alice);
     }
 
     function test_depositFirstLossCapital() public {
