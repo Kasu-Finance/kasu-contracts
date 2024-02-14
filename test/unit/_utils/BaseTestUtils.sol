@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract BaseTestUtils is Test {
+abstract contract BaseTestUtils is Test {
     address internal admin = address(0xad1);
 
     address internal alice = address(0x1);

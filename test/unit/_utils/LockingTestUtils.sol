@@ -10,7 +10,7 @@ import "../../../src/locking/KSULockBonus.sol";
 import "../../../src/locking/KSULocking.sol";
 import "../../../src/shared/access/KasuController.sol";
 
-contract LockingTestUtils is BaseTestUtils {
+abstract contract LockingTestUtils is BaseTestUtils {
     ERC20Permit internal _ksu;
     IERC20 internal _usdc;
 
