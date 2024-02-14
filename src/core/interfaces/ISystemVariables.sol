@@ -26,6 +26,10 @@ interface ISystemVariables {
     function loyaltyThresholds() external view returns (uint256[] memory loyaltyThresholds);
     function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds) external;
 
+    // LENDING POOL
+    function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
+    function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external;
+
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);

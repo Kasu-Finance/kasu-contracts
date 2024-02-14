@@ -3,14 +3,14 @@ pragma solidity 0.8.23;
 
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../../../shared/MockERC20Permit.sol";
-import "../../../shared/BaseTestUtils.sol";
-import "../../../../src/locking/KSULockBonus.sol";
-import "../../../../src/locking/KSULocking.sol";
-import "../../../../src/shared/access/KasuController.sol";
-import "../../../shared/MockUSDC.sol";
+import "./BaseTestUtils.sol";
+import "../../shared/MockERC20Permit.sol";
+import "../../shared/MockUSDC.sol";
+import "../../../src/locking/KSULockBonus.sol";
+import "../../../src/locking/KSULocking.sol";
+import "../../../src/shared/access/KasuController.sol";
 
-contract LockingTestUtils is BaseTestUtils {
+abstract contract LockingTestUtils is BaseTestUtils {
     ERC20Permit internal _ksu;
     IERC20 internal _usdc;
 
@@ -43,11 +43,10 @@ contract LockingTestUtils is BaseTestUtils {
     function __locking_setUp(ERC20Permit ksu, IERC20 usdc) internal virtual {
         _ksu = ksu;
         _usdc = usdc;
-        ProxyAdmin proxy = new ProxyAdmin(admin);
 
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =
-            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
+            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);

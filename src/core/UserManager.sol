@@ -35,8 +35,16 @@ contract UserManager is IUserManager {
         return _userLendingPools[user];
     }
 
-    function hasUserRKSU(address user) external view returns (bool) {
+    function hasUserRKSU(address user) public view returns (bool) {
         return ksuLocking.balanceOf(user) > 0;
+    }
+
+    function canUserDepositInJuniorTranche(address user) external view returns (bool) {
+        if (!systemVariables.getUserCanDepositToJuniorTrancheWhenHeHasRKSU()) {
+            return true;
+        } else {
+            return hasUserRKSU(user);
+        }
     }
 
     // TODO: only at clearing time

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import "./utils/LendingPoolTestUtils.sol";
+import "../_utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import "../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
-import "../../../../src/core/lendingPool/LendingPoolStoppable.sol";
+import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
+import "../../../src/core/lendingPool/LendingPoolStoppable.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {

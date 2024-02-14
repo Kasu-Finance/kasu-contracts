@@ -3,22 +3,20 @@ pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "forge-std/Test.sol";
-import "../../../../shared/MockUSDC.sol";
-import "../../../../../src/core/lendingPool/LendingPoolManager.sol";
-import "../../../../../src/core/lendingPool/LendingPoolFactory.sol";
-import "../../../../../src/core/KsuPrice.sol";
-import "../../../../../src/core/SystemVariables.sol";
-import "../../../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
-import "../../../../../src/core/interfaces/lendingPool/IPendingPool.sol";
-import {BaseTestUtils} from "../../../../shared/BaseTestUtils.sol";
-import "../../../../../src/shared/access/KasuController.sol";
-import "../../../../shared/MockKsuPrice.sol";
-import "../../../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
+import "./BaseTestUtils.sol";
+import "../../shared/MockUSDC.sol";
+import "../../shared/MockKsuPrice.sol";
+import "../../../src/core/lendingPool/LendingPoolManager.sol";
+import "../../../src/core/lendingPool/LendingPoolFactory.sol";
+import "../../../src/core/KsuPrice.sol";
+import "../../../src/core/SystemVariables.sol";
+import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
+import "../../../src/shared/access/KasuController.sol";
+import "../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
 
 abstract contract LendingPoolTestUtils is BaseTestUtils {
-    ProxyAdmin internal proxyAdmin;
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
     KsuPrice internal ksuPrice;
@@ -38,9 +36,6 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         vm.deal(admin, 1 << 128);
         vm.deal(alice, 1 << 128);
         vm.deal(bob, 1 << 128);
-
-        // proxy admin
-        proxyAdmin = new ProxyAdmin(admin);
 
         // usdc
         {
