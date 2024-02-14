@@ -11,7 +11,7 @@ import "../../../src/core/interfaces/ISystemVariables.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPool.sol";
 import "../../../src/locking/interfaces/IKSULocking.sol";
 
-contract UserManagerTest is BaseTestUtils {
+contract UserManagerMockTest is BaseTestUtils {
     ISystemVariables internal systemVariables;
     IKSULocking internal ksuLocking;
     UserManager internal userManager;

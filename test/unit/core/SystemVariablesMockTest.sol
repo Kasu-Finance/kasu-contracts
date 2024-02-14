@@ -10,7 +10,7 @@ import "../../../src/core/SystemVariables.sol";
 import "../../../src/shared/CommonErrors.sol";
 import "../../shared/MockKsuPrice.sol";
 
-contract SystemVariablesTest is BaseTestUtils {
+contract SystemVariablesMockTest is BaseTestUtils {
     SystemVariables internal systemVariables;
     MockKsuPrice internal ksuPrice;
     IKasuController internal kasuController;
