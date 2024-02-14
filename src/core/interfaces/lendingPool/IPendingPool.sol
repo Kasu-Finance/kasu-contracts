@@ -3,17 +3,23 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
+enum RequestedFrom {
+    USER,
+    SYSTEM
+}
+
 struct DepositNftDetails {
     uint256 assetAmount;
     address tranche;
     uint256 epochId;
-    uint256 priorityLevel;
+    RequestedFrom requestedFrom;
 }
 
 struct WithdrawalNftDetails {
     uint256 sharesAmount;
+    address tranche;
     uint256 epochId;
-    uint256 priorityLevel;
+    RequestedFrom requestedFrom;
 }
 
 struct ForceWithdrawalInput {

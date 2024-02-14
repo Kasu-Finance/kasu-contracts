@@ -46,8 +46,12 @@ contract PendingPool is
     uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
-    // user => epoch => tranche => nftId
-    mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftPerUserPerEpochPerTranche;
+    // user => epoch => tranche => dNftId
+    mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftIdPerUserPerEpochPerTranche;
+
+    // user => epoch => tranche => priority => wNftId
+    mapping(address => mapping(uint256 => mapping(address => mapping(RequestedFrom => uint256)))) private
+        _wNftIdPerUserPerEpochPerTranchePerPriority;
 
     constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
         AssetFunctionsBase(underlyingAsset_)
@@ -121,7 +125,7 @@ contract PendingPool is
         uint256 requestEpochId = systemVariables.getCurrentEpochNumber();
 
         // get user's dNftID for current epoch
-        dNftID = _dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche];
+        dNftID = _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche];
 
         if (dNftID == 0) {
             // create new dNft
@@ -129,9 +133,9 @@ contract PendingPool is
             _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
 
             _trancheDepositNFTs[tranche].push(dNftID);
-            _dNftPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
+            _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, 0, requestEpochId);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, requestEpochId, RequestedFrom.USER);
 
             _mint(user, dNftID);
         } else {
@@ -178,7 +182,7 @@ contract PendingPool is
         returns (uint256 wNftID)
     {
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
-        wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, 0);
+        wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, RequestedFrom.USER);
 
         emit WithdrawalRequested(user, tranche, wNftID, requestEpochId, trancheShares);
     }
@@ -192,7 +196,7 @@ contract PendingPool is
     function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
-        if (withdrawalNftDetails.priorityLevel == type(uint256).max) {
+        if (withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM) {
             revert WithdrawalRequestIsForced(user, address(_getOwnLendingPool()), wNftID);
         }
 
@@ -204,7 +208,7 @@ contract PendingPool is
         IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
 
         // delete nft storage
-        delete _trancheWithdrawalNftDetails[wNftID];
+        _deleteWNftDetails(user, wNftID);
 
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
@@ -218,7 +222,7 @@ contract PendingPool is
         wNftIDs = new uint256[](input.length);
         for (uint256 i = 0; i < input.length; i++) {
             wNftIDs[i] = _requestWithdrawal(
-                input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, type(uint256).max
+                input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, RequestedFrom.SYSTEM
             );
             emit ForceWithdrawalRequested(
                 input[i].user, input[i].tranche, wNftIDs[i], requestEpochId, input[i].sharesToWithdraw
@@ -235,7 +239,7 @@ contract PendingPool is
         address tranche,
         uint256 sharesToWithdraw,
         uint256 requestEpochId,
-        uint256 priority
+        RequestedFrom priority
     ) internal returns (uint256 wNftID) {
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
@@ -246,14 +250,25 @@ contract PendingPool is
 
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
-        wNftID = _nextTrancheWithdrawalNFTId[tranche];
-        _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
+        // get user's dNftID for current epoch
+        wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][priority];
 
-        _trancheWithdrawalNFTs[tranche].push(wNftID);
+        if (wNftID == 0) {
+            // create new wNft
+            wNftID = _nextTrancheWithdrawalNFTId[tranche];
+            _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
 
-        _mint(user, wNftID);
+            _trancheWithdrawalNFTs[tranche].push(wNftID);
+            _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][priority] = wNftID;
 
-        _trancheWithdrawalNftDetails[wNftID] = WithdrawalNftDetails(sharesToWithdraw, requestEpochId, priority);
+            _mint(user, wNftID);
+
+            _trancheWithdrawalNftDetails[wNftID] =
+                WithdrawalNftDetails(sharesToWithdraw, tranche, requestEpochId, priority);
+        } else {
+            // update existing wNft
+            _trancheWithdrawalNftDetails[wNftID].sharesAmount += sharesToWithdraw;
+        }
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
@@ -302,7 +317,7 @@ contract PendingPool is
             // Burn the deposit NFT
             _update(address(0), wNftID, address(0));
 
-            delete _trancheWithdrawalNftDetails[wNftID];
+            _deleteWNftDetails(user, wNftID);
         }
 
         (address tranche,) = decomposeWithdrawalId(wNftID);
@@ -313,8 +328,14 @@ contract PendingPool is
 
     function _deleteDNftDetails(address user, uint256 dNftID) private {
         DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
-        delete _dNftPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
+        delete _dNftIdPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
         delete _trancheDepositNftDetails[dNftID];
+    }
+
+    function _deleteWNftDetails(address user, uint256 wNftID) private {
+        WithdrawalNftDetails storage wNftDetails = _trancheWithdrawalNftDetails[wNftID];
+        delete _wNftIdPerUserPerEpochPerTranchePerPriority[user][wNftDetails.epochId][wNftDetails.tranche][wNftDetails.requestedFrom];
+        delete _trancheWithdrawalNftDetails[wNftID];
     }
 
     // ID
