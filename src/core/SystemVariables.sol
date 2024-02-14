@@ -249,7 +249,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns whether users can deposit to junior tranches only when having rKSU.
      * @return true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
      */
-    function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external returns (bool) {
+    function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
         return _userCanDepositToJuniorTrancheWhenHeHasRKSU;
     }
 

@@ -39,6 +39,14 @@ contract UserManager is IUserManager {
         return ksuLocking.balanceOf(user) > 0;
     }
 
+    function canUserDepositInJuniorTranche(address user) external view returns (bool) {
+        if (!systemVariables.getUserCanDepositToJuniorTrancheWhenHeHasRKSU()) {
+            return true;
+        } else {
+            return ksuLocking.userTotalDeposits(user) > 0;
+        }
+    }
+
     // TODO: only at clearing time
     function _updateUserLoyaltyLevel(address user) internal returns (uint256 currentEpoch, uint256 loyaltyLevel) {
         LoyaltyGlobalParameters memory params = _getLoyaltyParameters();
