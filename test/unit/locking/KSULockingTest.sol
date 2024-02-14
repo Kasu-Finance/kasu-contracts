@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
-import "./utils/LockingTestUtils.sol";
+import "../_utils/LockingTestUtils.sol";
 import "../../shared/SigUtilsERC20.sol";
 import "../../../src/locking/KSULockBonus.sol";
 import "../../../src/locking/interfaces/IKSULocking.sol";

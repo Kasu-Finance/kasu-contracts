@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "../../../src/token/KSU.sol";
 import {MockUSDC} from "../../shared/MockUSDC.sol";
-import "./utils/LockingTestUtils.sol";
+import "../_utils/LockingTestUtils.sol";
 
 contract LockingWorkflowTest is LockingTestUtils {
     function setUp() public {

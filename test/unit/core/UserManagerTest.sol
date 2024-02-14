@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 import "forge-std/Test.sol";
-import {BaseTestUtils} from "../../shared/BaseTestUtils.sol";
+import {BaseTestUtils} from "../_utils/BaseTestUtils.sol";
 import "../../../src/core/UserManager.sol";
 import "../../../src/core/interfaces/ISystemVariables.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPool.sol";

@@ -3,12 +3,12 @@ pragma solidity 0.8.23;
 
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "../../../shared/MockERC20Permit.sol";
-import "../../../shared/BaseTestUtils.sol";
-import "../../../../src/locking/KSULockBonus.sol";
-import "../../../../src/locking/KSULocking.sol";
-import "../../../../src/shared/access/KasuController.sol";
-import "../../../shared/MockUSDC.sol";
+import "./BaseTestUtils.sol";
+import "../../shared/MockERC20Permit.sol";
+import "../../shared/MockUSDC.sol";
+import "../../../src/locking/KSULockBonus.sol";
+import "../../../src/locking/KSULocking.sol";
+import "../../../src/shared/access/KasuController.sol";
 
 contract LockingTestUtils is BaseTestUtils {
     ERC20Permit internal _ksu;
