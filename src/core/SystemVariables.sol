@@ -41,6 +41,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     uint256[] private _loyaltyThresholds;
 
+    bool private _userCanDepositToJuniorTrancheWhenHeHasRKSU;
+
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
         ksuPrice = ksuPrice_;
         _disableInitializers();
@@ -239,5 +241,23 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         }
 
         _loyaltyThresholds = loyaltyThresholds_;
+    }
+
+    // LENDING POOL
+
+    /**
+     * @notice Returns whether users can deposit to junior tranches only when having rKSU.
+     * @return true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
+     */
+    function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external returns (bool) {
+        return _userCanDepositToJuniorTrancheWhenHeHasRKSU;
+    }
+
+    /**
+     * @notice Sets whether users are allowed to deposit only when the own rKSU
+     * @param value Set to true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
+     */
+    function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external onlyAdmin {
+        _userCanDepositToJuniorTrancheWhenHeHasRKSU = value;
     }
 }
