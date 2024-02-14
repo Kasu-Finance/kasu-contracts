@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract BaseTestUtils is Test {
     address internal admin = address(0xad1);
@@ -11,6 +12,8 @@ contract BaseTestUtils is Test {
     address internal bob = address(0x2);
     address internal carol = address(0x3);
     address internal david = address(0x4);
+
+    ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
 
     function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {
         token.approve(spender, amount);

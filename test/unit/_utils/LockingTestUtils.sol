@@ -43,11 +43,10 @@ contract LockingTestUtils is BaseTestUtils {
     function __locking_setUp(ERC20Permit ksu, IERC20 usdc) internal virtual {
         _ksu = ksu;
         _usdc = usdc;
-        ProxyAdmin proxy = new ProxyAdmin(admin);
 
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =
-            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxy), "");
+            new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
