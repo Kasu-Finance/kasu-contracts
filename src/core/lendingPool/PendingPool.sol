@@ -122,7 +122,7 @@ contract PendingPool is
         external
         lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
-        canUserRequestDeposit(user)
+        canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
         // receive the asset from the lending pool manager
@@ -447,8 +447,10 @@ contract PendingPool is
         _;
     }
 
-    modifier canUserRequestDeposit(address user) {
-        if (!userManager.canUserDepositInJuniorTranche(user)) {
+    modifier canUserRequestDeposit(address user, address tranche) {
+        TrancheData[] memory trancheData = _getOwnLendingPool().lendingPoolInfo().tranches;
+        if (trancheData.length <= 1) return;
+        if (trancheData[0].trancheAddress == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
         }
         _;
