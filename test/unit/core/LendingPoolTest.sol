@@ -20,6 +20,23 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
 
         uint256 dNftId1_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 125 * 10 ** 6);
+
+        vm.prank(admin);
+        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
+
+        vm.startPrank(bob);
+        deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
+        mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
+        vm.expectRevert(
+            abi.encodeWithSelector(IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu.selector, bob)
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 125 * 10 ** 6);
+        vm.stopPrank();
+
+        vm.prank(admin);
+        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
+
+        _lock(bob, 50 ether, lockPeriod30);
         uint256 dNftId2_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 125 * 10 ** 6);
 
         // ASSERT

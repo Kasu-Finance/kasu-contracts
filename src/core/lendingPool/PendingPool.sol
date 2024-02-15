@@ -10,6 +10,7 @@ import "../interfaces/ISystemVariables.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
+import "../interfaces/IUserManager.sol";
 
 /**
  * @dev
@@ -26,6 +27,7 @@ contract PendingPool is
     LendingPoolStoppable
 {
     ISystemVariables public immutable systemVariables;
+    IUserManager public immutable userManager;
 
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheDepositNFTs;
@@ -53,11 +55,14 @@ contract PendingPool is
     mapping(address => mapping(uint256 => mapping(address => mapping(RequestedFrom => uint256)))) private
         _wNftIdPerUserPerEpochPerTranchePerPriority;
 
-    constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
-        AssetFunctionsBase(underlyingAsset_)
-        LendingPoolHelpers(lendingPoolManager_)
-    {
+    constructor(
+        ISystemVariables systemVariables_,
+        address underlyingAsset_,
+        ILendingPoolManager lendingPoolManager_,
+        IUserManager userManger_
+    ) AssetFunctionsBase(underlyingAsset_) LendingPoolHelpers(lendingPoolManager_) {
         systemVariables = systemVariables_;
+        userManager = userManger_;
         _disableInitializers();
     }
 
@@ -117,6 +122,7 @@ contract PendingPool is
         external
         lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
+        canUserRequestDeposit(user)
         returns (uint256 dNftID)
     {
         // receive the asset from the lending pool manager
@@ -437,6 +443,13 @@ contract PendingPool is
     modifier nftExists(uint256 nftId) {
         if (ownerOf(nftId) == address(0)) {
             revert IERC721Errors.ERC721NonexistentToken(nftId);
+        }
+        _;
+    }
+
+    modifier canUserRequestDeposit(address user) {
+        if (!userManager.canUserDepositInJuniorTranche(user)) {
+            revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
         }
         _;
     }

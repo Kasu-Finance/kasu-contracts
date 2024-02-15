@@ -9,7 +9,7 @@ import "../_utils/LockingTestUtils.sol";
 import "../../shared/SigUtilsERC20.sol";
 import "../../../src/locking/KSULockBonus.sol";
 import "../../../src/locking/interfaces/IKSULocking.sol";
-import "../../../src/shared/Constants.sol";
+import "../../../src/core/Constants.sol";
 import "../../../src/shared/access/Roles.sol";
 
 contract KSULockingTest is LockingTestUtils {

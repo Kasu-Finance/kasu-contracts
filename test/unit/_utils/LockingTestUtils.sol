@@ -35,14 +35,8 @@ abstract contract LockingTestUtils is BaseTestUtils {
     uint256 internal ksuBonusMultiplier720 = 70_00;
 
     function __locking_setUp() internal virtual {
-        MockERC20Permit mockKsu = new MockERC20Permit("KSU", "KSU", 18);
-        MockUSDC mockUsdc = new MockUSDC();
-        __locking_setUp(mockKsu, mockUsdc);
-    }
-
-    function __locking_setUp(ERC20Permit ksu, IERC20 usdc) internal virtual {
-        _ksu = ksu;
-        _usdc = usdc;
+        _ksu = new MockERC20Permit("KSU", "KSU", 18);
+        _usdc = new MockUSDC();
 
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =

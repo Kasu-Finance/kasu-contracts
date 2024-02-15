@@ -29,7 +29,7 @@ contract UserManagerTest is LockingTestUtils {
 
     function test_canUserDepositInJuniorTranche_whenUserHasRKsuLockedAndFlagIsFalse() public {
         // ARRANGE
-        _lock(alice, 50 * 1e6, lockPeriod30);
+        _lock(alice, 50 ether, lockPeriod30);
         vm.prank(admin);
         systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
 
@@ -42,7 +42,7 @@ contract UserManagerTest is LockingTestUtils {
 
     function test_canUserDepositInJuniorTranche_whenUserHasRKsuLockedAndFlagIsTrue() public {
         // ARRANGE
-        _lock(alice, 50 * 1e6, lockPeriod30);
+        _lock(alice, 50 ether, lockPeriod30);
         vm.prank(admin);
         systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
 
