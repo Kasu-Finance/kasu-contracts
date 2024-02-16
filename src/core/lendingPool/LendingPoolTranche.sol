@@ -110,4 +110,15 @@ contract LendingPoolTranche is
         if (spender == address(_getOwnLendingPool())) return;
         super._spendAllowance(owner, spender, value);
     }
+
+    function transferFrom(address from, address to, uint256 tokenId)
+        public
+        override(IERC20, ERC20Upgradeable)
+        returns (bool)
+    {
+        if (to != _getPendingPool()) {
+            revert NonTransferable();
+        }
+        return super.transferFrom(from, to, tokenId);
+    }
 }
