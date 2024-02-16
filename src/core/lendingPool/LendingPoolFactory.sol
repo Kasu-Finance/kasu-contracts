@@ -105,7 +105,10 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         }
 
         // pending pool deploy
-        address pendingPoolAddress = _deployPendingPool(lendingPool, lendingPoolDeployment.tranches);
+        BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
+        PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
+        pendingPool.initialize("Pending pool nft", "PP", lendingPool);
+        address pendingPoolAddress = address(pendingPool);
 
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
 
@@ -114,6 +117,8 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolInfo.tranches = tranches;
 
         lendingPool.initialize(poolConfiguration, lendingPoolInfo, address(lendingPoolManager));
+
+        pendingPool.setUpTranches();
 
         // access control
         kasuController.grantLendingPoolRole(
@@ -139,15 +144,5 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
 
         return address(lendingPoolTranche);
-    }
-
-    function _deployPendingPool(ILendingPool lendingPool, address[] memory tranches) internal returns (address) {
-        BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
-        PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
-
-        // TODO: update pending NFT name and symbol
-        pendingPool.initialize("Pending pool nft", "PP", lendingPool, tranches);
-
-        return address(pendingPool);
     }
 }
