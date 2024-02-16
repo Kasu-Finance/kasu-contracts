@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "../../../src/core/lendingPool/LendingPoolStoppable.sol";
+import "../../../src/shared/CommonErrors.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -40,6 +41,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _lock(bob, 50 ether, lockPeriod30);
         uint256 dNftId1_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
         uint256 dNftId2_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
+
+        // transfer dNFT
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        IPendingPool(lpd.pendingPool).transferFrom(bob, alice, dNftId1_bob);
+        vm.stopPrank();
 
         // ASSERT
         assertEq(dNftId1_bob, dNftId2_bob);
@@ -182,6 +189,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
             )
         );
         _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 51 * 10 ** 18);
+
+        // transfer wNFT
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        IPendingPool(lpd.pendingPool).transferFrom(bob, alice, wNftId1_bob);
+        vm.stopPrank();
 
         // ### ASSERT ###
         assertTrue(wNftId1_bob == wNftId2_bob);
