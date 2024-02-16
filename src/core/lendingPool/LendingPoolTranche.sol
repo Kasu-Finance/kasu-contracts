@@ -111,14 +111,21 @@ contract LendingPoolTranche is
         super._spendAllowance(owner, spender, value);
     }
 
-    function transferFrom(address from, address to, uint256 tokenId)
+    function transfer(address to, uint256 value) public override(IERC20, ERC20Upgradeable) returns (bool) {
+        if (to != _getPendingPool() && msg.sender != _getPendingPool()) {
+            revert NonTransferable();
+        }
+        return super.transfer(to, value);
+    }
+
+    function transferFrom(address from, address to, uint256 value)
         public
         override(IERC20, ERC20Upgradeable)
         returns (bool)
     {
-        if (to != _getPendingPool()) {
+        if (to != _getPendingPool() && from != _getPendingPool()) {
             revert NonTransferable();
         }
-        return super.transferFrom(from, to, tokenId);
+        return super.transferFrom(from, to, value);
     }
 }

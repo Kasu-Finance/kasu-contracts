@@ -137,6 +137,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         _acceptDepositRequest(lendingPoolAddress, dNftId1_bob, 250 * 10 ** 6);
 
+        // transfer tranche shares
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        ILendingPoolTranche(juniorTrancheAddress).transfer(alice, 10 * 10 ** 6);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        ILendingPoolTranche(juniorTrancheAddress).transferFrom(bob, alice, 10 * 10 ** 6);
+        vm.stopPrank();
+
         // non existing dNftId
         uint256 dNftId_nonExistent = 888;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_nonExistent));
