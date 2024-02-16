@@ -17,26 +17,45 @@ contract LendingPoolTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         // ACT
-        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        uint256 dNftId1_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
 
-        uint256 dNftId1_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 125 * 10 ** 6);
-        uint256 dNftId2_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 125 * 10 ** 6);
+        vm.prank(admin);
+        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
+
+        uint256 dNftId2_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
+
+        // request deposit on junior tranche when no locking took place
+        vm.startPrank(bob);
+        deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
+        mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
+        vm.expectRevert(
+            abi.encodeWithSelector(IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu.selector, bob)
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
+        vm.stopPrank();
+
+        vm.prank(admin);
+        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
+
+        _lock(bob, 50 ether, lockPeriod30);
+        uint256 dNftId1_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
+        uint256 dNftId2_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
 
         // ASSERT
         assertEq(dNftId1_bob, dNftId2_bob);
         assertApproxEqAbs(mockUsdc.balanceOf(address(lpd.pendingPool)), 350 * 10 ** 6, 0);
 
         PendingPool pendingPool = PendingPool(lpd.pendingPool);
-        assertEq(pendingPool.ownerOf(dNftId_alice), alice);
+        assertEq(pendingPool.ownerOf(dNftId1_alice), alice);
         assertEq(pendingPool.ownerOf(dNftId1_bob), bob);
 
-        DepositNftDetails memory depositNftDetails_alice = pendingPool.trancheDepositNftDetails(dNftId_alice);
+        DepositNftDetails memory depositNftDetails_alice = pendingPool.trancheDepositNftDetails(dNftId1_alice);
         assertEq(depositNftDetails_alice.assetAmount, 100 * 10 ** 6);
-        assertEq(depositNftDetails_alice.tranche, lpd.tranches[0]);
+        assertEq(depositNftDetails_alice.tranche, lpd.tranches[1]);
 
         DepositNftDetails memory depositNftDetails_bob = pendingPool.trancheDepositNftDetails(dNftId1_bob);
         assertEq(depositNftDetails_bob.assetAmount, 250 * 10 ** 6);
-        assertEq(depositNftDetails_bob.tranche, lpd.tranches[1]);
+        assertEq(depositNftDetails_bob.tranche, lpd.tranches[0]);
     }
 
     function test_cancelDeposit() public {

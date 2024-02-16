@@ -97,4 +97,5 @@ interface IPendingPool is IERC721 {
     );
     error WithdrawalRequestIsForced(address user, address lendingPool, uint256 wNftID);
     error CannotCancelDepositDuringClearingPeriod();
+    error UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(address user);
 }

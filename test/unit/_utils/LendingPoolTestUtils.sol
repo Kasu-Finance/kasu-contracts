@@ -15,13 +15,17 @@ import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "../../../src/shared/access/KasuController.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
+import "../../../src/core/UserManager.sol";
+import "./LockingTestUtils.sol";
 
-abstract contract LendingPoolTestUtils is BaseTestUtils {
+abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
     KsuPrice internal ksuPrice;
     SystemVariables internal systemVariables;
     MockUSDC internal mockUsdc;
+    IUserManager internal userManager;
+
     mapping(address => PendingPoolHarness) internal pendingPools;
 
     LendingPoolFactory private lendingPoolFactory;
@@ -32,6 +36,8 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
     address internal lendingPoolManagerAccount = address(0xad5);
 
     function __lendingPool_setUp() internal {
+        __locking_setUp();
+
         // fund accounts
         vm.deal(admin, 1 << 128);
         vm.deal(alice, 1 << 128);
@@ -58,6 +64,12 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         // system variables
         _deploySystemVariables();
 
+        // user manager
+        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking);
+        TransparentUpgradeableProxy userManagerProxy =
+            new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
+        userManager = IUserManager(address(userManagerProxy));
+
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
         TransparentUpgradeableProxy lendingPoolManagerProxy =
@@ -65,7 +77,8 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
 
         // pending pool
-        PendingPool pendingPoolIml = new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager);
+        PendingPool pendingPoolIml =
+            new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager, userManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
@@ -253,9 +266,12 @@ abstract contract LendingPoolTestUtils is BaseTestUtils {
 }
 
 contract PendingPoolHarness is PendingPool {
-    constructor(ISystemVariables systemVariables_, address underlyingAsset_, ILendingPoolManager lendingPoolManager_)
-        PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_)
-    {}
+    constructor(
+        ISystemVariables systemVariables_,
+        address underlyingAsset_,
+        ILendingPoolManager lendingPoolManager_,
+        IUserManager userManger_
+    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_) {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         return _acceptDepositRequest(dNftID, acceptedAmount);

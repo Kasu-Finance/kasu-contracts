@@ -8,15 +8,7 @@ import "../_utils/LockingTestUtils.sol";
 
 contract LockingWorkflowTest is LockingTestUtils {
     function setUp() public {
-        ProxyAdmin proxy = new ProxyAdmin(admin);
-        KSU ksuImpl = new KSU();
-
-        TransparentUpgradeableProxy ksuProxy = new TransparentUpgradeableProxy(address(ksuImpl), address(proxy), "");
-        KSU ksu_ = KSU(address(ksuProxy));
-        ksu_.initialize(address(admin));
-
-        MockUSDC usdc_ = new MockUSDC();
-        __locking_setUp(ERC20Permit(address(ksu_)), usdc_);
+        __locking_setUp();
 
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);

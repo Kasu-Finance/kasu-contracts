@@ -28,3 +28,5 @@ error AddressNotContract(address address_);
 error NotSupported();
 
 error AmountShouldBeGreaterThanZero();
+
+error NonTransferable();
