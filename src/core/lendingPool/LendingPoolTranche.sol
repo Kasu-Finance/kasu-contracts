@@ -8,7 +8,6 @@ import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../../shared/CommonErrors.sol";
 import "./LendingPoolHelpers.sol";
-import "forge-std/console2.sol";
 
 /**
  * @dev
