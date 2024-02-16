@@ -11,6 +11,7 @@ import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
 import "../interfaces/IUserManager.sol";
+import "../../shared/CommonErrors.sol";
 
 /**
  * @dev
@@ -240,6 +241,10 @@ contract PendingPool is
         _stopLendingPool();
     }
 
+    function transferFrom(address from, address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
+    }
+
     function _requestWithdrawal(
         address user,
         address tranche,
@@ -346,23 +351,10 @@ contract PendingPool is
 
     // ID
 
-    // id: 256 bits
-    // id: tranche address + deposit id
-    // id: tranche address + withdrawal id
-
     // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
     // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
     // id: withdrawal id (12 bytes), tranche address (20bytes)
     // 000000000000000000000000 0000000000000000000000000000000000000000
-
-    // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
-    // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
-
-    // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
-    // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
-
-    // address: 2^160
-    // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
     function getUserPendingAmounts(address user, uint256 depositEpochId)
         external
