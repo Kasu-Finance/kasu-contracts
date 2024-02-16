@@ -48,6 +48,18 @@ contract LendingPoolTest is LendingPoolTestUtils {
         IPendingPool(lpd.pendingPool).transferFrom(bob, alice, dNftId1_bob);
         vm.stopPrank();
 
+        // approve dNFT
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        IPendingPool(lpd.pendingPool).approve(alice, dNftId1_bob);
+        vm.stopPrank();
+
+        // set approval dNFT
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        IPendingPool(lpd.pendingPool).setApprovalForAll(alice, true);
+        vm.stopPrank();
+
         // ASSERT
         assertEq(dNftId1_bob, dNftId2_bob);
         assertApproxEqAbs(mockUsdc.balanceOf(address(lpd.pendingPool)), 350 * 10 ** 6, 0);
@@ -141,8 +153,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(bob);
         vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
         ILendingPoolTranche(juniorTrancheAddress).transfer(alice, 10 * 10 ** 6);
+        vm.stopPrank();
+
+        // approve tranche shares
+        vm.startPrank(bob);
         vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
-        ILendingPoolTranche(juniorTrancheAddress).transferFrom(bob, alice, 10 * 10 ** 6);
+        ILendingPoolTranche(juniorTrancheAddress).approve(alice, 10 * 10 ** 6);
         vm.stopPrank();
 
         // non existing dNftId
@@ -202,6 +218,18 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(bob);
         vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
         IPendingPool(lpd.pendingPool).transferFrom(bob, alice, wNftId1_bob);
+        vm.stopPrank();
+
+        // approve dNFT
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        IPendingPool(lpd.pendingPool).approve(alice, wNftId1_bob);
+        vm.stopPrank();
+
+        // set approval dNFT
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        IPendingPool(lpd.pendingPool).setApprovalForAll(alice, true);
         vm.stopPrank();
 
         // ### ASSERT ###

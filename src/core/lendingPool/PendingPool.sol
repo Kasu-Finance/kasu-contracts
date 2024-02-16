@@ -72,23 +72,20 @@ contract PendingPool is
      * @param name_ The name of the pending NFT.
      * @param symbol_ The symbol of the pending NFT.
      * @param lendingPool_ The address of the lending pool.
-     * @param tranches The addresses of the tranches.
      */
-    function initialize(
-        string memory name_,
-        string memory symbol_,
-        ILendingPool lendingPool_,
-        address[] calldata tranches
-    ) public initializer {
+    function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC721_init(name_, symbol_);
         __LendingPoolHelpers_init(lendingPool_);
+    }
 
+    function setUpTranches() public {
+        TrancheData[] memory tranches = _getOwnLendingPool().lendingPoolInfo().tranches;
         for (uint256 i; i < tranches.length; i++) {
-            address tranche = tranches[i];
+            address tranche = tranches[i].trancheAddress;
             _nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
             _nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
 
-            IERC20(tranche).approve(address(lendingPool_), type(uint256).max);
+            IERC20(tranche).approve(address(_getOwnLendingPool()), type(uint256).max);
         }
     }
 
@@ -239,6 +236,14 @@ contract PendingPool is
 
     function stop() external onlyOwnLendingPool {
         _stopLendingPool();
+    }
+
+    function setApprovalForAll(address operator, bool approved) public override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
+    }
+
+    function approve(address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
     }
 
     function transferFrom(address from, address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
