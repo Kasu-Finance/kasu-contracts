@@ -7,6 +7,7 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../AssetFunctionsBase.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../interfaces/IKasuAllowList.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
@@ -22,15 +23,18 @@ contract LendingPoolManager is
     mapping(address => address) public ownLendingPool;
 
     mapping(address => LendingPoolDeployment) private lendingPools;
+
     ILendingPoolFactory private lendingPoolFactory;
+    IKasuAllowList private kasuAllowList;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
         KasuAccessControllable(controller_)
     {}
 
-    function initialize(ILendingPoolFactory lendingPoolFactory_) public initializer {
+    function initialize(ILendingPoolFactory lendingPoolFactory_, IKasuAllowList kasuAllowList_) public initializer {
         lendingPoolFactory = lendingPoolFactory_;
+        kasuAllowList = kasuAllowList_;
     }
 
     // #### CREATE POOL #### //
@@ -58,6 +62,7 @@ contract LendingPoolManager is
         external
         validLendingPool(lendingPool)
         validTranche(lendingPool, tranche)
+        isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
         _transferAssetsFrom(msg.sender, address(this), amount);
@@ -216,6 +221,13 @@ contract LendingPoolManager is
         }
         if (!trancheExists) {
             revert InvalidTranche(lendingPool, tranche);
+        }
+        _;
+    }
+
+    modifier isUserAllowed(address user) {
+        if (!kasuAllowList.isAllowed(user)) {
+            revert IKasuAllowList.UserNotInAllowList(user);
         }
         _;
     }
