@@ -11,6 +11,7 @@ import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
 import "../interfaces/IUserManager.sol";
+import "../../shared/CommonErrors.sol";
 
 /**
  * @dev
@@ -71,23 +72,20 @@ contract PendingPool is
      * @param name_ The name of the pending NFT.
      * @param symbol_ The symbol of the pending NFT.
      * @param lendingPool_ The address of the lending pool.
-     * @param tranches The addresses of the tranches.
      */
-    function initialize(
-        string memory name_,
-        string memory symbol_,
-        ILendingPool lendingPool_,
-        address[] calldata tranches
-    ) public initializer {
+    function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC721_init(name_, symbol_);
         __LendingPoolHelpers_init(lendingPool_);
+    }
 
+    function setUpTranches() public {
+        TrancheData[] memory tranches = _getOwnLendingPool().lendingPoolInfo().tranches;
         for (uint256 i; i < tranches.length; i++) {
-            address tranche = tranches[i];
+            address tranche = tranches[i].trancheAddress;
             _nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
             _nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
 
-            IERC20(tranche).approve(address(lendingPool_), type(uint256).max);
+            IERC20(tranche).approve(address(_getOwnLendingPool()), type(uint256).max);
         }
     }
 
@@ -240,6 +238,18 @@ contract PendingPool is
         _stopLendingPool();
     }
 
+    function setApprovalForAll(address operator, bool approved) public override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
+    }
+
+    function approve(address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
+    }
+
+    function transferFrom(address from, address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
+    }
+
     function _requestWithdrawal(
         address user,
         address tranche,
@@ -346,23 +356,10 @@ contract PendingPool is
 
     // ID
 
-    // id: 256 bits
-    // id: tranche address + deposit id
-    // id: tranche address + withdrawal id
-
     // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
     // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
     // id: withdrawal id (12 bytes), tranche address (20bytes)
     // 000000000000000000000000 0000000000000000000000000000000000000000
-
-    // deposit id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 0
-    // withdrawal id: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 + 2^95
-
-    // deposit id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 0
-    // withdrawal id: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC + 2^95
-
-    // address: 2^160
-    // left: 2^96 = 79.228.162.514.264.337.593.543.950.336
 
     function getUserPendingAmounts(address user, uint256 depositEpochId)
         external
