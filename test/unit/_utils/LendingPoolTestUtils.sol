@@ -17,6 +17,7 @@ import "../../../src/shared/access/KasuController.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
 import "../../../src/core/UserManager.sol";
 import "./LockingTestUtils.sol";
+import "../../../src/core/KasuAllowList.sol";
 
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
@@ -25,6 +26,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     SystemVariables internal systemVariables;
     MockUSDC internal mockUsdc;
     IUserManager internal userManager;
+    IKasuAllowList internal kasuAllowList;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -42,6 +44,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.deal(admin, 1 << 128);
         vm.deal(alice, 1 << 128);
         vm.deal(bob, 1 << 128);
+        vm.deal(carol, 1 << 128);
+        vm.deal(david, 1 << 128);
+        vm.deal(userNotAllowed, 1 << 128);
 
         // usdc
         {
@@ -57,6 +62,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         TransparentUpgradeableProxy kasuControllerProxy =
             new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
         kasuController = KasuController(address(kasuControllerProxy));
+
+        // allow list
+        KasuAllowList KasuAllowListImpl = new KasuAllowList(kasuController);
+        TransparentUpgradeableProxy KasuAllowListProxy =
+            new TransparentUpgradeableProxy(address(KasuAllowListImpl), address(proxyAdmin), "");
+        kasuAllowList = IKasuAllowList(address(KasuAllowListProxy));
 
         // ksu price
         _deployKsuPrice();
@@ -78,7 +89,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // pending pool
         PendingPool pendingPoolIml =
-            new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager, userManager);
+            new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager, userManager, kasuAllowList);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
@@ -101,6 +112,14 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
         lendingPoolManager.initialize(lendingPoolFactory);
+
+        // kasu allow list - allow users
+        vm.startPrank(admin);
+        kasuAllowList.allowUser(alice);
+        kasuAllowList.allowUser(bob);
+        kasuAllowList.allowUser(carol);
+        kasuAllowList.allowUser(david);
+        vm.stopPrank();
     }
 
     function _deployKsuPrice() internal {
@@ -270,8 +289,9 @@ contract PendingPoolHarness is PendingPool {
         ISystemVariables systemVariables_,
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
-        IUserManager userManger_
-    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_) {}
+        IUserManager userManger_,
+        IKasuAllowList kasuAllowList_
+    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_, kasuAllowList_) {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         return _acceptDepositRequest(dNftID, acceptedAmount);

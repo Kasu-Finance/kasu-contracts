@@ -13,6 +13,8 @@ abstract contract BaseTestUtils is Test {
     address internal carol = address(0x3);
     address internal david = address(0x4);
 
+    address internal userNotAllowed = address(0x5);
+
     ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
 
     function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {

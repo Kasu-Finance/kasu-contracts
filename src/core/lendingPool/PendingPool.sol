@@ -12,6 +12,7 @@ import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
 import "../interfaces/IUserManager.sol";
 import "../../shared/CommonErrors.sol";
+import "../interfaces/IKasuAllowList.sol";
 
 /**
  * @dev
@@ -29,6 +30,7 @@ contract PendingPool is
 {
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;
+    IKasuAllowList public immutable kasuAllowList;
 
     /// @dev tranche => nftIDs[]
     mapping(address => uint256[]) private _trancheDepositNFTs;
@@ -60,10 +62,12 @@ contract PendingPool is
         ISystemVariables systemVariables_,
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
-        IUserManager userManger_
+        IUserManager userManger_,
+        IKasuAllowList kasuAllowList_
     ) AssetFunctionsBase(underlyingAsset_) LendingPoolHelpers(lendingPoolManager_) {
         systemVariables = systemVariables_;
         userManager = userManger_;
+        kasuAllowList = kasuAllowList_;
         _disableInitializers();
     }
 
@@ -121,6 +125,7 @@ contract PendingPool is
         lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
         canUserRequestDeposit(user, tranche)
+        isUserAllowed(user)
         returns (uint256 dNftID)
     {
         // receive the asset from the lending pool manager
@@ -449,6 +454,13 @@ contract PendingPool is
         if (trancheData.length <= 1) return;
         if (trancheData[0].trancheAddress == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
+        }
+        _;
+    }
+
+    modifier isUserAllowed(address user) {
+        if (!kasuAllowList.isAllowed(user)) {
+            revert IKasuAllowList.UserNotInAllowList(user);
         }
         _;
     }
