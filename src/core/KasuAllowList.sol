@@ -12,10 +12,12 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable {
 
     function allowUser(address user) external onlyAdmin {
         _allowList[user] = true;
+        emit IKasuAllowList.UserAddedInAllowList(user);
     }
 
     function blockUser(address user) external onlyAdmin {
         _allowList[user] = false;
+        emit IKasuAllowList.UserRemovedFromAllowList(user);
     }
 
     function isAllowed(address user) external view returns (bool) {

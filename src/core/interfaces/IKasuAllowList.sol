@@ -8,5 +8,8 @@ interface IKasuAllowList {
 
     function isAllowed(address user) external view returns (bool);
 
+    event UserAddedInAllowList(address user);
+    event UserRemovedFromAllowList(address user);
+
     error UserNotInAllowList(address user);
 }
