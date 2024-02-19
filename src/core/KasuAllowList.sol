@@ -18,7 +18,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable {
         _allowList[user] = false;
     }
 
-    function isAllowed(address user) external returns (bool) {
+    function isAllowed(address user) external view returns (bool) {
         return _allowList[user];
     }
 }

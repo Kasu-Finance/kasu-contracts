@@ -89,7 +89,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // pending pool
         PendingPool pendingPoolIml =
-            new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager, userManager, kasuAllowList);
+            new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager, userManager);
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
@@ -111,7 +111,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
-        lendingPoolManager.initialize(lendingPoolFactory);
+        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList);
 
         // kasu allow list - allow users
         vm.startPrank(admin);
@@ -289,9 +289,8 @@ contract PendingPoolHarness is PendingPool {
         ISystemVariables systemVariables_,
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
-        IUserManager userManger_,
-        IKasuAllowList kasuAllowList_
-    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_, kasuAllowList_) {}
+        IUserManager userManger_
+    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_) {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         return _acceptDepositRequest(dNftID, acceptedAmount);

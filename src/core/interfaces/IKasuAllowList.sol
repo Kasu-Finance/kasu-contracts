@@ -6,7 +6,7 @@ interface IKasuAllowList {
 
     function blockUser(address user) external;
 
-    function isAllowed(address user) external returns (bool);
+    function isAllowed(address user) external view returns (bool);
 
     error UserNotInAllowList(address user);
 }
