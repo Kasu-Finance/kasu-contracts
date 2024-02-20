@@ -167,20 +167,22 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
         // create lending
         uint256 minDepositAmount = 1 ether;
+        uint256 maxDepositAmount = 1000 ether;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
-        Tranches memory tranches;
-        tranches.junior = TrancheDetail(true, 10, 20);
-        tranches.mezzo = TrancheDetail(true, 20, 10);
-        tranches.senior = TrancheDetail(true, 70, 5);
+        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        TrancheConfig[] memory trancheDetails = new TrancheConfig[](3);
+        trancheDetails[0] = TrancheConfig(10, 20, minDepositAmount, maxDepositAmount);
+        trancheDetails[1] = TrancheConfig(20, 10, minDepositAmount, maxDepositAmount);
+        trancheDetails[2] = TrancheConfig(70, 5, minDepositAmount, maxDepositAmount);
         PoolConfiguration memory poolConfiguration = PoolConfiguration(
             "Test Lending Pool",
             "TLP",
             address(mockUsdc),
-            minDepositAmount,
             targetExcessLiquidity,
-            tranches,
+            trancheDetails,
             lendingPoolAdminAccount,
-            lendingPoolLoanManagerAccount
+            lendingPoolLoanManagerAccount,
+            totalDesiredLoanAmount
         );
         vm.prank(lendingPoolCreatorAccount);
         lendingPoolDeployment = createLendingPool(poolConfiguration);

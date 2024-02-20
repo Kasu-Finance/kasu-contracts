@@ -12,6 +12,8 @@ import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "./LendingPoolStoppable.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @dev
  * This contract is the ledger of the lending pool balances.
@@ -21,10 +23,10 @@ import "./LendingPoolStoppable.sol";
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     ISystemVariables public immutable systemVariables;
 
-    /// @dev Lending pool configuration.
     LendingPoolInfo private _lendingPoolInfo;
-    /// @notice Is the address a lending pool tranche.
-    mapping(address => bool) public isTranche;
+    PoolConfiguration private _poolConfiguration;
+    /// @notice The index of lending pool info and pool configuration
+    mapping(address => uint256) private _trancheIndex;
 
     uint256 public borrowedAmount;
     address public borrowRecipient;
@@ -45,6 +47,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         LendingPoolInfo memory lendingPoolInfo_,
         address lendingPoolManager_
     ) public initializer {
+        // TODO: verify configuration
         if (lendingPoolManager_ == address(0)) {
             revert ConfigurationAddressZero();
         }
@@ -55,15 +58,31 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         __ERC20_init(poolConfiguration_.name, poolConfiguration_.symbol);
 
-        // TODO: setup the lending pool and it's tranches
-        _lendingPoolInfo.pendingPool = lendingPoolInfo_.pendingPool;
+        _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
 
-        for (uint256 i; i < lendingPoolInfo_.tranches.length; i++) {
-            _lendingPoolInfo.tranches.push(lendingPoolInfo_.tranches[i]);
-            address tranche = lendingPoolInfo_.tranches[i].trancheAddress;
-            isTranche[tranche] = true;
+        // copy memory to storage
+        _poolConfiguration.name = poolConfiguration_.name;
+        _poolConfiguration.symbol = poolConfiguration_.symbol;
+        _poolConfiguration.usdcAddress = poolConfiguration_.usdcAddress;
+        _poolConfiguration.targetExcessLiquidity = poolConfiguration_.targetExcessLiquidity;
+        _poolConfiguration.poolAdmin = poolConfiguration_.poolAdmin;
+        _poolConfiguration.borrowRecipient = poolConfiguration_.borrowRecipient;
 
-            _approve(address(this), tranche, type(uint256).max);
+        for (uint256 i; i < poolConfiguration_.tranches.length; i++) {
+            // copy memory to storage
+            _poolConfiguration.tranches.push(
+                TrancheConfig(
+                    poolConfiguration_.tranches[i].ratio,
+                    poolConfiguration_.tranches[i].interestRate,
+                    poolConfiguration_.tranches[i].minDepositAmount,
+                    poolConfiguration_.tranches[i].maxDepositAmount
+                )
+            );
+
+            _lendingPoolInfo.trancheAddresses.push(lendingPoolInfo_.trancheAddresses[i]);
+            _setTrancheIndex(lendingPoolInfo_.trancheAddresses[i], i);
+
+            _approve(address(this), lendingPoolInfo_.trancheAddresses[i], type(uint256).max);
         }
 
         borrowRecipient = poolConfiguration_.borrowRecipient;
@@ -81,12 +100,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _lendingPoolInfo;
     }
 
+    function poolConfiguration() external returns (PoolConfiguration memory) {
+        return _poolConfiguration;
+    }
+
     /**
      * @notice Returns the pending pool address.
      * @return The pending pool address.
      */
     function getPendingPool() public view returns (address) {
-        return _lendingPoolInfo.pendingPool;
+        return _lendingPoolInfo.pendingPoolAddress;
     }
 
     /**
@@ -99,8 +122,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function getUserAvailableBalance(address user) external view returns (uint256 availableBalance) {
-        for (uint256 i; i < _lendingPoolInfo.tranches.length; ++i) {
-            ILendingPoolTranche tranche = ILendingPoolTranche(_lendingPoolInfo.tranches[i].trancheAddress);
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
+            ILendingPoolTranche tranche = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]);
 
             availableBalance += tranche.convertToAssets(tranche.balanceOf(user));
         }
@@ -247,11 +270,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // TODO: remove the amount from the first loss capital
 
         // remove the funds from the tranches and mint loss tokens if first loss capital is not enough
-        for (uint256 i; i < _lendingPoolInfo.tranches.length; ++i) {
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             if (lossAmount > 0) {
                 uint256 lossApplied =
-                    ILendingPoolTranche(_lendingPoolInfo.tranches[i].trancheAddress).reportTrancheLoss(lossAmount);
-                _burn(_lendingPoolInfo.tranches[i].trancheAddress, lossApplied);
+                    ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(lossAmount);
+                _burn(_lendingPoolInfo.trancheAddresses[i], lossApplied);
 
                 lossAmount -= lossApplied;
             } else {
@@ -329,8 +352,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
         }
 
-        for (uint256 i = 0; i < _lendingPoolInfo.tranches.length; i++) {
-            _lendingPoolInfo.tranches[i].interestRate = 0;
+        for (uint256 i = 0; i < _lendingPoolInfo.trancheAddresses.length; i++) {
+            _poolConfiguration.tranches[i].interestRate = 0;
         }
         // TODO: remove desired borrow amount in the future
 
@@ -339,10 +362,51 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _stopLendingPool();
     }
 
+    // config
+
+    function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+    {
+        _getTrancheDetails(tranche).minDepositAmount = minimumDepositAmount;
+    }
+
+    function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount)
+        external
+        onlyLendingPoolManager
+    {
+        _getTrancheDetails(tranche).maxDepositAmount = maximumDepositAmount;
+    }
+
+    function updateTrancheInterestRate(address tranche, uint256 interestRate) external onlyLendingPoolManager {
+        _getTrancheDetails(tranche).interestRate = interestRate;
+    }
+
+    function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios) external {
+        if (tranches.length != ratios.length) {
+            revert InvalidArrayLength();
+        }
+        uint256 ratiosSum;
+        for (uint256 i; i < ratios.length; i++) {
+            ratiosSum += ratios[i];
+        }
+        if (ratiosSum != 100) {
+            revert InvalidConfiguration();
+        }
+        for (uint256 i; i < tranches.length; i++) {
+            _getTrancheDetails(tranches[i]).ratio = ratios[i];
+        }
+    }
+
+    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external {
+        _poolConfiguration.totalDesiredLoanAmount = totalDesiredLoanAmount;
+    }
+
     // Helper functions
 
     function _onlyPendingPool() private view {
-        if (msg.sender != _lendingPoolInfo.pendingPool) {
+        if (msg.sender != _lendingPoolInfo.pendingPoolAddress) {
             // TODO: Type Error
             revert("LendingPool: only pending pool");
         }
@@ -356,9 +420,17 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function _verifyTranche(address tranche) private view {
-        if (!isTranche[tranche]) {
+        if (_trancheIndex[tranche] == 0) {
             revert InvalidTranche(address(this), tranche);
         }
+    }
+
+    function _setTrancheIndex(address tranche, uint256 index) internal {
+        _trancheIndex[tranche] = index + 1;
+    }
+
+    function _getTrancheDetails(address tranche) internal view returns (TrancheConfig storage) {
+        return _poolConfiguration.tranches[_trancheIndex[tranche] - 1];
     }
 
     // Modifiers

@@ -79,13 +79,12 @@ contract PendingPool is
     }
 
     function setUpTranches() public {
-        TrancheData[] memory tranches = _getOwnLendingPool().lendingPoolInfo().tranches;
-        for (uint256 i; i < tranches.length; i++) {
-            address tranche = tranches[i].trancheAddress;
-            _nextTrancheDepositNFTId[tranche] = composeDepositId(tranche, 0);
-            _nextTrancheWithdrawalNFTId[tranche] = composeWithdrawalId(tranche, 0);
+        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolInfo().trancheAddresses;
+        for (uint256 i; i < trancheAddresses.length; i++) {
+            _nextTrancheDepositNFTId[trancheAddresses[i]] = composeDepositId(trancheAddresses[i], 0);
+            _nextTrancheWithdrawalNFTId[trancheAddresses[i]] = composeWithdrawalId(trancheAddresses[i], 0);
 
-            IERC20(tranche).approve(address(_getOwnLendingPool()), type(uint256).max);
+            IERC20(trancheAddresses[i]).approve(address(_getOwnLendingPool()), type(uint256).max);
         }
     }
 
@@ -445,9 +444,9 @@ contract PendingPool is
     }
 
     modifier canUserRequestDeposit(address user, address tranche) {
-        TrancheData[] memory trancheData = _getOwnLendingPool().lendingPoolInfo().tranches;
-        if (trancheData.length <= 1) return;
-        if (trancheData[0].trancheAddress == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
+        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolInfo().trancheAddresses;
+        if (trancheAddresses.length <= 1) return;
+        if (trancheAddresses[0] == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
         }
         _;

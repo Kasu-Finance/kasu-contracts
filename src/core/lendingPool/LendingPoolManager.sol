@@ -100,13 +100,6 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function updateDesiredLoanAmount(address lendingPool, uint256 amount)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
-    {
-        revert("0");
-    }
-
     function reportLoss(address lendingPool, uint256 amount)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
@@ -162,35 +155,6 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
     }
 
-    function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
-    {
-        revert("0");
-    }
-
-    function updateTrancheDesiredRatios(
-        address lendingPool,
-        address[] calldata tranches,
-        uint256[] calldata desiredRatios
-    ) external onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender) {
-        revert("0");
-    }
-
-    function updateMinimumDepositAmount(address lendingPool, uint256 minimumDepositAmount)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
-    {
-        revert("0");
-    }
-
-    function updateMaximumDepositAmount(address lendingPool, uint256 maximumDepositAmount)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
-    {
-        revert("0");
-    }
-
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
@@ -203,6 +167,44 @@ contract LendingPoolManager is
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
         revert("0");
+    }
+
+    // config
+
+    function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateMinimumDepositAmount(tranche, minimumDepositAmount);
+    }
+
+    function updateMaximumDepositAmount(address lendingPool, address tranche, uint256 maximumDepositAmount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateMaximumDepositAmount(tranche, maximumDepositAmount);
+    }
+
+    function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateTrancheInterestRate(tranche, interestRate);
+    }
+
+    function updateTrancheDesiredRatios(
+        address lendingPool,
+        address[] calldata tranches,
+        uint256[] calldata desiredRatios
+    ) external onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender) {
+        ILendingPool(lendingPool).updateTrancheDesiredRatios(tranches, desiredRatios);
+    }
+
+    function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateTotalDesiredLoanAmount(amount);
     }
 
     // #### MODIFIERS #### //

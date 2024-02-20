@@ -39,8 +39,6 @@ interface ILendingPoolManager {
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
-    function updateDesiredLoanAmount(address lendingPool, uint256 amount) external;
-
     function reportLoss(address lendingPool, uint256 amount) external returns (uint256 lossId);
 
     function repayLoss(address lendingPool, uint256 lossId, uint256 amount) external;
@@ -60,19 +58,20 @@ interface ILendingPoolManager {
 
     function stopLendingPool(address lendingPool, address firstLossCapitalReceiver) external;
 
-    function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate) external;
-
-    function updateTrancheDesiredRatios(
-        address lendingPool,
-        address[] calldata tranches,
-        uint256[] calldata desiredRatios
-    ) external;
-
-    function updateMinimumDepositAmount(address lendingPool, uint256 minimumDepositAmount) external;
-
-    function updateMaximumDepositAmount(address lendingPool, uint256 maximumDepositAmount) external;
-
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID) external;
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
+
+    // config
+
+    function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount) external;
+
+    function updateMaximumDepositAmount(address lendingPool, address tranche, uint256 maximumDepositAmount) external;
+
+    function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate) external;
+
+    function updateTrancheDesiredRatios(address lendingPool, address[] calldata tranches, uint256[] calldata ratios)
+        external;
+
+    function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount) external;
 }

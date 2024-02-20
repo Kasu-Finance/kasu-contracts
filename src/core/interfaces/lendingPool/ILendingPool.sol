@@ -2,16 +2,11 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./ILendingPoolFactory.sol";
 
 struct LendingPoolInfo {
-    TrancheData[] tranches;
-    address pendingPool;
-}
-
-struct TrancheData {
-    address trancheAddress;
-    uint256 ratio;
-    uint256 interestRate;
+    address[] trancheAddresses;
+    address pendingPoolAddress;
 }
 
 /**
@@ -23,6 +18,8 @@ interface ILendingPool is IERC20 {
     function getUserAvailableBalance(address user) external view returns (uint256);
 
     function lendingPoolInfo() external view returns (LendingPoolInfo memory);
+
+    function poolConfiguration() external returns (PoolConfiguration memory);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
@@ -51,6 +48,18 @@ interface ILendingPool is IERC20 {
         returns (uint256 assetAmount);
 
     function stop(address firstLossCapitalReceiver) external;
+
+    // #### CONFIG #### //
+
+    function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount) external;
+
+    function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount) external;
+
+    function updateTrancheInterestRate(address tranche, uint256 interestRate) external;
+
+    function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios) external;
+
+    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external;
 
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);

@@ -18,6 +18,8 @@ import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
+import "forge-std/console2.sol";
+
 contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;
     address private immutable lendingPoolBeacon;
@@ -46,62 +48,22 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
 
-        uint256 trancheCount;
-        if (poolConfiguration.tranches.junior.isEnabled) {
-            trancheCount++;
-        }
-
-        if (poolConfiguration.tranches.mezzo.isEnabled) {
-            trancheCount++;
-        }
-
-        if (poolConfiguration.tranches.senior.isEnabled) {
-            trancheCount++;
-        }
-
-        if (trancheCount == 0) {
+        if (poolConfiguration.tranches.length == 0) {
             revert("LendingPoolFactory: at least senior tranche must be enabled");
         }
 
         // tranches deploy
-        TrancheData[] memory tranches = new TrancheData[](trancheCount);
-        if (poolConfiguration.tranches.junior.isEnabled) {
-            if (trancheCount < 2) {
-                revert("LendingPoolFactory: junior tranche cannot be enabled without senior tranche");
-            }
+        lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
+        lendingPoolDeployment.tranches = new address[](poolConfiguration.tranches.length);
 
-            address juniorTranche = _deployLendingPoolTranche(
-                poolConfiguration.name, poolConfiguration.symbol, "Junior Tranche", "jr", lendingPool
-            );
-            tranches[0] = TrancheData(
-                juniorTranche, poolConfiguration.tranches.junior.ratio, poolConfiguration.tranches.junior.interestRate
-            );
-        }
-        if (poolConfiguration.tranches.mezzo.isEnabled) {
-            if (trancheCount < 3) {
-                revert("LendingPoolFactory: mezzo tranche cannot be enabled without senior and junior tranche");
-            }
+        address[] memory trancheAddresses = new address[](poolConfiguration.tranches.length);
 
-            address mezzoTranche = _deployLendingPoolTranche(
-                poolConfiguration.name, poolConfiguration.symbol, "Mezzo Tranche", "mz", lendingPool
-            );
-            tranches[1] = TrancheData(
-                mezzoTranche, poolConfiguration.tranches.mezzo.ratio, poolConfiguration.tranches.mezzo.interestRate
-            );
-        }
-        if (poolConfiguration.tranches.senior.isEnabled) {
-            address seniorTranche = _deployLendingPoolTranche(
+        address trancheAddress;
+        for (uint256 i; i < poolConfiguration.tranches.length; i++) {
+            trancheAddresses[i] = _deployLendingPoolTranche(
                 poolConfiguration.name, poolConfiguration.symbol, "Senior Tranche", "sr", lendingPool
             );
-            tranches[trancheCount - 1] = TrancheData(
-                seniorTranche, poolConfiguration.tranches.senior.ratio, poolConfiguration.tranches.senior.interestRate
-            );
-        }
-
-        lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
-        lendingPoolDeployment.tranches = new address[](trancheCount);
-        for (uint256 i; i < tranches.length; i++) {
-            lendingPoolDeployment.tranches[i] = tranches[i].trancheAddress;
+            lendingPoolDeployment.tranches[i] = trancheAddresses[i];
         }
 
         // pending pool deploy
@@ -113,8 +75,8 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolDeployment.pendingPool = pendingPoolAddress;
 
         LendingPoolInfo memory lendingPoolInfo;
-        lendingPoolInfo.pendingPool = pendingPoolAddress;
-        lendingPoolInfo.tranches = tranches;
+        lendingPoolInfo.pendingPoolAddress = pendingPoolAddress;
+        lendingPoolInfo.trancheAddresses = trancheAddresses;
 
         lendingPool.initialize(poolConfiguration, lendingPoolInfo, address(lendingPoolManager));
 
