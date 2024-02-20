@@ -202,7 +202,7 @@ contract LendingPoolManager is
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).updateTotalDesiredLoanAmount(amount);
     }

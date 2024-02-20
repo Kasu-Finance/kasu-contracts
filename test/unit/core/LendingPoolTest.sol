@@ -706,4 +706,63 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(userPendingWithdrawalBalance_alice, requestDepositAmount_alice0);
         assertEq(userPendingDepositBalance_bob, requestDepositAmount_bob);
     }
+
+    function test_updateConfig() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // ### ACT ###
+        vm.startPrank(lendingPoolManagerAccount);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 15);
+        uint256[] memory ratios = new uint256[](3);
+        ratios[0] = 15;
+        ratios[1] = 25;
+        ratios[2] = 60;
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, ratios);
+        lendingPoolManager.updateTotalDesiredLoanAmount(lpd.lendingPool, 400_000 * 1e6);
+
+        // wrong tranche
+        address[] memory wrongTrancheAddresses = new address[](3);
+        wrongTrancheAddresses[0] = lpd.tranches[0];
+        wrongTrancheAddresses[1] = lpd.tranches[1];
+        wrongTrancheAddresses[2] = lpd.tranches[1];
+        vm.expectRevert(
+            abi.encodeWithSelector(ILendingPoolErrors.InvalidTranche.selector, lpd.lendingPool, lpd.tranches[1])
+        );
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongTrancheAddresses, ratios);
+
+        // wrong ratios
+        uint256[] memory wrongRatios = new uint256[](3);
+        wrongRatios[0] = 15;
+        wrongRatios[1] = 25;
+        wrongRatios[2] = 50;
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfiguration.selector));
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, wrongRatios);
+
+        vm.stopPrank();
+
+        // ### ASSERT ###
+        ILendingPool lendingPool = ILendingPool(address(lpd.lendingPool));
+        PoolConfiguration memory poolConfiguration = lendingPool.poolConfiguration();
+
+        assertEq(poolConfiguration.totalDesiredLoanAmount, 400_000 * 1e6);
+
+        assertEq(poolConfiguration.tranches[0].ratio, 15);
+        assertEq(poolConfiguration.tranches[0].interestRate, 20);
+        assertEq(poolConfiguration.tranches[0].minDepositAmount, 1000 * 1e6);
+        assertEq(poolConfiguration.tranches[0].maxDepositAmount, 200_000 * 1e6);
+
+        assertEq(poolConfiguration.tranches[1].ratio, 25);
+        assertEq(poolConfiguration.tranches[1].interestRate, 15);
+        assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
+        assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
+
+        assertEq(poolConfiguration.tranches[2].ratio, 60);
+        assertEq(poolConfiguration.tranches[2].interestRate, 5);
+        assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
+        assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
+    }
 }

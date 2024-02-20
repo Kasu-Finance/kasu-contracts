@@ -166,8 +166,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.prank(admin);
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
         // create lending
-        uint256 minDepositAmount = 1 ether;
-        uint256 maxDepositAmount = 1000 ether;
+        uint256 minDepositAmount = 500 * 1e6;
+        uint256 maxDepositAmount = 100_000 * 1e6;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         TrancheConfig[] memory trancheDetails = new TrancheConfig[](3);

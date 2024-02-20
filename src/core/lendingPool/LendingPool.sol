@@ -375,18 +375,37 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount)
         external
         onlyLendingPoolManager
+        verifyTranche(tranche)
     {
         _getTrancheDetails(tranche).maxDepositAmount = maximumDepositAmount;
     }
 
-    function updateTrancheInterestRate(address tranche, uint256 interestRate) external onlyLendingPoolManager {
+    function updateTrancheInterestRate(address tranche, uint256 interestRate)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+    {
         _getTrancheDetails(tranche).interestRate = interestRate;
     }
 
-    function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios) external {
+    function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios)
+        external
+        onlyLendingPoolManager
+    {
         if (tranches.length != ratios.length) {
             revert InvalidArrayLength();
         }
+
+        if (tranches.length != _poolConfiguration.tranches.length) {
+            revert InvalidArrayLength();
+        }
+
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; i++) {
+            if (_lendingPoolInfo.trancheAddresses[i] != tranches[i]) {
+                revert InvalidTranche(address(this), tranches[i]);
+            }
+        }
+
         uint256 ratiosSum;
         for (uint256 i; i < ratios.length; i++) {
             ratiosSum += ratios[i];
@@ -394,12 +413,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         if (ratiosSum != 100) {
             revert InvalidConfiguration();
         }
+
         for (uint256 i; i < tranches.length; i++) {
             _getTrancheDetails(tranches[i]).ratio = ratios[i];
         }
     }
 
-    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external {
+    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
         _poolConfiguration.totalDesiredLoanAmount = totalDesiredLoanAmount;
     }
 
