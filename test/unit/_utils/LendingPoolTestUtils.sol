@@ -171,9 +171,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         uint256 targetExcessLiquidity = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         TrancheConfig[] memory trancheDetails = new TrancheConfig[](3);
-        trancheDetails[0] = TrancheConfig(10, 20, minDepositAmount, maxDepositAmount);
-        trancheDetails[1] = TrancheConfig(20, 10, minDepositAmount, maxDepositAmount);
-        trancheDetails[2] = TrancheConfig(70, 5, minDepositAmount, maxDepositAmount);
+        trancheDetails[0] = TrancheConfig(10_00, 20_00, minDepositAmount, maxDepositAmount);
+        trancheDetails[1] = TrancheConfig(20_00, 10_00, minDepositAmount, maxDepositAmount);
+        trancheDetails[2] = TrancheConfig(70_00, 5_00, minDepositAmount, maxDepositAmount);
         PoolConfiguration memory poolConfiguration = PoolConfiguration(
             "Test Lending Pool",
             "TLP",

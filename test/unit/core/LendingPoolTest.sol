@@ -716,11 +716,11 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6);
         lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6);
-        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 15);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 15_00);
         uint256[] memory ratios = new uint256[](3);
-        ratios[0] = 15;
-        ratios[1] = 25;
-        ratios[2] = 60;
+        ratios[0] = 15_00;
+        ratios[1] = 25_00;
+        ratios[2] = 60_00;
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, ratios);
         lendingPoolManager.updateTotalDesiredLoanAmount(lpd.lendingPool, 400_000 * 1e6);
 
@@ -736,9 +736,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // wrong ratios
         uint256[] memory wrongRatios = new uint256[](3);
-        wrongRatios[0] = 15;
-        wrongRatios[1] = 25;
-        wrongRatios[2] = 50;
+        wrongRatios[0] = 15_00;
+        wrongRatios[1] = 25_00;
+        wrongRatios[2] = 50_00;
         vm.expectRevert(abi.encodeWithSelector(InvalidConfiguration.selector));
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, wrongRatios);
 
@@ -750,18 +750,18 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         assertEq(poolConfiguration.totalDesiredLoanAmount, 400_000 * 1e6);
 
-        assertEq(poolConfiguration.tranches[0].ratio, 15);
-        assertEq(poolConfiguration.tranches[0].interestRate, 20);
+        assertEq(poolConfiguration.tranches[0].ratio, 15_00);
+        assertEq(poolConfiguration.tranches[0].interestRate, 20_00);
         assertEq(poolConfiguration.tranches[0].minDepositAmount, 1000 * 1e6);
         assertEq(poolConfiguration.tranches[0].maxDepositAmount, 200_000 * 1e6);
 
-        assertEq(poolConfiguration.tranches[1].ratio, 25);
-        assertEq(poolConfiguration.tranches[1].interestRate, 15);
+        assertEq(poolConfiguration.tranches[1].ratio, 25_00);
+        assertEq(poolConfiguration.tranches[1].interestRate, 15_00);
         assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
 
-        assertEq(poolConfiguration.tranches[2].ratio, 60);
-        assertEq(poolConfiguration.tranches[2].interestRate, 5);
+        assertEq(poolConfiguration.tranches[2].ratio, 60_00);
+        assertEq(poolConfiguration.tranches[2].interestRate, 5_00);
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
     }

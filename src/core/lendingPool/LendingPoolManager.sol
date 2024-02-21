@@ -207,6 +207,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTotalDesiredLoanAmount(amount);
     }
 
+    function updateTrancheInterestEpochDelay(address lendingPool, address epochDelay)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_KASU_ADMIN, msg.sender)
+    {
+        revert("0");
+    }
+
     // #### MODIFIERS #### //
 
     modifier validLendingPool(address lendingPool) {

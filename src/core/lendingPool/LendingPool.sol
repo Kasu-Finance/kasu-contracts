@@ -11,8 +11,7 @@ import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "./LendingPoolStoppable.sol";
-
-import "forge-std/console2.sol";
+import "../Constants.sol";
 
 /**
  * @dev
@@ -410,7 +409,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         for (uint256 i; i < ratios.length; i++) {
             ratiosSum += ratios[i];
         }
-        if (ratiosSum != 100) {
+        if (ratiosSum != FULL_PERCENT) {
             revert InvalidConfiguration();
         }
 
