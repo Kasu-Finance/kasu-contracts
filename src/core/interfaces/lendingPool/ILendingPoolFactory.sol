@@ -2,24 +2,7 @@
 pragma solidity 0.8.23;
 
 import "./ILendingPoolManager.sol";
-
-struct TrancheConfig {
-    uint256 ratio;
-    uint256 interestRate;
-    uint256 minDepositAmount;
-    uint256 maxDepositAmount;
-}
-
-struct PoolConfiguration {
-    string name;
-    string symbol;
-    address usdcAddress;
-    uint256 targetExcessLiquidity;
-    TrancheConfig[] tranches;
-    address poolAdmin;
-    address borrowRecipient;
-    uint256 totalDesiredLoanAmount;
-}
+import "./ILendingPool.sol";
 
 struct LendingPoolDeployment {
     address lendingPool;

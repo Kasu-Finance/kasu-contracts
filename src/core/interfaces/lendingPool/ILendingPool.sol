@@ -9,6 +9,24 @@ struct LendingPoolInfo {
     address pendingPoolAddress;
 }
 
+struct TrancheConfig {
+    uint256 ratio;
+    uint256 interestRate;
+    uint256 minDepositAmount;
+    uint256 maxDepositAmount;
+}
+
+struct PoolConfiguration {
+    string name;
+    string symbol;
+    address usdcAddress;
+    uint256 targetExcessLiquidity;
+    TrancheConfig[] tranches;
+    address poolAdmin;
+    address borrowRecipient;
+    uint256 totalDesiredLoanAmount;
+}
+
 /**
  * @notice Interface for the LendingPool contract.
  */

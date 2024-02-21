@@ -2,6 +2,7 @@
 pragma solidity 0.8.23;
 
 import "./IPendingPool.sol";
+import "./ILendingPool.sol";
 import "./ILendingPoolFactory.sol";
 
 struct ForceWithdrawalDetails {
