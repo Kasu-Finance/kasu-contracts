@@ -636,7 +636,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // check tranches interest rate is zero
         PoolConfiguration memory poolConfiguration = ILendingPool(lpd.lendingPool).poolConfiguration();
-        for (uint256 i = 0; i < poolConfiguration.tranches.length; i++) {
+        for (uint256 i = 0; i < poolConfiguration.tranches.length; ++i) {
             assertEq(poolConfiguration.tranches[i].interestRate, 0);
         }
     }

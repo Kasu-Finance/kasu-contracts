@@ -52,7 +52,7 @@ contract LendingPoolManager is
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
 
         ownLendingPool[lendingPoolDeployment.pendingPool] = lendingPoolDeployment.lendingPool;
-        for (uint256 i = 0; i < lendingPoolDeployment.tranches.length; i++) {
+        for (uint256 i = 0; i < lendingPoolDeployment.tranches.length; ++i) {
             ownLendingPool[lendingPoolDeployment.tranches[i]] = lendingPoolDeployment.lendingPool;
         }
     }
@@ -225,7 +225,7 @@ contract LendingPoolManager is
 
     modifier validTranche(address lendingPool, address tranche) {
         bool trancheExists = false;
-        for (uint256 i = 0; i < lendingPools[lendingPool].tranches.length; i++) {
+        for (uint256 i = 0; i < lendingPools[lendingPool].tranches.length; ++i) {
             if (lendingPools[lendingPool].tranches[i] == tranche) trancheExists = true;
         }
         if (!trancheExists) {

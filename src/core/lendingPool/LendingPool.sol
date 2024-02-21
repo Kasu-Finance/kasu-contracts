@@ -67,7 +67,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _poolConfiguration.poolAdmin = poolConfiguration_.poolAdmin;
         _poolConfiguration.borrowRecipient = poolConfiguration_.borrowRecipient;
 
-        for (uint256 i; i < poolConfiguration_.tranches.length; i++) {
+        for (uint256 i; i < poolConfiguration_.tranches.length; ++i) {
             // copy memory to storage
             _poolConfiguration.tranches.push(
                 TrancheConfig(
@@ -351,7 +351,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
         }
 
-        for (uint256 i = 0; i < _lendingPoolInfo.trancheAddresses.length; i++) {
+        for (uint256 i = 0; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             _poolConfiguration.tranches[i].interestRate = 0;
         }
         // TODO: remove desired borrow amount in the future
@@ -399,21 +399,21 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert InvalidArrayLength();
         }
 
-        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; i++) {
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             if (_lendingPoolInfo.trancheAddresses[i] != tranches[i]) {
                 revert InvalidTranche(address(this), tranches[i]);
             }
         }
 
         uint256 ratiosSum;
-        for (uint256 i; i < ratios.length; i++) {
+        for (uint256 i; i < ratios.length; ++i) {
             ratiosSum += ratios[i];
         }
         if (ratiosSum != FULL_PERCENT) {
             revert InvalidConfiguration();
         }
 
-        for (uint256 i; i < tranches.length; i++) {
+        for (uint256 i; i < tranches.length; ++i) {
             _getTrancheDetails(tranches[i]).ratio = ratios[i];
         }
     }

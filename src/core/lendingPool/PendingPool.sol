@@ -80,7 +80,7 @@ contract PendingPool is
 
     function setUpTranches() public {
         address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolInfo().trancheAddresses;
-        for (uint256 i; i < trancheAddresses.length; i++) {
+        for (uint256 i; i < trancheAddresses.length; ++i) {
             _nextTrancheDepositNFTId[trancheAddresses[i]] = composeDepositId(trancheAddresses[i], 0);
             _nextTrancheWithdrawalNFTId[trancheAddresses[i]] = composeWithdrawalId(trancheAddresses[i], 0);
 
@@ -223,7 +223,7 @@ contract PendingPool is
     {
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
         wNftIDs = new uint256[](input.length);
-        for (uint256 i = 0; i < input.length; i++) {
+        for (uint256 i = 0; i < input.length; ++i) {
             wNftIDs[i] = _requestWithdrawal(
                 input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, RequestedFrom.SYSTEM
             );
