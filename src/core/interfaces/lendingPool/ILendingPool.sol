@@ -102,4 +102,5 @@ interface ILendingPool is IERC20 {
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
     error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
     error LendingPoolIsStopped();
+    error PoolConfigurationIsIncorrect(string reason);
 }

@@ -739,7 +739,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         wrongRatios[0] = 15_00;
         wrongRatios[1] = 25_00;
         wrongRatios[2] = 50_00;
-        vm.expectRevert(abi.encodeWithSelector(InvalidConfiguration.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "invalid tranche ratio sum")
+        );
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, wrongRatios);
 
         vm.stopPrank();

@@ -48,14 +48,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         LendingPoolInfo memory lendingPoolInfo_,
         address lendingPoolManager_
     ) public initializer {
-        // TODO: verify configuration
-        if (lendingPoolManager_ == address(0)) {
-            revert ConfigurationAddressZero();
-        }
-
-        if (poolConfiguration_.borrowRecipient == address(0)) {
-            revert ConfigurationAddressZero();
-        }
+        _verifyPoolConfiguration(poolConfiguration_);
 
         __ERC20_init(poolName, poolSymbol);
 
@@ -65,6 +58,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _poolConfiguration.targetExcessLiquidity = poolConfiguration_.targetExcessLiquidity;
         _poolConfiguration.poolAdmin = poolConfiguration_.poolAdmin;
         _poolConfiguration.borrowRecipient = poolConfiguration_.borrowRecipient;
+        _poolConfiguration.totalDesiredLoanAmount = poolConfiguration_.totalDesiredLoanAmount;
 
         for (uint256 i; i < poolConfiguration_.tranches.length; ++i) {
             // copy memory to storage
@@ -404,17 +398,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             }
         }
 
-        uint256 ratiosSum;
-        for (uint256 i; i < ratios.length; ++i) {
-            ratiosSum += ratios[i];
-        }
-        if (ratiosSum != FULL_PERCENT) {
-            revert InvalidConfiguration();
-        }
-
         for (uint256 i; i < tranches.length; ++i) {
             _getTrancheDetails(tranches[i]).ratio = ratios[i];
         }
+
+        _verifyPoolConfiguration(_poolConfiguration);
     }
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
@@ -422,6 +410,42 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     // Helper functions
+
+    function _verifyPoolConfiguration(PoolConfiguration memory poolConfiguration_) private pure {
+        // verify addresses
+        if (poolConfiguration_.borrowRecipient == address(0)) {
+            revert PoolConfigurationIsIncorrect("borrow receipient is zero address");
+        }
+        if (poolConfiguration_.poolAdmin == address(0)) {
+            revert PoolConfigurationIsIncorrect("pool admin is zero address");
+        }
+
+        // totalDesiredLoanAmount
+        if (poolConfiguration_.totalDesiredLoanAmount == 0) {
+            revert PoolConfigurationIsIncorrect("desired loan amount is zero");
+        }
+
+        // verify tranche: number of tranches, interest rates,  ratios, maxDepositAmount
+        if (poolConfiguration_.tranches.length == 0) {
+            revert PoolConfigurationIsIncorrect("tranches length is zero");
+        }
+        uint256 ratiosSum;
+        for (uint256 i; i < poolConfiguration_.tranches.length; ++i) {
+            if (poolConfiguration_.tranches[i].ratio == 0) {
+                revert PoolConfigurationIsIncorrect("ratio is zero");
+            }
+            if (poolConfiguration_.tranches[i].interestRate == 0) {
+                revert PoolConfigurationIsIncorrect("interest rate is zero");
+            }
+            if (poolConfiguration_.tranches[i].maxDepositAmount == 0) {
+                revert PoolConfigurationIsIncorrect("max deposit amount is zero");
+            }
+            ratiosSum += poolConfiguration_.tranches[i].ratio;
+        }
+        if (ratiosSum != FULL_PERCENT) {
+            revert PoolConfigurationIsIncorrect("invalid tranche ratio sum");
+        }
+    }
 
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPoolAddress) {
