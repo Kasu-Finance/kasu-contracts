@@ -30,6 +30,10 @@ interface ISystemVariables {
     function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
     function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external;
 
+    // TRANCHE
+    function defaultTrancheInterestChangeEpochDelay() external view returns (uint256);
+    function setDefaultTrancheInterestChangeEpochDelay(uint256 defaultTrancheInterestChangeEpochDelay_) external;
+
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);

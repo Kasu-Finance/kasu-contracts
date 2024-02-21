@@ -19,6 +19,7 @@ struct SystemVariablesSetup {
     uint256 clearingPeriodLength;
     uint256 protocolFee;
     uint256[] loyaltyThresholds;
+    uint256 defaultTrancheInterestChangeEpochDelay;
 }
 
 /**
@@ -42,6 +43,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256[] private _loyaltyThresholds;
 
     bool private _userCanDepositToJuniorTrancheWhenHeHasRKSU;
+
+    uint256 private _defaultTrancheInterestChangeEpochDelay;
 
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
         ksuPrice = ksuPrice_;
@@ -70,6 +73,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
 
         _updateKsuTokenPrice();
+
+        _defaultTrancheInterestChangeEpochDelay = 4;
     }
 
     // EPOCH
@@ -259,5 +264,22 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external onlyAdmin {
         _userCanDepositToJuniorTrancheWhenHeHasRKSU = value;
+    }
+
+    // TRANCHE
+
+    function defaultTrancheInterestChangeEpochDelay() external view returns (uint256) {
+        return _defaultTrancheInterestChangeEpochDelay;
+    }
+
+    /**
+     * @notice Sets default epoch delay when tranche interest rate is changed
+     * @param defaultTrancheInterestChangeEpochDelay_ The new default epoch delay.
+     */
+    function setDefaultTrancheInterestChangeEpochDelay(uint256 defaultTrancheInterestChangeEpochDelay_)
+        public
+        onlyAdmin
+    {
+        _defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
     }
 }
