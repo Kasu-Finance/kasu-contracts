@@ -17,9 +17,6 @@ struct TrancheConfig {
 }
 
 struct PoolConfiguration {
-    string name;
-    string symbol;
-    address usdcAddress;
     uint256 targetExcessLiquidity;
     TrancheConfig[] tranches;
     address poolAdmin;

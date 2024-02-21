@@ -39,12 +39,16 @@ contract LendingPoolManager is
 
     // #### CREATE POOL #### //
 
-    function createPool(PoolConfiguration calldata poolConfiguration)
+    function createPool(
+        string calldata poolName,
+        string calldata poolSymbol,
+        PoolConfiguration calldata poolConfiguration
+    )
         external
         onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        lendingPoolDeployment = lendingPoolFactory.createPool(poolConfiguration);
+        lendingPoolDeployment = lendingPoolFactory.createPool(poolName, poolSymbol, poolConfiguration);
         registerLendingPool(lendingPoolDeployment);
     }
 

@@ -149,11 +149,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariables.initialize(systemVariablesSetup);
     }
 
-    function createLendingPool(PoolConfiguration memory poolConfiguration)
-        internal
-        returns (LendingPoolDeployment memory lendingPoolDeployment)
-    {
-        lendingPoolDeployment = lendingPoolManager.createPool(poolConfiguration);
+    function createLendingPool(
+        string memory poolName,
+        string memory poolSymbol,
+        PoolConfiguration memory poolConfiguration
+    ) internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
+        lendingPoolDeployment = lendingPoolManager.createPool(poolName, poolSymbol, poolConfiguration);
         pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
@@ -175,9 +176,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         trancheDetails[1] = TrancheConfig(20_00, 10_00, minDepositAmount, maxDepositAmount);
         trancheDetails[2] = TrancheConfig(70_00, 5_00, minDepositAmount, maxDepositAmount);
         PoolConfiguration memory poolConfiguration = PoolConfiguration(
-            "Test Lending Pool",
-            "TLP",
-            address(mockUsdc),
             targetExcessLiquidity,
             trancheDetails,
             lendingPoolAdminAccount,
@@ -185,7 +183,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             totalDesiredLoanAmount
         );
         vm.prank(lendingPoolCreatorAccount);
-        lendingPoolDeployment = createLendingPool(poolConfiguration);
+        lendingPoolDeployment = createLendingPool("Test Lending Pool", "TLP", poolConfiguration);
         // access control - grant
         vm.startPrank(lendingPoolAdminAccount);
         kasuController.grantLendingPoolRole(

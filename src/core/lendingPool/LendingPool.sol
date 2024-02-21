@@ -42,6 +42,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
      */
     function initialize(
+        string calldata poolName,
+        string calldata poolSymbol,
         PoolConfiguration memory poolConfiguration_,
         LendingPoolInfo memory lendingPoolInfo_,
         address lendingPoolManager_
@@ -55,14 +57,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert ConfigurationAddressZero();
         }
 
-        __ERC20_init(poolConfiguration_.name, poolConfiguration_.symbol);
+        __ERC20_init(poolName, poolSymbol);
 
         _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
 
         // copy memory to storage
-        _poolConfiguration.name = poolConfiguration_.name;
-        _poolConfiguration.symbol = poolConfiguration_.symbol;
-        _poolConfiguration.usdcAddress = poolConfiguration_.usdcAddress;
         _poolConfiguration.targetExcessLiquidity = poolConfiguration_.targetExcessLiquidity;
         _poolConfiguration.poolAdmin = poolConfiguration_.poolAdmin;
         _poolConfiguration.borrowRecipient = poolConfiguration_.borrowRecipient;

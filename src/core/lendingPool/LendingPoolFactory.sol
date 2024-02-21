@@ -18,8 +18,6 @@ import {PendingPool} from "./PendingPool.sol";
 import {LendingPoolTranche} from "./LendingPoolTranche.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
-import "forge-std/console2.sol";
-
 contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;
     address private immutable lendingPoolBeacon;
@@ -39,11 +37,11 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         kasuController = kasuController_;
     }
 
-    function createPool(PoolConfiguration calldata poolConfiguration)
-        external
-        onlyLendingPoolManager
-        returns (LendingPoolDeployment memory lendingPoolDeployment)
-    {
+    function createPool(
+        string calldata poolName,
+        string calldata poolSymbol,
+        PoolConfiguration calldata poolConfiguration
+    ) external onlyLendingPoolManager returns (LendingPoolDeployment memory lendingPoolDeployment) {
         // lending pool deploy
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
@@ -60,9 +58,7 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
 
         address trancheAddress;
         for (uint256 i; i < poolConfiguration.tranches.length; ++i) {
-            trancheAddresses[i] = _deployLendingPoolTranche(
-                poolConfiguration.name, poolConfiguration.symbol, "Senior Tranche", "sr", lendingPool
-            );
+            trancheAddresses[i] = _deployLendingPoolTranche(poolName, poolSymbol, "Senior Tranche", "sr", lendingPool);
             lendingPoolDeployment.tranches[i] = trancheAddresses[i];
         }
 
@@ -78,7 +74,7 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolInfo.pendingPoolAddress = pendingPoolAddress;
         lendingPoolInfo.trancheAddresses = trancheAddresses;
 
-        lendingPool.initialize(poolConfiguration, lendingPoolInfo, address(lendingPoolManager));
+        lendingPool.initialize(poolName, poolSymbol, poolConfiguration, lendingPoolInfo, address(lendingPoolManager));
 
         pendingPool.setUpTranches();
 

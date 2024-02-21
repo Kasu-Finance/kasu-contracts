@@ -13,7 +13,9 @@ struct LendingPoolDeployment {
 event PoolCreated(address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment);
 
 interface ILendingPoolFactory {
-    function createPool(PoolConfiguration calldata poolConfiguration)
-        external
-        returns (LendingPoolDeployment memory lendingPoolDeployment);
+    function createPool(
+        string calldata poolName,
+        string calldata poolSymbol,
+        PoolConfiguration calldata poolConfiguration
+    ) external returns (LendingPoolDeployment memory lendingPoolDeployment);
 }
