@@ -3,20 +3,16 @@ pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {
-    ILendingPoolFactory,
-    PoolConfiguration,
-    LendingPoolDeployment
-} from "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "../../shared/interfaces/IKasuController.sol";
+import "../../shared/access/Roles.sol";
+import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../lendingPool/LendingPoolHelpers.sol";
 import "./LendingPool.sol";
-import {LendingPoolManager} from "./LendingPoolManager.sol";
-import {ILendingPoolManager} from "../interfaces/lendingPool/ILendingPoolManager.sol";
-import {IKasuController} from "../../shared/interfaces/IKasuController.sol";
-import "../../shared/access/Roles.sol";
-import {PendingPool} from "./PendingPool.sol";
-import {LendingPoolTranche} from "./LendingPoolTranche.sol";
-import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "./LendingPoolManager.sol";
+import "./PendingPool.sol";
+import "./LendingPoolTranche.sol";
 
 contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;
@@ -37,28 +33,30 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         kasuController = kasuController_;
     }
 
-    function createPool(
-        string calldata poolName,
-        string calldata poolSymbol,
-        PoolConfiguration calldata poolConfiguration
-    ) external onlyLendingPoolManager returns (LendingPoolDeployment memory lendingPoolDeployment) {
+    function createPool(CreatePoolConfig calldata createPoolConfig)
+        external
+        onlyLendingPoolManager
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
+    {
         // lending pool deploy
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
 
-        if (poolConfiguration.tranches.length == 0) {
+        if (createPoolConfig.tranches.length == 0) {
             revert("LendingPoolFactory: at least senior tranche must be enabled");
         }
 
         // tranches deploy
         lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
-        lendingPoolDeployment.tranches = new address[](poolConfiguration.tranches.length);
+        lendingPoolDeployment.tranches = new address[](createPoolConfig.tranches.length);
 
-        address[] memory trancheAddresses = new address[](poolConfiguration.tranches.length);
+        address[] memory trancheAddresses = new address[](createPoolConfig.tranches.length);
 
         address trancheAddress;
-        for (uint256 i; i < poolConfiguration.tranches.length; ++i) {
-            trancheAddresses[i] = _deployLendingPoolTranche(poolName, poolSymbol, "Senior Tranche", "sr", lendingPool);
+        for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
+            trancheAddresses[i] = _deployLendingPoolTranche(
+                createPoolConfig.poolName, createPoolConfig.poolSymbol, "Senior Tranche", "sr", lendingPool
+            );
             lendingPoolDeployment.tranches[i] = trancheAddresses[i];
         }
 
@@ -74,13 +72,13 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolInfo.pendingPoolAddress = pendingPoolAddress;
         lendingPoolInfo.trancheAddresses = trancheAddresses;
 
-        lendingPool.initialize(poolName, poolSymbol, poolConfiguration, lendingPoolInfo, address(lendingPoolManager));
+        lendingPool.initialize(createPoolConfig, lendingPoolInfo, address(lendingPoolManager));
 
         pendingPool.setUpTranches();
 
         // access control
         kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, poolConfiguration.poolAdmin
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, createPoolConfig.poolAdmin
         );
 
         emit PoolCreated(lendingPoolDeployment.lendingPool, lendingPoolDeployment);

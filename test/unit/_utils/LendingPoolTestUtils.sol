@@ -149,12 +149,11 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariables.initialize(systemVariablesSetup);
     }
 
-    function createLendingPool(
-        string memory poolName,
-        string memory poolSymbol,
-        PoolConfiguration memory poolConfiguration
-    ) internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
-        lendingPoolDeployment = lendingPoolManager.createPool(poolName, poolSymbol, poolConfiguration);
+    function createLendingPool(CreatePoolConfig memory createPoolConfig)
+        internal
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
+    {
+        lendingPoolDeployment = lendingPoolManager.createPool(createPoolConfig);
         pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
@@ -171,19 +170,21 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         uint256 maxDepositAmount = 100_000 * 1e6;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
-        TrancheConfig[] memory trancheDetails = new TrancheConfig[](3);
-        trancheDetails[0] = TrancheConfig(10_00, 20_00, minDepositAmount, maxDepositAmount);
-        trancheDetails[1] = TrancheConfig(20_00, 10_00, minDepositAmount, maxDepositAmount);
-        trancheDetails[2] = TrancheConfig(70_00, 5_00, minDepositAmount, maxDepositAmount);
-        PoolConfiguration memory poolConfiguration = PoolConfiguration(
+        CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
+        createTrancheConfig[0] = CreateTrancheConfig(10_00, 20_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[1] = CreateTrancheConfig(20_00, 10_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[2] = CreateTrancheConfig(70_00, 5_00, minDepositAmount, maxDepositAmount);
+        CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
+            "Test Lending Pool",
+            "TLP",
             targetExcessLiquidity,
-            trancheDetails,
+            createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
             totalDesiredLoanAmount
         );
         vm.prank(lendingPoolCreatorAccount);
-        lendingPoolDeployment = createLendingPool("Test Lending Pool", "TLP", poolConfiguration);
+        lendingPoolDeployment = createLendingPool(createPoolConfig);
         // access control - grant
         vm.startPrank(lendingPoolAdminAccount);
         kasuController.grantLendingPoolRole(

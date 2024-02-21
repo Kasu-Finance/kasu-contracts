@@ -39,16 +39,12 @@ contract LendingPoolManager is
 
     // #### CREATE POOL #### //
 
-    function createPool(
-        string calldata poolName,
-        string calldata poolSymbol,
-        PoolConfiguration calldata poolConfiguration
-    )
+    function createPool(CreatePoolConfig calldata createPoolConfig)
         external
         onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        lendingPoolDeployment = lendingPoolFactory.createPool(poolName, poolSymbol, poolConfiguration);
+        lendingPoolDeployment = lendingPoolFactory.createPool(createPoolConfig);
         registerLendingPool(lendingPoolDeployment);
     }
 
@@ -204,18 +200,18 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheDesiredRatios(tranches, desiredRatios);
     }
 
+    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, address tranche, uint256 epochDelay)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_KASU_ADMIN, msg.sender)
+    {
+        ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(tranche, epochDelay);
+    }
+
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
         ILendingPool(lendingPool).updateTotalDesiredLoanAmount(amount);
-    }
-
-    function updateTrancheInterestEpochDelay(address lendingPool, address epochDelay)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_KASU_ADMIN, msg.sender)
-    {
-        revert("0");
     }
 
     // #### MODIFIERS #### //

@@ -14,6 +14,7 @@ struct TrancheConfig {
     uint256 interestRate;
     uint256 minDepositAmount;
     uint256 maxDepositAmount;
+    uint256 interestChangeEpochDelay;
 }
 
 struct PoolConfiguration {
@@ -73,6 +74,8 @@ interface ILendingPool is IERC20 {
     function updateTrancheInterestRate(address tranche, uint256 interestRate) external;
 
     function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios) external;
+
+    function updateTrancheInterestRateChangeEpochDelay(address tranche, uint256 epochDelay) external;
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external;
 

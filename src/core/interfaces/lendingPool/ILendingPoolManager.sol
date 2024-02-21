@@ -31,11 +31,9 @@ interface ILendingPoolManager {
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
     // #### LENDING POOL CREATOR #### //
-    function createPool(
-        string calldata poolName,
-        string calldata poolSymbol,
-        PoolConfiguration calldata poolConfiguration
-    ) external returns (LendingPoolDeployment memory lendingPoolDeployment);
+    function createPool(CreatePoolConfig calldata createPoolConfig)
+        external
+        returns (LendingPoolDeployment memory lendingPoolDeployment);
 
     // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoan(address lendingPool, uint256 amount) external;
@@ -74,6 +72,9 @@ interface ILendingPoolManager {
     function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate) external;
 
     function updateTrancheDesiredRatios(address lendingPool, address[] calldata tranches, uint256[] calldata ratios)
+        external;
+
+    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, address tranche, uint256 epochDelay)
         external;
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount) external;

@@ -12,10 +12,25 @@ struct LendingPoolDeployment {
 
 event PoolCreated(address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment);
 
+struct CreateTrancheConfig {
+    uint256 ratio;
+    uint256 interestRate;
+    uint256 minDepositAmount;
+    uint256 maxDepositAmount;
+}
+
+struct CreatePoolConfig {
+    string poolName;
+    string poolSymbol;
+    uint256 targetExcessLiquidity;
+    CreateTrancheConfig[] tranches;
+    address poolAdmin;
+    address borrowRecipient;
+    uint256 totalDesiredLoanAmount;
+}
+
 interface ILendingPoolFactory {
-    function createPool(
-        string calldata poolName,
-        string calldata poolSymbol,
-        PoolConfiguration calldata poolConfiguration
-    ) external returns (LendingPoolDeployment memory lendingPoolDeployment);
+    function createPool(CreatePoolConfig calldata createPoolConfig)
+        external
+        returns (LendingPoolDeployment memory lendingPoolDeployment);
 }

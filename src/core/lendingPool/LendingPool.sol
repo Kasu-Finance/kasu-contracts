@@ -13,6 +13,8 @@ import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "./LendingPoolStoppable.sol";
 import "../Constants.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @dev
  * This contract is the ledger of the lending pool balances.
@@ -38,36 +40,37 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Initializes the lending pool.
-     * @param poolConfiguration_ Lending pool configuration.
+     * @param createPoolConfig Create lending pool configuration.
      * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
      */
     function initialize(
-        string calldata poolName,
-        string calldata poolSymbol,
-        PoolConfiguration memory poolConfiguration_,
+        CreatePoolConfig memory createPoolConfig,
         LendingPoolInfo memory lendingPoolInfo_,
         address lendingPoolManager_
     ) public initializer {
-        _verifyPoolConfiguration(poolConfiguration_);
-
-        __ERC20_init(poolName, poolSymbol);
+        __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
 
         _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
 
         // copy memory to storage
-        _poolConfiguration.targetExcessLiquidity = poolConfiguration_.targetExcessLiquidity;
-        _poolConfiguration.poolAdmin = poolConfiguration_.poolAdmin;
-        _poolConfiguration.borrowRecipient = poolConfiguration_.borrowRecipient;
-        _poolConfiguration.totalDesiredLoanAmount = poolConfiguration_.totalDesiredLoanAmount;
+        _poolConfiguration.targetExcessLiquidity = createPoolConfig.targetExcessLiquidity;
+        _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
+        _poolConfiguration.borrowRecipient = createPoolConfig.borrowRecipient;
+        _poolConfiguration.totalDesiredLoanAmount = createPoolConfig.totalDesiredLoanAmount;
 
-        for (uint256 i; i < poolConfiguration_.tranches.length; ++i) {
+        uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+
+        console2.log(createPoolConfig.tranches.length);
+        for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             // copy memory to storage
+            console2.log(createPoolConfig.tranches[i].ratio);
             _poolConfiguration.tranches.push(
                 TrancheConfig(
-                    poolConfiguration_.tranches[i].ratio,
-                    poolConfiguration_.tranches[i].interestRate,
-                    poolConfiguration_.tranches[i].minDepositAmount,
-                    poolConfiguration_.tranches[i].maxDepositAmount
+                    createPoolConfig.tranches[i].ratio,
+                    createPoolConfig.tranches[i].interestRate,
+                    createPoolConfig.tranches[i].minDepositAmount,
+                    createPoolConfig.tranches[i].maxDepositAmount,
+                    defaultTrancheInterestChangeEpochDelay
                 )
             );
 
@@ -77,7 +80,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _approve(address(this), lendingPoolInfo_.trancheAddresses[i], type(uint256).max);
         }
 
-        borrowRecipient = poolConfiguration_.borrowRecipient;
+        _verifyPoolConfiguration(_poolConfiguration);
+
+        borrowRecipient = createPoolConfig.borrowRecipient;
         lendingPoolManager = lendingPoolManager_;
     }
 
@@ -403,6 +408,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         _verifyPoolConfiguration(_poolConfiguration);
+    }
+
+    function updateTrancheInterestRateChangeEpochDelay(address tranche, uint256 epochDelay)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+    {
+        _getTrancheDetails(tranche).interestChangeEpochDelay = epochDelay;
     }
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
