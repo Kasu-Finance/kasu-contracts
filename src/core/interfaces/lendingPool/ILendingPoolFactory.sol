@@ -13,6 +13,8 @@ struct LendingPoolDeployment {
 event PoolCreated(address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment);
 
 struct CreateTrancheConfig {
+    string trancheName;
+    string trancheSymbol;
     uint256 ratio;
     uint256 interestRate;
     uint256 minDepositAmount;

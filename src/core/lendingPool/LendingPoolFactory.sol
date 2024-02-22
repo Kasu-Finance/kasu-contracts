@@ -55,7 +55,11 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         address trancheAddress;
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             trancheAddresses[i] = _deployLendingPoolTranche(
-                createPoolConfig.poolName, createPoolConfig.poolSymbol, "Senior Tranche", "sr", lendingPool
+                createPoolConfig.poolName,
+                createPoolConfig.poolSymbol,
+                createPoolConfig.tranches[i].trancheName,
+                createPoolConfig.tranches[i].trancheSymbol,
+                lendingPool
             );
             lendingPoolDeployment.tranches[i] = trancheAddresses[i];
         }
