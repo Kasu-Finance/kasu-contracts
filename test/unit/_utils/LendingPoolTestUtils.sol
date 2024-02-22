@@ -27,10 +27,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     MockUSDC internal mockUsdc;
     IUserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
+    ILendingPoolFactory private lendingPoolFactory;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
-
-    LendingPoolFactory private lendingPoolFactory;
 
     address internal lendingPoolLoanManagerAccount = address(0xad2);
     address internal lendingPoolCreatorAccount = address(0xad3);
