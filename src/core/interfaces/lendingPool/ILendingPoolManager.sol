@@ -73,8 +73,7 @@ interface ILendingPoolManager {
 
     function updateTrancheDesiredRatios(address lendingPool, uint256[] calldata ratios) external;
 
-    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, address tranche, uint256 epochDelay)
-        external;
+    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay) external;
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount) external;
 }

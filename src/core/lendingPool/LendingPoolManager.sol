@@ -199,11 +199,11 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheDesiredRatios(desiredRatios);
     }
 
-    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, address tranche, uint256 epochDelay)
+    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay)
         external
         onlyLendingPoolRole(lendingPool, ROLE_KASU_ADMIN, msg.sender)
     {
-        ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(tranche, epochDelay);
+        ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)

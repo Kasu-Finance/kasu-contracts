@@ -52,13 +52,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
 
+        uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+
         // copy memory to storage
         _poolConfiguration.targetExcessLiquidity = createPoolConfig.targetExcessLiquidity;
         _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
         _poolConfiguration.borrowRecipient = createPoolConfig.borrowRecipient;
         _poolConfiguration.totalDesiredLoanAmount = createPoolConfig.totalDesiredLoanAmount;
-
-        uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+        _poolConfiguration.trancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay;
 
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             // copy memory to storage
@@ -67,8 +68,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
                     createPoolConfig.tranches[i].ratio,
                     createPoolConfig.tranches[i].interestRate,
                     createPoolConfig.tranches[i].minDepositAmount,
-                    createPoolConfig.tranches[i].maxDepositAmount,
-                    defaultTrancheInterestChangeEpochDelay
+                    createPoolConfig.tranches[i].maxDepositAmount
                 )
             );
 
@@ -396,12 +396,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _verifyPoolConfiguration(_poolConfiguration);
     }
 
-    function updateTrancheInterestRateChangeEpochDelay(address tranche, uint256 epochDelay)
-        external
-        onlyLendingPoolManager
-        verifyTranche(tranche)
-    {
-        _getTrancheConfiguration(tranche).interestChangeEpochDelay = epochDelay;
+    function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external onlyLendingPoolManager {
+        _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
     }
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
