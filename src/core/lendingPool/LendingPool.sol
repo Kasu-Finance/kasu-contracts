@@ -13,8 +13,6 @@ import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "./LendingPoolStoppable.sol";
 import "../Constants.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @dev
  * This contract is the ledger of the lending pool balances.
