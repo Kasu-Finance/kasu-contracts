@@ -7,6 +7,7 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../../shared/CommonErrors.sol";
+import "./LendingPoolTrancheLoss.sol";
 import "./LendingPoolHelpers.sol";
 
 /**
@@ -18,15 +19,19 @@ import "./LendingPoolHelpers.sol";
 contract LendingPoolTranche is
     ILendingPoolTranche,
     ERC4626Upgradeable,
-    ERC1155Upgradeable,
+    LendingPoolTrancheLoss,
     ILendingPoolErrors,
     LendingPoolHelpers
 {
-    mapping(address => bool) private isTrancheUser;
+    mapping(address user => uint256 activeShares) private _userActiveShares;
+    mapping(address user => uint256 index) private _userArrayIndex;
 
-    address[] private trancheUsers;
+    address[] private _trancheUsers;
 
-    constructor(ILendingPoolManager lendingPoolManager_) LendingPoolHelpers(lendingPoolManager_) {}
+    constructor(ILendingPoolManager lendingPoolManager_, address lossAsset_)
+        LendingPoolHelpers(lendingPoolManager_)
+        AssetFunctionsBase(lossAsset_)
+    {}
 
     /**
      * @param name_ The name of the lending pool tranche token
@@ -36,7 +41,7 @@ contract LendingPoolTranche is
     function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC20_init(name_, symbol_);
         __ERC4626_init(lendingPool_);
-        __ERC1155_init("");
+        __LendingPoolTrancheLoss__init();
         __LendingPoolHelpers_init(lendingPool_);
     }
 
@@ -44,52 +49,83 @@ contract LendingPoolTranche is
         public
         override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
-        returns (uint256)
+        returns (uint256 shares)
     {
-        if (isTrancheUser[receiver] == false) {
-            isTrancheUser[receiver] = true;
-            trancheUsers.push(receiver);
+        shares = super.deposit(assets, receiver);
+
+        // if user had not shares before, add to the trancheUsers array
+        if (_userActiveShares[receiver] == 0) {
+            _userArrayIndex[receiver] = _trancheUsers.length;
+            _trancheUsers.push(receiver);
         }
 
-        return super.deposit(assets, receiver);
+        _userActiveShares[receiver] += shares;
     }
 
     function redeem(uint256 shares, address receiver, address owner)
         public
         override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
-        returns (uint256)
+        returns (uint256 assets)
     {
-        // NOTE: make sure the shares are not pending withdrawal or possibly lick the pending withdrawal amount
-        if (balanceOf(receiver) == 0) {
-            isTrancheUser[receiver] = false;
-            // TODO: remove from the array
-            // maybe by adding an id to each user in the trancheUsers array
-        }
+        assets = super.redeem(shares, receiver, owner);
 
-        return super.redeem(shares, receiver, owner);
+        _userActiveShares[receiver] -= shares;
+
+        // remove user from trancheUsers array if they have no shares
+        if (_userActiveShares[receiver] == 0) {
+            // get removing and last user
+            uint256 removingUserIndex = _userArrayIndex[receiver];
+            uint256 lastUserIndex = _trancheUsers.length - 1;
+            address lastUser = _trancheUsers[lastUserIndex];
+
+            // swap removing user with last user
+            _trancheUsers[removingUserIndex] = lastUser;
+            _trancheUsers.pop();
+
+            // update last  and removinf user index
+            _userArrayIndex[lastUser] = removingUserIndex;
+            delete _userArrayIndex[receiver];
+        }
     }
 
-    function reportTrancheLoss(uint256 lossAmount) external view onlyOwnLendingPool returns (uint256 lossApplied) {
+    function _getUsers() internal view override returns (address[] storage users) {
+        return _trancheUsers;
+    }
+
+    function _getUserActiveTrancheBalance(address user) internal view override returns (uint256) {
+        return _userActiveShares[user];
+    }
+
+    function _verifyOnlyOwnLendingPool() internal view override {
+        _onlyOwnLendingPool();
+    }
+
+    function getMaximumLossAmount() public view returns (uint256 maxLossAmount) {
         uint256 totalAssets_ = totalAssets();
-        if (totalAssets_ > 0) {
+
+        if (totalAssets_ > minimumLeftAmountAfterLoss) {
+            unchecked {
+                maxLossAmount = totalAssets_ - minimumLeftAmountAfterLoss;
+            }
+        }
+    }
+
+    function reportTrancheLoss(uint256 lossAmount) external onlyOwnLendingPool returns (uint256 lossApplied) {
+        uint256 maxLossAmount = getMaximumLossAmount();
+
+        if (lossAmount > 0 && maxLossAmount > 0) {
             // check if total assets can cover the loss
-            if (totalAssets_ >= lossAmount) {
+            if (maxLossAmount >= lossAmount) {
                 lossApplied = lossAmount;
             } else {
-                lossApplied = totalAssets_;
+                lossApplied = maxLossAmount;
             }
 
-            // TODO: mint loss tokens to all users
+            _registerLoss(lossApplied, 0);
 
-            unchecked {
-                totalAssets_ -= lossApplied;
-            }
-
-            // TODO: if tranche assets are 0, then burn all share tokens
-            if (totalAssets_ == 0) {
-                // burn all shares from all users
-            }
+            // transfer lost assets back to the lending pool
+            SafeERC20.safeTransfer(IERC20(asset()), msg.sender, lossApplied);
         }
     }
 

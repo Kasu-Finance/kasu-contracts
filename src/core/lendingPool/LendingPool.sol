@@ -237,13 +237,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * Burns tranche shares if needed.
      * Burns the lending pool token.
      * @param lossAmount The amount of the loss.
-     * @return lossId The id of the loss.
+     * @return appliedLoss The id of the loss.
      */
-    function reportLoss(uint256 lossAmount) external returns (uint256 lossId) {
-        // verify caller
+    function reportLoss(uint256 lossAmount) external onlyLendingPoolManager returns (uint256 appliedLoss) {
+        if (systemVariables.isClearingTime()) {
+            revert CannotExecuteDuringClearingTime();
+        }
 
         // verify input
-        if (lossAmount > 0) {
+        if (lossAmount == 0) {
             revert LossAmountShouldBeGreaterThanZero(lossAmount);
         }
 
@@ -253,27 +255,46 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert LossAmountCantBeGreaterThanSupply(lossAmount, borrowedAmount);
         }
 
-        borrowedAmount -= lossAmount;
+        uint256 lossLeft = lossAmount;
 
-        // get the loss id
-        lossId = 0;
+        // remove the amount from the first loss capital
+        if (lossLeft > firstLossCapital) {
+            unchecked {
+                lossLeft -= firstLossCapital;
+            }
+        } else {
+            lossLeft = 0;
+        }
 
-        // TODO: remove the amount from the first loss capital
+        if (lossLeft < lossAmount) {
+            uint256 firstLossCapitalLoss = lossAmount - lossLeft;
+
+            firstLossCapital -= firstLossCapitalLoss;
+            _burn(address(this), firstLossCapitalLoss);
+
+            emit FirstLossCapitalLossReported(firstLossCapitalLoss);
+        }
 
         // remove the funds from the tranches and mint loss tokens if first loss capital is not enough
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
-            if (lossAmount > 0) {
-                uint256 lossApplied =
-                    ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(lossAmount);
-                _burn(_lendingPoolInfo.trancheAddresses[i], lossApplied);
+            if (lossLeft > 0) {
+                uint256 trancheLossApplied =
+                    ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(lossLeft);
 
-                lossAmount -= lossApplied;
+                // lending pool tranche should return tokens
+                _burn(address(this), trancheLossApplied);
+
+                lossLeft -= trancheLossApplied;
             } else {
                 break;
             }
         }
 
-        emit LossReported(lossAmount);
+        appliedLoss = lossAmount - lossLeft;
+
+        borrowedAmount -= appliedLoss;
+
+        emit LossReported(appliedLoss);
     }
 
     function depositFirstLossCapital(uint256 amount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {

@@ -94,7 +94,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
-        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
+        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
         // lending pool factory
         LendingPoolFactory lendingPoolFactoryImpl = new LendingPoolFactory(
@@ -119,6 +119,10 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuAllowList.allowUser(carol);
         kasuAllowList.allowUser(david);
         vm.stopPrank();
+    }
+
+    function _allowUser(address user) internal prank(admin) {
+        kasuAllowList.allowUser(user);
     }
 
     function _deployKsuPrice() internal {
@@ -281,6 +285,14 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     function _stop(address caller, address lendingPool, address firstLostCapitalReceiver) internal prank(caller) {
         lendingPoolManager.stopLendingPool(lendingPool, firstLostCapitalReceiver);
+    }
+
+    function _reportLoss(address caller, address lendingPool, uint256 amount)
+        internal
+        prank(caller)
+        returns (uint256)
+    {
+        return lendingPoolManager.reportLoss(lendingPool, amount);
     }
 }
 
