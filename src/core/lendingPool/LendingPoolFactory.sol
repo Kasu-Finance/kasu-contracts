@@ -42,10 +42,6 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
 
-        if (createPoolConfig.tranches.length == 0) {
-            revert("LendingPoolFactory: at least senior tranche must be enabled");
-        }
-
         // tranches deploy
         lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
         lendingPoolDeployment.tranches = new address[](createPoolConfig.tranches.length);

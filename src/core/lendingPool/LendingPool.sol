@@ -421,9 +421,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         uint256 maxTrancheInterestRate = systemVariables.maxTrancheInterestRate();
 
         // verify tranche: number of tranches, interest rates,  ratios, maxDepositAmount
-        if (poolConfiguration_.tranches.length == 0) {
-            revert PoolConfigurationIsIncorrect("tranches length is zero");
+
+        if (poolConfiguration_.tranches.length < systemVariables.minTrancheCountPerLendingPool()) {
+            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count less than minimum");
         }
+
+        if (poolConfiguration_.tranches.length > systemVariables.maxTrancheCountPerLendingPool()) {
+            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count more than maximum");
+        }
+
         uint256 ratiosSum;
         for (uint256 i; i < poolConfiguration_.tranches.length; ++i) {
             if (poolConfiguration_.tranches[i].ratio == 0) {
