@@ -73,7 +73,7 @@ interface ILendingPool is IERC20 {
 
     function updateTrancheInterestRate(address tranche, uint256 interestRate) external;
 
-    function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios) external;
+    function updateTrancheDesiredRatios(uint256[] calldata ratios) external;
 
     function updateTrancheInterestRateChangeEpochDelay(address tranche, uint256 epochDelay) external;
 

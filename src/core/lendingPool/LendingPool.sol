@@ -60,10 +60,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
 
-        console2.log(createPoolConfig.tranches.length);
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             // copy memory to storage
-            console2.log(createPoolConfig.tranches[i].ratio);
             _poolConfiguration.tranches.push(
                 TrancheConfig(
                     createPoolConfig.tranches[i].ratio,
@@ -366,7 +364,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         onlyLendingPoolManager
         verifyTranche(tranche)
     {
-        _getTrancheDetails(tranche).minDepositAmount = minimumDepositAmount;
+        _getTrancheConfiguration(tranche).minDepositAmount = minimumDepositAmount;
     }
 
     function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount)
@@ -374,7 +372,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         onlyLendingPoolManager
         verifyTranche(tranche)
     {
-        _getTrancheDetails(tranche).maxDepositAmount = maximumDepositAmount;
+        _getTrancheConfiguration(tranche).maxDepositAmount = maximumDepositAmount;
     }
 
     function updateTrancheInterestRate(address tranche, uint256 interestRate)
@@ -382,29 +380,17 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         onlyLendingPoolManager
         verifyTranche(tranche)
     {
-        _getTrancheDetails(tranche).interestRate = interestRate;
+        _getTrancheConfiguration(tranche).interestRate = interestRate;
+        _verifyPoolConfiguration(_poolConfiguration);
     }
 
-    function updateTrancheDesiredRatios(address[] calldata tranches, uint256[] calldata ratios)
-        external
-        onlyLendingPoolManager
-    {
-        if (tranches.length != ratios.length) {
-            revert InvalidArrayLength();
-        }
-
-        if (tranches.length != _poolConfiguration.tranches.length) {
+    function updateTrancheDesiredRatios(uint256[] calldata ratios) external onlyLendingPoolManager {
+        if (ratios.length != _lendingPoolInfo.trancheAddresses.length) {
             revert InvalidArrayLength();
         }
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
-            if (_lendingPoolInfo.trancheAddresses[i] != tranches[i]) {
-                revert InvalidTranche(address(this), tranches[i]);
-            }
-        }
-
-        for (uint256 i; i < tranches.length; ++i) {
-            _getTrancheDetails(tranches[i]).ratio = ratios[i];
+            _getTrancheConfiguration(_lendingPoolInfo.trancheAddresses[i]).ratio = ratios[i];
         }
 
         _verifyPoolConfiguration(_poolConfiguration);
@@ -415,7 +401,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         onlyLendingPoolManager
         verifyTranche(tranche)
     {
-        _getTrancheDetails(tranche).interestChangeEpochDelay = epochDelay;
+        _getTrancheConfiguration(tranche).interestChangeEpochDelay = epochDelay;
     }
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
@@ -449,6 +435,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             }
             if (poolConfiguration_.tranches[i].interestRate == 0) {
                 revert PoolConfigurationIsIncorrect("interest rate is zero");
+            }
+            if (poolConfiguration_.tranches[i].interestRate > 5_00) {
+                revert PoolConfigurationIsIncorrect("interest rate is more than five percent");
             }
             if (poolConfiguration_.tranches[i].maxDepositAmount == 0) {
                 revert PoolConfigurationIsIncorrect("max deposit amount is zero");
@@ -484,7 +473,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _trancheIndex[tranche] = index + 1;
     }
 
-    function _getTrancheDetails(address tranche) internal view returns (TrancheConfig storage) {
+    function _getTrancheConfiguration(address tranche) internal view returns (TrancheConfig storage) {
         return _poolConfiguration.tranches[_trancheIndex[tranche] - 1];
     }
 

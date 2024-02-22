@@ -192,12 +192,11 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheInterestRate(tranche, interestRate);
     }
 
-    function updateTrancheDesiredRatios(
-        address lendingPool,
-        address[] calldata tranches,
-        uint256[] calldata desiredRatios
-    ) external onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender) {
-        ILendingPool(lendingPool).updateTrancheDesiredRatios(tranches, desiredRatios);
+    function updateTrancheDesiredRatios(address lendingPool, uint256[] calldata desiredRatios)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateTrancheDesiredRatios(desiredRatios);
     }
 
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, address tranche, uint256 epochDelay)

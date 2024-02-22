@@ -716,23 +716,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6);
         lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6);
-        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 15_00);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 3_50);
         uint256[] memory ratios = new uint256[](3);
         ratios[0] = 15_00;
         ratios[1] = 25_00;
         ratios[2] = 60_00;
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, ratios);
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, ratios);
         lendingPoolManager.updateTotalDesiredLoanAmount(lpd.lendingPool, 400_000 * 1e6);
-
-        // wrong tranche
-        address[] memory wrongTrancheAddresses = new address[](3);
-        wrongTrancheAddresses[0] = lpd.tranches[0];
-        wrongTrancheAddresses[1] = lpd.tranches[1];
-        wrongTrancheAddresses[2] = lpd.tranches[1];
-        vm.expectRevert(
-            abi.encodeWithSelector(ILendingPoolErrors.InvalidTranche.selector, lpd.lendingPool, lpd.tranches[1])
-        );
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongTrancheAddresses, ratios);
 
         // wrong ratios
         uint256[] memory wrongRatios = new uint256[](3);
@@ -742,7 +732,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "invalid tranche ratio sum")
         );
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, wrongRatios);
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongRatios);
 
         vm.stopPrank();
 
@@ -753,17 +743,17 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.totalDesiredLoanAmount, 400_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[0].ratio, 15_00);
-        assertEq(poolConfiguration.tranches[0].interestRate, 20_00);
+        assertEq(poolConfiguration.tranches[0].interestRate, 5_00);
         assertEq(poolConfiguration.tranches[0].minDepositAmount, 1000 * 1e6);
         assertEq(poolConfiguration.tranches[0].maxDepositAmount, 200_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[1].ratio, 25_00);
-        assertEq(poolConfiguration.tranches[1].interestRate, 15_00);
+        assertEq(poolConfiguration.tranches[1].interestRate, 3_50);
         assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[2].ratio, 60_00);
-        assertEq(poolConfiguration.tranches[2].interestRate, 5_00);
+        assertEq(poolConfiguration.tranches[2].interestRate, 3_00);
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
     }
