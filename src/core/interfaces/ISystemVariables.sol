@@ -34,6 +34,9 @@ interface ISystemVariables {
     function defaultTrancheInterestChangeEpochDelay() external view returns (uint256);
     function setDefaultTrancheInterestChangeEpochDelay(uint256 defaultTrancheInterestChangeEpochDelay_) external;
 
+    function maxTrancheInterestRate() external view returns (uint256);
+    function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) external;
+
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);

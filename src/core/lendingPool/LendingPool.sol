@@ -410,7 +410,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     // Helper functions
 
-    function _verifyPoolConfiguration(PoolConfiguration memory poolConfiguration_) private pure {
+    function _verifyPoolConfiguration(PoolConfiguration memory poolConfiguration_) private view {
         // verify addresses
         if (poolConfiguration_.borrowRecipient == address(0)) {
             revert PoolConfigurationIsIncorrect("borrow receipient is zero address");
@@ -424,6 +424,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert PoolConfigurationIsIncorrect("desired loan amount is zero");
         }
 
+        uint256 maxTrancheInterestRate = systemVariables.maxTrancheInterestRate();
+
         // verify tranche: number of tranches, interest rates,  ratios, maxDepositAmount
         if (poolConfiguration_.tranches.length == 0) {
             revert PoolConfigurationIsIncorrect("tranches length is zero");
@@ -436,8 +438,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             if (poolConfiguration_.tranches[i].interestRate == 0) {
                 revert PoolConfigurationIsIncorrect("interest rate is zero");
             }
-            if (poolConfiguration_.tranches[i].interestRate > 5_00) {
-                revert PoolConfigurationIsIncorrect("interest rate is more than five percent");
+            if (poolConfiguration_.tranches[i].interestRate > maxTrancheInterestRate) {
+                revert PoolConfigurationIsIncorrect("interest rate is more than max allowed");
             }
             if (poolConfiguration_.tranches[i].maxDepositAmount == 0) {
                 revert PoolConfigurationIsIncorrect("max deposit amount is zero");
