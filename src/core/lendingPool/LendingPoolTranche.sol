@@ -31,7 +31,9 @@ contract LendingPoolTranche is
     constructor(ILendingPoolManager lendingPoolManager_, address lossAsset_)
         LendingPoolHelpers(lendingPoolManager_)
         AssetFunctionsBase(lossAsset_)
-    {}
+    {
+        _disableInitializers();
+    }
 
     /**
      * @param name_ The name of the lending pool tranche token
@@ -69,13 +71,15 @@ contract LendingPoolTranche is
         returns (uint256 assets)
     {
         assets = super.redeem(shares, receiver, owner);
+    }
 
-        _userActiveShares[receiver] -= shares;
+    function removeUserActiveShares(address user, uint256 shares) external onlyOwnLendingPool {
+        _userActiveShares[user] -= shares;
 
         // remove user from trancheUsers array if they have no shares
-        if (_userActiveShares[receiver] == 0) {
+        if (_userActiveShares[user] == 0) {
             // get removing and last user
-            uint256 removingUserIndex = _userArrayIndex[receiver];
+            uint256 removingUserIndex = _userArrayIndex[user];
             uint256 lastUserIndex = _trancheUsers.length - 1;
             address lastUser = _trancheUsers[lastUserIndex];
 
@@ -85,7 +89,7 @@ contract LendingPoolTranche is
 
             // update last  and removinf user index
             _userArrayIndex[lastUser] = removingUserIndex;
-            delete _userArrayIndex[receiver];
+            delete _userArrayIndex[user];
         }
     }
 

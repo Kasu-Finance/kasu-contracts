@@ -172,6 +172,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // transfer lending pool tokens from tranche to lending pool and burn tranche shares
         assetAmount = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), msg.sender);
+        ILendingPoolTranche(tranche).removeUserActiveShares(user, acceptedShares);
 
         // burn the lending pool token
         _burn(address(this), assetAmount);

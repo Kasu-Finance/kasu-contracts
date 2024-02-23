@@ -14,4 +14,5 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
  */
 interface ILendingPoolTranche is IERC4626, IERC1155 {
     function reportTrancheLoss(uint256 lossAmount) external returns (uint256 lossApplied);
+    function removeUserActiveShares(address user, uint256 shares) external;
 }
