@@ -155,7 +155,12 @@ contract PendingPool is
      * @param user The user cancelling the deposit.
      * @param dNftID The deposit id to cancel.
      */
-    function cancelDepositRequest(address user, uint256 dNftID) external canCancel isNftOwner(user, dNftID) {
+    function cancelDepositRequest(address user, uint256 dNftID)
+        external
+        canCancel
+        isNftOwner(user, dNftID)
+        onlyLendingPoolManager
+    {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
         // Burn the deposit NFT
@@ -182,6 +187,7 @@ contract PendingPool is
      */
     function requestWithdrawal(address user, address tranche, uint256 trancheShares)
         external
+        onlyLendingPoolManager
         returns (uint256 wNftID)
     {
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();

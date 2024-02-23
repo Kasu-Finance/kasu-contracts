@@ -159,14 +159,18 @@ contract LendingPoolManager is
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
-        revert("0");
+        IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
+        address dNftOwner = pendingPool.ownerOf(dNftID);
+        pendingPool.cancelDepositRequest(dNftOwner, dNftID);
     }
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
     {
-        revert("0");
+        IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
+        address wNftOwner = pendingPool.ownerOf(wNftID);
+        pendingPool.cancelDepositRequest(wNftOwner, wNftID);
     }
 
     // config

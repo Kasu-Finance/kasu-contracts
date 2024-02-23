@@ -131,10 +131,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // dNft burned
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_alice));
         assertEq(pendingPool.ownerOf(dNftId_alice), address(0));
+        assertEq(mockUsdc.balanceOf(alice), 100 * 10 ** 6);
 
         // dNft burned
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId1_bob));
         assertEq(pendingPool.ownerOf(dNftId1_bob), address(0));
+        assertEq(mockUsdc.balanceOf(bob), 250 * 10 ** 6);
     }
 
     function test_acceptDeposit() public {
@@ -319,14 +321,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 wNftId2_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 18);
 
         // ### ASSERT ###
-        // wNft burned
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_alice));
-        assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
+        assertEq(pendingPool.ownerOf(wNftId_alice), address(0)); // wNft burned
+        assertEq(mockUsdc.balanceOf(alice), 0);
 
-        // wNft burned
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId1_bob));
-        assertEq(pendingPool.ownerOf(wNftId1_bob), address(0));
+        assertEq(pendingPool.ownerOf(wNftId1_bob), address(0)); // wNft burned
+        assertEq(mockUsdc.balanceOf(bob), 0);
 
         assertFalse(wNftId1_bob == wNftId2_bob);
     }
@@ -756,6 +758,63 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.tranches[2].interestRate, 3_00);
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
+    }
+
+    function test_forceCancelDepositRequest() external {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+
+        // ### ACT ###
+        vm.prank(lendingPoolManagerAccount);
+        lendingPoolManager.forceCancelDepositRequest(lpd.lendingPool, dNftId_alice);
+
+        vm.prank(lendingPoolManagerAccount);
+        lendingPoolManager.forceCancelDepositRequest(lpd.lendingPool, dNftId_bob);
+
+        // ### ASSERT ###
+        PendingPool pendingPool = PendingPool(lpd.pendingPool);
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_alice));
+        assertEq(pendingPool.ownerOf(dNftId_alice), address(0));
+        assertEq(mockUsdc.balanceOf(alice), 100 * 10 ** 6);
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, dNftId_bob));
+        assertEq(pendingPool.ownerOf(dNftId_bob), address(0));
+        assertEq(mockUsdc.balanceOf(bob), 250 * 10 ** 6);
+    }
+
+    function test_forceCancelWithdrawRequest() external {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
+
+        uint256 wNftId_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 40 * 10 ** 18);
+        uint256 wNftId1_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
+
+        // ### ACT ###
+        vm.prank(lendingPoolManagerAccount);
+        lendingPoolManager.forceCancelWithdrawalRequest(lpd.lendingPool, wNftId_alice);
+
+        vm.prank(lendingPoolManagerAccount);
+        lendingPoolManager.forceCancelWithdrawalRequest(lpd.lendingPool, wNftId1_bob);
+
+        // ### ASSERT ###
+        IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId_alice));
+        assertEq(pendingPool.ownerOf(wNftId_alice), address(0));
+        assertEq(mockUsdc.balanceOf(alice), 0);
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId1_bob));
+        assertEq(pendingPool.ownerOf(wNftId1_bob), address(0));
+        assertEq(mockUsdc.balanceOf(bob), 0);
     }
 
     function test_incorrectMinimumTrancheCount() public {
