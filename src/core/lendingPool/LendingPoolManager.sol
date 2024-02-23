@@ -85,6 +85,10 @@ contract LendingPoolManager is
         IPendingPool(lendingPools[lendingPool].pendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
+    function claimLoss(address lendingPool, address tranche, uint256 lossId) external returns (uint256 claimedAmount) {
+        claimedAmount = ILendingPool(lendingPool).claimLoss(msg.sender, tranche, lossId);
+    }
+
     // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoan(address lendingPool, uint256 amount)
         external
@@ -100,19 +104,21 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function reportLoss(address lendingPool, uint256 amount)
+    function reportLoss(address lendingPool, uint256 amount, bool doMintLossShares)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         returns (uint256)
     {
-        return ILendingPool(lendingPool).reportLoss(amount);
+        return ILendingPool(lendingPool).reportLoss(amount, doMintLossShares);
     }
 
-    function repayLoss(address lendingPool, uint256 lossId, uint256 amount)
+    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
     {
-        revert("0");
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(lendingPool, amount);
+        ILendingPool(lendingPool).repayLoss(tranche, lossId, amount);
     }
 
     function depositFirstLossCapital(address lendingPool, uint256 amount)

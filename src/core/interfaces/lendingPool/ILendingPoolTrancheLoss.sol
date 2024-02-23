@@ -14,10 +14,10 @@ interface ILendingPoolTrancheLoss {
     // function registerLoss(uint256 lossAmount, uint256 batchSize) external returns (uint256 lossId);
     function batchMintLossTokens(uint256 lossId, uint256 batchSize) external;
     function isLossMintingComplete(uint256 lossId) external view returns (bool);
-    function returnLoss(uint256 lossId, uint256 amount) external;
+    function repayLoss(uint256 lossId, uint256 amount) external;
 
     function getUserClaimableLoss(address user, uint256 lossId) external view returns (uint256 claimableAmount);
-    function claimLoss(uint256 lossId) external returns (uint256 claimedAmount);
+    function claimLoss(address user, uint256 lossId) external returns (uint256 claimedAmount);
 
     event LossRegistered(uint256 indexed lossId, uint256 lossAmount, uint256 usersCount);
     event LossReturned(uint256 indexed lossId, uint256 amount);

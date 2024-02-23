@@ -115,7 +115,11 @@ contract LendingPoolTranche is
         }
     }
 
-    function reportTrancheLoss(uint256 lossAmount) external onlyOwnLendingPool returns (uint256 lossApplied) {
+    function reportTrancheLoss(uint256 lossAmount, bool doMintLossShares)
+        external
+        onlyOwnLendingPool
+        returns (uint256 lossApplied)
+    {
         uint256 maxLossAmount = getMaximumLossAmount();
 
         if (lossAmount > 0 && maxLossAmount > 0) {
@@ -126,7 +130,8 @@ contract LendingPoolTranche is
                 lossApplied = maxLossAmount;
             }
 
-            _registerLoss(lossApplied, 0);
+            uint256 batchSize = doMintLossShares ? type(uint256).max : 0;
+            _registerLoss(lossApplied, batchSize);
 
             // transfer lost assets back to the lending pool
             SafeERC20.safeTransfer(IERC20(asset()), msg.sender, lossApplied);

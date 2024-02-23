@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "./ILendingPoolTrancheLoss.sol";
 
 /**
  * @dev
@@ -12,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
  * - when deposits are cleared, users receive ERC20 receipt tokens
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
-interface ILendingPoolTranche is IERC4626, IERC1155 {
-    function reportTrancheLoss(uint256 lossAmount) external returns (uint256 lossApplied);
+interface ILendingPoolTranche is ILendingPoolTrancheLoss, IERC4626, IERC1155 {
+    function reportTrancheLoss(uint256 lossAmoun, bool doMintLossSharest) external returns (uint256 lossApplied);
     function removeUserActiveShares(address user, uint256 shares) external;
 }

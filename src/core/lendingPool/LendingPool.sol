@@ -240,7 +240,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param lossAmount The amount of the loss.
      * @return appliedLoss The id of the loss.
      */
-    function reportLoss(uint256 lossAmount) external onlyLendingPoolManager returns (uint256 appliedLoss) {
+    function reportLoss(uint256 lossAmount, bool doMintLossShares)
+        external
+        onlyLendingPoolManager
+        returns (uint256 appliedLoss)
+    {
         if (systemVariables.isClearingTime()) {
             revert CannotExecuteDuringClearingTime();
         }
@@ -279,8 +283,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // remove the funds from the tranches and mint loss tokens if first loss capital is not enough
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             if (lossLeft > 0) {
-                uint256 trancheLossApplied =
-                    ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(lossLeft);
+                uint256 trancheLossApplied = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(
+                    lossLeft, doMintLossShares
+                );
 
                 // lending pool tranche should return tokens
                 _burn(address(this), trancheLossApplied);
@@ -296,6 +301,25 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         borrowedAmount -= appliedLoss;
 
         emit LossReported(appliedLoss);
+    }
+
+    function repayLoss(address tranche, uint256 lossId, uint256 amount)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+    {
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(tranche, amount);
+        ILendingPoolTranche(tranche).repayLoss(lossId, amount);
+    }
+
+    function claimLoss(address user, address tranche, uint256 lossId)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+        returns (uint256 claimedAmount)
+    {
+        claimedAmount = ILendingPoolTranche(tranche).claimLoss(user, lossId);
     }
 
     function depositFirstLossCapital(uint256 amount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {

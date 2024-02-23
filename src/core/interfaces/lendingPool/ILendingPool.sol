@@ -51,9 +51,9 @@ interface ILendingPool is IERC20 {
 
     //     function updateLoanAmount(uint256 amount) external;
 
-    function reportLoss(uint256 lossAmount) external returns (uint256 appliedLoss);
+    function reportLoss(uint256 lossAmount, bool doMintLossShares) external returns (uint256 appliedLoss);
 
-    //     function repayLoss(uint256 lossId, uint256 amount) external;
+    function repayLoss(address tranche, uint256 lossId, uint256 amount) external;
 
     function depositFirstLossCapital(uint256 amount) external;
 
@@ -64,6 +64,10 @@ interface ILendingPool is IERC20 {
         returns (uint256 assetAmount);
 
     function stop(address firstLossCapitalReceiver) external;
+
+    // #### USER #### //
+
+    function claimLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
 
     // #### CONFIG #### //
 

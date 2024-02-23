@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/lendingPool/ILendingPoolTrancheLoss.sol";
 import "../AssetFunctionsBase.sol";
 
-import "forge-std/console2.sol";
-
 // TODO: add maximum minted total shares
 
 /**
@@ -39,7 +37,7 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
 
     function _verifyOnlyOwnLendingPool() internal view virtual;
 
-    function getLossDetails(uint256 lossId) external view override returns (LossDetails memory) {
+    function getLossDetails(uint256 lossId) external view override verifyLossId(lossId) returns (LossDetails memory) {
         return _lossDetails[lossId];
     }
 
@@ -92,7 +90,6 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         uint256 mintToUserIndex = usersMintedCount + batchSize;
 
         for (uint256 i = usersMintedCount; i < mintToUserIndex; ++i) {
-            console2.log("minting to user", users[i]);
             address user = users[i];
             uint256 userLossShares = _getUserActiveTrancheBalance(user);
             _mintUserLossTokens(user, lossId, userLossShares);
@@ -113,9 +110,9 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         _lossDetails[lossId].totalLossShares += userLossShares;
     }
 
-    function returnLoss(uint256 lossId, uint256 amount) external verifyLossId(lossId) {
+    function repayLoss(uint256 lossId, uint256 amount) external verifyLossId(lossId) {
         _verifyOnlyOwnLendingPool();
-        if (_isLossMintingComplete(lossId)) {
+        if (!_isLossMintingComplete(lossId)) {
             revert LossMintingNotYetComplete(lossId);
         }
 
@@ -133,7 +130,7 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         verifyLossId(lossId)
         returns (uint256 claimableAmount)
     {
-        if (_isLossMintingComplete(lossId)) {
+        if (!_isLossMintingComplete(lossId)) {
             revert LossMintingNotYetComplete(lossId);
         }
 
@@ -143,14 +140,18 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         }
     }
 
-    function claimLoss(uint256 lossId) external returns (uint256 claimedAmount) {
-        claimedAmount = getUserClaimableLoss(msg.sender, lossId);
-        userClaimedLosses[msg.sender][lossId] += claimedAmount;
+    function claimLoss(address user, uint256 lossId) external returns (uint256 claimedAmount) {
+        _verifyOnlyOwnLendingPool();
 
-        _transferAssets(msg.sender, claimedAmount);
+        claimedAmount = getUserClaimableLoss(user, lossId);
+        userClaimedLosses[user][lossId] += claimedAmount;
 
-        emit LossClaimed(msg.sender, lossId, claimedAmount);
+        _transferAssets(user, claimedAmount);
+
+        emit LossClaimed(user, lossId, claimedAmount);
     }
+
+    // HELPER FUNCTIONS
 
     function isLossMintingComplete(uint256 lossId) external view verifyLossId(lossId) returns (bool) {
         return _isLossMintingComplete(lossId);

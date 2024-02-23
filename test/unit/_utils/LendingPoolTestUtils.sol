@@ -287,12 +287,29 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager.stopLendingPool(lendingPool, firstLostCapitalReceiver);
     }
 
-    function _reportLoss(address caller, address lendingPool, uint256 amount)
+    function _reportLoss(address caller, address lendingPool, uint256 amount, bool doMintLossShares)
         internal
         prank(caller)
         returns (uint256)
     {
-        return lendingPoolManager.reportLoss(lendingPool, amount);
+        return lendingPoolManager.reportLoss(lendingPool, amount, doMintLossShares);
+    }
+
+    function _repayLoss(address caller, address lendingPool, address tranche, uint256 lossId, uint256 amount)
+        internal
+        prank(caller)
+    {
+        deal(address(mockUsdc), caller, amount, true);
+        mockUsdc.approve(address(lendingPoolManager), amount);
+        lendingPoolManager.repayLoss(lendingPool, tranche, lossId, amount);
+    }
+
+    function _claimLoss(address caller, address lendingPool, address tranche, uint256 lossId)
+        internal
+        prank(caller)
+        returns (uint256 claimedAmount)
+    {
+        return lendingPoolManager.claimLoss(lendingPool, tranche, lossId);
     }
 }
 

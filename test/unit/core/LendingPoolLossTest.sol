@@ -14,7 +14,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         __lendingPool_setUp();
     }
 
-    function test_firstLossCapitalLoss() public {
+    function test_reportLoss_firstLossCapitalLoss() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -25,7 +25,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 lossAmount = firstLossCapitalAmount;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount);
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
 
         // ### ASSERT ###
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
@@ -35,7 +35,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
     }
 
-    function test_singleTrancheLoss() public {
+    function test_reportLoss_singleTrancheLoss() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -49,7 +49,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 lossAmount = firstLossCapitalAmount + totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount);
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
 
         // ### ASSERT ###
 
@@ -69,7 +69,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertEq(lossDetails.usersCount, 3);
     }
 
-    function test_multipleTrancheLoss() public {
+    function test_reportLoss_multipleTrancheLoss() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -90,7 +90,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 lossAmount = firstLossCapitalAmount + trancheDeposits0 + trancheDeposits1 + trancheDeposits2 / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount);
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
 
         // ### ASSERT ###
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
@@ -123,7 +123,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertEq(lossDetails2.usersCount, 5);
     }
 
-    function test_batchMintLossTokens_singleCall() public {
+    function test_reportLossAndbatchMintLossTokens() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -138,11 +138,10 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
 
         uint256 lossAmount = firstLossCapitalAmount + totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount);
-        uint256 trancheLossId = 1;
 
         // ### ACT ###
-        LendingPoolTranche(lpd.tranches[0]).batchMintLossTokens(trancheLossId, 20);
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, true);
+        uint256 trancheLossId = 1;
 
         // ### ASSERT ###
 
@@ -178,7 +177,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
 
         uint256 lossAmount = firstLossCapitalAmount + totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount);
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
         uint256 trancheLossId = 1;
 
         // ### ACT - mint half users ###
@@ -212,78 +211,166 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         }
     }
 
-    // function test_withdrawFirstLossCapital() public {
-    //     // ### ARRANGE ###
-    //     LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+    function test_reportLoss_multipleTimes() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
-    //     uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-    //     uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+        uint256 totalUserDeposits = 100_000 * 10 ** 6;
+        uint256 usersCount = 19;
+        (address[] memory userAddresses, uint256[] memory amounts) =
+            _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
 
-    //     uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-    //     uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+        _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, totalUserDeposits);
 
-    //     uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-    //     _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+        // ### ACT ###
+        uint256 lossAmount1 = totalUserDeposits / 8;
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount1, true);
 
-    //     uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-    //     _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        uint256 lossAmount2 = totalUserDeposits / 4;
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount2, true);
 
-    //     _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
-    //     _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
+        uint256 lossAmount3 = totalUserDeposits / 2;
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount3, true);
 
-    //     // ### ACT ###
-    //     vm.expectRevert(
-    //         abi.encodeWithSelector(
-    //             ILendingPool.WithdrawAmountCantBeGreaterThanFirstLostCapital.selector, 61 * 10 ** 6, 60 * 10 ** 6
-    //         )
-    //     );
-    //     _withdrawFirstLossCapital(
-    //         lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 61 * 10 ** 6
-    //     );
-    //     _withdrawFirstLossCapital(
-    //         lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 20 * 10 ** 6
-    //     );
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolTrancheLoss.LossIdNotValid.selector, 0));
+        LendingPoolTranche(lpd.tranches[0]).getLossDetails(0);
 
-    //     // ### ASSERT ###
-    //     assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 20 * 10 ** 6);
-    //     assertEq(mockUsdc.balanceOf(lpd.lendingPool), 330 * 10 ** 6);
-    //     // assertEq(mockUsdc.balanceOf(lpd.lendingPool), ILendingPool(lpd.lendingPool).totalSupply());
-    // }
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolTrancheLoss.LossIdNotValid.selector, 4));
+        LendingPoolTranche(lpd.tranches[0]).getLossDetails(4);
 
-    // function test_borrowLoan() public {
-    //     // ### ARRANGE ###
-    //     LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], 1, lossAmount1);
+        _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], 2, lossAmount2);
+        _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], 3, lossAmount3);
 
-    //     uint256 requestDepositAmount_alice = 100 * 10 ** 6;
-    //     uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+        // ### ASSERT ###
+        {
+            LossDetails memory lossDetails1 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(1);
+            assertEq(lossDetails1.lossAmount, lossAmount1);
+            assertEq(lossDetails1.usersCount, usersCount);
+            assertEq(lossDetails1.recoveredAmount, lossAmount1);
 
-    //     uint256 requestDepositAmount_bob = 250 * 10 ** 6;
-    //     uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], requestDepositAmount_bob);
+            LossDetails memory lossDetails2 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(2);
+            assertEq(lossDetails2.lossAmount, lossAmount2);
+            assertEq(lossDetails2.usersCount, usersCount);
+            assertEq(lossDetails2.recoveredAmount, lossAmount2);
 
-    //     uint256 acceptDepositAmount_alice = 40 * 10 ** 6;
-    //     _acceptDepositRequest(lpd.lendingPool, dNftId_alice, acceptDepositAmount_alice);
+            LossDetails memory lossDetails3 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(3);
+            assertEq(lossDetails3.lossAmount, lossAmount3);
+            assertEq(lossDetails3.usersCount, usersCount);
+            assertEq(lossDetails3.recoveredAmount, lossAmount3);
+        }
 
-    //     uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
-    //     _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        for (uint256 i; i < userAddresses.length; ++i) {
+            assertEq(LendingPoolTranche(lpd.tranches[0]).balanceOf(userAddresses[i], 1), amounts[i] * 10 ** 12);
 
-    //     _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
+            assertEq(LendingPoolTranche(lpd.tranches[0]).balanceOf(userAddresses[i], 2), amounts[i] * 10 ** 12);
 
-    //     uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
+            assertEq(LendingPoolTranche(lpd.tranches[0]).balanceOf(userAddresses[i], 3), amounts[i] * 10 ** 12);
+        }
 
-    //     // ### ACT ###
-    //     vm.expectRevert(
-    //         abi.encodeWithSelector(
-    //             ILendingPool.BorrowAmountCantBeGreaterThanAvailableAmount.selector, 341 * 10 ** 6, 340 * 10 ** 6
-    //         )
-    //     );
-    //     _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, 341 * 10 ** 6);
-    //     _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        for (uint256 i; i < 1; ++i) {
+            uint256 claimedAmount1 = _claimLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 1);
+            uint256 claimedAmount2 = _claimLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 2);
+            uint256 claimedAmount3 = _claimLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 3);
 
-    //     // ### ASSERT ###
-    //     assertEq(mockUsdc.balanceOf(lpd.lendingPool), 140 * 10 ** 6);
-    //     assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 200 * 10 ** 6);
-    //     assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
-    // }
+            assertApproxEqAbs(claimedAmount1, lossAmount1 * amounts[i] / totalUserDeposits, 1);
+            assertApproxEqAbs(claimedAmount2, lossAmount2 * amounts[i] / totalUserDeposits, 1);
+            assertApproxEqAbs(claimedAmount3, lossAmount3 * amounts[i] / totalUserDeposits, 1);
+        }
+    }
+
+    function test_repayLoss() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 totalUserDeposits = 100_000 * 10 ** 6;
+        uint256 usersCount = 20;
+        _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
+
+        _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, totalUserDeposits);
+
+        uint256 lossAmount = totalUserDeposits / 2;
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+
+        uint256 lossId = 1;
+        LendingPoolTranche(lpd.tranches[0]).batchMintLossTokens(lossId, usersCount);
+
+        // ### ACT ###
+        uint256 repayAmount = lossAmount / 2;
+        _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
+
+        // ### ASSERT ###
+        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).getLossDetails(lossId);
+        assertEq(lossDetails.recoveredAmount, repayAmount);
+        assertEq(mockUsdc.balanceOf(lpd.tranches[0]), repayAmount);
+    }
+
+    function test_claimLoss() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 totalUserDeposits = 100_000 * 10 ** 6;
+        uint256 usersCount = 20;
+        (address[] memory userAddresses, uint256[] memory amounts) =
+            _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
+
+        _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, totalUserDeposits);
+
+        uint256 lossAmount = totalUserDeposits / 2;
+        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+
+        uint256 lossId = 1;
+        LendingPoolTranche(lpd.tranches[0]).batchMintLossTokens(lossId, usersCount);
+        uint256 repayAmount = lossAmount / 4;
+        _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
+
+        // ### ACT / ASSERT ###
+        // claim first half of users
+        for (uint256 i; i < userAddresses.length / 2; ++i) {
+            uint256 balanceBefore = mockUsdc.balanceOf(userAddresses[i]);
+
+            uint256 claimedAmount = _claimLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
+
+            uint256 expectedClaimedAmount = amounts[i] / 2 / 4;
+            assertApproxEqAbs(claimedAmount, expectedClaimedAmount, 1);
+
+            uint256 balanceAfter = mockUsdc.balanceOf(userAddresses[i]);
+            assertApproxEqAbs(balanceAfter - balanceBefore, expectedClaimedAmount, 1);
+        }
+
+        // ### ARRANGE - repay loss again ###
+        uint256 repayAmount2 = lossAmount / 2;
+        _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount2);
+
+        // ### ACT / ASSERT ###
+        // claim first half of users
+        for (uint256 i; i < userAddresses.length / 2; ++i) {
+            uint256 balanceBefore = mockUsdc.balanceOf(userAddresses[i]);
+
+            uint256 claimedAmount = _claimLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
+
+            uint256 expectedClaimedAmount = amounts[i] / 2 / 2;
+            assertApproxEqAbs(claimedAmount, expectedClaimedAmount, 1);
+
+            uint256 balanceAfter = mockUsdc.balanceOf(userAddresses[i]);
+            assertApproxEqAbs(balanceAfter - balanceBefore, expectedClaimedAmount, 1);
+        }
+
+        // claim for users that haven't claimed before
+        for (uint256 i = userAddresses.length / 2; i < userAddresses.length; ++i) {
+            uint256 balanceBefore = mockUsdc.balanceOf(userAddresses[i]);
+
+            uint256 claimedAmount = _claimLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
+
+            uint256 expectedClaimedAmount = amounts[i] / 2 / 2 + amounts[i] / 2 / 4;
+            assertApproxEqAbs(claimedAmount, expectedClaimedAmount, 1);
+
+            uint256 balanceAfter = mockUsdc.balanceOf(userAddresses[i]);
+            assertApproxEqAbs(balanceAfter - balanceBefore, expectedClaimedAmount, 1);
+        }
+
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.tranches[0]), 0, usersCount);
+    }
 
     function _requestAndAcceptUserDeposits(address lendingPool, uint256 userCount, address tranche, uint256 totalAmount)
         private
@@ -297,7 +384,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         for (uint256 i; i < userCount; ++i) {
             address user = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
             userAddresses[i] = user;
-            amounts[i] = totalAmount / userCount;
+            amounts[i] = amountLeft / userCount;
             amountLeft -= amounts[i];
 
             if (i == userCount - 1) {
