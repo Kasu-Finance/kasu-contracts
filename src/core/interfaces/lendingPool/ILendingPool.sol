@@ -2,16 +2,27 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./ILendingPoolFactory.sol";
 
 struct LendingPoolInfo {
-    TrancheData[] tranches;
-    address pendingPool;
+    address[] trancheAddresses;
+    address pendingPoolAddress;
 }
 
-struct TrancheData {
-    address trancheAddress;
+struct TrancheConfig {
     uint256 ratio;
     uint256 interestRate;
+    uint256 minDepositAmount;
+    uint256 maxDepositAmount;
+}
+
+struct PoolConfiguration {
+    uint256 targetExcessLiquidity;
+    TrancheConfig[] tranches;
+    address poolAdmin;
+    address borrowRecipient;
+    uint256 totalDesiredLoanAmount;
+    uint256 trancheInterestChangeEpochDelay;
 }
 
 /**
@@ -23,6 +34,8 @@ interface ILendingPool is IERC20 {
     function getUserAvailableBalance(address user) external view returns (uint256);
 
     function lendingPoolInfo() external view returns (LendingPoolInfo memory);
+
+    function poolConfiguration() external returns (PoolConfiguration memory);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
@@ -52,6 +65,20 @@ interface ILendingPool is IERC20 {
 
     function stop(address firstLossCapitalReceiver) external;
 
+    // #### CONFIG #### //
+
+    function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount) external;
+
+    function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount) external;
+
+    function updateTrancheInterestRate(address tranche, uint256 interestRate) external;
+
+    function updateTrancheDesiredRatios(uint256[] calldata ratios) external;
+
+    function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external;
+
+    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external;
+
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 
@@ -78,4 +105,5 @@ interface ILendingPool is IERC20 {
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
     error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
     error LendingPoolIsStopped();
+    error PoolConfigurationIsIncorrect(string reason);
 }

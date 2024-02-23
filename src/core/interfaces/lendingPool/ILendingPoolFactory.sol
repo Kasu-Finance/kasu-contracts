@@ -2,29 +2,7 @@
 pragma solidity 0.8.23;
 
 import "./ILendingPoolManager.sol";
-
-struct TrancheDetail {
-    bool isEnabled;
-    uint256 ratio;
-    uint256 interestRate;
-}
-
-struct PoolConfiguration {
-    string name;
-    string symbol;
-    address usdcAddress;
-    uint256 minDepositAmount;
-    uint256 targetExcessLiquidity;
-    Tranches tranches;
-    address poolAdmin;
-    address borrowRecipient;
-}
-
-struct Tranches {
-    TrancheDetail junior;
-    TrancheDetail mezzo;
-    TrancheDetail senior;
-}
+import "./ILendingPool.sol";
 
 struct LendingPoolDeployment {
     address lendingPool;
@@ -34,8 +12,27 @@ struct LendingPoolDeployment {
 
 event PoolCreated(address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment);
 
+struct CreateTrancheConfig {
+    string trancheName;
+    string trancheSymbol;
+    uint256 ratio;
+    uint256 interestRate;
+    uint256 minDepositAmount;
+    uint256 maxDepositAmount;
+}
+
+struct CreatePoolConfig {
+    string poolName;
+    string poolSymbol;
+    uint256 targetExcessLiquidity;
+    CreateTrancheConfig[] tranches;
+    address poolAdmin;
+    address borrowRecipient;
+    uint256 totalDesiredLoanAmount;
+}
+
 interface ILendingPoolFactory {
-    function createPool(PoolConfiguration calldata poolConfiguration)
+    function createPool(CreatePoolConfig calldata createPoolConfig)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 }

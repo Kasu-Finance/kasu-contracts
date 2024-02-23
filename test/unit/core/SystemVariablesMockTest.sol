@@ -243,6 +243,15 @@ contract SystemVariablesMockTest is BaseTestUtils {
         systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
     }
 
+    function test_setDefaultTrancheInterestChangeEpochDelay() public {
+        _initalize();
+
+        hoax(admin);
+        systemVariables.setDefaultTrancheInterestChangeEpochDelay(2);
+
+        assertEq(systemVariables.defaultTrancheInterestChangeEpochDelay(), 2);
+    }
+
     function _initalize() internal returns (SystemVariablesSetup memory systemVariablesSetup) {
         systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
         systemVariablesSetup.clearingPeriodLength = 1 days;
@@ -250,6 +259,7 @@ contract SystemVariablesMockTest is BaseTestUtils {
         systemVariablesSetup.loyaltyThresholds = new uint256[](2);
         systemVariablesSetup.loyaltyThresholds[0] = 1_00;
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
+        systemVariablesSetup.defaultTrancheInterestChangeEpochDelay = 4;
 
         systemVariables.initialize(systemVariablesSetup);
     }

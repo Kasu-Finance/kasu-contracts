@@ -27,10 +27,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     MockUSDC internal mockUsdc;
     IUserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
+    ILendingPoolFactory private lendingPoolFactory;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
-
-    LendingPoolFactory private lendingPoolFactory;
 
     address internal lendingPoolLoanManagerAccount = address(0xad2);
     address internal lendingPoolCreatorAccount = address(0xad3);
@@ -149,11 +148,11 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariables.initialize(systemVariablesSetup);
     }
 
-    function createLendingPool(PoolConfiguration memory poolConfiguration)
+    function createLendingPool(CreatePoolConfig memory createPoolConfig)
         internal
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        lendingPoolDeployment = lendingPoolManager.createPool(poolConfiguration);
+        lendingPoolDeployment = lendingPoolManager.createPool(createPoolConfig);
         pendingPools[lendingPoolDeployment.lendingPool] = PendingPoolHarness(address(lendingPoolDeployment.pendingPool));
         // fund lending pool
         vm.deal(lendingPoolDeployment.lendingPool, 1 << 128);
@@ -166,24 +165,25 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.prank(admin);
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
         // create lending
-        uint256 minDepositAmount = 1 ether;
+        uint256 minDepositAmount = 500 * 1e6;
+        uint256 maxDepositAmount = 100_000 * 1e6;
         uint256 targetExcessLiquidity = 50_000 * 1e6;
-        Tranches memory tranches;
-        tranches.junior = TrancheDetail(true, 10, 20);
-        tranches.mezzo = TrancheDetail(true, 20, 10);
-        tranches.senior = TrancheDetail(true, 70, 5);
-        PoolConfiguration memory poolConfiguration = PoolConfiguration(
+        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
+        createTrancheConfig[0] = CreateTrancheConfig("Junior", "JR", 10_00, 5_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[1] = CreateTrancheConfig("Mezzo", "MZ", 20_00, 4_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[2] = CreateTrancheConfig("Senior", "SR", 70_00, 3_00, minDepositAmount, maxDepositAmount);
+        CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
-            address(mockUsdc),
-            minDepositAmount,
             targetExcessLiquidity,
-            tranches,
+            createTrancheConfig,
             lendingPoolAdminAccount,
-            lendingPoolLoanManagerAccount
+            lendingPoolLoanManagerAccount,
+            totalDesiredLoanAmount
         );
         vm.prank(lendingPoolCreatorAccount);
-        lendingPoolDeployment = createLendingPool(poolConfiguration);
+        lendingPoolDeployment = createLendingPool(createPoolConfig);
         // access control - grant
         vm.startPrank(lendingPoolAdminAccount);
         kasuController.grantLendingPoolRole(
