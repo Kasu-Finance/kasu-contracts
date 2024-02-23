@@ -42,20 +42,19 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
 
-        if (createPoolConfig.tranches.length == 0) {
-            revert("LendingPoolFactory: at least senior tranche must be enabled");
-        }
-
         // tranches deploy
         lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
         lendingPoolDeployment.tranches = new address[](createPoolConfig.tranches.length);
 
         address[] memory trancheAddresses = new address[](createPoolConfig.tranches.length);
 
-        address trancheAddress;
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             trancheAddresses[i] = _deployLendingPoolTranche(
-                createPoolConfig.poolName, createPoolConfig.poolSymbol, "Senior Tranche", "sr", lendingPool
+                createPoolConfig.poolName,
+                createPoolConfig.poolSymbol,
+                createPoolConfig.tranches[i].trancheName,
+                createPoolConfig.tranches[i].trancheSymbol,
+                lendingPool
             );
             lendingPoolDeployment.tranches[i] = trancheAddresses[i];
         }

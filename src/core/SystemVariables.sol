@@ -46,6 +46,11 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     uint256 private _defaultTrancheInterestChangeEpochDelay;
 
+    uint256 private _maxTrancheInterestRate;
+
+    uint256 private _minTrancheCountPerLendingPool;
+    uint256 private _maxTrancheCountPerLendingPool;
+
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
         ksuPrice = ksuPrice_;
         _disableInitializers();
@@ -75,6 +80,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _updateKsuTokenPrice();
 
         _defaultTrancheInterestChangeEpochDelay = 4;
+        _maxTrancheInterestRate = 5_00;
+        _minTrancheCountPerLendingPool = 1;
+        _maxTrancheCountPerLendingPool = 3;
     }
 
     // EPOCH
@@ -268,6 +276,10 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     // TRANCHE
 
+    /**
+     * @notice Returns default epoch delay when tranche interest rate is changed
+     * @return The default epoch delay when tranche interest rate is changed
+     */
     function defaultTrancheInterestChangeEpochDelay() external view returns (uint256) {
         return _defaultTrancheInterestChangeEpochDelay;
     }
@@ -281,5 +293,37 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         onlyAdmin
     {
         _defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
+    }
+
+    /**
+     * @notice Returns the maximum allowed interest rate allowed in tranche
+     * @return The maximum interest rate allowed in tranche
+     */
+    function maxTrancheInterestRate() external view returns (uint256) {
+        return _maxTrancheInterestRate;
+    }
+
+    /**
+     * @notice Sets the maximum allowed interest rate per tranche
+     * @param maxTrancheInterestRate_ maximum allowed interest rate per tranche
+     */
+    function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public onlyAdmin {
+        _maxTrancheInterestRate = maxTrancheInterestRate_;
+    }
+
+    /**
+     * @notice Returns the minimum tranche count per lending pool
+     * @return The minimum tranche count per lending pool
+     */
+    function minTrancheCountPerLendingPool() external view returns (uint256) {
+        return _minTrancheCountPerLendingPool;
+    }
+
+    /**
+     * @notice Returns the maximum tranche count per lending pool
+     * @return The maximum tranche count per lending pool
+     */
+    function maxTrancheCountPerLendingPool() external view returns (uint256) {
+        return _maxTrancheCountPerLendingPool;
     }
 }

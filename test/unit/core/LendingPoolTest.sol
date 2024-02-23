@@ -718,23 +718,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6);
         lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6);
-        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 15_00);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 3_50);
         uint256[] memory ratios = new uint256[](3);
         ratios[0] = 15_00;
         ratios[1] = 25_00;
         ratios[2] = 60_00;
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, ratios);
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, ratios);
         lendingPoolManager.updateTotalDesiredLoanAmount(lpd.lendingPool, 400_000 * 1e6);
-
-        // wrong tranche
-        address[] memory wrongTrancheAddresses = new address[](3);
-        wrongTrancheAddresses[0] = lpd.tranches[0];
-        wrongTrancheAddresses[1] = lpd.tranches[1];
-        wrongTrancheAddresses[2] = lpd.tranches[1];
-        vm.expectRevert(
-            abi.encodeWithSelector(ILendingPoolErrors.InvalidTranche.selector, lpd.lendingPool, lpd.tranches[1])
-        );
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongTrancheAddresses, ratios);
 
         // wrong ratios
         uint256[] memory wrongRatios = new uint256[](3);
@@ -744,7 +734,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "invalid tranche ratio sum")
         );
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, lpd.tranches, wrongRatios);
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongRatios);
 
         vm.stopPrank();
 
@@ -755,17 +745,17 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.totalDesiredLoanAmount, 400_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[0].ratio, 15_00);
-        assertEq(poolConfiguration.tranches[0].interestRate, 20_00);
+        assertEq(poolConfiguration.tranches[0].interestRate, 5_00);
         assertEq(poolConfiguration.tranches[0].minDepositAmount, 1000 * 1e6);
         assertEq(poolConfiguration.tranches[0].maxDepositAmount, 200_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[1].ratio, 25_00);
-        assertEq(poolConfiguration.tranches[1].interestRate, 15_00);
+        assertEq(poolConfiguration.tranches[1].interestRate, 3_50);
         assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[2].ratio, 60_00);
-        assertEq(poolConfiguration.tranches[2].interestRate, 5_00);
+        assertEq(poolConfiguration.tranches[2].interestRate, 3_00);
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
     }
@@ -825,5 +815,67 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, wNftId1_bob));
         assertEq(pendingPool.ownerOf(wNftId1_bob), address(0));
         assertEq(mockUsdc.balanceOf(bob), 0);
+    }
+
+    function test_incorrectMinimumTrancheCount() public {
+        vm.prank(admin);
+        kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
+
+        uint256 minDepositAmount = 500 * 1e6;
+        uint256 maxDepositAmount = 100_000 * 1e6;
+        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](0);
+        CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
+            "Test Lending Pool",
+            "TLP",
+            targetExcessLiquidity,
+            createTrancheConfig,
+            lendingPoolAdminAccount,
+            lendingPoolLoanManagerAccount,
+            totalDesiredLoanAmount
+        );
+
+        vm.startPrank(lendingPoolCreatorAccount);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector, "tranche count less than minimum"
+            )
+        );
+        lendingPoolManager.createPool(createPoolConfig);
+        vm.stopPrank();
+    }
+
+    function test_incorrectMaximumTrancheCount() public {
+        vm.prank(admin);
+        kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
+
+        uint256 minDepositAmount = 500 * 1e6;
+        uint256 maxDepositAmount = 100_000 * 1e6;
+        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](4);
+        createTrancheConfig[0] = CreateTrancheConfig("Junior", "JR", 10_00, 5_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[1] = CreateTrancheConfig("Mezzo", "MZ", 20_00, 4_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[2] = CreateTrancheConfig("Senior", "SR", 30_00, 3_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[3] = CreateTrancheConfig("Extra", "XT", 40_00, 3_00, minDepositAmount, maxDepositAmount);
+        CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
+            "Test Lending Pool",
+            "TLP",
+            targetExcessLiquidity,
+            createTrancheConfig,
+            lendingPoolAdminAccount,
+            lendingPoolLoanManagerAccount,
+            totalDesiredLoanAmount
+        );
+
+        vm.startPrank(lendingPoolCreatorAccount);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector, "tranche count more than maximum"
+            )
+        );
+        lendingPoolManager.createPool(createPoolConfig);
+        vm.stopPrank();
     }
 }
