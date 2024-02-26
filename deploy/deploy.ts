@@ -56,48 +56,73 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         contract: 'ProxyAdmin',
     });
 
-    const ksu = await deployWithExportAddress(
+    const ksuDeployment = await deployWithExportAddress(
         'KSU',
-        transparentProxyDeployOptions(admin, [admin]),
+        transparentProxyDeployOptions(admin, [], [admin]),
     );
 
     const mockUsdc = await deployWithExportAddress(
         'MockUSDC',
-        transparentProxyDeployOptions(admin, [admin]),
+        transparentProxyDeployOptions(admin, [], [admin]),
         'USDC',
     );
 
-    const kasuController = await deployWithExportAddress(
+    const kasuControllerDeployment = await deployWithExportAddress(
         'KasuController',
-        transparentProxyDeployOptions(admin, [admin], []),
+        transparentProxyDeployOptions(admin, [], undefined),
     );
 
-    const ksuLockingResult = await deployWithExportAddress(
+    const ksuLockingDeployment = await deployWithExportAddress(
         'KSULocking',
         transparentProxyDeployOptions(
             admin,
-            [ksu.address, mockUsdc.address],
-            [kasuController.address],
+            [kasuControllerDeployment.address],
+            [ksuDeployment.address, mockUsdc.address],
         ),
     );
 
-    const ksuBonusResult = await deployWithExportAddress(
+    await deployWithExportAddress(
+        'KasuAllowList',
+        transparentProxyDeployOptions(
+            admin,
+            [kasuControllerDeployment.address],
+            undefined,
+        ),
+    );
+
+    const mockKsuPriceDeployment = await deployWithExportAddress(
+        'MockKsuPrice',
+        transparentProxyDeployOptions(admin, [], []),
+        'KsuPrice',
+    );
+
+    await deployWithExportAddress(
+        'SystemVariables',
+        transparentProxyDeployOptions(
+            admin,
+            [mockKsuPriceDeployment.address, kasuControllerDeployment.address],
+            undefined,
+        ),
+    );
+
+    const ksuLockBonusDeployment = await deployWithExportAddress(
         'KSULockBonus',
-        transparentProxyDeployOptions(admin, [
-            ksuLockingResult.address,
-            ksu.address,
-        ]),
+        transparentProxyDeployOptions(
+            admin,
+            [],
+            [ksuLockingDeployment.address, ksuDeployment.address],
+        ),
     );
 
     // add lock periods
     const adminSigners = await hre.ethers.getNamedSigners();
     const adminSigner = adminSigners['admin'];
     const ksuLocking = KSULocking__factory.connect(
-        ksuLockingResult.address,
+        ksuLockingDeployment.address,
         adminSigner,
     );
 
-    let tx = await ksuLocking.setKSULockBonus(ksuBonusResult.address);
+    let tx = await ksuLocking.setKSULockBonus(ksuLockBonusDeployment.address);
     await tx.wait();
 
     tx = await ksuLocking.addLockPeriod(
