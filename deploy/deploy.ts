@@ -3,8 +3,8 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { KSULocking__factory } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
-import { createAddressFile } from './utils/export-addresses';
-import { transparentProxyDeployOptions } from './utils/deploy-options';
+import { addressFileFactory } from './utils/export-addresses';
+import { deployFactory, transparentProxyDeployOptions } from './utils/deploy';
 
 export const SECONDS_IN_DAY = 86400n;
 
@@ -28,67 +28,51 @@ let deploymentPath = path.join('./deployment-addresses-none.json');
 let blockNumber = 0;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deploy } = hre.deployments;
-    const { admin } = await hre.getNamedAccounts();
-
     if (!fs.existsSync(path.join(`./deployments/${hre.network.name}`))) {
         fs.mkdirSync(path.join(`./deployments/${hre.network.name}`), {
             recursive: true,
         });
     }
-
     deploymentPath = path.join(
         `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
     );
     blockNumber = await hre.ethers.provider.getBlockNumber();
 
-    const addressFile = createAddressFile(
+    const addressFile = addressFileFactory(
         deploymentPath,
         blockNumber,
         hre.network.name,
     );
 
-    const proxyAdminDeployment = await deploy('ProxyAdmin', {
+    const { deployWithExportAddress } = deployFactory(hre, addressFile);
+
+    const { admin } = await hre.getNamedAccounts();
+
+    await deployWithExportAddress('ProxyAdmin', {
         deterministicDeployment: true,
         args: [admin],
         from: admin,
         log: true,
         contract: 'ProxyAdmin',
     });
-    const proxyAdmin = proxyAdminDeployment.address;
 
-    addressFile.writeAddress('ProxyAdmin', proxyAdmin);
-
-    const ksu = await deploy(
+    const ksu = await deployWithExportAddress(
         'KSU',
         transparentProxyDeployOptions(admin, [admin]),
     );
 
-    addressFile.writeAddressProxy('KSU', ksu.address, ksu.implementation);
-
-    const mockUsdc = await deploy(
+    const mockUsdc = await deployWithExportAddress(
         'MockUSDC',
         transparentProxyDeployOptions(admin, [admin]),
-    );
-
-    addressFile.writeAddressProxy(
         'USDC',
-        mockUsdc.address,
-        mockUsdc.implementation,
     );
 
-    const kasuController = await deploy(
+    const kasuController = await deployWithExportAddress(
         'KasuController',
-        transparentProxyDeployOptions(admin, [admin]),
+        transparentProxyDeployOptions(admin, [admin], []),
     );
 
-    addressFile.writeAddressProxy(
-        'KasuController',
-        kasuController.address,
-        kasuController.implementation,
-    );
-
-    const ksuLockingResult = await deploy(
+    const ksuLockingResult = await deployWithExportAddress(
         'KSULocking',
         transparentProxyDeployOptions(
             admin,
@@ -97,26 +81,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ),
     );
 
-    addressFile.writeAddressProxy(
-        'KSULocking',
-        ksuLockingResult.address,
-        ksuLockingResult.implementation,
-    );
-
-    const ksuBonusResult = await deploy(
+    const ksuBonusResult = await deployWithExportAddress(
         'KSULockBonus',
         transparentProxyDeployOptions(admin, [
             ksuLockingResult.address,
             ksu.address,
         ]),
-    );
-
-    [ksuLockingResult.address, ksu.address];
-
-    addressFile.writeAddressProxy(
-        'KSULockBonus',
-        ksuBonusResult.address,
-        ksuBonusResult.implementation,
     );
 
     // add lock periods

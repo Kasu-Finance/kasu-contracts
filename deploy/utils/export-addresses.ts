@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-export function createAddressFile(
+export function addressFileFactory(
     deploymentPath: string,
     blockNumber: number,
     networkName: string,
