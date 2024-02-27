@@ -51,7 +51,7 @@ interface ILendingPool is IERC20 {
 
     //     function updateLoanAmount(uint256 amount) external;
 
-    function reportLoss(uint256 lossAmount, bool doMintLossShares) external returns (uint256 appliedLoss);
+    function reportLoss(uint256 lossAmount, bool doMintLossTokens) external returns (uint256 appliedLoss);
 
     function repayLoss(address tranche, uint256 lossId, uint256 amount) external;
 

@@ -115,7 +115,7 @@ contract LendingPoolTranche is
         }
     }
 
-    function reportTrancheLoss(uint256 lossAmount, bool doMintLossShares)
+    function reportTrancheLoss(uint256 lossAmount, bool doMintLossTokens)
         external
         onlyOwnLendingPool
         returns (uint256 lossApplied)
@@ -130,7 +130,7 @@ contract LendingPoolTranche is
                 lossApplied = maxLossAmount;
             }
 
-            uint256 batchSize = doMintLossShares ? type(uint256).max : 0;
+            uint256 batchSize = doMintLossTokens ? type(uint256).max : 0;
             _registerLoss(lossApplied, batchSize);
 
             // transfer lost assets back to the lending pool

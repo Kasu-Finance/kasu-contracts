@@ -14,6 +14,6 @@ import "./ILendingPoolTrancheLoss.sol";
  * - when withdrawals are cleared, users can claim assets using their withdrawal NFTs
  */
 interface ILendingPoolTranche is ILendingPoolTrancheLoss, IERC4626, IERC1155 {
-    function reportTrancheLoss(uint256 lossAmoun, bool doMintLossSharest) external returns (uint256 lossApplied);
+    function reportTrancheLoss(uint256 lossAmoun, bool doMintLossTokenst) external returns (uint256 lossApplied);
     function removeUserActiveShares(address user, uint256 shares) external;
 }

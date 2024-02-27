@@ -104,12 +104,12 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function reportLoss(address lendingPool, uint256 amount, bool doMintLossShares)
+    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         returns (uint256)
     {
-        return ILendingPool(lendingPool).reportLoss(amount, doMintLossShares);
+        return ILendingPool(lendingPool).reportLoss(amount, doMintLossTokens);
     }
 
     function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount)

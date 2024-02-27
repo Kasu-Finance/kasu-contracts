@@ -240,7 +240,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param lossAmount The amount of the loss.
      * @return appliedLoss The id of the loss.
      */
-    function reportLoss(uint256 lossAmount, bool doMintLossShares)
+    function reportLoss(uint256 lossAmount, bool doMintLossTokens)
         external
         onlyLendingPoolManager
         returns (uint256 appliedLoss)
@@ -284,7 +284,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             if (lossLeft > 0) {
                 uint256 trancheLossApplied = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(
-                    lossLeft, doMintLossShares
+                    lossLeft, doMintLossTokens
                 );
 
                 // lending pool tranche should return tokens
