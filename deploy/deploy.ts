@@ -4,7 +4,11 @@ import { KSULocking__factory } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
 import { addressFileFactory } from './utils/export-addresses';
-import { deployFactory, transparentProxyDeployOptions } from './utils/deploy';
+import {
+    deployFactory,
+    transparentProxyDeployOptions,
+    upgradeableBeaconDeployOptions,
+} from './utils/deploy';
 
 export const SECONDS_IN_DAY = 86400n;
 
@@ -45,7 +49,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
 
     const { admin } = await hre.getNamedAccounts();
-    const { deployTransparentProxy } = deployFactory(hre, addressFile, admin);
+    const { deployTransparentProxy, deployBeacon } = deployFactory(
+        hre,
+        addressFile,
+        admin,
+    );
 
     await deployTransparentProxy('ProxyAdmin', {
         deterministicDeployment: true,
@@ -60,7 +68,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         transparentProxyDeployOptions(admin, [], [admin]),
     );
 
-    const mockUsdc = await deployTransparentProxy(
+    const mockUsdcDeployment = await deployTransparentProxy(
         'MockUSDC',
         transparentProxyDeployOptions(admin, [], [admin]),
         'USDC',
@@ -76,7 +84,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         transparentProxyDeployOptions(
             admin,
             [kasuControllerDeployment.address],
-            [ksuDeployment.address, mockUsdc.address],
+            [ksuDeployment.address, mockUsdcDeployment.address],
         ),
     );
 
@@ -95,13 +103,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         'KsuPrice',
     );
 
-    await deployTransparentProxy(
+    const systemVariablesDeployment = await deployTransparentProxy(
         'SystemVariables',
         transparentProxyDeployOptions(
             admin,
             [mockKsuPriceDeployment.address, kasuControllerDeployment.address],
             undefined,
         ),
+    );
+
+    const lendingPoolManagerDeployment = await deployTransparentProxy(
+        'LendingPoolManager',
+        transparentProxyDeployOptions(
+            admin,
+            [mockUsdcDeployment.address, kasuControllerDeployment.address],
+            undefined,
+        ),
+    );
+
+    const userManagerDeployment = await deployTransparentProxy(
+        'UserManager',
+        transparentProxyDeployOptions(
+            admin,
+            [systemVariablesDeployment.address, ksuLockingDeployment.address],
+            undefined,
+        ),
+    );
+
+    const pendingPoolBeacon = await deployBeacon(
+        'PendingPool',
+        upgradeableBeaconDeployOptions(admin, [
+            systemVariablesDeployment.address,
+            mockUsdcDeployment.address,
+            lendingPoolManagerDeployment.address,
+            userManagerDeployment.address,
+        ]),
     );
 
     const ksuLockBonusDeployment = await deployTransparentProxy(
