@@ -66,7 +66,7 @@ export async function deployFactory(
                 transparentUpgradeableProxy.address,
                 implementation.address,
             );
-            return implementation;
+            return transparentUpgradeableProxy;
         },
         deployBeacon: async (
             name: string,

@@ -170,7 +170,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         adminSigner,
     );
     tx = await kasuController.initialize(admin, lendingPoolFactory.address);
-    await tx.wait();
+    await tx.wait(1);
 
     const lendingPoolManager = LendingPoolManager__factory.connect(
         lendingPoolManagerDeployment.address,
@@ -180,7 +180,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         lendingPoolFactory.address,
         kasuAllowListDeployment.address,
     );
-    await tx.wait();
+    await tx.wait(1);
 
     // add lock periods
     const ksuLocking = KSULocking__factory.connect(
@@ -188,36 +188,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         adminSigner,
     );
 
+    console.log(1);
     tx = await ksuLocking.setKSULockBonus(ksuLockBonusDeployment.address);
-    await tx.wait();
+    console.log(2);
+    await tx.wait(1);
+    console.log(3);
 
     tx = await ksuLocking.addLockPeriod(
         lockPeriod30,
         lockMultiplier30,
         ksuBonusMultiplier30,
     );
-    await tx.wait();
+    console.log(4);
+    await tx.wait(1);
+    console.log(5);
 
     tx = await ksuLocking.addLockPeriod(
         lockPeriod180,
         lockMultiplier180,
         ksuBonusMultiplier180,
     );
-    await tx.wait();
+    await tx.wait(1);
 
     tx = await ksuLocking.addLockPeriod(
         lockPeriod360,
         lockMultiplier360,
         ksuBonusMultiplier360,
     );
-    await tx.wait();
+    await tx.wait(1);
 
     tx = await ksuLocking.addLockPeriod(
         lockPeriod720,
         lockMultiplier720,
         ksuBonusMultiplier720,
     );
-    await tx.wait();
+    await tx.wait(1);
 };
 
 export default func;
