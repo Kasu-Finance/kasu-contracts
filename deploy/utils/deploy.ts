@@ -1,4 +1,4 @@
-import { DeployOptions, DeployResult } from 'hardhat-deploy/types';
+import { Address, DeployOptions, DeployResult } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { addressFileFactory } from './export-addresses';
 
@@ -42,21 +42,59 @@ export function transparentProxyDeployOptions(
     return config;
 }
 
+export function upgradeableBeaconDeployOptions(
+    admin: string,
+    constructorArgs: unknown[],
+): DeployOptions {
+    return {
+        deterministicDeployment: true,
+        from: admin,
+        args: constructorArgs,
+        log: true,
+    };
+}
+
 export function deployFactory(
     hre: HardhatRuntimeEnvironment,
     addressFile: ReturnType<typeof addressFileFactory>,
+    admin: Address,
 ) {
     return {
-        deployWithExportAddress: async (
+        deployTransparentProxy: async (
             name: string,
             options: DeployOptions,
             exportName?: string,
         ): Promise<DeployResult> => {
-            console.log(name, JSON.stringify(options, null, 2));
             const deployment = await hre.deployments.deploy(name, options);
             exportName = exportName ? exportName : name;
             addressFile.writeAddress(exportName, deployment.address);
             return deployment;
+        },
+        deployBeacon: async (
+            name: string,
+            options: DeployOptions,
+            exportName?: string,
+        ): Promise<DeployResult> => {
+            const contractImplementation = await hre.deployments.deploy(
+                name,
+                options,
+            );
+            const beaconDeployment = await hre.deployments.deploy(
+                'UpgradeableBeacon',
+                {
+                    deterministicDeployment: true,
+                    from: admin,
+                    args: [contractImplementation.address, admin],
+                    log: true,
+                },
+            );
+            exportName = exportName ? exportName : name;
+            addressFile.writeAddress(exportName, beaconDeployment.address);
+            addressFile.writeAddress(
+                exportName + '_Beacon',
+                beaconDeployment.address,
+            );
+            return beaconDeployment;
         },
     };
 }

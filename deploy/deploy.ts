@@ -44,11 +44,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         hre.network.name,
     );
 
-    const { deployWithExportAddress } = deployFactory(hre, addressFile);
-
     const { admin } = await hre.getNamedAccounts();
+    const { deployTransparentProxy } = deployFactory(hre, addressFile, admin);
 
-    await deployWithExportAddress('ProxyAdmin', {
+    await deployTransparentProxy('ProxyAdmin', {
         deterministicDeployment: true,
         args: [admin],
         from: admin,
@@ -56,23 +55,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         contract: 'ProxyAdmin',
     });
 
-    const ksuDeployment = await deployWithExportAddress(
+    const ksuDeployment = await deployTransparentProxy(
         'KSU',
         transparentProxyDeployOptions(admin, [], [admin]),
     );
 
-    const mockUsdc = await deployWithExportAddress(
+    const mockUsdc = await deployTransparentProxy(
         'MockUSDC',
         transparentProxyDeployOptions(admin, [], [admin]),
         'USDC',
     );
 
-    const kasuControllerDeployment = await deployWithExportAddress(
+    const kasuControllerDeployment = await deployTransparentProxy(
         'KasuController',
         transparentProxyDeployOptions(admin, [], undefined),
     );
 
-    const ksuLockingDeployment = await deployWithExportAddress(
+    const ksuLockingDeployment = await deployTransparentProxy(
         'KSULocking',
         transparentProxyDeployOptions(
             admin,
@@ -81,7 +80,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ),
     );
 
-    await deployWithExportAddress(
+    await deployTransparentProxy(
         'KasuAllowList',
         transparentProxyDeployOptions(
             admin,
@@ -90,13 +89,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ),
     );
 
-    const mockKsuPriceDeployment = await deployWithExportAddress(
+    const mockKsuPriceDeployment = await deployTransparentProxy(
         'MockKsuPrice',
         transparentProxyDeployOptions(admin, [], []),
         'KsuPrice',
     );
 
-    await deployWithExportAddress(
+    await deployTransparentProxy(
         'SystemVariables',
         transparentProxyDeployOptions(
             admin,
@@ -105,7 +104,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ),
     );
 
-    const ksuLockBonusDeployment = await deployWithExportAddress(
+    const ksuLockBonusDeployment = await deployTransparentProxy(
         'KSULockBonus',
         transparentProxyDeployOptions(
             admin,
