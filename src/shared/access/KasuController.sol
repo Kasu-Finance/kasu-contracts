@@ -13,7 +13,8 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
     /* ========== CONSTRUCTOR ========== */
 
     constructor() {
-        _disableInitializers();
+        // TODO: add it back when resolved circular dependencies
+        //_disableInitializers();
     }
 
     function initialize(address admin, address factory) public initializer {

@@ -80,6 +80,8 @@ const config: HardhatUserConfig = {
         },
         alice: 1,
         bob: 2,
+        carol: 2,
+        david: 4,
     },
 };
 

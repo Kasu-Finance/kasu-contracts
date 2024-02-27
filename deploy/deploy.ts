@@ -1,6 +1,11 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { KSULocking__factory } from '../typechain-types';
+import {
+    KasuAllowList__factory,
+    KasuController__factory,
+    KSULocking__factory,
+    LendingPoolManager__factory,
+} from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
 import { addressFileFactory } from './utils/export-addresses';
@@ -79,7 +84,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ),
     );
 
-    await deployTransparentProxy(
+    const kasuAllowListDeployment = await deployTransparentProxy(
         'KasuAllowList',
         deployOptions(deployer, [kasuControllerDeployment.address]),
     );
@@ -108,7 +113,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const userManagerDeployment = await deployTransparentProxy(
         'UserManager',
-        deployOptions(admin, [
+        deployOptions(deployer, [
             systemVariablesDeployment.address,
             ksuLockingDeployment.address,
         ]),
@@ -116,7 +121,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const pendingPoolBeacon = await deployBeacon(
         'PendingPool',
-        deployOptions(admin, [
+        deployOptions(deployer, [
             systemVariablesDeployment.address,
             mockUsdcDeployment.address,
             lendingPoolManagerDeployment.address,
@@ -124,18 +129,60 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ]),
     );
 
-    const ksuLockBonusDeployment = await deployTransparentProxy(
-        'KSULockBonus',
-        deployOptions(
-            admin,
-            [],
-            [ksuLockingDeployment.address, ksuDeployment.address],
-        ),
+    const lendingPoolBeacon = await deployBeacon(
+        'LendingPool',
+        deployOptions(deployer, [
+            systemVariablesDeployment.address,
+            mockUsdcDeployment.address,
+        ]),
     );
 
-    // add lock periods
+    const lendingPoolTrancheBeacon = await deployBeacon(
+        'LendingPoolTranche',
+        deployOptions(deployer, [lendingPoolManagerDeployment.address]),
+    );
+
+    const lendingPoolFactory = await deployTransparentProxy(
+        'LendingPoolFactory',
+        deployOptions(deployer, [
+            pendingPoolBeacon.address,
+            lendingPoolBeacon.address,
+            lendingPoolTrancheBeacon.address,
+            kasuControllerDeployment.address,
+            lendingPoolManagerDeployment.address,
+        ]),
+    );
+
+    const ksuLockBonusDeployment = await deployTransparentProxy(
+        'KSULockBonus',
+        deployOptions(deployer, []),
+    );
+
+    // get signer
     const adminSigners = await hre.ethers.getNamedSigners();
     const adminSigner = adminSigners['admin'];
+
+    // initialise
+    const kasuController = KasuController__factory.connect(
+        kasuControllerDeployment.address,
+        adminSigner,
+    );
+    await (
+        await kasuController.initialize(admin, lendingPoolFactory.address)
+    ).wait();
+
+    const lendingPoolManager = LendingPoolManager__factory.connect(
+        lendingPoolManagerDeployment.address,
+        adminSigner,
+    );
+    await (
+        await lendingPoolManager.initialize(
+            lendingPoolFactory.address,
+            kasuAllowListDeployment.address,
+        )
+    ).wait();
+
+    // add lock periods
     const ksuLocking = KSULocking__factory.connect(
         ksuLockingDeployment.address,
         adminSigner,
@@ -168,6 +215,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ksuBonusMultiplier720,
     );
     await tx.wait();
+
+    // add users to allow list
+    const { alice, bob, carol, david } = await hre.getNamedAccounts();
+    const kasuAllowList = KasuAllowList__factory.connect(
+        kasuAllowListDeployment.address,
+        adminSigner,
+    );
+    await (await kasuAllowList.allowUser(alice)).wait();
+    await (await kasuAllowList.allowUser(bob)).wait();
+    await (await kasuAllowList.allowUser(carol)).wait();
+    await (await kasuAllowList.allowUser(david)).wait();
 };
 
 export default func;
