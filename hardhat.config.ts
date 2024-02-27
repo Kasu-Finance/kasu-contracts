@@ -13,14 +13,6 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
         const paths = await runSuper();
 
-        const proxyAdmin = path.join(
-            hre.config.paths.root,
-            'lib',
-            'openzeppelin-contracts',
-            'contracts',
-            'proxy',
-            'ProxyAdmin.sol',
-        );
         const mockUSDC = path.join(
             hre.config.paths.root,
             'test',
@@ -33,7 +25,6 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
             'shared',
             'MockKsuPrice.sol',
         );
-
         const dependenciesFix = path.join(
             hre.config.paths.root,
             'test',
@@ -43,14 +34,12 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
 
         const mockUSDCPath = glob.sync(mockUSDC);
         const mockKsuPricePath = glob.sync(mockKsuPrice);
-        const proxyAdminPath = glob.sync(proxyAdmin);
         const dependenciesFixPath = glob.sync(dependenciesFix);
 
         return [
             ...paths,
             ...mockUSDCPath,
             ...mockKsuPricePath,
-            ...proxyAdminPath,
             ...dependenciesFixPath,
         ];
     },

@@ -49,40 +49,35 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
 
     const { admin } = await hre.getNamedAccounts();
-    const { deployTransparentProxy, deployBeacon } = deployFactory(
+    const deployer = admin;
+
+    const { deployTransparentProxy, deployBeacon } = await deployFactory(
         hre,
         addressFile,
+        deployer,
         admin,
     );
 
-    await deployTransparentProxy('ProxyAdmin', {
-        deterministicDeployment: true,
-        args: [admin],
-        from: admin,
-        log: true,
-        contract: 'ProxyAdmin',
-    });
-
     const ksuDeployment = await deployTransparentProxy(
         'KSU',
-        transparentProxyDeployOptions(admin, [], [admin]),
+        transparentProxyDeployOptions(deployer, [], [admin]),
     );
 
     const mockUsdcDeployment = await deployTransparentProxy(
         'MockUSDC',
-        transparentProxyDeployOptions(admin, [], [admin]),
+        transparentProxyDeployOptions(deployer, [], [admin]),
         'USDC',
     );
 
     const kasuControllerDeployment = await deployTransparentProxy(
         'KasuController',
-        transparentProxyDeployOptions(admin, [], undefined),
+        transparentProxyDeployOptions(deployer, [], undefined),
     );
 
     const ksuLockingDeployment = await deployTransparentProxy(
         'KSULocking',
         transparentProxyDeployOptions(
-            admin,
+            deployer,
             [kasuControllerDeployment.address],
             [ksuDeployment.address, mockUsdcDeployment.address],
         ),
@@ -91,7 +86,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await deployTransparentProxy(
         'KasuAllowList',
         transparentProxyDeployOptions(
-            admin,
+            deployer,
             [kasuControllerDeployment.address],
             undefined,
         ),
@@ -106,7 +101,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const systemVariablesDeployment = await deployTransparentProxy(
         'SystemVariables',
         transparentProxyDeployOptions(
-            admin,
+            deployer,
             [mockKsuPriceDeployment.address, kasuControllerDeployment.address],
             undefined,
         ),
@@ -115,7 +110,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lendingPoolManagerDeployment = await deployTransparentProxy(
         'LendingPoolManager',
         transparentProxyDeployOptions(
-            admin,
+            deployer,
             [mockUsdcDeployment.address, kasuControllerDeployment.address],
             undefined,
         ),

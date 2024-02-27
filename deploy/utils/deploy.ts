@@ -3,37 +3,27 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { addressFileFactory } from './export-addresses';
 
 export function transparentProxyDeployOptions(
-    admin: string,
+    deployer: string,
     constructorArgs: unknown[],
     initializeArgs: unknown[] | undefined,
 ): DeployOptions {
     let config: DeployOptions = {
         deterministicDeployment: true,
-        from: admin,
+        from: deployer,
         args: constructorArgs,
-        proxy: {
-            owner: admin,
-            proxyContract: 'OpenZeppelinTransparentProxy',
-            viaAdminContract: 'ProxyAdmin',
-        },
         log: true,
     };
 
     if (initializeArgs !== undefined) {
         config = {
             deterministicDeployment: true,
-            from: admin,
+            from: deployer,
             args: constructorArgs,
             proxy: {
-                owner: admin,
                 execute: {
-                    init: {
-                        methodName: 'initialize',
-                        args: initializeArgs,
-                    },
+                    methodName: 'initialize',
+                    args: initializeArgs,
                 },
-                proxyContract: 'OpenZeppelinTransparentProxy',
-                viaAdminContract: 'ProxyAdmin',
             },
             log: true,
         };
@@ -43,32 +33,64 @@ export function transparentProxyDeployOptions(
 }
 
 export function upgradeableBeaconDeployOptions(
-    admin: string,
+    deployer: string,
     constructorArgs: unknown[],
 ): DeployOptions {
     return {
         deterministicDeployment: true,
-        from: admin,
+        from: deployer,
         args: constructorArgs,
         log: true,
     };
 }
 
-export function deployFactory(
+export function deployOptions(
+    deployer: string,
+    constructorArgs: unknown[],
+): DeployOptions {
+    return {
+        deterministicDeployment: true,
+        from: deployer,
+        args: constructorArgs,
+        log: true,
+    };
+}
+
+export async function deployFactory(
     hre: HardhatRuntimeEnvironment,
     addressFile: ReturnType<typeof addressFileFactory>,
-    admin: Address,
+    deployer: Address,
+    proxyAdminAdmin: Address,
 ) {
+    const proxyAdmin = await hre.deployments.deploy(
+        'ProxyAdmin',
+        deployOptions(deployer, [proxyAdminAdmin]),
+    );
+
     return {
         deployTransparentProxy: async (
             name: string,
             options: DeployOptions,
             exportName?: string,
         ): Promise<DeployResult> => {
-            const deployment = await hre.deployments.deploy(name, options);
+            const implementation = await hre.deployments.deploy(name, options);
+
+            const transparentUpgradeableProxy = await hre.deployments.deploy(
+                'TransparentUpgradeableProxy',
+                deployOptions(deployer, [
+                    implementation.address,
+                    proxyAdmin.address,
+                    [],
+                ]),
+            );
+
             exportName = exportName ? exportName : name;
-            addressFile.writeAddress(exportName, deployment.address);
-            return deployment;
+            addressFile.writeAddressProxy(
+                exportName,
+                transparentUpgradeableProxy.address,
+                implementation.address,
+            );
+            return implementation;
         },
         deployBeacon: async (
             name: string,
@@ -81,9 +103,9 @@ export function deployFactory(
             );
             const beaconDeployment = await hre.deployments.deploy(
                 'UpgradeableBeacon',
-                upgradeableBeaconDeployOptions(admin, [
+                upgradeableBeaconDeployOptions(deployer, [
                     contractImplementation.address,
-                    admin,
+                    deployer,
                 ]),
             );
             exportName = exportName ? exportName : name;
