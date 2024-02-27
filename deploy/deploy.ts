@@ -218,17 +218,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ksuBonusMultiplier720,
     );
     await tx.wait();
-
-    // add users to allow list
-    const { alice, bob, carol, david } = await hre.getNamedAccounts();
-    const kasuAllowList = KasuAllowList__factory.connect(
-        kasuAllowListDeployment.address,
-        adminSigner,
-    );
-    await (await kasuAllowList.allowUser(alice)).wait();
-    await (await kasuAllowList.allowUser(bob)).wait();
-    await (await kasuAllowList.allowUser(carol)).wait();
-    await (await kasuAllowList.allowUser(david)).wait();
 };
 
 export default func;
