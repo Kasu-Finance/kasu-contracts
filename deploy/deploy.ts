@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { addressFileFactory } from './utils/export-addresses';
 import { deployFactory, deployOptions } from './utils/deploy';
+import { ContractTransactionResponse } from 'ethers';
 
 export const SECONDS_IN_DAY = 86400n;
 
@@ -162,25 +163,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const adminSigners = await hre.ethers.getNamedSigners();
     const adminSigner = adminSigners['admin'];
 
+    let tx: ContractTransactionResponse;
     // initialise
     const kasuController = KasuController__factory.connect(
         kasuControllerDeployment.address,
         adminSigner,
     );
-    await (
-        await kasuController.initialize(admin, lendingPoolFactory.address)
-    ).wait();
+    tx = await kasuController.initialize(admin, lendingPoolFactory.address);
+    await tx.wait();
 
     const lendingPoolManager = LendingPoolManager__factory.connect(
         lendingPoolManagerDeployment.address,
         adminSigner,
     );
-    await (
-        await lendingPoolManager.initialize(
-            lendingPoolFactory.address,
-            kasuAllowListDeployment.address,
-        )
-    ).wait();
+    tx = await lendingPoolManager.initialize(
+        lendingPoolFactory.address,
+        kasuAllowListDeployment.address,
+    );
+    await tx.wait();
 
     // add lock periods
     const ksuLocking = KSULocking__factory.connect(
@@ -188,7 +188,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         adminSigner,
     );
 
-    let tx = await ksuLocking.setKSULockBonus(ksuLockBonusDeployment.address);
+    tx = await ksuLocking.setKSULockBonus(ksuLockBonusDeployment.address);
     await tx.wait();
 
     tx = await ksuLocking.addLockPeriod(
@@ -197,18 +197,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ksuBonusMultiplier30,
     );
     await tx.wait();
+
     tx = await ksuLocking.addLockPeriod(
         lockPeriod180,
         lockMultiplier180,
         ksuBonusMultiplier180,
     );
     await tx.wait();
+
     tx = await ksuLocking.addLockPeriod(
         lockPeriod360,
         lockMultiplier360,
         ksuBonusMultiplier360,
     );
     await tx.wait();
+
     tx = await ksuLocking.addLockPeriod(
         lockPeriod720,
         lockMultiplier720,
