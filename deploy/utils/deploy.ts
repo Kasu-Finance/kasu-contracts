@@ -2,10 +2,10 @@ import { Address, DeployOptions, DeployResult } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { addressFileFactory } from './export-addresses';
 
-export function transparentProxyDeployOptions(
+export function deployOptions(
     deployer: string,
     constructorArgs: unknown[],
-    initializeArgs: unknown[] | undefined,
+    initializeArgs?: unknown[],
 ): DeployOptions {
     let config: DeployOptions = {
         deterministicDeployment: true,
@@ -30,30 +30,6 @@ export function transparentProxyDeployOptions(
     }
 
     return config;
-}
-
-export function upgradeableBeaconDeployOptions(
-    deployer: string,
-    constructorArgs: unknown[],
-): DeployOptions {
-    return {
-        deterministicDeployment: true,
-        from: deployer,
-        args: constructorArgs,
-        log: true,
-    };
-}
-
-export function deployOptions(
-    deployer: string,
-    constructorArgs: unknown[],
-): DeployOptions {
-    return {
-        deterministicDeployment: true,
-        from: deployer,
-        args: constructorArgs,
-        log: true,
-    };
 }
 
 export async function deployFactory(
@@ -103,15 +79,16 @@ export async function deployFactory(
             );
             const beaconDeployment = await hre.deployments.deploy(
                 'UpgradeableBeacon',
-                upgradeableBeaconDeployOptions(deployer, [
+                deployOptions(deployer, [
                     contractImplementation.address,
                     deployer,
                 ]),
             );
             exportName = exportName ? exportName : name;
-            addressFile.writeAddress(
+            addressFile.writeAddressProxy(
                 exportName + '_Beacon',
                 beaconDeployment.address,
+                contractImplementation.address,
             );
             return beaconDeployment;
         },
