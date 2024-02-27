@@ -81,15 +81,12 @@ export function deployFactory(
             );
             const beaconDeployment = await hre.deployments.deploy(
                 'UpgradeableBeacon',
-                {
-                    deterministicDeployment: true,
-                    from: admin,
-                    args: [contractImplementation.address, admin],
-                    log: true,
-                },
+                upgradeableBeaconDeployOptions(admin, [
+                    contractImplementation.address,
+                    admin,
+                ]),
             );
             exportName = exportName ? exportName : name;
-            addressFile.writeAddress(exportName, beaconDeployment.address);
             addressFile.writeAddress(
                 exportName + '_Beacon',
                 beaconDeployment.address,

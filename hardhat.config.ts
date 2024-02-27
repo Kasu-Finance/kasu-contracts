@@ -1,10 +1,60 @@
-import { HardhatUserConfig } from 'hardhat/config';
+import { HardhatUserConfig, subtask } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
 import 'hardhat-deploy';
 import 'hardhat-deploy-ethers';
 import * as dotenv from 'dotenv';
+import path from 'path';
+import { glob } from 'glob';
+import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
 dotenv.config();
+
+subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
+    async (_, hre, runSuper) => {
+        const paths = await runSuper();
+
+        const proxyAdmin = path.join(
+            hre.config.paths.root,
+            'lib',
+            'openzeppelin-contracts',
+            'contracts',
+            'proxy',
+            'ProxyAdmin.sol',
+        );
+        const mockUSDC = path.join(
+            hre.config.paths.root,
+            'test',
+            'shared',
+            'MockUSDC.sol',
+        );
+        const mockKsuPrice = path.join(
+            hre.config.paths.root,
+            'test',
+            'shared',
+            'MockKsuPrice.sol',
+        );
+
+        const dependenciesFix = path.join(
+            hre.config.paths.root,
+            'test',
+            'shared',
+            'DependenciesFix.sol',
+        );
+
+        const mockUSDCPath = glob.sync(mockUSDC);
+        const mockKsuPricePath = glob.sync(mockKsuPrice);
+        const proxyAdminPath = glob.sync(proxyAdmin);
+        const dependenciesFixPath = glob.sync(dependenciesFix);
+
+        return [
+            ...paths,
+            ...mockUSDCPath,
+            ...mockKsuPricePath,
+            ...proxyAdminPath,
+            ...dependenciesFixPath,
+        ];
+    },
+);
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -41,16 +91,6 @@ const config: HardhatUserConfig = {
         },
         alice: 1,
         bob: 2,
-    },
-    external: {
-        contracts: [
-            {
-                artifacts: 'lib',
-            },
-            {
-                artifacts: 'test/shared',
-            },
-        ],
     },
 };
 
