@@ -20,8 +20,7 @@ contract LendingPoolTranche is
     ILendingPoolTranche,
     ERC4626Upgradeable,
     LendingPoolTrancheLoss,
-    ILendingPoolErrors,
-    LendingPoolHelpers
+    ILendingPoolErrors
 {
     mapping(address user => uint256 activeShares) private _userActiveShares;
     mapping(address user => uint256 index) private _userArrayIndex;
@@ -51,6 +50,7 @@ contract LendingPoolTranche is
         public
         override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
+        NotPendingLossMint
         returns (uint256 shares)
     {
         shares = super.deposit(assets, receiver);
@@ -68,6 +68,7 @@ contract LendingPoolTranche is
         public
         override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
+        NotPendingLossMint
         returns (uint256 assets)
     {
         assets = super.redeem(shares, receiver, owner);
@@ -87,7 +88,7 @@ contract LendingPoolTranche is
             _trancheUsers[removingUserIndex] = lastUser;
             _trancheUsers.pop();
 
-            // update last  and removinf user index
+            // update last and removing user index
             _userArrayIndex[lastUser] = removingUserIndex;
             delete _userArrayIndex[user];
         }
@@ -101,40 +102,17 @@ contract LendingPoolTranche is
         return _userActiveShares[user];
     }
 
-    function _verifyOnlyOwnLendingPool() internal view override {
-        _onlyOwnLendingPool();
+    function getMaximumLossAmount() public view returns (uint256 maxLossAmount) {
+        return _getMaximumLossAmount();
     }
 
-    function getMaximumLossAmount() public view returns (uint256 maxLossAmount) {
+    function _getMaximumLossAmount() internal view override returns (uint256 maxLossAmount) {
         uint256 totalAssets_ = totalAssets();
 
         if (totalAssets_ > minimumLeftAmountAfterLoss) {
             unchecked {
                 maxLossAmount = totalAssets_ - minimumLeftAmountAfterLoss;
             }
-        }
-    }
-
-    function reportTrancheLoss(uint256 lossAmount, bool doMintLossTokens)
-        external
-        onlyOwnLendingPool
-        returns (uint256 lossApplied)
-    {
-        uint256 maxLossAmount = getMaximumLossAmount();
-
-        if (lossAmount > 0 && maxLossAmount > 0) {
-            // check if total assets can cover the loss
-            if (maxLossAmount >= lossAmount) {
-                lossApplied = lossAmount;
-            } else {
-                lossApplied = maxLossAmount;
-            }
-
-            uint256 batchSize = doMintLossTokens ? type(uint256).max : 0;
-            _registerLoss(lossApplied, batchSize);
-
-            // transfer lost assets back to the lending pool
-            SafeERC20.safeTransfer(IERC20(asset()), msg.sender, lossApplied);
         }
     }
 

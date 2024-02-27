@@ -30,6 +30,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     uint256 public borrowedAmount;
     address public lendingPoolManager;
     uint256 public firstLossCapital;
+    uint256 public nextLossId;
 
     constructor(ISystemVariables systemVariables_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
         systemVariables = systemVariables_;
@@ -78,6 +79,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _verifyPoolConfiguration();
 
         lendingPoolManager = lendingPoolManager_;
+        nextLossId = 1;
     }
 
     /**
@@ -238,12 +240,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * Burns tranche shares if needed.
      * Burns the lending pool token.
      * @param lossAmount The amount of the loss.
-     * @return appliedLoss The id of the loss.
+     * @param doMintLossTokens If true, mints loss tokens to all the users.
+     * @return lossId The id of the loss.
      */
     function reportLoss(uint256 lossAmount, bool doMintLossTokens)
         external
         onlyLendingPoolManager
-        returns (uint256 appliedLoss)
+        returns (uint256 lossId)
     {
         if (systemVariables.isClearingTime()) {
             revert CannotExecuteDuringClearingTime();
@@ -255,10 +258,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         // verify the amount is not greater than total balance
-        // TODO: the amount should not be greater than the borrowed amount (less than total balance)
         if (lossAmount > borrowedAmount) {
             revert LossAmountCantBeGreaterThanSupply(lossAmount, borrowedAmount);
         }
+
+        // get loss id and increment next loss id
+        lossId = nextLossId;
+        nextLossId++;
 
         uint256 lossLeft = lossAmount;
 
@@ -277,18 +283,18 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             firstLossCapital -= firstLossCapitalLoss;
             _burn(address(this), firstLossCapitalLoss);
 
-            emit FirstLossCapitalLossReported(firstLossCapitalLoss);
+            emit FirstLossCapitalLossReported(lossId, firstLossCapitalLoss);
         }
 
         // remove the funds from the tranches and mint loss tokens if first loss capital is not enough
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             if (lossLeft > 0) {
-                uint256 trancheLossApplied = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).reportTrancheLoss(
-                    lossLeft, doMintLossTokens
+                uint256 trancheLossApplied = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).registerTrancheLoss(
+                    lossId, lossLeft, doMintLossTokens
                 );
 
                 // lending pool tranche should return tokens
-                _burn(address(this), trancheLossApplied);
+                _burn(_lendingPoolInfo.trancheAddresses[i], trancheLossApplied);
 
                 lossLeft -= trancheLossApplied;
             } else {
@@ -296,7 +302,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             }
         }
 
-        appliedLoss = lossAmount - lossLeft;
+        uint256 appliedLoss = lossAmount - lossLeft;
 
         borrowedAmount -= appliedLoss;
 
@@ -307,6 +313,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
+        verifyLossId(lossId)
     {
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(tranche, amount);
@@ -317,6 +324,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
+        verifyLossId(lossId)
         returns (uint256 claimedAmount)
     {
         claimedAmount = ILendingPoolTranche(tranche).claimLoss(user, lossId);
@@ -521,6 +529,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _getTrancheConfiguration(address tranche) internal view returns (TrancheConfig storage) {
         return _poolConfiguration.tranches[_trancheIndex[tranche] - 1];
+    }    
+
+    function _isLossIdValid(uint256 lossId) internal view {
+        if (lossId >= nextLossId || lossId == 0) {
+            revert LossIdNotValid(lossId);
+        }
     }
 
     // Modifiers
@@ -537,6 +551,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     modifier verifyTranche(address tranche) {
         _verifyTranche(tranche);
+        _;
+    }
+
+    modifier verifyLossId(uint256 lossId) {
+        _isLossIdValid(lossId);
         _;
     }
 }

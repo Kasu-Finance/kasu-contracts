@@ -5,6 +5,8 @@ import "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/lendingPool/ILendingPoolTrancheLoss.sol";
 import "../AssetFunctionsBase.sol";
+import "./LendingPoolHelpers.sol";
+import "../../shared/CommonErrors.sol";
 
 // TODO: add maximum minted total shares
 
@@ -14,11 +16,10 @@ import "../AssetFunctionsBase.sol";
  * - when withdrawals are cleared, assets are sent to the lending pool
  * - when impairment happens, users receive ERC1155 impairment receipt tokens
  */
-abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgradeable, AssetFunctionsBase {
+abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgradeable, AssetFunctionsBase, LendingPoolHelpers {
     using SafeERC20 for IERC20;
 
-    uint256 public nextLossId;
-    bool public isPendingLossMint;
+    uint256 public pendingMintLossId;
 
     uint256 public minimumLeftAmountAfterLoss;
 
@@ -28,61 +29,80 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
 
     function __LendingPoolTrancheLoss__init() internal onlyInitializing {
         __ERC1155_init("");
-        nextLossId = 1;
     }
 
     function _getUsers() internal view virtual returns (address[] storage users);
 
     function _getUserActiveTrancheBalance(address user) internal view virtual returns (uint256);
 
-    function _verifyOnlyOwnLendingPool() internal view virtual;
+    function _getMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
 
-    function getLossDetails(uint256 lossId) external view override verifyLossId(lossId) returns (LossDetails memory) {
+    function getLossDetails(uint256 lossId) external view override returns (LossDetails memory) {
         return _lossDetails[lossId];
     }
 
-    function _registerLoss(uint256 lossAmount, uint256 batchSize)
+    function isPendingLossMint() public view returns (bool) {
+        return pendingMintLossId > 0;
+    }
+
+    function registerTrancheLoss(uint256 lossId, uint256 lossAmount, bool doMintLossTokens)
+        external
+        onlyOwnLendingPool
+        NotPendingLossMint
+        returns (uint256 lossApplied)
+    {
+        uint256 maxLossAmount = _getMaximumLossAmount();
+
+        if (lossAmount > 0 && maxLossAmount > 0) {
+            // check if total assets can cover the loss
+            if (maxLossAmount >= lossAmount) {
+                lossApplied = lossAmount;
+            } else {
+                lossApplied = maxLossAmount;
+            }
+
+            uint256 batchSize = doMintLossTokens ? type(uint256).max : 0;
+            _registerLoss(lossId, lossApplied, batchSize);
+        }
+    }
+
+    function _registerLoss(uint256 lossId, uint256 lossAmount, uint256 batchSize)
         internal
-        verifyValidLossState
-        returns (uint256 lossId)
     {
         address[] storage users = _getUsers();
         uint256 usersCount = users.length;
 
-        lossId = nextLossId;
         _lossDetails[lossId] = LossDetails(lossAmount, usersCount, 0, 0, 0);
-        nextLossId++;
-
-        if (usersCount > 0) {
-            isPendingLossMint = true;
-        }
 
         emit LossRegistered(lossId, lossAmount, usersCount);
 
-        if (batchSize > 0) {
-            _batchMintLossTokens(lossId, batchSize);
+        if (usersCount > 0) {
+            pendingMintLossId = lossId;
+
+            if (batchSize > 0) {
+                _batchMintLossTokens(lossId, batchSize);
+            }
         }
     }
 
-    function batchMintLossTokens(uint256 lossId, uint256 batchSize) external verifyLossId(lossId) {
+    function batchMintLossTokens(uint256 lossId, uint256 batchSize) external {
+        if (pendingMintLossId != lossId || lossId == 0) {
+            revert LossMintingNotYetComplete(pendingMintLossId);
+        }
+
         _batchMintLossTokens(lossId, batchSize);
     }
 
     function _batchMintLossTokens(uint256 lossId, uint256 batchSize) internal {
-        if (_isLossMintingComplete(lossId)) {
-            revert LossMintAlreadyComplete(lossId);
+        uint256 usersMintedCount = _lossDetails[lossId].usersMintedCount;
+        uint256 usersLeft = _lossDetails[lossId].usersCount - usersMintedCount;
+
+        if (batchSize > usersLeft) {
+            batchSize = usersLeft;
         }
 
         if (batchSize == 0) {
             return;
-        }
-
-        uint256 usersCount = _lossDetails[lossId].usersCount;
-        uint256 usersMintedCount = _lossDetails[lossId].usersMintedCount;
-        uint256 usersLeft = usersCount - usersMintedCount;
-
-        if (batchSize > usersLeft) {
-            batchSize = usersLeft;
         }
 
         address[] storage users = _getUsers();
@@ -96,9 +116,11 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         }
 
         _lossDetails[lossId].usersMintedCount = mintToUserIndex;
+        
+        emit MintedLossTokensToUsers(lossId, batchSize);
 
         if (_isLossMintingComplete(lossId)) {
-            isPendingLossMint = false;
+            pendingMintLossId = 0;
             emit LossMintingComplete(lossId);
         }
     }
@@ -110,8 +132,7 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         _lossDetails[lossId].totalLossShares += userLossShares;
     }
 
-    function repayLoss(uint256 lossId, uint256 amount) external verifyLossId(lossId) {
-        _verifyOnlyOwnLendingPool();
+    function repayLoss(uint256 lossId, uint256 amount) external onlyOwnLendingPool {
         if (!_isLossMintingComplete(lossId)) {
             revert LossMintingNotYetComplete(lossId);
         }
@@ -127,7 +148,6 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
     function getUserClaimableLoss(address user, uint256 lossId)
         public
         view
-        verifyLossId(lossId)
         returns (uint256 claimableAmount)
     {
         if (!_isLossMintingComplete(lossId)) {
@@ -140,9 +160,7 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         }
     }
 
-    function claimLoss(address user, uint256 lossId) external returns (uint256 claimedAmount) {
-        _verifyOnlyOwnLendingPool();
-
+    function claimLoss(address user, uint256 lossId) external onlyOwnLendingPool returns (uint256 claimedAmount) {
         claimedAmount = getUserClaimableLoss(user, lossId);
         userClaimedLosses[user][lossId] += claimedAmount;
 
@@ -153,7 +171,7 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
 
     // HELPER FUNCTIONS
 
-    function isLossMintingComplete(uint256 lossId) external view verifyLossId(lossId) returns (bool) {
+    function isLossMintingComplete(uint256 lossId) external view returns (bool) {
         return _isLossMintingComplete(lossId);
     }
 
@@ -161,10 +179,14 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         return _lossDetails[lossId].usersCount == _lossDetails[lossId].usersMintedCount;
     }
 
-    function _isLossIdValid(uint256 lossId) internal view {
-        if (lossId >= nextLossId || lossId == 0) {
-            revert LossIdNotValid(lossId);
-        }
+    // Disable ERC1155 transfer functions
+
+    function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
+        revert NotSupported();
+    }
+
+    function setApprovalForAll(address, bool) public pure override {
+        revert NotSupported();
     }
 
     /**
@@ -195,14 +217,9 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         }
     }
 
-    modifier verifyLossId(uint256 lossId) {
-        _isLossIdValid(lossId);
-        _;
-    }
-
-    modifier verifyValidLossState() {
-        if (isPendingLossMint) {
-            revert LossMintingInProgress(nextLossId - 1);
+    modifier NotPendingLossMint() {
+        if (isPendingLossMint()) {
+            revert LossMintingInProgress(pendingMintLossId);
         }
         _;
     }

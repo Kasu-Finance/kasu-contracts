@@ -232,12 +232,6 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         uint256 lossAmount3 = totalUserDeposits / 2;
         _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount3, true);
 
-        vm.expectRevert(abi.encodeWithSelector(ILendingPoolTrancheLoss.LossIdNotValid.selector, 0));
-        LendingPoolTranche(lpd.tranches[0]).getLossDetails(0);
-
-        vm.expectRevert(abi.encodeWithSelector(ILendingPoolTrancheLoss.LossIdNotValid.selector, 4));
-        LendingPoolTranche(lpd.tranches[0]).getLossDetails(4);
-
         _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], 1, lossAmount1);
         _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], 2, lossAmount2);
         _repayLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lpd.tranches[0], 3, lossAmount3);
@@ -262,9 +256,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         for (uint256 i; i < userAddresses.length; ++i) {
             assertEq(LendingPoolTranche(lpd.tranches[0]).balanceOf(userAddresses[i], 1), amounts[i] * 10 ** 12);
-
             assertEq(LendingPoolTranche(lpd.tranches[0]).balanceOf(userAddresses[i], 2), amounts[i] * 10 ** 12);
-
             assertEq(LendingPoolTranche(lpd.tranches[0]).balanceOf(userAddresses[i], 3), amounts[i] * 10 ** 12);
         }
 

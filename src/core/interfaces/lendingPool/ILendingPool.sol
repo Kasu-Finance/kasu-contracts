@@ -94,7 +94,7 @@ interface ILendingPool is IERC20 {
 
     event LoanRepaid(uint256 amount);
 
-    event FirstLossCapitalLossReported(uint256 amount);
+    event FirstLossCapitalLossReported(uint256 indexed lossId, uint256 amount);
 
     event LossReported(uint256 amount);
 
@@ -112,4 +112,5 @@ interface ILendingPool is IERC20 {
     error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
     error LendingPoolIsStopped();
     error PoolConfigurationIsIncorrect(string reason);
+    error LossIdNotValid(uint256 lossId);
 }
