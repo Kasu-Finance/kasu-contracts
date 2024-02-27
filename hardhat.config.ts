@@ -1,50 +1,10 @@
-import { HardhatUserConfig, subtask } from 'hardhat/config';
+import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
 import 'hardhat-deploy';
 import 'hardhat-deploy-ethers';
-import { glob } from 'glob';
-import * as path from 'path';
-import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
 import * as dotenv from 'dotenv';
 dotenv.config();
-
-subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
-    async (_, hre, runSuper) => {
-        const paths = await runSuper();
-
-        const mockUSDC = path.join(
-            hre.config.paths.root,
-            'test',
-            'shared',
-            'MockUSDC.sol',
-        );
-        const mockKsuPrice = path.join(
-            hre.config.paths.root,
-            'test',
-            'shared',
-            'MockKsuPrice.sol',
-        );
-        const proxyAdmin = path.join(
-            hre.config.paths.root,
-            'lib',
-            'openzeppelin-contracts',
-            'contracts',
-            'proxy',
-            'ProxyAdmin.sol',
-        );
-        const mockUSDCPath = glob.sync(mockUSDC);
-        const mockKsuPricePath = glob.sync(mockKsuPrice);
-        const proxyAdminPaths = glob.sync(proxyAdmin);
-
-        return [
-            ...paths,
-            ...mockUSDCPath,
-            ...mockKsuPricePath,
-            ...proxyAdminPaths,
-        ];
-    },
-);
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -81,6 +41,16 @@ const config: HardhatUserConfig = {
         },
         alice: 1,
         bob: 2,
+    },
+    external: {
+        contracts: [
+            {
+                artifacts: 'lib',
+            },
+            {
+                artifacts: 'test/shared',
+            },
+        ],
     },
 };
 
