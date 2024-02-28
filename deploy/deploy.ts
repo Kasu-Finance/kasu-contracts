@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployFunction } from 'hardhat-deploy/types';
+import { Address, DeployFunction, DeployOptions, DeployResult } from 'hardhat-deploy/types';
 import {
     KasuController__factory,
     KSU__factory,
@@ -10,8 +10,6 @@ import {
 } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
-import { addressFileFactory } from './utils/export-addresses';
-import { deployFactory, deployOptions } from './utils/deploy';
 import { ContractTransactionResponse } from 'ethers';
 
 export const SECONDS_IN_DAY = 86400n;
@@ -239,3 +237,149 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
+
+//*** UTIL FUNCTIONS ***//
+
+
+function deployOptions(
+    deployer: string,
+    constructorArgs: unknown[],
+): DeployOptions {
+    return {
+        deterministicDeployment: true,
+        from: deployer,
+        args: constructorArgs,
+        log: true,
+    };
+}
+
+async function deployFactory(
+    hre: HardhatRuntimeEnvironment,
+    addressFile: ReturnType<typeof addressFileFactory>,
+    deployer: Address,
+    proxyAdminAdmin: Address,
+) {
+    const proxyAdmin = await hre.deployments.deploy(
+        'ProxyAdmin',
+        deployOptions(deployer, [proxyAdminAdmin]),
+    );
+
+    return {
+        deployTransparentProxy: async (
+            name: string,
+            options: DeployOptions,
+            exportName?: string,
+        ): Promise<DeployResult> => {
+            const implementation = await hre.deployments.deploy(name, options);
+
+            const transparentUpgradeableProxy = await hre.deployments.deploy(
+                'TransparentUpgradeableProxy',
+                deployOptions(deployer, [
+                    implementation.address,
+                    proxyAdmin.address,
+                    [],
+                ]),
+            );
+
+            exportName = exportName ? exportName : name;
+            addressFile.writeAddressProxy(
+                exportName,
+                transparentUpgradeableProxy.address,
+                implementation.address,
+            );
+            return transparentUpgradeableProxy;
+        },
+        deployBeacon: async (
+            name: string,
+            options: DeployOptions,
+            exportName?: string,
+        ): Promise<DeployResult> => {
+            const contractImplementation = await hre.deployments.deploy(
+                name,
+                options,
+            );
+            const beaconDeployment = await hre.deployments.deploy(
+                'UpgradeableBeacon',
+                deployOptions(deployer, [
+                    contractImplementation.address,
+                    deployer,
+                ]),
+            );
+            exportName = exportName ? exportName : name;
+            addressFile.writeAddressProxy(
+                exportName + '_Beacon',
+                beaconDeployment.address,
+                contractImplementation.address,
+            );
+            return beaconDeployment;
+        },
+    };
+}
+
+function addressFileFactory(
+    deploymentPath: string,
+    blockNumber: number,
+    networkName: string,
+) {
+    fs.writeFileSync(
+        deploymentPath,
+        JSON.stringify({
+            network: networkName,
+            startBlock: blockNumber,
+        }),
+    );
+
+    return {
+        writeAddressProxy: (
+            name: string,
+            proxy: string,
+            implementation: string | undefined = undefined,
+        ) =>
+            writeAddressProxy(
+                deploymentPath,
+                blockNumber,
+                name,
+                proxy,
+                implementation,
+            ),
+    };
+}
+
+function writeAddressProxy(
+    deploymentPath: string,
+    blockNumber: number,
+    name: string,
+    proxy: string,
+    implementation: string | undefined = undefined,
+) {
+    if (implementation) {
+        _writeAddress(deploymentPath, blockNumber, name, implementation, proxy);
+    } else {
+        throw new Error(`Implementation address for ${name} is undefined`);
+    }
+}
+
+function _writeAddress(
+    deploymentPath: string,
+    blockNumber: number,
+    name: string,
+    implementation: string,
+    proxy: string | undefined = undefined,
+) {
+    const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
+
+    if (!proxy) {
+        addresses[name] = {
+            address: implementation,
+            startBlock: blockNumber,
+        };
+    } else {
+        addresses[name] = {
+            address: proxy,
+            implementation: implementation,
+            startBlock: blockNumber,
+        };
+    }
+
+    fs.writeFileSync(deploymentPath, JSON.stringify(addresses, null, 4));
+}
