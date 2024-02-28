@@ -26,8 +26,6 @@ export function addressFileFactory(
                 proxy,
                 implementation,
             ),
-        writeAddress: (name: string, implementation: string) =>
-            writeAddress(deploymentPath, blockNumber, name, implementation),
     };
 }
 
@@ -43,15 +41,6 @@ function writeAddressProxy(
     } else {
         throw new Error(`Implementation address for ${name} is undefined`);
     }
-}
-
-function writeAddress(
-    deploymentPath: string,
-    blockNumber: number,
-    name: string,
-    implementation: string,
-) {
-    _writeAddress(deploymentPath, blockNumber, name, implementation);
 }
 
 function _writeAddress(
