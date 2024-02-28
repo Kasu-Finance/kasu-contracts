@@ -5,31 +5,13 @@ import { addressFileFactory } from './export-addresses';
 export function deployOptions(
     deployer: string,
     constructorArgs: unknown[],
-    initializeArgs?: unknown[],
 ): DeployOptions {
-    let config: DeployOptions = {
+    return {
         deterministicDeployment: true,
         from: deployer,
         args: constructorArgs,
         log: true,
     };
-
-    if (initializeArgs !== undefined) {
-        config = {
-            deterministicDeployment: true,
-            from: deployer,
-            args: constructorArgs,
-            proxy: {
-                execute: {
-                    methodName: 'initialize',
-                    args: initializeArgs,
-                },
-            },
-            log: true,
-        };
-    }
-
-    return config;
 }
 
 export async function deployFactory(

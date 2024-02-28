@@ -1,10 +1,12 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import {
-    KasuAllowList__factory,
     KasuController__factory,
+    KSU__factory,
     KSULocking__factory,
     LendingPoolManager__factory,
+    MockKsuPrice__factory,
+    MockUSDC__factory,
 } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
@@ -60,16 +62,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         admin,
     );
 
+    // get signer
+    const adminSigners = await hre.ethers.getNamedSigners();
+    const adminSigner = adminSigners['admin'];
+
+    // deploy
+    let tx: ContractTransactionResponse;
     const ksuDeployment = await deployTransparentProxy(
         'KSU',
-        deployOptions(deployer, [], [admin]),
+        deployOptions(deployer, []),
     );
+    const ksu = KSU__factory.connect(ksuDeployment.address, adminSigner);
+    tx = await ksu.initialize(admin);
+    await tx.wait(1);
 
     const mockUsdcDeployment = await deployTransparentProxy(
         'MockUSDC',
-        deployOptions(deployer, [], [admin]),
+        deployOptions(deployer, []),
         'USDC',
     );
+    const mockUsdc = MockUSDC__factory.connect(
+        mockUsdcDeployment.address,
+        adminSigner,
+    );
+    tx = await mockUsdc.initialize(admin);
+    await tx.wait(1);
 
     const kasuControllerDeployment = await deployTransparentProxy(
         'KasuController',
@@ -78,12 +95,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const ksuLockingDeployment = await deployTransparentProxy(
         'KSULocking',
-        deployOptions(
-            deployer,
-            [kasuControllerDeployment.address],
-            [ksuDeployment.address, mockUsdcDeployment.address],
-        ),
+        deployOptions(deployer, [kasuControllerDeployment.address]),
     );
+    const ksuLocking = KSULocking__factory.connect(
+        ksuLockingDeployment.address,
+        adminSigner,
+    );
+    tx = await ksuLocking.initialize(
+        ksuDeployment.address,
+        mockUsdcDeployment.address,
+    );
+    await tx.wait(1);
 
     const kasuAllowListDeployment = await deployTransparentProxy(
         'KasuAllowList',
@@ -92,9 +114,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const mockKsuPriceDeployment = await deployTransparentProxy(
         'MockKsuPrice',
-        deployOptions(admin, [], []),
+        deployOptions(admin, []),
         'KsuPrice',
     );
+    const mockKsuPrice = MockKsuPrice__factory.connect(
+        mockKsuPriceDeployment.address,
+        adminSigner,
+    );
+    tx = await mockKsuPrice.initialize();
+    await tx.wait(1);
 
     const systemVariablesDeployment = await deployTransparentProxy(
         'SystemVariables',
@@ -159,11 +187,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions(deployer, []),
     );
 
-    // get signer
-    const adminSigners = await hre.ethers.getNamedSigners();
-    const adminSigner = adminSigners['admin'];
-
-    let tx: ContractTransactionResponse;
     // initialise
     const kasuController = KasuController__factory.connect(
         kasuControllerDeployment.address,
@@ -183,25 +206,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await tx.wait(1);
 
     // add lock periods
-    const ksuLocking = KSULocking__factory.connect(
-        ksuLockingDeployment.address,
-        adminSigner,
-    );
-
-    console.log(1);
     tx = await ksuLocking.setKSULockBonus(ksuLockBonusDeployment.address);
-    console.log(2);
     await tx.wait(1);
-    console.log(3);
 
     tx = await ksuLocking.addLockPeriod(
         lockPeriod30,
         lockMultiplier30,
         ksuBonusMultiplier30,
     );
-    console.log(4);
     await tx.wait(1);
-    console.log(5);
 
     tx = await ksuLocking.addLockPeriod(
         lockPeriod180,
