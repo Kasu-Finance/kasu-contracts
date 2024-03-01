@@ -11,6 +11,7 @@ import "./LendingPoolTrancheLoss.sol";
 import "./LendingPoolHelpers.sol";
 
 /**
+ * @title Lending Pool Tranche Contract
  * @dev
  * - when deposits are cleared, users receive ERC20 receipt tranche tokens
  * - when withdrawals are cleared, assets are sent to the lending pool

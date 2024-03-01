@@ -11,20 +11,24 @@ import "../../shared/CommonErrors.sol";
 // TODO: add maximum minted total shares
 
 /**
- * @dev
- * - when deposits are cleared, users receive ERC20 receipt tranche tokens
- * - when withdrawals are cleared, assets are sent to the lending pool
- * - when impairment happens, users receive ERC1155 impairment receipt tokens
+ * @title Lending Pool Tranche Loss Contract
+ * @notice This contract is used to handle the loss of assets in a tranche.
+ * @dev When impairment happens, users receive ERC1155 impairment receipt tokens with id of the loss.
  */
 abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgradeable, AssetFunctionsBase, LendingPoolHelpers {
     using SafeERC20 for IERC20;
 
+    /// @notice Loss id that is pending for user tokens to be minted.
+    /// @dev If 0 then no loss is pending.
     uint256 public pendingMintLossId;
 
+    /// @notice Minimum amount of assets left in the tranche after a loss.
     uint256 public minimumLeftAmountAfterLoss;
 
+    /// @dev Loss details for each loss.
     mapping(uint256 lossId => LossDetails lossDetails) private _lossDetails;
 
+    /// @notice User claimed repaid loss amounts for each loss.
     mapping(address user => mapping(uint256 lossId => uint256 claimedAmount)) public userClaimedLosses;
 
     function __LendingPoolTrancheLoss__init() internal onlyInitializing {
@@ -41,10 +45,20 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         return _lossDetails[lossId];
     }
 
+    /**
+     * @notice Checks if there is a pending loss mint.
+     */
     function isPendingLossMint() public view returns (bool) {
         return pendingMintLossId > 0;
     }
 
+    /**
+     * @notice Registers a loss in the tranche.
+     * @param lossId The id of the loss.
+     * @param lossAmount The amount of the loss.
+     * @param doMintLossTokens If true, mint all loss tokens to users.
+     * @return lossApplied The amount of the loss applied.
+     */
     function registerTrancheLoss(uint256 lossId, uint256 lossAmount, bool doMintLossTokens)
         external
         onlyOwnLendingPool
@@ -85,6 +99,15 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         }
     }
 
+    /**
+    * @notice Mints loss tokens to users for the id.
+    * @dev
+    * Anyone can call this function to mint loss tokens to users.
+    * Tranche share operations should be blocked when there is a pending loss mint.
+    * Can only be called when there is a pending loss mint.
+    * @param lossId The id of the loss.
+    * @param batchSize The amount of users to mint tokens to. If the value is more than remaining users, mint to all remaining users.
+    */
     function batchMintLossTokens(uint256 lossId, uint256 batchSize) external {
         if (pendingMintLossId != lossId || lossId == 0) {
             revert LossMintingNotYetComplete(pendingMintLossId);
@@ -132,6 +155,11 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         _lossDetails[lossId].totalLossShares += userLossShares;
     }
 
+    /**
+     * @notice Repays a loss for the id.
+     * @param lossId The id of the loss.
+     * @param amount The amount to repay.
+     */
     function repayLoss(uint256 lossId, uint256 amount) external onlyOwnLendingPool {
         if (!_isLossMintingComplete(lossId)) {
             revert LossMintingNotYetComplete(lossId);
@@ -145,6 +173,12 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
 
     // CLAIM LOSS
 
+    /**
+     * @notice Gets the claimable loss amount for the user and loss id.
+     * @param user The user to get the claimable loss for.
+     * @param lossId The id of the loss.
+     * @return claimableAmount The claimable loss amount.
+     */
     function getUserClaimableLoss(address user, uint256 lossId)
         public
         view
@@ -160,7 +194,13 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
         }
     }
 
-    function claimLoss(address user, uint256 lossId) external onlyOwnLendingPool returns (uint256 claimedAmount) {
+    /**
+     * @notice Claims a loss for the loss id.
+     * @param user The user to claim the loss for.
+     * @param lossId The id of the loss.
+     * @return claimedAmount The loss amount claimed.
+     */
+    function claimRepaiedLoss(address user, uint256 lossId) external onlyOwnLendingPool returns (uint256 claimedAmount) {
         claimedAmount = getUserClaimableLoss(user, lossId);
         userClaimedLosses[user][lossId] += claimedAmount;
 
@@ -171,6 +211,9 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
 
     // HELPER FUNCTIONS
 
+    /**
+     * @notice Checks if the minting of loss tokens for the id is complete.
+     */
     function isLossMintingComplete(uint256 lossId) external view returns (bool) {
         return _isLossMintingComplete(lossId);
     }
@@ -181,10 +224,16 @@ abstract contract LendingPoolTrancheLoss is ILendingPoolTrancheLoss, ERC1155Upgr
 
     // Disable ERC1155 transfer functions
 
+    /**
+     * @notice ERC1155 safeTransferFrom is disabled.
+     */
     function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
         revert NotSupported();
     }
 
+    /**
+     * @notice ERC1155 setApprovalForAll is disabled.
+     */
     function setApprovalForAll(address, bool) public pure override {
         revert NotSupported();
     }

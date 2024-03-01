@@ -35,6 +35,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal lendingPoolCreatorAccount = address(0xad3);
     address internal lendingPoolAdminAccount = address(0xad4);
     address internal lendingPoolManagerAccount = address(0xad5);
+    address internal lendingPoolBorrowerAccount = address(0xad6);
 
     function __lendingPool_setUp() internal {
         __locking_setUp();
@@ -196,6 +197,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_MANAGER, lendingPoolManagerAccount
         );
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_BORROWER, lendingPoolBorrowerAccount
+        );
         vm.stopPrank();
     }
 
@@ -304,12 +308,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager.repayLoss(lendingPool, tranche, lossId, amount);
     }
 
-    function _claimLoss(address caller, address lendingPool, address tranche, uint256 lossId)
+    function _claimRepaiedLoss(address caller, address lendingPool, address tranche, uint256 lossId)
         internal
         prank(caller)
         returns (uint256 claimedAmount)
     {
-        return lendingPoolManager.claimLoss(lendingPool, tranche, lossId);
+        return lendingPoolManager.claimRepaiedLoss(lendingPool, tranche, lossId);
     }
 }
 

@@ -238,7 +238,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * If there is no more first loss capital,
      * the loss is applied to the tranches in order from the junior to the senior.
      * Burns tranche shares if needed.
-     * Burns the lending pool token.
+     * Burns the lending pool token in te amount of the loss.
      * @param lossAmount The amount of the loss.
      * @param doMintLossTokens If true, mints loss tokens to all the users.
      * @return lossId The id of the loss.
@@ -309,6 +309,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit LossReported(appliedLoss);
     }
 
+    /**
+     * @notice Repays the loss of the lending pool tranche for the loss id.
+     * @param tranche The tranche address.
+     * @param lossId The id of the loss.
+     * @param amount The amount of the loss to repay.
+     */
     function repayLoss(address tranche, uint256 lossId, uint256 amount)
         external
         onlyLendingPoolManager
@@ -320,14 +326,21 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         ILendingPoolTranche(tranche).repayLoss(lossId, amount);
     }
 
-    function claimLoss(address user, address tranche, uint256 lossId)
+    /**
+     * @notice Claims the repaid loss of the lending pool tranche for the loss id.
+     * @param user Claiming user address.
+     * @param tranche The tranche address.
+     * @param lossId The id of the loss.
+     * @return claimedAmount The amount of the loss that is claimed.
+     */
+    function claimRepaiedLoss(address user, address tranche, uint256 lossId)
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
         verifyLossId(lossId)
         returns (uint256 claimedAmount)
     {
-        claimedAmount = ILendingPoolTranche(tranche).claimLoss(user, lossId);
+        claimedAmount = ILendingPoolTranche(tranche).claimRepaiedLoss(user, lossId);
     }
 
     function depositFirstLossCapital(uint256 amount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {

@@ -67,7 +67,7 @@ interface ILendingPool is IERC20 {
 
     // #### USER #### //
 
-    function claimLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
+    function claimRepaiedLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
 
     // #### CONFIG #### //
 
