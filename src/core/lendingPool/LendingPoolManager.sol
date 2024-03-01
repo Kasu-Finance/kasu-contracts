@@ -91,7 +91,10 @@ contract LendingPoolManager is
      * @param tranche Address of the tranche
      * @param lossId ID of the loss
      */
-    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId) external returns (uint256 claimedAmount) {
+    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId)
+        external
+        returns (uint256 claimedAmount)
+    {
         claimedAmount = ILendingPool(lendingPool).claimRepaiedLoss(msg.sender, tranche, lossId);
     }
 
@@ -124,7 +127,7 @@ contract LendingPoolManager is
     {
         return ILendingPool(lendingPool).reportLoss(amount, doMintLossTokens);
     }
-    
+
     /**
      * @notice Repay loss to the lending pool.
      * @param lendingPool Address of the lending pool.

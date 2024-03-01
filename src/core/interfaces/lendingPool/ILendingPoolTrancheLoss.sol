@@ -11,7 +11,9 @@ struct LossDetails {
 
 interface ILendingPoolTrancheLoss {
     function getLossDetails(uint256 lossId) external view returns (LossDetails memory);
-    function registerTrancheLoss(uint256 lossId, uint256 lossAmoun, bool doMintLossTokenst) external returns (uint256 lossApplied);
+    function registerTrancheLoss(uint256 lossId, uint256 lossAmoun, bool doMintLossTokenst)
+        external
+        returns (uint256 lossApplied);
     function batchMintLossTokens(uint256 lossId, uint256 batchSize) external;
     function isLossMintingComplete(uint256 lossId) external view returns (bool);
     function repayLoss(uint256 lossId, uint256 amount) external;

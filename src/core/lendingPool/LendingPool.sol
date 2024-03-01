@@ -289,9 +289,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // remove the funds from the tranches and mint loss tokens if first loss capital is not enough
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             if (lossLeft > 0) {
-                uint256 trancheLossApplied = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).registerTrancheLoss(
-                    lossId, lossLeft, doMintLossTokens
-                );
+                uint256 trancheLossApplied = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i])
+                    .registerTrancheLoss(lossId, lossLeft, doMintLossTokens);
 
                 // lending pool tranche should return tokens
                 _burn(_lendingPoolInfo.trancheAddresses[i], trancheLossApplied);
@@ -542,7 +541,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _getTrancheConfiguration(address tranche) internal view returns (TrancheConfig storage) {
         return _poolConfiguration.tranches[_trancheIndex[tranche] - 1];
-    }    
+    }
 
     function _isLossIdValid(uint256 lossId) internal view {
         if (lossId >= nextLossId || lossId == 0) {

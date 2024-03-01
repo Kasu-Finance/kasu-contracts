@@ -44,7 +44,9 @@ interface ILendingPoolManager {
 
     function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
 
-    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
+    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId)
+        external
+        returns (uint256 claimedAmount);
 
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 

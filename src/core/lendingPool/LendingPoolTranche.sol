@@ -17,12 +17,7 @@ import "./LendingPoolHelpers.sol";
  * - when withdrawals are cleared, assets are sent to the lending pool
  * - when impairment happens, users receive ERC1155 impairment receipt tokens
  */
-contract LendingPoolTranche is
-    ILendingPoolTranche,
-    ERC4626Upgradeable,
-    LendingPoolTrancheLoss,
-    ILendingPoolErrors
-{
+contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss, ILendingPoolErrors {
     mapping(address user => uint256 activeShares) private _userActiveShares;
     mapping(address user => uint256 index) private _userArrayIndex;
 
