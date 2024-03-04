@@ -12,6 +12,7 @@ contract LockingWorkflowTest is LockingTestUtils {
 
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
+        vm.prank(admin);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
     }
 

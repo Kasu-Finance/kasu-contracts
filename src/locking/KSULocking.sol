@@ -36,6 +36,13 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         feeToken = feeToken_;
     }
 
+    /**
+     * @dev See {IKSULocking-setKSULockBonus}.
+     */
+    function setKSULockBonus(address ksuBonusTokens_) external onlyAdmin {
+        ksuBonusTokens = ksuBonusTokens_;
+    }
+
     // ### Public Interface ###
 
     function userLock(address user, uint256 userLockId) external view returns (UserLock memory) {
@@ -156,13 +163,6 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewardDebt(msg.sender);
 
         emit FeesClaimed(msg.sender, earned);
-    }
-
-    /**
-     * @dev See {IKSULocking-setKSULockBonus}.
-     */
-    function setKSULockBonus(address ksuBonusTokens_) external {
-        ksuBonusTokens = ksuBonusTokens_;
     }
 
     /**
