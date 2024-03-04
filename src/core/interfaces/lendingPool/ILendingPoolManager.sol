@@ -80,4 +80,10 @@ interface ILendingPoolManager {
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay) external;
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount) external;
+
+    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
+        external;
+
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
+        external;
 }

@@ -823,13 +823,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 minDepositAmount = 500 * 1e6;
         uint256 maxDepositAmount = 100_000 * 1e6;
-        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](0);
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
-            targetExcessLiquidity,
+            targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
@@ -852,7 +852,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 minDepositAmount = 500 * 1e6;
         uint256 maxDepositAmount = 100_000 * 1e6;
-        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](4);
         createTrancheConfig[0] = CreateTrancheConfig("Junior", "JR", 10_00, 5_00, minDepositAmount, maxDepositAmount);
@@ -862,7 +862,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
-            targetExcessLiquidity,
+            targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,

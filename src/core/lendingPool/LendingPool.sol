@@ -53,7 +53,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
 
         // copy memory to storage
-        _poolConfiguration.targetExcessLiquidity = createPoolConfig.targetExcessLiquidity;
+        _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
         _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
         _poolConfiguration.borrowRecipient = createPoolConfig.borrowRecipient;
         _poolConfiguration.totalDesiredLoanAmount = createPoolConfig.totalDesiredLoanAmount;
@@ -464,6 +464,20 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
         _poolConfiguration.totalDesiredLoanAmount = totalDesiredLoanAmount;
+    }
+
+    function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
+        external
+        onlyLendingPoolManager
+    {
+        _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
+    }
+
+    function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage)
+        external
+        onlyLendingPoolManager
+    {
+        _poolConfiguration.minumumExcessLiquidityPercentage = minumumExcessLiquidityPercentage;
     }
 
     // Helper functions

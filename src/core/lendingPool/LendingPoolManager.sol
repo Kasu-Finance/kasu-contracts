@@ -106,13 +106,6 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).borrowLoan(amount);
     }
 
-    function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
-    {
-        ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
-    }
-
     /**
      * @notice Reort loss to the lending pool.
      * @param lendingPool Address of the lending pool.
@@ -128,6 +121,47 @@ contract LendingPoolManager is
         return ILendingPool(lendingPool).reportLoss(amount, doMintLossTokens);
     }
 
+    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
+    }
+
+    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
+    }
+
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateMinimumExcessLiquidityPercentage(minumumExcessLiquidityPercentage);
+    }
+
+    // TODO: Pool Repayer role
+    function depositFirstLossCapital(address lendingPool, uint256 amount)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(lendingPool, amount);
+        ILendingPool(lendingPool).depositFirstLossCapital(amount);
+    }
+
+    // TODO: Pool Repayer role
+    function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
+    }
+
+    // #### LENDING POOL BORROWER #### //
+
     /**
      * @notice Repay loss to the lending pool.
      * @param lendingPool Address of the lending pool.
@@ -142,22 +176,6 @@ contract LendingPoolManager is
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPool, amount);
         ILendingPool(lendingPool).repayLoss(tranche, lossId, amount);
-    }
-
-    function depositFirstLossCapital(address lendingPool, uint256 amount)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
-    {
-        _transferAssetsFrom(msg.sender, address(this), amount);
-        _approveAsset(lendingPool, amount);
-        ILendingPool(lendingPool).depositFirstLossCapital(amount);
-    }
-
-    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
-        external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
-    {
-        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
     }
 
     // #### LENDING POOL MANAGER #### //
