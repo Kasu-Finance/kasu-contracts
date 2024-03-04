@@ -35,6 +35,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal lendingPoolCreatorAccount = address(0xad3);
     address internal lendingPoolAdminAccount = address(0xad4);
     address internal lendingPoolManagerAccount = address(0xad5);
+    address internal lendingPoolBorrowerAccount = address(0xad6);
 
     function __lendingPool_setUp() internal {
         __locking_setUp();
@@ -94,7 +95,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
-        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager);
+        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
         // lending pool factory
         LendingPoolFactory lendingPoolFactoryImpl = new LendingPoolFactory(
@@ -119,6 +120,10 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuAllowList.allowUser(carol);
         kasuAllowList.allowUser(david);
         vm.stopPrank();
+    }
+
+    function _allowUser(address user) internal prank(admin) {
+        kasuAllowList.allowUser(user);
     }
 
     function _deployKsuPrice() internal {
@@ -191,6 +196,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         );
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_MANAGER, lendingPoolManagerAccount
+        );
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_BORROWER, lendingPoolBorrowerAccount
         );
         vm.stopPrank();
     }
@@ -281,6 +289,31 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     function _stop(address caller, address lendingPool, address firstLostCapitalReceiver) internal prank(caller) {
         lendingPoolManager.stopLendingPool(lendingPool, firstLostCapitalReceiver);
+    }
+
+    function _reportLoss(address caller, address lendingPool, uint256 amount, bool doMintLossTokens)
+        internal
+        prank(caller)
+        returns (uint256)
+    {
+        return lendingPoolManager.reportLoss(lendingPool, amount, doMintLossTokens);
+    }
+
+    function _repayLoss(address caller, address lendingPool, address tranche, uint256 lossId, uint256 amount)
+        internal
+        prank(caller)
+    {
+        deal(address(mockUsdc), caller, amount, true);
+        mockUsdc.approve(address(lendingPoolManager), amount);
+        lendingPoolManager.repayLoss(lendingPool, tranche, lossId, amount);
+    }
+
+    function _claimRepaiedLoss(address caller, address lendingPool, address tranche, uint256 lossId)
+        internal
+        prank(caller)
+        returns (uint256 claimedAmount)
+    {
+        return lendingPoolManager.claimRepaiedLoss(lendingPool, tranche, lossId);
     }
 }
 

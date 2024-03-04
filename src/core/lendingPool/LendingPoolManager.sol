@@ -85,6 +85,19 @@ contract LendingPoolManager is
         IPendingPool(lendingPools[lendingPool].pendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
+    /**
+     * @notice Claim repaid loss from the lending pool tranche
+     * @param lendingPool Address of the lending pool
+     * @param tranche Address of the tranche
+     * @param lossId ID of the loss
+     */
+    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId)
+        external
+        returns (uint256 claimedAmount)
+    {
+        claimedAmount = ILendingPool(lendingPool).claimRepaiedLoss(msg.sender, tranche, lossId);
+    }
+
     // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoan(address lendingPool, uint256 amount)
         external
@@ -100,19 +113,35 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
     }
 
-    function reportLoss(address lendingPool, uint256 amount)
+    /**
+     * @notice Reort loss to the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param amount Amount of loss.
+     * @param doMintLossTokens Whether to mint loss tokens to all the users.
+     * @return lossId ID of the lending pool loss.
+     */
+    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
-        returns (uint256)
+        returns (uint256 lossId)
     {
-        return ILendingPool(lendingPool).reportLoss(amount);
+        return ILendingPool(lendingPool).reportLoss(amount, doMintLossTokens);
     }
 
-    function repayLoss(address lendingPool, uint256 lossId, uint256 amount)
+    /**
+     * @notice Repay loss to the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche to repay to.
+     * @param lossId ID of the loss.
+     * @param amount Amount to repay.
+     */
+    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount)
         external
-        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_BORROWER, msg.sender)
     {
-        revert("0");
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(lendingPool, amount);
+        ILendingPool(lendingPool).repayLoss(tranche, lossId, amount);
     }
 
     function depositFirstLossCapital(address lendingPool, uint256 amount)

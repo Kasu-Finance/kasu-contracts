@@ -40,9 +40,13 @@ interface ILendingPoolManager {
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
-    function reportLoss(address lendingPool, uint256 amount) external returns (uint256 lossId);
+    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens) external returns (uint256 lossId);
 
-    function repayLoss(address lendingPool, uint256 lossId, uint256 amount) external;
+    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
+
+    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId)
+        external
+        returns (uint256 claimedAmount);
 
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 

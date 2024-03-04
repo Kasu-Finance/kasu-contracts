@@ -51,9 +51,9 @@ interface ILendingPool is IERC20 {
 
     //     function updateLoanAmount(uint256 amount) external;
 
-    function reportLoss(uint256 lossAmount) external returns (uint256 lossId);
+    function reportLoss(uint256 lossAmount, bool doMintLossTokens) external returns (uint256 appliedLoss);
 
-    //     function repayLoss(uint256 lossId, uint256 amount) external;
+    function repayLoss(address tranche, uint256 lossId, uint256 amount) external;
 
     function depositFirstLossCapital(uint256 amount) external;
 
@@ -64,6 +64,10 @@ interface ILendingPool is IERC20 {
         returns (uint256 assetAmount);
 
     function stop(address firstLossCapitalReceiver) external;
+
+    // #### USER #### //
+
+    function claimRepaiedLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
 
     // #### CONFIG #### //
 
@@ -90,6 +94,8 @@ interface ILendingPool is IERC20 {
 
     event LoanRepaid(uint256 amount);
 
+    event FirstLossCapitalLossReported(uint256 indexed lossId, uint256 amount);
+
     event LossReported(uint256 amount);
 
     event FirstLossCapitalAdded(uint256 amountAdded, uint256 newTotalAmount);
@@ -106,4 +112,5 @@ interface ILendingPool is IERC20 {
     error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
     error LendingPoolIsStopped();
     error PoolConfigurationIsIncorrect(string reason);
+    error LossIdNotValid(uint256 lossId);
 }
