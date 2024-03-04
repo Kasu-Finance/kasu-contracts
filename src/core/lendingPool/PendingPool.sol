@@ -243,15 +243,19 @@ contract PendingPool is
         _stopLendingPool();
     }
 
-    function setApprovalForAll(address operator, bool approved) public override(IERC721, ERC721Upgradeable) {
+    function setApprovalForAll(address, bool) public pure override(IERC721, ERC721Upgradeable) {
         revert NonTransferable();
     }
 
-    function approve(address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
+    function approve(address, uint256) public pure override(IERC721, ERC721Upgradeable) {
         revert NonTransferable();
     }
 
-    function transferFrom(address from, address to, uint256 tokenId) public override(IERC721, ERC721Upgradeable) {
+    function transferFrom(address, address, uint256) public pure override(IERC721, ERC721Upgradeable) {
+        revert NonTransferable();
+    }
+
+    function safeTransferFrom(address, address, uint256, bytes memory) public pure override(IERC721, ERC721Upgradeable) {
         revert NonTransferable();
     }
 
