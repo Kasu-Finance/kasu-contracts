@@ -258,7 +258,11 @@ contract PendingPool is
         revert NonTransferable();
     }
 
-    function safeTransferFrom(address, address, uint256, bytes memory) public pure override(IERC721, ERC721Upgradeable) {
+    function safeTransferFrom(address, address, uint256, bytes memory)
+        public
+        pure
+        override(IERC721, ERC721Upgradeable)
+    {
         revert NonTransferable();
     }
 
