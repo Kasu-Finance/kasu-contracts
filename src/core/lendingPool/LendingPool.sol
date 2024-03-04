@@ -416,7 +416,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         for (uint256 i = 0; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             _poolConfiguration.tranches[i].interestRate = 0;
         }
-        // TODO: remove desired borrow amount in the future
+
+        _poolConfiguration.totalDesiredLoanAmount = 0;
 
         IPendingPool(getPendingPool()).stop();
 
