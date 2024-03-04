@@ -12,6 +12,7 @@ import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
 import "../interfaces/IUserManager.sol";
 import "../../shared/CommonErrors.sol";
+import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 
 /**
  * @dev
@@ -25,7 +26,8 @@ contract PendingPool is
     ERC721EnumerableUpgradeable,
     AssetFunctionsBase,
     LendingPoolHelpers,
-    LendingPoolStoppable
+    LendingPoolStoppable,
+    ILendingPoolErrors
 {
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;
@@ -119,6 +121,7 @@ contract PendingPool is
         external
         lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
+        verifyTranche(tranche)
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
@@ -177,7 +180,6 @@ contract PendingPool is
         emit DepositRequestCancelled(user, tranche, dNftID);
     }
 
-    // TODO: check valid tranche with modifier
     /**
      * @notice Creates a pending withdrawal for the user.
      * @param user The user making withdrawal request.
@@ -188,6 +190,7 @@ contract PendingPool is
     function requestWithdrawal(address user, address tranche, uint256 trancheShares)
         external
         onlyLendingPoolManager
+        verifyTranche(tranche)
         returns (uint256 wNftID)
     {
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
@@ -230,6 +233,7 @@ contract PendingPool is
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
         wNftIDs = new uint256[](input.length);
         for (uint256 i = 0; i < input.length; ++i) {
+            _verifyTranche(input[i].tranche);
             wNftIDs[i] = _requestWithdrawal(
                 input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, RequestedFrom.SYSTEM
             );
@@ -432,6 +436,12 @@ contract PendingPool is
         incrementedId = composeWithdrawalId(tranche, withdrawalId + 1);
     }
 
+    function _verifyTranche(address tranche) private view {
+        if (_getOwnLendingPool().isLendingPoolTranche(tranche)) {
+            revert InvalidTranche(address(_getOwnLendingPool()), tranche);
+        }
+    }
+
     // MODIFIERS
 
     modifier canCancel() {
@@ -459,6 +469,11 @@ contract PendingPool is
         if (trancheAddresses[0] == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
         }
+        _;
+    }
+
+    modifier verifyTranche(address tranche) {
+        _verifyTranche(tranche);
         _;
     }
 }

@@ -105,6 +105,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _lendingPoolInfo.pendingPoolAddress;
     }
 
+    function isLendingPoolTranche(address tranche) public view returns (bool) {
+        return _trancheIndex[tranche] != 0;
+    }
+
     /**
      * @notice Returns the balance of the tranche.
      * @param tranche The tranche address.
@@ -548,7 +552,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function _verifyTranche(address tranche) private view {
-        if (_trancheIndex[tranche] == 0) {
+        if (isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(this), tranche);
         }
     }
