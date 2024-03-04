@@ -4,7 +4,6 @@ pragma solidity 0.8.23;
 import "@openzeppelin-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
 contract KSU is ERC20PermitUpgradeable {
-    // TODO: check the exact KSU supply
     uint256 private constant TOTAL_SUPPLY = 1_000_000_000 ether;
 
     function initialize(address recipient) external initializer {
@@ -14,5 +13,24 @@ contract KSU is ERC20PermitUpgradeable {
         _mint(recipient, TOTAL_SUPPLY);
     }
 
-    // TODO: add burn function
+    /**
+     * @dev Destroys a `value` amount of tokens from the caller.
+     */
+    function burn(uint256 value) public virtual {
+        _burn(_msgSender(), value);
+    }
+
+    /**
+     * @dev Destroys a `value` amount of tokens from `account`, deducting from
+     * the caller's allowance.
+     *
+     * Requirements:
+     *
+     * - the caller must have allowance for ``accounts``'s tokens of at least
+     * `value`.
+     */
+    function burnFrom(address account, uint256 value) public virtual {
+        _spendAllowance(account, _msgSender(), value);
+        _burn(account, value);
+    }
 }
