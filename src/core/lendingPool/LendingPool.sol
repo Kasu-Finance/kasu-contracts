@@ -552,7 +552,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function _verifyTranche(address tranche) private view {
-        if (isLendingPoolTranche(tranche)) {
+        if (!isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(this), tranche);
         }
     }

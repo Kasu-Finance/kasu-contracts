@@ -437,7 +437,7 @@ contract PendingPool is
     }
 
     function _verifyTranche(address tranche) private view {
-        if (_getOwnLendingPool().isLendingPoolTranche(tranche)) {
+        if (!_getOwnLendingPool().isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(_getOwnLendingPool()), tranche);
         }
     }
