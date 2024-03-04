@@ -37,6 +37,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal lendingPoolManagerAccount = address(0xad5);
     address internal lendingPoolBorrowerAccount = address(0xad6);
 
+    function test_mock() external pure {}
+
     function __lendingPool_setUp() internal {
         __locking_setUp();
 

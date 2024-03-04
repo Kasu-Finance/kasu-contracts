@@ -34,6 +34,8 @@ abstract contract LockingTestUtils is BaseTestUtils {
     uint256 internal lockMultiplier720 = 100_00;
     uint256 internal ksuBonusMultiplier720 = 70_00;
 
+    function test_utils() external pure {}
+
     function __locking_setUp() internal virtual {
         _ksu = new MockERC20Permit("KSU", "KSU", 18);
         _usdc = new MockUSDC();

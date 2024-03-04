@@ -20,6 +20,8 @@ contract SigUtilsERC20 {
         uint256 deadline;
     }
 
+    function test_mock() external pure {}
+
     // computes the hash of a permit
     function getStructHash(Permit memory _permit) internal pure returns (bytes32) {
         return keccak256(
