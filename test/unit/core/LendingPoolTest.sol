@@ -46,9 +46,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
         vm.stopPrank();
 
-        // request deposit on user that was allowed and now is blocked
+        // request deposit on user that was allowed and now is disallowed
         vm.prank(admin);
-        kasuAllowList.blockUser(bob);
+        kasuAllowList.disallowUser(bob);
         vm.startPrank(bob);
         deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
