@@ -26,8 +26,7 @@ contract PendingPool is
     ERC721EnumerableUpgradeable,
     AssetFunctionsBase,
     LendingPoolHelpers,
-    LendingPoolStoppable,
-    ILendingPoolErrors
+    LendingPoolStoppable
 {
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;

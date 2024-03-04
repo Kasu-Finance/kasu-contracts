@@ -539,15 +539,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPoolAddress) {
-            // TODO: Type Error
-            revert("LendingPool: only pending pool");
+            revert OnlyOwnPendingPool(msg.sender, _lendingPoolInfo.pendingPoolAddress);
         }
     }
 
     function _onlyLendingPoolManager() private view {
         if (msg.sender != lendingPoolManager) {
-            // TODO: Type Error
-            revert("LendingPool: only lending pool manager");
+            revert OnlyLendingPoolManager();
         }
     }
 
