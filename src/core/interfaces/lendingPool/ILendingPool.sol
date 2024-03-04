@@ -72,6 +72,8 @@ interface ILendingPool is IERC20 {
 
     // #### CONFIG #### //
 
+    function updateBorrowRecipient(address borrowRecipient) external;
+
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount) external;
 
     function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount) external;

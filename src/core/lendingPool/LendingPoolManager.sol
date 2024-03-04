@@ -180,6 +180,13 @@ contract LendingPoolManager is
 
     // #### LENDING POOL MANAGER #### //
 
+    function updateBorrowRecipient(address lendingPool, address borrowRecipient)
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
+    {
+        ILendingPool(lendingPool).updateBorrowRecipient(borrowRecipient);
+    }
+
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)

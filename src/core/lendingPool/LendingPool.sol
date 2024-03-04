@@ -421,6 +421,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     // config
 
+    function updateBorrowRecipient(address borrowRecipient) external onlyLendingPoolManager {
+        _poolConfiguration.borrowRecipient = borrowRecipient;
+    }
+
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount)
         external
         onlyLendingPoolManager

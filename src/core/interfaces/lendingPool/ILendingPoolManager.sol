@@ -69,6 +69,8 @@ interface ILendingPoolManager {
 
     // config
 
+    function updateBorrowRecipient(address lendingPool, address borrowRecipient) external;
+
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount) external;
 
     function updateMaximumDepositAmount(address lendingPool, address tranche, uint256 maximumDepositAmount) external;
