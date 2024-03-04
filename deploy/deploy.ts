@@ -1,5 +1,10 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Address, DeployFunction, DeployOptions, DeployResult } from 'hardhat-deploy/types';
+import {
+    Address,
+    DeployFunction,
+    DeployOptions,
+    DeployResult,
+} from 'hardhat-deploy/types';
 import {
     KasuController__factory,
     KSU__factory,
@@ -166,7 +171,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const lendingPoolTrancheBeacon = await deployBeacon(
         'LendingPoolTranche',
-        deployOptions(deployer, [lendingPoolManagerDeployment.address]),
+        deployOptions(deployer, [
+            lendingPoolManagerDeployment.address,
+            mockUsdcDeployment.address,
+        ]),
     );
 
     const lendingPoolFactory = await deployTransparentProxy(
@@ -239,7 +247,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func;
 
 //*** UTIL FUNCTIONS ***//
-
 
 function deployOptions(
     deployer: string,
