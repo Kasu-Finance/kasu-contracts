@@ -310,12 +310,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager.repayLoss(lendingPool, tranche, lossId, amount);
     }
 
-    function _claimRepaiedLoss(address caller, address lendingPool, address tranche, uint256 lossId)
+    function _claimRepaidLoss(address caller, address lendingPool, address tranche, uint256 lossId)
         internal
         prank(caller)
         returns (uint256 claimedAmount)
     {
-        return lendingPoolManager.claimRepaiedLoss(lendingPool, tranche, lossId);
+        return lendingPoolManager.claimRepaidLoss(lendingPool, tranche, lossId);
     }
 }
 

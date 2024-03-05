@@ -86,12 +86,12 @@ contract LendingPoolManager is
      * @param tranche Address of the tranche
      * @param lossId ID of the loss
      */
-    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId)
+    function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
         external
         validLendingPool(lendingPool)
         returns (uint256 claimedAmount)
     {
-        claimedAmount = ILendingPool(lendingPool).claimRepaiedLoss(msg.sender, tranche, lossId);
+        claimedAmount = ILendingPool(lendingPool).claimRepaidLoss(msg.sender, tranche, lossId);
     }
 
     // #### LENDING POOL LOAN MANAGER #### //

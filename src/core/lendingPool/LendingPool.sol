@@ -336,14 +336,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param lossId The id of the loss.
      * @return claimedAmount The amount of the loss that is claimed.
      */
-    function claimRepaiedLoss(address user, address tranche, uint256 lossId)
+    function claimRepaidLoss(address user, address tranche, uint256 lossId)
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
         verifyLossId(lossId)
         returns (uint256 claimedAmount)
     {
-        claimedAmount = ILendingPoolTranche(tranche).claimRepaiedLoss(user, lossId);
+        claimedAmount = ILendingPoolTranche(tranche).claimRepaidLoss(user, lossId);
     }
 
     function depositFirstLossCapital(uint256 amount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
