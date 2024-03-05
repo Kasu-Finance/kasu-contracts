@@ -664,8 +664,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, requestDepositAmount_bob);
 
         // ### ACT ###
-        uint256 userAvailableBalance_alice = ILendingPool(lpd.lendingPool).getUserAvailableBalance(alice);
-        uint256 userAvailableBalance_bob = ILendingPool(lpd.lendingPool).getUserAvailableBalance(bob);
+        uint256 userAvailableBalance_alice = ILendingPool(lpd.lendingPool).getUserBalance(alice);
+        uint256 userAvailableBalance_bob = ILendingPool(lpd.lendingPool).getUserBalance(bob);
 
         // ### ASSERT ###
         assertEq(
@@ -675,7 +675,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(userAvailableBalance_bob, requestDepositAmount_bob);
     }
 
-    function test_getUserPendingAmounts() public {
+    function test_getUserPendingDepositAmount() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -699,13 +699,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ACT ###
         skip(6 days + 1);
         uint256 epochId = systemVariables.getCurrentEpochNumber();
-        (uint256 userPendingDepositBalance_alice, uint256 userPendingWithdrawalBalance_alice) =
-            IPendingPool(lpd.pendingPool).getUserPendingAmounts(alice, epochId);
-        (uint256 userPendingDepositBalance_bob,) = IPendingPool(lpd.pendingPool).getUserPendingAmounts(bob, epochId);
+        uint256 userPendingDepositBalance_alice =
+            IPendingPool(lpd.pendingPool).getUserPendingDepositAmount(alice, epochId);
+        uint256 userPendingDepositBalance_bob = IPendingPool(lpd.pendingPool).getUserPendingDepositAmount(bob, epochId);
 
         // ### ASSERT ###
         assertEq(userPendingDepositBalance_alice, requestDepositAmount_alice1 + requestDepositAmount_alice2);
-        assertEq(userPendingWithdrawalBalance_alice, requestDepositAmount_alice0);
         assertEq(userPendingDepositBalance_bob, requestDepositAmount_bob);
     }
 

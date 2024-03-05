@@ -83,24 +83,23 @@ contract UserManager is IUserManager {
         for (uint256 i; i < _userLendingPools[user].length; ++i) {
             // get the user's available lending pool balance
             ILendingPool lendingPool = ILendingPool(_userLendingPools[user][i]);
-            uint256 userLendingPoolBalance = lendingPool.getUserAvailableBalance(user);
+            uint256 userLendingPoolBalance = lendingPool.getUserBalance(user);
 
             // get user pending deposit amount
             // get user pending withdrawal amount
             IPendingPool pendingPool = IPendingPool(lendingPool.getPendingPool());
 
-            (uint256 pendingDepositAmount, uint256 pendingWithdrawalAmount) =
-                pendingPool.getUserPendingAmounts(user, params.currentEpoch);
+            uint256 pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, params.currentEpoch);
 
             // sum up
-            userDepositAmount += userLendingPoolBalance + pendingDepositAmount + pendingWithdrawalAmount;
+            userDepositAmount += userLendingPoolBalance + pendingDepositAmount;
         }
 
         // get user rKSU balance
         uint256 userRKSU = ksuLocking.balanceOf(user);
 
         // calculate rKSU in asset (USDC)
-        uint256 rKSUInUSDC = userRKSU * params.ksuPrice / KSU_PRICE_MULTIPLIER;
+        uint256 rKSUInUSDC = _getRKSUInUSDC(userRKSU, params.ksuPrice);
 
         // calculate user rKSU vs user deposit amount
         uint256 rKSUDepositRatio;
@@ -119,6 +118,11 @@ contract UserManager is IUserManager {
                 break;
             }
         }
+    }
+
+    function _getRKSUInUSDC(uint256 rKSUAmount, uint256 ksuPrice) internal pure returns (uint256 rKSUInUSDC) {
+        // NOTE: 1e12 is the difference in decimal places between rKSU and USDC
+        rKSUInUSDC = rKSUAmount * ksuPrice / KSU_PRICE_MULTIPLIER / 1e12;
     }
 
     function userRequestedDeposit(address user, address lendingPool) external {

@@ -377,10 +377,10 @@ contract PendingPool is
     // id: withdrawal id (12 bytes), tranche address (20bytes)
     // 000000000000000000000000 0000000000000000000000000000000000000000
 
-    function getUserPendingAmounts(address user, uint256 depositEpochId)
+    function getUserPendingDepositAmount(address user, uint256 depositEpochId)
         external
         view
-        returns (uint256 pendingDepositAmount, uint256 pendingWithdrawalAmount)
+        returns (uint256 pendingDepositAmount)
     {
         uint256 ownerNftCount = balanceOf(user);
 
@@ -391,12 +391,6 @@ contract PendingPool is
                 if (depositNftDetails.epochId <= depositEpochId) {
                     pendingDepositAmount += depositNftDetails.assetAmount;
                 }
-            } else {
-                WithdrawalNftDetails memory withdrawalNftDetails = _trancheWithdrawalNftDetails[nftId];
-                (address tranche,) = decomposeWithdrawalId(nftId);
-                ILendingPoolTranche lendingPoolTranche = ILendingPoolTranche(tranche);
-
-                pendingWithdrawalAmount += lendingPoolTranche.convertToAssets(withdrawalNftDetails.sharesAmount);
             }
         }
     }

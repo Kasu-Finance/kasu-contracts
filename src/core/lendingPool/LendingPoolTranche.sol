@@ -90,6 +90,16 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         }
     }
 
+    /**
+     * @notice Returns the active assets of a user.
+     * @dev This value includes pending withdrawals.
+     * @param user The address of the user.
+     * @return userActiveAssets The active assets of the user.
+     */
+    function getUserActiveAssets(address user) external view returns (uint256 userActiveAssets) {
+        userActiveAssets = convertToAssets(_userActiveShares[user]);
+    }
+
     function _getUsers() internal view override returns (address[] storage users) {
         return _trancheUsers;
     }

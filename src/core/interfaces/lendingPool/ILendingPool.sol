@@ -32,7 +32,7 @@ struct PoolConfiguration {
 interface ILendingPool is IERC20 {
     function getPendingPool() external view returns (address);
 
-    function getUserAvailableBalance(address user) external view returns (uint256);
+    function getUserBalance(address user) external view returns (uint256);
 
     function lendingPoolInfo() external view returns (LendingPoolInfo memory);
 
