@@ -48,8 +48,8 @@ contract UserManagerMockTest is BaseTestUtils {
             abi.encode(pendingPool2)
         );
 
-        _mockLendingPool(lendingPool1, 0, 0, 0);
-        _mockLendingPool(lendingPool2, 0, 0, 0);
+        _mockLendingPool(lendingPool1, 0, 0);
+        _mockLendingPool(lendingPool2, 0, 0);
 
         vm.mockCall(
             address(systemVariables),
@@ -98,10 +98,9 @@ contract UserManagerMockTest is BaseTestUtils {
         // ARRANGE
         uint256 aliceAvailableBalance = 850 * 1e6;
         uint256 alicePendingDeposit = 150 * 1e6;
-        uint256 alicePendingWithdrawal = 50 * 1e6;
-        uint256 aliceRKSU = 5 * 1e6;
+        uint256 aliceRKSU = 5 * 1e18;
 
-        _mockLendingPool(lendingPool1, aliceAvailableBalance, alicePendingDeposit, alicePendingWithdrawal);
+        _mockLendingPool(lendingPool1, aliceAvailableBalance, alicePendingDeposit);
         _mockRKSU(alice, aliceRKSU);
 
         userManager.userRequestedDeposit(alice, lendingPool1);
@@ -122,10 +121,9 @@ contract UserManagerMockTest is BaseTestUtils {
         // ARRANGE
         uint256 aliceAvailableBalance = 850 * 1e6;
         uint256 alicePendingDeposit = 150 * 1e6;
-        uint256 alicePendingWithdrawal = 50 * 1e6;
-        uint256 aliceRKSU = 15 * 1e6;
+        uint256 aliceRKSU = 15 * 1e18;
 
-        _mockLendingPool(lendingPool1, aliceAvailableBalance, alicePendingDeposit, alicePendingWithdrawal);
+        _mockLendingPool(lendingPool1, aliceAvailableBalance, alicePendingDeposit);
         _mockRKSU(alice, aliceRKSU);
 
         userManager.userRequestedDeposit(alice, lendingPool1);
@@ -142,15 +140,10 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(loyaltyLevel, 2);
     }
 
-    function _mockLendingPool(
-        address lendingPool,
-        uint256 userAvailableBalance,
-        uint256 pendingDeposit,
-        uint256 pendingWithdrawal
-    ) internal {
+    function _mockLendingPool(address lendingPool, uint256 userAvailableBalance, uint256 pendingDeposit) internal {
         vm.mockCall(
             address(lendingPool),
-            abi.encodeWithSelector(ILendingPool.getUserAvailableBalance.selector),
+            abi.encodeWithSelector(ILendingPool.getUserBalance.selector),
             abi.encode(userAvailableBalance)
         );
 
@@ -163,7 +156,9 @@ contract UserManagerMockTest is BaseTestUtils {
         address pendingPool = ILendingPool(lendingPool).getPendingPool();
 
         vm.mockCall(
-            address(pendingPool), abi.encodeWithSelector(IPendingPool.getUserPendingAmounts.selector), abi.encode(0, 0)
+            address(pendingPool),
+            abi.encodeWithSelector(IPendingPool.getUserPendingDepositAmount.selector),
+            abi.encode(pendingDeposit)
         );
     }
 

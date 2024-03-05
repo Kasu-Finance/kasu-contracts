@@ -114,11 +114,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return balanceOf(tranche);
     }
 
-    function getUserAvailableBalance(address user) external view returns (uint256 availableBalance) {
+    /**
+     * @notice Returns the total user balance of the lending pool.
+     * @dev Users' balance form all tranches.
+     * @param user The user address.
+     * @return availableBalance Total balance of the lending pool in the underlying asset.
+     */
+    function getUserBalance(address user) external view returns (uint256 availableBalance) {
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             ILendingPoolTranche tranche = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]);
-
-            availableBalance += tranche.convertToAssets(tranche.balanceOf(user));
+            availableBalance += tranche.getUserActiveAssets(user);
         }
     }
 

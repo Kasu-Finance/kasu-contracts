@@ -39,10 +39,10 @@ interface IPendingPool is IERC721 {
         external
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function getUserPendingAmounts(address user, uint256 depositEpochId)
+    function getUserPendingDepositAmount(address user, uint256 depositEpochId)
         external
         view
-        returns (uint256 pendingDepositAmount, uint256 pendingWithdrawalAmount);
+        returns (uint256 pendingDepositAmount);
 
     // #### USER DEPOSITS #### //
     /**
