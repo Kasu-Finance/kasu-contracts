@@ -36,6 +36,13 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         feeToken = feeToken_;
     }
 
+    /**
+     * @dev See {IKSULocking-setKSULockBonus}.
+     */
+    function setKSULockBonus(address ksuBonusTokens_) external onlyAdmin {
+        ksuBonusTokens = ksuBonusTokens_;
+    }
+
     // ### Public Interface ###
 
     function userLock(address user, uint256 userLockId) external view returns (UserLock memory) {
@@ -84,9 +91,9 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      */
     function unlock(uint256 unlockAmount, uint256 userLockId) external {
         // check if lock is ok and unlocked
-        UserLock storage userLock = _userLocks[msg.sender][userLockId];
+        UserLock storage userLock_ = _userLocks[msg.sender][userLockId];
 
-        if (userLock.amount == 0) {
+        if (userLock_.amount == 0) {
             revert InvalidUserDeposit(userLockId);
         }
 
@@ -94,11 +101,11 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             revert UnlockAmountShouldBeMoreThanZero();
         }
 
-        if (userLock.amount < unlockAmount) {
-            revert UserUnlockAmountTooHigh(userLockId, userLock.amount, unlockAmount);
+        if (userLock_.amount < unlockAmount) {
+            revert UserUnlockAmountTooHigh(userLockId, userLock_.amount, unlockAmount);
         }
 
-        uint256 unlockTime = userLock.startTime + userLock.lockPeriod;
+        uint256 unlockTime = userLock_.startTime + userLock_.lockPeriod;
 
         if (unlockTime > block.timestamp) {
             revert DepositLocked(userLockId);
@@ -108,14 +115,14 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewards(msg.sender);
 
         // burn rKSU
-        uint256 amountRemaining = userLock.amount - unlockAmount;
-        uint256 rKSURemaining = amountRemaining * userLock.rKSUMultiplier / FULL_PERCENT;
-        uint256 rKSUBurned = userLock.rKSUAmount - rKSURemaining;
+        uint256 amountRemaining = userLock_.amount - unlockAmount;
+        uint256 rKSURemaining = amountRemaining * userLock_.rKSUMultiplier / FULL_PERCENT;
+        uint256 rKSUBurned = userLock_.rKSUAmount - rKSURemaining;
         _burn(msg.sender, rKSUBurned);
 
         // update reward details
-        userLock.amount = amountRemaining;
-        userLock.rKSUAmount = rKSURemaining;
+        userLock_.amount = amountRemaining;
+        userLock_.rKSUAmount = rKSURemaining;
         userTotalDeposits[msg.sender] -= unlockAmount;
 
         // transfer KSU token to user
@@ -156,13 +163,6 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewardDebt(msg.sender);
 
         emit FeesClaimed(msg.sender, earned);
-    }
-
-    /**
-     * @dev See {IKSULocking-setKSULockBonus}.
-     */
-    function setKSULockBonus(address ksuBonusTokens_) external {
-        ksuBonusTokens = ksuBonusTokens_;
     }
 
     /**

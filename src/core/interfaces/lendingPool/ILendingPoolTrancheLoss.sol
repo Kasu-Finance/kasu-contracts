@@ -19,7 +19,7 @@ interface ILendingPoolTrancheLoss {
     function repayLoss(uint256 lossId, uint256 amount) external;
 
     function getUserClaimableLoss(address user, uint256 lossId) external view returns (uint256 claimableAmount);
-    function claimRepaiedLoss(address user, uint256 lossId) external returns (uint256 claimedAmount);
+    function claimRepaidLoss(address user, uint256 lossId) external returns (uint256 claimedAmount);
 
     event LossRegistered(uint256 indexed lossId, uint256 lossAmount, uint256 usersCount);
     event LossReturned(uint256 indexed lossId, uint256 amount);

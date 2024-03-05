@@ -10,6 +10,8 @@ contract MockERC20Permit is ERC20Permit {
         _decimals = decimals_;
     }
 
+    function test_mock() external pure {}
+
     function mint(address recipient, uint256 amount) external {
         _mint(recipient, amount);
     }

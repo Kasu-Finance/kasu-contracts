@@ -44,7 +44,7 @@ interface ILendingPoolManager {
 
     function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
 
-    function claimRepaiedLoss(address lendingPool, address tranche, uint256 lossId)
+    function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
         external
         returns (uint256 claimedAmount);
 
@@ -69,6 +69,8 @@ interface ILendingPoolManager {
 
     // config
 
+    function updateBorrowRecipient(address lendingPool, address borrowRecipient) external;
+
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount) external;
 
     function updateMaximumDepositAmount(address lendingPool, address tranche, uint256 maximumDepositAmount) external;
@@ -80,4 +82,10 @@ interface ILendingPoolManager {
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay) external;
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount) external;
+
+    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
+        external;
+
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
+        external;
 }

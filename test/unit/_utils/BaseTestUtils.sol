@@ -17,6 +17,8 @@ abstract contract BaseTestUtils is Test {
 
     ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
 
+    function test_baseUtils() external pure {}
+
     function _approve(IERC20 token, address owner, address spender, uint256 amount) internal prank(owner) {
         token.approve(spender, amount);
     }

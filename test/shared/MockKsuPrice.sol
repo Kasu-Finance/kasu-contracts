@@ -11,6 +11,8 @@ contract MockKsuPrice is IKsuPrice, Initializable {
         _ksuTokenPrice = 2e18;
     }
 
+    function test_mock() external pure {}
+
     function getKsuTokenPrice() external view returns (uint256) {
         return _ksuTokenPrice;
     }

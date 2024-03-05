@@ -53,7 +53,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
 
         // copy memory to storage
-        _poolConfiguration.targetExcessLiquidity = createPoolConfig.targetExcessLiquidity;
+        _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
         _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
         _poolConfiguration.borrowRecipient = createPoolConfig.borrowRecipient;
         _poolConfiguration.totalDesiredLoanAmount = createPoolConfig.totalDesiredLoanAmount;
@@ -93,7 +93,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _lendingPoolInfo;
     }
 
-    function poolConfiguration() external returns (PoolConfiguration memory) {
+    function poolConfiguration() external view returns (PoolConfiguration memory) {
         return _poolConfiguration;
     }
 
@@ -103,6 +103,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      */
     function getPendingPool() public view returns (address) {
         return _lendingPoolInfo.pendingPoolAddress;
+    }
+
+    function isLendingPoolTranche(address tranche) public view returns (bool) {
+        return _trancheIndex[tranche] != 0;
     }
 
     /**
@@ -332,14 +336,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param lossId The id of the loss.
      * @return claimedAmount The amount of the loss that is claimed.
      */
-    function claimRepaiedLoss(address user, address tranche, uint256 lossId)
+    function claimRepaidLoss(address user, address tranche, uint256 lossId)
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
         verifyLossId(lossId)
         returns (uint256 claimedAmount)
     {
-        claimedAmount = ILendingPoolTranche(tranche).claimRepaiedLoss(user, lossId);
+        claimedAmount = ILendingPoolTranche(tranche).claimRepaidLoss(user, lossId);
     }
 
     function depositFirstLossCapital(uint256 amount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
@@ -412,7 +416,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         for (uint256 i = 0; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             _poolConfiguration.tranches[i].interestRate = 0;
         }
-        // TODO: remove desired borrow amount in the future
+
+        _poolConfiguration.totalDesiredLoanAmount = 0;
 
         IPendingPool(getPendingPool()).stop();
 
@@ -420,6 +425,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     // config
+
+    function updateBorrowRecipient(address borrowRecipient) external onlyLendingPoolManager {
+        _poolConfiguration.borrowRecipient = borrowRecipient;
+    }
 
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount)
         external
@@ -464,6 +473,20 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
         _poolConfiguration.totalDesiredLoanAmount = totalDesiredLoanAmount;
+    }
+
+    function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
+        external
+        onlyLendingPoolManager
+    {
+        _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
+    }
+
+    function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage)
+        external
+        onlyLendingPoolManager
+    {
+        _poolConfiguration.minumumExcessLiquidityPercentage = minumumExcessLiquidityPercentage;
     }
 
     // Helper functions
@@ -517,20 +540,18 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _onlyPendingPool() private view {
         if (msg.sender != _lendingPoolInfo.pendingPoolAddress) {
-            // TODO: Type Error
-            revert("LendingPool: only pending pool");
+            revert OnlyOwnPendingPool(msg.sender, _lendingPoolInfo.pendingPoolAddress);
         }
     }
 
     function _onlyLendingPoolManager() private view {
         if (msg.sender != lendingPoolManager) {
-            // TODO: Type Error
-            revert("LendingPool: only lending pool manager");
+            revert OnlyLendingPoolManager();
         }
     }
 
     function _verifyTranche(address tranche) private view {
-        if (_trancheIndex[tranche] == 0) {
+        if (!isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(this), tranche);
         }
     }

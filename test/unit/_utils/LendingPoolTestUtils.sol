@@ -37,6 +37,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal lendingPoolManagerAccount = address(0xad5);
     address internal lendingPoolBorrowerAccount = address(0xad6);
 
+    function test_mock() external pure {}
+
     function __lendingPool_setUp() internal {
         __locking_setUp();
 
@@ -172,7 +174,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // create lending
         uint256 minDepositAmount = 500 * 1e6;
         uint256 maxDepositAmount = 100_000 * 1e6;
-        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
         createTrancheConfig[0] = CreateTrancheConfig("Junior", "JR", 10_00, 5_00, minDepositAmount, maxDepositAmount);
@@ -181,7 +183,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
-            targetExcessLiquidity,
+            targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
@@ -308,12 +310,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager.repayLoss(lendingPool, tranche, lossId, amount);
     }
 
-    function _claimRepaiedLoss(address caller, address lendingPool, address tranche, uint256 lossId)
+    function _claimRepaidLoss(address caller, address lendingPool, address tranche, uint256 lossId)
         internal
         prank(caller)
         returns (uint256 claimedAmount)
     {
-        return lendingPoolManager.claimRepaiedLoss(lendingPool, tranche, lossId);
+        return lendingPoolManager.claimRepaidLoss(lendingPool, tranche, lossId);
     }
 }
 

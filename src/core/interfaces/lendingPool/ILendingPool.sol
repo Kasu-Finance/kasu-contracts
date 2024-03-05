@@ -17,12 +17,13 @@ struct TrancheConfig {
 }
 
 struct PoolConfiguration {
-    uint256 targetExcessLiquidity;
     TrancheConfig[] tranches;
     address poolAdmin;
     address borrowRecipient;
     uint256 totalDesiredLoanAmount;
     uint256 trancheInterestChangeEpochDelay;
+    uint256 targetExcessLiquidityPercentage;
+    uint256 minumumExcessLiquidityPercentage;
 }
 
 /**
@@ -36,6 +37,8 @@ interface ILendingPool is IERC20 {
     function lendingPoolInfo() external view returns (LendingPoolInfo memory);
 
     function poolConfiguration() external returns (PoolConfiguration memory);
+
+    function isLendingPoolTranche(address tranche) external view returns (bool);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
@@ -67,9 +70,11 @@ interface ILendingPool is IERC20 {
 
     // #### USER #### //
 
-    function claimRepaiedLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
+    function claimRepaidLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
 
     // #### CONFIG #### //
+
+    function updateBorrowRecipient(address borrowRecipient) external;
 
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount) external;
 
@@ -82,6 +87,10 @@ interface ILendingPool is IERC20 {
     function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external;
 
     function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external;
+
+    function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) external;
+
+    function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage) external;
 
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);

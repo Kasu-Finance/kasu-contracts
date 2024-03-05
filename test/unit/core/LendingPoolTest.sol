@@ -23,7 +23,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.prank(admin);
         systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
 
-        uint256 dNftId2_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
 
         // request deposit on junior tranche when no locking took place
         vm.startPrank(bob);
@@ -46,9 +46,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
         vm.stopPrank();
 
-        // request deposit on user that was allowed and now is blocked
+        // request deposit on user that was allowed and now is disallowed
         vm.prank(admin);
-        kasuAllowList.blockUser(bob);
+        kasuAllowList.disallowUser(bob);
         vm.startPrank(bob);
         deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
@@ -821,15 +821,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.prank(admin);
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
 
-        uint256 minDepositAmount = 500 * 1e6;
-        uint256 maxDepositAmount = 100_000 * 1e6;
-        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](0);
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
-            targetExcessLiquidity,
+            targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
@@ -852,7 +850,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 minDepositAmount = 500 * 1e6;
         uint256 maxDepositAmount = 100_000 * 1e6;
-        uint256 targetExcessLiquidity = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](4);
         createTrancheConfig[0] = CreateTrancheConfig("Junior", "JR", 10_00, 5_00, minDepositAmount, maxDepositAmount);
@@ -862,7 +860,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
-            targetExcessLiquidity,
+            targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,

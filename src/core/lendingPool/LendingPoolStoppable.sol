@@ -10,8 +10,8 @@ abstract contract LendingPoolStoppable {
         isLendingPoolStopped = true;
     }
 
-    function _isLendingPoolStopped() internal returns (bool) {
-        return isLendingPoolStopped == true;
+    function _isLendingPoolStopped() internal view returns (bool) {
+        return isLendingPoolStopped;
     }
 
     modifier lendingPoolShouldNotBeStopped() {

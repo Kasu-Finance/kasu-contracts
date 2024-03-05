@@ -104,6 +104,7 @@ contract KSULockingTest is LockingTestUtils {
         // ARRANGE
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
+        vm.prank(admin);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
         _addBonusKSU(1000 ether);
 

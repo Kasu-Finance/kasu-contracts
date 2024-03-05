@@ -261,9 +261,9 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         }
 
         for (uint256 i; i < 1; ++i) {
-            uint256 claimedAmount1 = _claimRepaiedLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 1);
-            uint256 claimedAmount2 = _claimRepaiedLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 2);
-            uint256 claimedAmount3 = _claimRepaiedLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 3);
+            uint256 claimedAmount1 = _claimRepaidLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 1);
+            uint256 claimedAmount2 = _claimRepaidLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 2);
+            uint256 claimedAmount3 = _claimRepaidLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], 3);
 
             assertApproxEqAbs(claimedAmount1, lossAmount1 * amounts[i] / totalUserDeposits, 1);
             assertApproxEqAbs(claimedAmount2, lossAmount2 * amounts[i] / totalUserDeposits, 1);
@@ -297,7 +297,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(lpd.tranches[0]), repayAmount);
     }
 
-    function test_claimRepaiedLoss() public {
+    function test_claimRepaidLoss() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -321,7 +321,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         for (uint256 i; i < userAddresses.length / 2; ++i) {
             uint256 balanceBefore = mockUsdc.balanceOf(userAddresses[i]);
 
-            uint256 claimedAmount = _claimRepaiedLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
+            uint256 claimedAmount = _claimRepaidLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
 
             uint256 expectedClaimedAmount = amounts[i] / 2 / 4;
             assertApproxEqAbs(claimedAmount, expectedClaimedAmount, 1);
@@ -339,7 +339,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         for (uint256 i; i < userAddresses.length / 2; ++i) {
             uint256 balanceBefore = mockUsdc.balanceOf(userAddresses[i]);
 
-            uint256 claimedAmount = _claimRepaiedLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
+            uint256 claimedAmount = _claimRepaidLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
 
             uint256 expectedClaimedAmount = amounts[i] / 2 / 2;
             assertApproxEqAbs(claimedAmount, expectedClaimedAmount, 1);
@@ -352,7 +352,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         for (uint256 i = userAddresses.length / 2; i < userAddresses.length; ++i) {
             uint256 balanceBefore = mockUsdc.balanceOf(userAddresses[i]);
 
-            uint256 claimedAmount = _claimRepaiedLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
+            uint256 claimedAmount = _claimRepaidLoss(userAddresses[i], lpd.lendingPool, lpd.tranches[0], lossId);
 
             uint256 expectedClaimedAmount = amounts[i] / 2 / 2 + amounts[i] / 2 / 4;
             assertApproxEqAbs(claimedAmount, expectedClaimedAmount, 1);
