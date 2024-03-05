@@ -11,7 +11,8 @@
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
-        "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts"
+        "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
+        "scripts:lendingPoolWorkFlow": "hardhat run --network localhost ./scripts/lendingPoolWorkFlow.ts"
     },
     "repository": {
         "type": "git",
