@@ -39,20 +39,25 @@ async function main() {
     );
 
     // system variables
-    const systemVariablesSetup: SystemVariablesSetupStruct = {
-        firstEpochStartTimestamp: Math.round(Date.now() / 1000) + 3600 * 24 * 3,
-        clearingPeriodLength: 1,
-        protocolFee: 10_00,
-        loyaltyThresholds: [10_00, 20_00, 30_00],
-        defaultTrancheInterestChangeEpochDelay: 1,
-    };
-    tx = await systemVariables.initialize(systemVariablesSetup);
-    await tx.wait(1);
+    if (shouldInitialiseSystemVariables()) {
+        const systemVariablesSetup: SystemVariablesSetupStruct = {
+            firstEpochStartTimestamp:
+                Math.round(Date.now() / 1000) + 3600 * 24 * 3,
+            clearingPeriodLength: 1,
+            protocolFee: 10_00,
+            loyaltyThresholds: [10_00, 20_00, 30_00],
+            defaultTrancheInterestChangeEpochDelay: 1,
+        };
+        console.info('Initializing System Variables');
+        tx = await systemVariables.initialize(systemVariablesSetup);
+        await tx.wait(1);
+    }
 
     // access control
     const ROLE_LENDING_POOL_CREATOR = hre.ethers.id(
         'ROLE_LENDING_POOL_CREATOR',
     );
+    console.info('Granting ROLE_LENDING_POOL_CREATOR role');
     tx = await kasuController.grantRole(
         ROLE_LENDING_POOL_CREATOR,
         poolCreatorAccount,
@@ -97,8 +102,13 @@ async function main() {
         borrowRecipient: borrowRecipientAccount.address,
         totalDesiredLoanAmount: BigInt(100_000_000_000),
     };
+    console.info('Creating Lending Pool');
     tx = await lendingPoolManager.createPool(createPoolConfig);
     await tx.wait(1);
+}
+
+function shouldInitialiseSystemVariables() {
+    return process.env['INIT_SYSTEM_VARS'] === '1';
 }
 
 main().catch((error) => {
