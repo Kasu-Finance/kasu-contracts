@@ -749,7 +749,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.tranches[0].maxDepositAmount, 200_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[1].ratio, 25_00);
-        assertEq(poolConfiguration.tranches[1].interestRate, 3_50);
+        assertEq(poolConfiguration.tranches[1].interestRate, 4_00);
         assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
 
@@ -757,6 +757,18 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.tranches[2].interestRate, 3_00);
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
+
+        // update interest rate epoch delay
+        uint256 interestRateEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+        skip(7 days * (interestRateEpochDelay - 1));
+
+        poolConfiguration = lendingPool.poolConfiguration();
+        assertEq(poolConfiguration.tranches[1].interestRate, 4_00);
+
+        skip(7 days);
+
+        poolConfiguration = lendingPool.poolConfiguration();
+        assertEq(poolConfiguration.tranches[1].interestRate, 3_50);
     }
 
     function test_forceCancelDepositRequest() external {
