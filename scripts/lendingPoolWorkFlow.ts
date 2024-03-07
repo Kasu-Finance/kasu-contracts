@@ -33,25 +33,6 @@ async function main() {
         addresses['KasuController'].address,
         admin,
     );
-    const systemVariables = SystemVariables__factory.connect(
-        addresses['SystemVariables'].address,
-        admin,
-    );
-
-    // system variables
-    if (shouldInitialiseSystemVariables()) {
-        const systemVariablesSetup: SystemVariablesSetupStruct = {
-            firstEpochStartTimestamp:
-                Math.round(Date.now() / 1000) + 3600 * 24 * 3,
-            clearingPeriodLength: 1,
-            protocolFee: 10_00,
-            loyaltyThresholds: [10_00, 20_00, 30_00],
-            defaultTrancheInterestChangeEpochDelay: 1,
-        };
-        console.info('Initializing System Variables');
-        tx = await systemVariables.initialize(systemVariablesSetup);
-        await tx.wait(1);
-    }
 
     // access control
     const ROLE_LENDING_POOL_CREATOR = hre.ethers.id(

@@ -12,10 +12,13 @@ import {
     LendingPoolManager__factory,
     MockKsuPrice__factory,
     MockUSDC__factory,
+    SystemVariables__factory,
 } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
 import { ContractTransactionResponse } from 'ethers';
+import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
+import * as addresses from '../deployments/localhost/addresses-localhost.json';
 
 export const SECONDS_IN_DAY = 86400n;
 
@@ -209,6 +212,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         lendingPoolFactory.address,
         kasuAllowListDeployment.address,
     );
+    await tx.wait(1);
+
+    const systemVariables = SystemVariables__factory.connect(
+        addresses['SystemVariables'].address,
+        adminSigner,
+    );
+    const systemVariablesSetup: SystemVariablesSetupStruct = {
+        firstEpochStartTimestamp: Math.round(Date.now() / 1000) + 3600 * 24 * 3,
+        clearingPeriodLength: 1,
+        protocolFee: 10_00,
+        loyaltyThresholds: [10_00, 20_00, 30_00],
+        defaultTrancheInterestChangeEpochDelay: 1,
+    };
+    console.info('Initializing System Variables');
+    tx = await systemVariables.initialize(systemVariablesSetup);
     await tx.wait(1);
 
     // add lock periods
