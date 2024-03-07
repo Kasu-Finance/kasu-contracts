@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import { ContractTransactionResponse } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
-import * as addresses from '../deployments/localhost/addresses-localhost.json';
 
 export const SECONDS_IN_DAY = 86400n;
 
@@ -215,7 +214,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await tx.wait(1);
 
     const systemVariables = SystemVariables__factory.connect(
-        addresses['SystemVariables'].address,
+        systemVariablesDeployment.address,
         adminSigner,
     );
     const systemVariablesSetup: SystemVariablesSetupStruct = {
