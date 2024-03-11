@@ -111,6 +111,10 @@ interface ILendingPool is IERC20 {
 
     event FirstLossCapitalWithdrawn(uint256 amountWithdrawn, uint256 newTotalAmount);
 
+    event UpdatedTrancheInterestRate(address indexed tranche, uint256 indexed applicableEpoch, uint256 newInterestRate);
+
+    event RemovedTracheInterestRateUpdate(address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex);
+
     // Errors
 
     error BorrowAmountCantBeGreaterThanAvailableAmount(uint256 borrowAmount, uint256 availableAmount);
