@@ -548,12 +548,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     // functions to handle the delay of interest rates
 
     function _getTrancheInterestRateIndex(address tranche, uint256 epoch) private view returns (uint256 index) {
-        FutureTrancheInterestRates[] memory futureTrancheInterests = _futureTrancheInterests[tranche];
-
         index = _trancheInterestIndex[tranche];
 
-        for (uint256 i = index + 1; i < futureTrancheInterests.length; ++i) {
-            if (futureTrancheInterests[i].epoch <= epoch) {
+        for (uint256 i = index + 1; i < _futureTrancheInterests[tranche].length; ++i) {
+            if (_futureTrancheInterests[tranche][i].epoch <= epoch) {
                 index++;
             } else {
                 break;
