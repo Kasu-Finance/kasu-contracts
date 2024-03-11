@@ -71,7 +71,8 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolInfo.pendingPoolAddress = pendingPoolAddress;
         lendingPoolInfo.trancheAddresses = trancheAddresses;
 
-        lendingPool.initialize(createPoolConfig, lendingPoolInfo, address(lendingPoolManager));
+        PoolConfiguration memory poolConfiguration =
+            lendingPool.initialize(createPoolConfig, lendingPoolInfo, address(lendingPoolManager));
 
         pendingPool.setUpTranches();
 
@@ -80,7 +81,7 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
             lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_ADMIN, createPoolConfig.poolAdmin
         );
 
-        emit PoolCreated(lendingPoolDeployment.lendingPool, lendingPoolDeployment);
+        emit PoolCreated(lendingPoolDeployment.lendingPool, lendingPoolDeployment, poolConfiguration);
     }
 
     function _deployLendingPoolTranche(

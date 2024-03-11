@@ -10,7 +10,9 @@ struct LendingPoolDeployment {
     address[] tranches;
 }
 
-event PoolCreated(address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment);
+event PoolCreated(
+    address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment, PoolConfiguration poolConfiguration
+);
 
 struct CreateTrancheConfig {
     string trancheName;

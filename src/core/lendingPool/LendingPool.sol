@@ -45,7 +45,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         CreatePoolConfig memory createPoolConfig,
         LendingPoolInfo memory lendingPoolInfo_,
         address lendingPoolManager_
-    ) public initializer {
+    ) public initializer returns (PoolConfiguration memory) {
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
 
         _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
@@ -80,6 +80,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         lendingPoolManager = lendingPoolManager_;
         nextLossId = 1;
+
+        return _poolConfiguration;
     }
 
     /**

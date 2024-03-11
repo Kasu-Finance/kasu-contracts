@@ -4,14 +4,15 @@
     "description": "kasu smart contracts",
     "main": "index.js",
     "scripts": {
-        "node:local": "hardhat node --no-deploy",
+        "node:local": "hardhat node --no-deploy --hostname 0.0.0.0",
         "deploy:local": "hardhat --network localhost deploy --export-all deployments/localhost/export.json",
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
-        "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts"
+        "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
+        "scripts:lendingPoolWorkFlow": "hardhat run --network localhost ./scripts/lendingPoolWorkFlow.ts"
     },
     "repository": {
         "type": "git",
