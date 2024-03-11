@@ -129,6 +129,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _trancheIndex[tranche] != 0;
     }
 
+    function getTrancheIndex(address tranche) external view verifyTranche(tranche) returns (uint256) {
+        return _trancheIndex[tranche];
+    }
+
     /**
      * @notice Returns the balance of the tranche.
      * @param tranche The tranche address.

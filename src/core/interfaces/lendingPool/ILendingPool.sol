@@ -40,6 +40,8 @@ interface ILendingPool is IERC20 {
 
     function isLendingPoolTranche(address tranche) external view returns (bool);
 
+    function getTrancheIndex(address tranche) external view returns (uint256);
+
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
 
