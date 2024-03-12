@@ -5,33 +5,37 @@ import "../interfaces/clearing/IClearing.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
+import {ISystemVariables} from "../interfaces/ISystemVariables.sol";
 
 abstract contract ClearingCalculations is IClearingCalculations {
     IUserManager private userManager;
+    ISystemVariables private systemVariables;
 
     PendingDeposits public pendingDeposits;
     PendingWithdrawals public pendingWithdrawals;
 
     uint256 private _pendingRequestProcessedIndexCount;
 
-    constructor(IUserManager userManger_) {
+    constructor(IUserManager userManger_, ISystemVariables systemVariables_) {
         userManager = userManger_;
+        systemVariables = systemVariables_;
     }
 
     function calculatePendingRequestsPriority(uint256 batchSize) external {
-        // TODO: check epoch id
         uint256 batchSize_ = getRemainingPendingRequestsPriorityCalculation() >= batchSize
             ? batchSize
             : getRemainingPendingRequestsPriorityCalculation();
         uint256 startingIndexInclusive = _pendingRequestProcessedIndexCount + 1;
         uint256 endingIndexInclusive = startingIndexInclusive + batchSize_ - 1;
+        uint256 epochId = systemVariables.getCurrentEpochNumber();
 
-        for (uint256 i = startingIndexInclusive + 1; i <= endingIndexInclusive; ++i) {
+        for (uint256 i = startingIndexInclusive; i <= endingIndexInclusive; ++i) {
             uint256 userRequestNftId = tokenByIndex(i);
             address pendingRequestOwner = ownerOf(userRequestNftId);
             (, uint256 ownerLoyaltyLevel) = userManager.getUserLoyaltyLevel(pendingRequestOwner);
             if (isDepositNft(userRequestNftId)) {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
+                if (depositNftDetails.epochId != epochId) break;
                 (address trancheAddress,) = decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
 
@@ -41,6 +45,7 @@ abstract contract ClearingCalculations is IClearingCalculations {
                     depositNftDetails.assetAmount;
             } else {
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
+                if (withdrawalNftDetails.epochId != epochId) break;
                 (address trancheAddress,) = decomposeWithdrawalId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
 
