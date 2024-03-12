@@ -16,8 +16,8 @@ struct PendingWithdrawals {
 
 error PendingRequestsPriorityCalculationIsPending();
 
-interface IClearingCalculations {
-    function calculatePendingRequestsPriority() external;
+interface ICalculatePendingRequestsPriority {
+    function calculatePendingRequestsPriority(uint256 batchSize) external;
 
-    function isPendingRequestsPriorityCalculationPending() external returns (bool);
+    function getRemainingPendingRequestsPriorityCalculation() external view returns (uint256);
 }

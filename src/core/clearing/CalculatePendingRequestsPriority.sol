@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "../interfaces/clearing/IClearing.sol";
+import "../interfaces/clearing/ICalculatePendingRequestsPriority.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import {ISystemVariables} from "../interfaces/ISystemVariables.sol";
 
-abstract contract ClearingCalculations is IClearingCalculations {
+abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsPriority {
     IUserManager private userManager;
     ISystemVariables private systemVariables;
 
@@ -30,8 +30,8 @@ abstract contract ClearingCalculations is IClearingCalculations {
         uint256 epochId = systemVariables.getCurrentEpochNumber();
 
         for (uint256 i = startingIndexInclusive; i <= endingIndexInclusive; ++i) {
-            uint256 userRequestNftId = tokenByIndex(i);
-            address pendingRequestOwner = ownerOf(userRequestNftId);
+            uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
+            address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
             (, uint256 ownerLoyaltyLevel) = userManager.getUserLoyaltyLevel(pendingRequestOwner);
             if (isDepositNft(userRequestNftId)) {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
@@ -62,22 +62,20 @@ abstract contract ClearingCalculations is IClearingCalculations {
     //*** Helper Methods ***/
 
     function getRemainingPendingRequestsPriorityCalculation() public view returns (uint256) {
-        return totalSupply() - _pendingRequestProcessedIndexCount;
+        return _getTotalPendingRequests() - _pendingRequestProcessedIndexCount;
     }
 
     //*** Virtual Methods ***/
 
-    //getTotalPendingRequests()
-    function totalSupply() public view virtual returns (uint256);
+    // ERC721
+    function _getTotalPendingRequests() internal view virtual returns (uint256);
 
-    // getPendingRequestIdByIndex
-    function tokenByIndex(uint256 index) public view virtual returns (uint256);
+    function _getPendingRequestIdByIndex(uint256 index) internal view virtual returns (uint256);
 
-    // isPendingRequestDeposit
+    function _getPendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
+
+    // Pending Pool
     function isDepositNft(uint256 nftId) public pure virtual returns (bool);
-
-    // getPendingRequestOwner
-    function ownerOf(uint256 tokenId) public view virtual returns (address);
 
     function decomposeDepositId(uint256 id) public pure virtual returns (address tranche, uint256 depositId);
 
