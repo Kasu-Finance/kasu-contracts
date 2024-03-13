@@ -125,6 +125,7 @@ contract UserManager is IUserManager {
         rKSUInUSDC = rKSUAmount * ksuPrice / KSU_PRICE_MULTIPLIER / 1e12;
     }
 
+    // TODO: add access control
     function userRequestedDeposit(address user, address lendingPool) external {
         if (!isUser[user]) {
             allUsers.push(user);

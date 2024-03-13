@@ -17,7 +17,11 @@ struct PendingWithdrawals {
 error PendingRequestsPriorityCalculationIsPending();
 
 interface ICalculatePendingRequestsPriority {
-    function calculatePendingRequestsPriority(uint256 batchSize) external;
+    function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) external;
 
-    function getRemainingPendingRequestsPriorityCalculation() external view returns (uint256);
+    function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
+
+    function getPendingDeposits(uint256 targetEpoch) external returns (PendingDeposits memory);
+
+    function getPendingWithdrawals(uint256 targetEpoch) external returns (PendingWithdrawals memory);
 }

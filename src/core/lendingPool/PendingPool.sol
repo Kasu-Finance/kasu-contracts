@@ -449,7 +449,7 @@ contract PendingPool is
 
     // OVERRIDES
 
-    function _getTotalPendingRequests() internal view override returns (uint256) {
+    function _getCurrentEpochTotalPendingRequests() internal view override returns (uint256) {
         return totalSupply();
     }
 
@@ -461,8 +461,16 @@ contract PendingPool is
         return ownerOf(tokenId);
     }
 
-    function _getTrancheIndex(address tranche) internal override returns (uint256) {
+    function _getTrancheIndex(address tranche) internal view override returns (uint256) {
         return _getOwnLendingPool().getTrancheIndex(tranche);
+    }
+
+    function _getTrancheCount() internal view override returns (uint256) {
+        return _getOwnLendingPool().lendingPoolInfo().trancheAddresses.length;
+    }
+
+    function _getTranche(uint256 index) internal view override returns (address) {
+        return _getOwnLendingPool().lendingPoolInfo().trancheAddresses[index];
     }
 
     // MODIFIERS

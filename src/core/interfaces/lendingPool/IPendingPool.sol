@@ -2,6 +2,7 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ICalculatePendingRequestsPriority} from "../clearing/ICalculatePendingRequestsPriority.sol";
 
 enum RequestedFrom {
     USER,
@@ -32,7 +33,7 @@ struct ForceWithdrawalInput {
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
  */
-interface IPendingPool is IERC721 {
+interface IPendingPool is IERC721, ICalculatePendingRequestsPriority {
     // VIEWS
     function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
     function trancheWithdrawalNftDetails(uint256 wNftId)
