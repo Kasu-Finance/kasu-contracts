@@ -49,9 +49,6 @@ contract ClearingCalculationTest is Test {
                 assertEq(
                     tranchePriorityDepositsAccepted[i][j][i], input.pendingDeposits.tranchePriorityDepositsAmounts[i][j]
                 );
-
-                console2.log("tranche %d priority %d accepted: %d", i, j, tranchePriorityDepositsAccepted[i][j][i]);
-                console2.log("tranche priority deposit", input.pendingDeposits.tranchePriorityDepositsAmounts[i][j]);
             }
         }
     }
