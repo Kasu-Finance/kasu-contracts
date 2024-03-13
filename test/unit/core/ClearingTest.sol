@@ -23,8 +23,7 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 wNftId_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 40 * 10 ** 18);
         uint256 wNftId1_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
-        // TODO: change epoch
-        uint256 currentEpoch = 0;
+        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
         // ### ACT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
@@ -32,9 +31,15 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
-        PendingWithdrawals memory pendingWithdrawals = pendingPool.getPendingWithdrawals(currentEpoch);
-
         assertEq(pendingDeposits.totalDepositAmount, 110 * 10 ** 6);
+        assertEq(pendingDeposits.trancheDepositsAmounts.length, 3);
+        assertEq(pendingDeposits.trancheDepositsAmounts[0], 60 * 10 ** 6);
+        assertEq(pendingDeposits.trancheDepositsAmounts[1], 50 * 10 ** 6);
+        assertEq(pendingDeposits.trancheDepositsAmounts[2], 0 * 10 ** 6);
+
+        PendingWithdrawals memory pendingWithdrawals = pendingPool.getPendingWithdrawals(currentEpoch);
         assertEq(pendingWithdrawals.totalWithdrawalsAmount, 240 * 10 ** 6);
+
+        //TODO: access control to functions that need to be stopped
     }
 }

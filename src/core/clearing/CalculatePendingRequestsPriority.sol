@@ -11,7 +11,7 @@ import "forge-std/console2.sol";
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
     PendingWithdrawals pendingWithdrawals;
-    uint256 processedIndexCount;
+    uint256 nextIndexToProcess;
     uint256 status; //0: uninitialised, 1: started, 2:ended
 }
 
@@ -29,7 +29,7 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
     function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) external {
         uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
         uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
-        uint256 startingIndexInclusive = pendingRequestsPerEpoch[targetEpoch].processedIndexCount + 1;
+        uint256 startingIndexInclusive = pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endingIndexInclusive = startingIndexInclusive + batchSize_ - 1;
 
         _initialisePendingRequests(targetEpoch);
@@ -71,11 +71,11 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
                 pendingWithdrawals.totalWithdrawalsAmount += assetAmount;
                 pendingWithdrawals.priorityWithdrawalAmounts[withdrawLoyaltyLevel] += assetAmount;
             }
-            pendingRequestsPerEpoch[targetEpoch].processedIndexCount = i;
+            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = i;
         }
 
         if (
-            pendingRequestsPerEpoch[targetEpoch].processedIndexCount >= _getCurrentEpochTotalPendingRequests()
+            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess >= _getCurrentEpochTotalPendingRequests()
                 && pendingRequestsPerEpoch[targetEpoch].status != 2
         ) {
             pendingRequestsPerEpoch[targetEpoch].status = 2;
@@ -83,7 +83,7 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        return _getCurrentEpochTotalPendingRequests() - pendingRequestsPerEpoch[targetEpoch].processedIndexCount;
+        return _getCurrentEpochTotalPendingRequests() - pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
     function getPendingDeposits(uint256 targetEpoch) external returns (PendingDeposits memory) {
@@ -109,24 +109,23 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
 
     function _initialisePendingRequests(uint256 targetEpoch) private {
         if (pendingRequestsPerEpoch[targetEpoch].status != 0) return;
-
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
         // pending deposits
         pendingRequestsPerEpoch[targetEpoch].pendingDeposits.totalDepositAmount = 0;
+        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](_getTrancheCount());
+        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts =
+            new uint256[][](_getTrancheCount());
         for (uint256 i = 0; i < _getTrancheCount(); ++i) {
-            pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts.push(0);
-            for (uint256 j = 0; j < loyaltyLevelsCount; ++j) {
-                pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts[i].push(0);
-            }
+            pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts[i] =
+                new uint256[](loyaltyLevelsCount);
         }
 
         // pending withdrawals
         pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.totalWithdrawalsAmount = 0;
         // loyaltyLevelsCount + 1: forced withdrawals, withdrawals waiting >= 5 epochs
-        for (uint256 i = 0; i < loyaltyLevelsCount + 1; ++i) {
-            pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.priorityWithdrawalAmounts.push(0);
-        }
+        pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.priorityWithdrawalAmounts =
+            new uint256[](loyaltyLevelsCount + 1);
 
         pendingRequestsPerEpoch[targetEpoch].status = 1;
     }
