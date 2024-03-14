@@ -6,6 +6,7 @@ interface IUserManager {
     function getUserLendingPools(address user) external returns (address[] memory lendingPools);
     function hasUserRKSU(address user) external view returns (bool);
     function canUserDepositInJuniorTranche(address user) external view returns (bool);
+    function userRequestedDeposit(address user, address lendingPool) external;
 
     // EVENTS
     event UserLoyaltyLevelUpdated(address indexed user, uint256 indexed epoch, uint256 loyaltyLevel);

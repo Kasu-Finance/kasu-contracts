@@ -25,6 +25,8 @@ contract ClearingTest is LendingPoolTestUtils {
 
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
+        _lock(alice, 200 ether, lockPeriod30);
+
         // ### ACT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
         pendingPool.calculatePendingRequestsPriority(10, currentEpoch);
@@ -36,6 +38,8 @@ contract ClearingTest is LendingPoolTestUtils {
         assertEq(pendingDeposits.trancheDepositsAmounts[0], 60 * 10 ** 6);
         assertEq(pendingDeposits.trancheDepositsAmounts[1], 50 * 10 ** 6);
         assertEq(pendingDeposits.trancheDepositsAmounts[2], 0 * 10 ** 6);
+
+        //TODO: test loyalty levels
 
         PendingWithdrawals memory pendingWithdrawals = pendingPool.getPendingWithdrawals(currentEpoch);
         assertEq(pendingWithdrawals.totalWithdrawalsAmount, 240 * 10 ** 6);

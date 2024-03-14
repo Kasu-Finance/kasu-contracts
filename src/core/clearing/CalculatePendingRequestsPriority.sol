@@ -42,7 +42,7 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
         for (uint256 i = startingIndexInclusive; i <= endingIndexInclusive; ++i) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
-            (, uint256 ownerLoyaltyLevel) = _getUserLoyaltyLevels(pendingRequestOwner);
+            (, uint256 ownerLoyaltyLevel) = _getUserLoyaltyLevel(pendingRequestOwner);
             if (isDepositNft(userRequestNftId)) {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
                 if (depositNftDetails.epochId != targetEpoch) break;
@@ -59,6 +59,7 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
 
                 uint256 withdrawLoyaltyLevel = ownerLoyaltyLevel;
                 if (
+                    // TODO: make 5 a variable
                     targetEpoch - withdrawalNftDetails.epochId >= 5
                         || withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM
                 ) {
@@ -86,37 +87,39 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
         return _getCurrentEpochTotalPendingRequests() - pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
-    function getPendingDeposits(uint256 targetEpoch) external returns (PendingDeposits memory) {
+    function getPendingDeposits(uint256 targetEpoch) external view returns (PendingDeposits memory) {
         return pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
     }
 
-    function getPendingWithdrawals(uint256 targetEpoch) external returns (PendingWithdrawals memory) {
+    function getPendingWithdrawals(uint256 targetEpoch) external view returns (PendingWithdrawals memory) {
         return pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
     }
 
     //*** Helper Methods ***/
 
-    function _getUserLoyaltyLevels(address pendingRequestOwner)
+    function _getUserLoyaltyLevel(address pendingRequestOwner)
         private
+        view
         returns (uint256 currentEpoch, uint256 loyaltyLevel)
     {
         return _userManager.getUserLoyaltyLevel(pendingRequestOwner);
     }
 
-    function _getLoyaltyLevelCount() private returns (uint256) {
-        return _systemVariables.loyaltyThresholds().length;
+    function _getLoyaltyLevelCount() private view returns (uint256) {
+        return _systemVariables.loyaltyThresholds().length + 1;
     }
 
     function _initialisePendingRequests(uint256 targetEpoch) private {
         if (pendingRequestsPerEpoch[targetEpoch].status != 0) return;
+        uint256 trancheCount = _getTrancheCount();
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
         // pending deposits
         pendingRequestsPerEpoch[targetEpoch].pendingDeposits.totalDepositAmount = 0;
-        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](_getTrancheCount());
+        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
         pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts =
-            new uint256[][](_getTrancheCount());
-        for (uint256 i = 0; i < _getTrancheCount(); ++i) {
+            new uint256[][](trancheCount);
+        for (uint256 i = 0; i < trancheCount; ++i) {
             pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts[i] =
                 new uint256[](loyaltyLevelsCount);
         }

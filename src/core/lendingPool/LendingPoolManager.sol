@@ -61,6 +61,8 @@ contract LendingPoolManager is
     {
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
+        // notify user manager to be able to calculate loyalty levels
+        // userManager.userRequestedDeposit(msg.sender, lendingPool);
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
     }
 

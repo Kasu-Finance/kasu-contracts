@@ -110,7 +110,7 @@ contract UserManager is IUserManager {
             rKSUDepositRatio = type(uint256).max;
         }
 
-        // calculate userloyalty level
+        // calculate user loyalty level
         for (uint256 i; i < params.loyaltyThresholds.length; ++i) {
             if (rKSUDepositRatio >= params.loyaltyThresholds[i]) {
                 loyaltyLevel++;

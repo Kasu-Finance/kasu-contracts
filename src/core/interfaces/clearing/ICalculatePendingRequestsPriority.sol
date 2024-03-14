@@ -21,7 +21,7 @@ interface ICalculatePendingRequestsPriority {
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
 
-    function getPendingDeposits(uint256 targetEpoch) external returns (PendingDeposits memory);
+    function getPendingDeposits(uint256 targetEpoch) external view returns (PendingDeposits memory);
 
-    function getPendingWithdrawals(uint256 targetEpoch) external returns (PendingWithdrawals memory);
+    function getPendingWithdrawals(uint256 targetEpoch) external view returns (PendingWithdrawals memory);
 }
