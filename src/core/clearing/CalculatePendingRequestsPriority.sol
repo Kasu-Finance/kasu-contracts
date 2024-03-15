@@ -7,7 +7,7 @@ import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../../shared/CommonErrors.sol";
-//import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
@@ -16,10 +16,7 @@ struct PendingRequestsEpoch {
     uint256 status; //0: uninitialised, 1: started, 2:ended
 }
 
-// TODO: Linearization of inheritance graph impossible
-//abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsPriority, Initializable {
-
-abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsPriority {
+abstract contract CalculatePendingRequestsPriority is Initializable, ICalculatePendingRequestsPriority {
     IUserManager private immutable _userManager;
     ISystemVariables private immutable _systemVariables;
 
@@ -30,12 +27,9 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
     constructor(IUserManager userManger_, ISystemVariables systemVariables_) {
         _userManager = userManger_;
         _systemVariables = systemVariables_;
-        //_disableInitializers();
     }
 
-    //
-    //    function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
-    function __CalculatePendingRequestsPriority__init() internal {
+    function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
         REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
     }
 
@@ -83,6 +77,7 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
                 }
 
                 ILendingPoolTranche tranche = ILendingPoolTranche(withdrawalNftDetails.tranche);
+                // TODO: convert at the end
                 uint256 assetAmount = tranche.convertToAssets(withdrawalNftDetails.sharesAmount);
 
                 pendingWithdrawals.totalWithdrawalsAmount += assetAmount;
