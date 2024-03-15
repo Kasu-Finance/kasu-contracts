@@ -31,9 +31,15 @@ contract ClearingTest is LendingPoolTestUtils {
         _requestDeposit(userSeven, lpd.lendingPool, lpd.tranches[1], 60 * 1e6);
 
         // tranche 3
-        _requestDeposit(userEight, lpd.lendingPool, lpd.tranches[2], 80 * 1e6);
+        uint256 dNftId_userEight = _requestDeposit(userEight, lpd.lendingPool, lpd.tranches[2], 80 * 1e6);
         _requestDeposit(userNine, lpd.lendingPool, lpd.tranches[2], 20 * 1e6);
         _requestDeposit(userTen, lpd.lendingPool, lpd.tranches[2], 180 * 1e6);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_userEight, 10 * 1e6);
+
+        ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
+        input1[0] = ForceWithdrawalInput(lpd.tranches[2], userEight, 10 * 10 ** 18);
+        _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input1)[0];
 
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
@@ -55,11 +61,11 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
-        assertEq(pendingDeposits.totalDepositAmount, 1110 * 1e6);
+        assertEq(pendingDeposits.totalDepositAmount, 1100 * 1e6);
         assertEq(pendingDeposits.trancheDepositsAmounts.length, 3);
         assertEq(pendingDeposits.trancheDepositsAmounts[0], 620 * 1e6);
         assertEq(pendingDeposits.trancheDepositsAmounts[1], 210 * 1e6);
-        assertEq(pendingDeposits.trancheDepositsAmounts[2], 280 * 1e6);
+        assertEq(pendingDeposits.trancheDepositsAmounts[2], 270 * 1e6);
 
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[0][0], 50 * 1e6);
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[0][1], 560 * 1e6);
@@ -69,15 +75,16 @@ contract ClearingTest is LendingPoolTestUtils {
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[1][1], 0);
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[1][2], 0);
 
-        assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][0], 280 * 1e6);
+        assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][0], 270 * 1e6);
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][1], 0);
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][2], 0);
 
         PendingWithdrawals memory pendingWithdrawals = pendingPool.getPendingWithdrawals(currentEpoch);
-        assertEq(pendingWithdrawals.totalWithdrawalsAmount, 240 * 1e6);
+        assertEq(pendingWithdrawals.totalWithdrawalsAmount, 250 * 1e6);
 
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[0], 200 * 1e6);
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[1], 40 * 1e6);
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[2], 0);
+        assertEq(pendingWithdrawals.priorityWithdrawalAmounts[3], 10 * 1e6);
     }
 }

@@ -73,7 +73,7 @@ abstract contract CalculatePendingRequestsPriority is Initializable, ICalculateP
                     targetEpoch - withdrawalNftDetails.epochId >= REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION
                         || withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM
                 ) {
-                    withdrawLoyaltyLevel = ownerLoyaltyLevel + 1;
+                    withdrawLoyaltyLevel = loyaltyLevelCount;
                 }
 
                 ILendingPoolTranche tranche = ILendingPoolTranche(withdrawalNftDetails.tranche);
