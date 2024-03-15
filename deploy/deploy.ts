@@ -137,19 +137,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ]),
     );
 
-    const lendingPoolManagerDeployment = await deployTransparentProxy(
-        'LendingPoolManager',
-        deployOptions(deployer, [
-            mockUsdcDeployment.address,
-            kasuControllerDeployment.address,
-        ]),
-    );
-
     const userManagerDeployment = await deployTransparentProxy(
         'UserManager',
         deployOptions(deployer, [
             systemVariablesDeployment.address,
             ksuLockingDeployment.address,
+        ]),
+    );
+
+    const lendingPoolManagerDeployment = await deployTransparentProxy(
+        'LendingPoolManager',
+        deployOptions(deployer, [
+            mockUsdcDeployment.address,
+            kasuControllerDeployment.address,
+            userManagerDeployment.address,
         ]),
     );
 

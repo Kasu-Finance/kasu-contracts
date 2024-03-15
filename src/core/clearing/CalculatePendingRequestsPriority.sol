@@ -6,7 +6,8 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/ISystemVariables.sol";
-import "forge-std/console2.sol";
+import "../../shared/CommonErrors.sol";
+//import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
@@ -15,18 +16,34 @@ struct PendingRequestsEpoch {
     uint256 status; //0: uninitialised, 1: started, 2:ended
 }
 
+// TODO: Linearization of inheritance graph impossible
+//abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsPriority, Initializable {
+
 abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsPriority {
     IUserManager private immutable _userManager;
     ISystemVariables private immutable _systemVariables;
+
+    uint256 private REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION;
 
     mapping(uint256 => PendingRequestsEpoch) private pendingRequestsPerEpoch;
 
     constructor(IUserManager userManger_, ISystemVariables systemVariables_) {
         _userManager = userManger_;
         _systemVariables = systemVariables_;
+        //_disableInitializers();
+    }
+
+    //
+    //    function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
+    function __CalculatePendingRequestsPriority__init() internal {
+        REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
     }
 
     function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) external {
+        if (!_systemVariables.isClearingTime()) {
+            revert CanOnlyExecuteDuringClearingTime();
+        }
+
         uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
         uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
         uint256 startingIndexInclusive = pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
@@ -42,7 +59,7 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
         for (uint256 i = startingIndexInclusive; i <= endingIndexInclusive; ++i) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
-            (, uint256 ownerLoyaltyLevel) = _getUserLoyaltyLevel(pendingRequestOwner);
+            uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
             if (isDepositNft(userRequestNftId)) {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
                 if (depositNftDetails.epochId != targetEpoch) break;
@@ -59,11 +76,10 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
 
                 uint256 withdrawLoyaltyLevel = ownerLoyaltyLevel;
                 if (
-                    // TODO: make 5 a variable
-                    targetEpoch - withdrawalNftDetails.epochId >= 5
+                    targetEpoch - withdrawalNftDetails.epochId >= REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION
                         || withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM
                 ) {
-                    withdrawLoyaltyLevel = loyaltyLevelCount + 1;
+                    withdrawLoyaltyLevel = ownerLoyaltyLevel + 1;
                 }
 
                 ILendingPoolTranche tranche = ILendingPoolTranche(withdrawalNftDetails.tranche);
@@ -97,12 +113,8 @@ abstract contract CalculatePendingRequestsPriority is ICalculatePendingRequestsP
 
     //*** Helper Methods ***/
 
-    function _getUserLoyaltyLevel(address pendingRequestOwner)
-        private
-        view
-        returns (uint256 currentEpoch, uint256 loyaltyLevel)
-    {
-        return _userManager.getUserLoyaltyLevel(pendingRequestOwner);
+    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) private view returns (uint256) {
+        return _userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
     }
 
     function _getLoyaltyLevelCount() private view returns (uint256) {

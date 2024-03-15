@@ -8,6 +8,7 @@ import "../AssetFunctionsBase.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../interfaces/IKasuAllowList.sol";
+import "../interfaces/IUserManager.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
@@ -26,15 +27,21 @@ contract LendingPoolManager is
 
     ILendingPoolFactory private lendingPoolFactory;
     IKasuAllowList private kasuAllowList;
+    IUserManager private userManager;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
         KasuAccessControllable(controller_)
     {}
 
-    function initialize(ILendingPoolFactory lendingPoolFactory_, IKasuAllowList kasuAllowList_) public initializer {
+    function initialize(
+        ILendingPoolFactory lendingPoolFactory_,
+        IKasuAllowList kasuAllowList_,
+        IUserManager userManager_
+    ) public initializer {
         lendingPoolFactory = lendingPoolFactory_;
         kasuAllowList = kasuAllowList_;
+        userManager = userManager_;
     }
 
     // #### CREATE POOL #### //
@@ -62,7 +69,7 @@ contract LendingPoolManager is
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
-        // userManager.userRequestedDeposit(msg.sender, lendingPool);
+        userManager.userRequestedDeposit(msg.sender, lendingPool);
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
     }
 

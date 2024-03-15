@@ -83,6 +83,7 @@ contract PendingPool is
     function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC721_init(name_, symbol_);
         __LendingPoolHelpers_init(lendingPool_);
+        __CalculatePendingRequestsPriority__init();
     }
 
     function setUpTranches() public {
