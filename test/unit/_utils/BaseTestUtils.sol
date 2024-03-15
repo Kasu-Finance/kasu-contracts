@@ -19,7 +19,7 @@ abstract contract BaseTestUtils is Test {
     address internal userNine = address(0x9);
     address internal userTen = address(0xA);
 
-    address internal userNotAllowed = address(0x5);
+    address internal userNotAllowed = address(0xF);
 
     ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
 
