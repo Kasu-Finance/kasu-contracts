@@ -6,6 +6,7 @@ import "./interfaces/ISystemVariables.sol";
 import "./interfaces/lendingPool/ILendingPool.sol";
 import "./interfaces/lendingPool/IPendingPool.sol";
 import "../locking/interfaces/IKSULocking.sol";
+import "../shared/CommonErrors.sol";
 import "./Constants.sol";
 
 struct LoyaltyGlobalParameters {
@@ -24,11 +25,21 @@ contract UserManager is IUserManager {
     mapping(address user => address[] lendingPools) private _userLendingPools;
     mapping(address lendingPool => mapping(address user => bool)) public isUserPartOfLendingPool;
 
-    mapping(address user => mapping(uint256 epochId => uint256 loyaltyLevel)) public userEpochLoyaltyLevel;
+    mapping(address user => mapping(uint256 epochId => uint256 loyaltyLevel)) public _userEpochLoyaltyLevel;
+
+    mapping(uint256 epochId => EpochUserLoyaltyProcessing) private _epochUserLoyaltyProcessing;
 
     constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_) {
         systemVariables = systemVariables_;
         ksuLocking = ksuLocking_;
+    }
+
+    function getCalculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint256) {
+        return _userEpochLoyaltyLevel[user][epoch];
+    }
+
+    function getEpochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory) {
+        return _epochUserLoyaltyProcessing[epoch];
     }
 
     function getUserLendingPools(address user) external view returns (address[] memory lendingPools) {
@@ -47,17 +58,54 @@ contract UserManager is IUserManager {
         }
     }
 
-    // TODO: only at clearing time
-    function _updateUserLoyaltyLevel(address user) internal returns (uint256 currentEpoch, uint256 loyaltyLevel) {
+    function batchCalculateUserLoyaltyLevels(uint256 batchSize) external {
+        if (!systemVariables.isClearingTime()) {
+            revert CanOnlyExecuteDuringClearingTime();
+        }
+
+        if (batchSize == 0) {
+            return;
+        }
+
         LoyaltyGlobalParameters memory params = _getLoyaltyParameters();
-        currentEpoch = params.currentEpoch;
-        loyaltyLevel = _getUserLoyaltyLevel(user, params);
 
-        // update user loyalty level
-        userEpochLoyaltyLevel[user][currentEpoch] = loyaltyLevel;
+        if (!_epochUserLoyaltyProcessing[params.currentEpoch].didStart) {
+            _epochUserLoyaltyProcessing[params.currentEpoch].userCount = allUsers.length;
+            _epochUserLoyaltyProcessing[params.currentEpoch].didStart = true;
+        }
 
-        // emit event
-        emit UserLoyaltyLevelUpdated(user, currentEpoch, loyaltyLevel);
+        uint256 startUser = _epochUserLoyaltyProcessing[params.currentEpoch].processedUsersCount;
+        uint256 endUser = startUser + batchSize;
+
+        if (endUser > _epochUserLoyaltyProcessing[params.currentEpoch].userCount) {
+            endUser = _epochUserLoyaltyProcessing[params.currentEpoch].userCount;
+        }
+
+        if (startUser == endUser) {
+            return;
+        }
+
+        for (uint256 i = startUser; i < endUser; ++i) {
+            address user = allUsers[i];
+
+            uint256 loyaltyLevel = _getUserLoyaltyLevel(user, params);
+
+            // update user loyalty level
+            _userEpochLoyaltyLevel[user][params.currentEpoch] = loyaltyLevel;
+
+            emit UserLoyaltyLevelUpdated(user, params.currentEpoch, loyaltyLevel);
+        }
+
+        _epochUserLoyaltyProcessing[params.currentEpoch].processedUsersCount = endUser;
+
+        if (_epochUserLoyaltyProcessing[params.currentEpoch].userCount == endUser) {
+            emit UserLoyaltyLevelsForEpochProcessed(params.currentEpoch, endUser);
+        }
+    }
+
+    function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool) {
+        return _epochUserLoyaltyProcessing[epoch].didStart
+            && _epochUserLoyaltyProcessing[epoch].processedUsersCount == _epochUserLoyaltyProcessing[epoch].userCount;
     }
 
     function _getLoyaltyParameters() private view returns (LoyaltyGlobalParameters memory params) {
@@ -138,6 +186,7 @@ contract UserManager is IUserManager {
     }
 
     function _removeLendingPoolFromUser(address user, address lendingPool) internal {
+        // TODO: not during clearing period
         for (uint256 i; i < _userLendingPools[user].length; ++i) {
             if (_userLendingPools[user][i] == lendingPool) {
                 _userLendingPools[user][i] = _userLendingPools[user][_userLendingPools[user].length - 1];

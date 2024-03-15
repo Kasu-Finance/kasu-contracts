@@ -32,3 +32,5 @@ error AmountShouldBeGreaterThanZero();
 error NonTransferable();
 
 error CannotExecuteDuringClearingTime();
+
+error CanOnlyExecuteDuringClearingTime();
