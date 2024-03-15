@@ -14,6 +14,7 @@ interface IUserManager {
         returns (uint256 loyaltyLevel);
     function getEpochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory);
     function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool);
+    function batchCalculateUserLoyaltyLevels(uint256 batchSize) external;
     function getUserLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint256 loyaltyLevel);
     function getUserLendingPools(address user) external returns (address[] memory lendingPools);
     function hasUserRKSU(address user) external view returns (bool);
