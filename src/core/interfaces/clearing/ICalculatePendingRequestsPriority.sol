@@ -52,4 +52,12 @@ interface ICalculatePendingRequestsPriority {
      * @return Pending withdrawals grouped by priority.
      */
     function getPendingWithdrawals(uint256 targetEpoch) external view returns (PendingWithdrawals memory);
+
+    //*** ERRORS ***//
+
+    /**
+     * @dev Indicates task pending requests priority calculation task has already been processed
+     * @param targetEpoch The epoch task pending requests priority calculation task that has been processed
+     */
+    error PendingRequestsPriorityCalculationAlreadyProcessed(uint256 targetEpoch);
 }

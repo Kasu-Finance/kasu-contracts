@@ -12,6 +12,8 @@ import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
     PendingWithdrawals pendingWithdrawals;
+    // array by priority and tranche
+    uint256[][] tempPriorityTrancheWithdrawalAmounts;
     uint256 nextIndexToProcess;
     uint256 status; //0: uninitialised, 1: started, 2:ended
 }
@@ -36,6 +38,9 @@ abstract contract CalculatePendingRequestsPriority is Initializable, ICalculateP
     function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) external {
         if (!_systemVariables.isClearingTime()) {
             revert CanOnlyExecuteDuringClearingTime();
+        }
+        if (pendingRequestsPerEpoch[targetEpoch].status == 2) {
+            revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
         uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
