@@ -16,7 +16,7 @@ struct PendingWithdrawals {
 
 error PendingRequestsPriorityCalculationIsPending();
 
-interface ICalculatePendingRequestsPriority {
+interface IPendingRequestsPriorityCalculation {
     /**
      * @notice Sets priorities for an amount of pending deposits and withdrawals.
      * @dev

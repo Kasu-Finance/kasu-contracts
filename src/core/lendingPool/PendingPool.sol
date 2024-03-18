@@ -13,7 +13,7 @@ import "./LendingPoolStoppable.sol";
 import "../interfaces/IUserManager.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
-import "../clearing/CalculatePendingRequestsPriority.sol";
+import "../clearing/PendingRequestsPriorityCalculation.sol";
 
 /**
  * @dev
@@ -28,7 +28,7 @@ contract PendingPool is
     AssetFunctionsBase,
     LendingPoolHelpers,
     LendingPoolStoppable,
-    CalculatePendingRequestsPriority
+    PendingRequestsPriorityCalculation
 {
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;
@@ -67,7 +67,7 @@ contract PendingPool is
     )
         AssetFunctionsBase(underlyingAsset_)
         LendingPoolHelpers(lendingPoolManager_)
-        CalculatePendingRequestsPriority(userManger_, systemVariables_)
+        PendingRequestsPriorityCalculation(userManger_, systemVariables_)
     {
         systemVariables = systemVariables_;
         userManager = userManger_;
@@ -100,7 +100,7 @@ contract PendingPool is
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view
-        override(IPendingPool, CalculatePendingRequestsPriority)
+        override(IPendingPool, PendingRequestsPriorityCalculation)
         returns (DepositNftDetails memory depositNftDetails)
     {
         return _trancheDepositNftDetails[dNftId];
@@ -109,7 +109,7 @@ contract PendingPool is
     function trancheWithdrawalNftDetails(uint256 wNftId)
         public
         view
-        override(IPendingPool, CalculatePendingRequestsPriority)
+        override(IPendingPool, PendingRequestsPriorityCalculation)
         returns (WithdrawalNftDetails memory withdrawalNftDetails)
     {
         return _trancheWithdrawalNftDetails[wNftId];

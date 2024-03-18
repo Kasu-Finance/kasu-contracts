@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "../interfaces/clearing/ICalculatePendingRequestsPriority.sol";
+import "../interfaces/clearing/IPendingRequestsPriorityCalculation.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
@@ -18,7 +18,7 @@ struct PendingRequestsEpoch {
     uint256 status; //0: uninitialised, 1: started, 2:ended
 }
 
-abstract contract CalculatePendingRequestsPriority is Initializable, ICalculatePendingRequestsPriority {
+abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingRequestsPriorityCalculation {
     IUserManager private immutable _userManager;
     ISystemVariables private immutable _systemVariables;
 
