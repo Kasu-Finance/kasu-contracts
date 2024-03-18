@@ -2,13 +2,13 @@
 pragma solidity 0.8.23;
 
 import "forge-std/Test.sol";
-import "../../../src/core/clearing/ClearingCalculation.sol";
+import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
 
 contract ClearingCalculationTest is Test {
-    ClearingCalculation clearingCalculation;
+    AcceptedRequestsCalculation clearingCalculation;
 
     function setUp() public {
-        clearingCalculation = new ClearingCalculation();
+        clearingCalculation = new AcceptedRequestsCalculation();
     }
 
     function test_doClearing_testDepositsSameAsRatios() public {
@@ -41,7 +41,7 @@ contract ClearingCalculationTest is Test {
         input.pendingDeposits.tranchePriorityDepositsAmounts[2][2] = 10_000 * 1e6; // senior priority 2
 
         // ACT
-        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.doClearing(input);
+        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT
         for (uint256 i; i < tranchePriorityDepositsAccepted.length; ++i) {
@@ -84,7 +84,7 @@ contract ClearingCalculationTest is Test {
         input.pendingDeposits.tranchePriorityDepositsAmounts[2][2] = 5_000 * 1e6; // senior priority 2
 
         // ACT
-        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.doClearing(input);
+        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT in the order as the deposits are accepted
         // junior deposits to junior
@@ -146,7 +146,7 @@ contract ClearingCalculationTest is Test {
         input.pendingDeposits.tranchePriorityDepositsAmounts[2][2] = 5_000 * 1e6; // senior priority 2
 
         // ACT
-        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.doClearing(input);
+        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT in the order as the deposits are accepted
         // junior deposits to junior
@@ -208,7 +208,7 @@ contract ClearingCalculationTest is Test {
         input.pendingDeposits.tranchePriorityDepositsAmounts[2][2] = 5_000 * 1e6; // senior priority 2
 
         // ACT
-        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.doClearing(input);
+        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT all values are 0
         for (uint256 i; i < tranchePriorityDepositsAccepted.length; ++i) {
@@ -258,7 +258,7 @@ contract ClearingCalculationTest is Test {
         input.pendingDeposits.tranchePriorityDepositsAmounts[1][2] = 15_000 * 1e6; // senior priority 2
 
         // ACT
-        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.doClearing(input);
+        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT in the order as the deposits are accepted
         // junior deposits to junior
@@ -310,7 +310,7 @@ contract ClearingCalculationTest is Test {
         input.pendingDeposits.tranchePriorityDepositsAmounts[0][2] = 35_000 * 1e6; // senior priority 2
 
         // ACT
-        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.doClearing(input);
+        (uint256[][][] memory tranchePriorityDepositsAccepted,) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT in the order as the deposits are accepted
         // deposits to senior
@@ -338,7 +338,7 @@ contract ClearingCalculationTest is Test {
         input.pendingWithdrawals.priorityWithdrawalAmounts[3] = 40_000 * 1e6; // priority 3 withdrawal
 
         // ACT
-        (, uint256[] memory acceptedPriorityWithdrawalAmounts) = clearingCalculation.doClearing(input);
+        (, uint256[] memory acceptedPriorityWithdrawalAmounts) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT
         for (uint256 i; i < acceptedPriorityWithdrawalAmounts.length; ++i) {
@@ -362,7 +362,7 @@ contract ClearingCalculationTest is Test {
         input.pendingWithdrawals.priorityWithdrawalAmounts[3] = 55_000 * 1e6; // priority 3 withdrawal
 
         // ACT
-        (, uint256[] memory acceptedPriorityWithdrawalAmounts) = clearingCalculation.doClearing(input);
+        (, uint256[] memory acceptedPriorityWithdrawalAmounts) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT
         assertEq(acceptedPriorityWithdrawalAmounts[0], 0);
@@ -387,7 +387,7 @@ contract ClearingCalculationTest is Test {
         input.pendingWithdrawals.priorityWithdrawalAmounts[3] = 55_000 * 1e6; // priority 3 withdrawal
 
         // ACT
-        (, uint256[] memory acceptedPriorityWithdrawalAmounts) = clearingCalculation.doClearing(input);
+        (, uint256[] memory acceptedPriorityWithdrawalAmounts) = clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT
         for (uint256 i; i < acceptedPriorityWithdrawalAmounts.length; ++i) {
@@ -434,7 +434,7 @@ contract ClearingCalculationTest is Test {
 
         // ACT
         (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
-            clearingCalculation.doClearing(input);
+            clearingCalculation.calculateAcceptedRequests(input);
 
         // ASSERT in the order as the deposits are accepted
         // junior deposits to junior

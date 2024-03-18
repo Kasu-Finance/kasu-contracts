@@ -61,8 +61,8 @@ struct PendingWithdrawals {
     uint256[] priorityWithdrawalAmounts;
 }
 
-interface IClearingCalculation {
-    function doClearing(ClearingInput calldata input)
+interface IAcceptedRequestsCalculation {
+    function calculateAcceptedRequests(ClearingInput calldata input)
         external
         view
         returns (

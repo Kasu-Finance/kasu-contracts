@@ -3,10 +3,10 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "../interfaces/clearing/IClearingCalculation.sol";
+import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../Constants.sol";
 
-contract ClearingCalculation is IClearingCalculation {
+contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
     struct Step1In {
         uint256 totalDepositAmount;
         uint256 totalWithdrawalsAmount;
@@ -55,7 +55,7 @@ contract ClearingCalculation is IClearingCalculation {
      * @return tranchePriorityDepositsAccepted The accepted deposits amounts to tranche for each tranche and priority. The first index is the requested tranche, the second index is the priority, and the third index is the tranche it got accepted to.
      * @return acceptedPriorityWithdrawalAmounts The accepted withdrawal amounts for each priority.
      */
-    function doClearing(ClearingInput memory input)
+    function calculateAcceptedRequests(ClearingInput memory input)
         external
         pure
         returns (
