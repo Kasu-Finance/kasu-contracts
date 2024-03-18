@@ -12,8 +12,8 @@ import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
     PendingWithdrawals pendingWithdrawals;
-    // array by priority and tranche
-    uint256[][] tempPriorityTrancheWithdrawalAmounts;
+    // array by priority and trancheIndex
+    uint256[][] tempPriorityTrancheWithdrawalShares;
     uint256 nextIndexToProcess;
     uint256 status; //0: uninitialised, 1: started, 2:ended
 }
@@ -51,12 +51,13 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         _initialisePendingRequests(targetEpoch);
 
         PendingDeposits storage pendingDeposits = pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
-        PendingWithdrawals storage pendingWithdrawals = pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
+        uint256[][] storage tempPriorityTrancheWithdrawalShares =
+            pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
         uint256 loyaltyLevelCount = _getLoyaltyLevelCount();
 
-        for (uint256 i = startingIndexInclusive; i <= endingIndexInclusive; ++i) {
-            uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
+        for (uint256 userRequestId = startingIndexInclusive; userRequestId <= endingIndexInclusive; ++userRequestId) {
+            uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
             uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
             if (isDepositNft(userRequestNftId)) {
@@ -81,20 +82,39 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                     withdrawLoyaltyLevel = loyaltyLevelCount;
                 }
 
-                ILendingPoolTranche tranche = ILendingPoolTranche(withdrawalNftDetails.tranche);
-                // TODO: convert at the end
-                uint256 assetAmount = tranche.convertToAssets(withdrawalNftDetails.sharesAmount);
-
-                pendingWithdrawals.totalWithdrawalsAmount += assetAmount;
-                pendingWithdrawals.priorityWithdrawalAmounts[withdrawLoyaltyLevel] += assetAmount;
+                uint256 trancheIndex = _getTrancheIndex(withdrawalNftDetails.tranche);
+                tempPriorityTrancheWithdrawalShares[withdrawLoyaltyLevel][trancheIndex] +=
+                    withdrawalNftDetails.sharesAmount;
             }
-            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = i;
+            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
         }
 
         if (
-            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess >= _getCurrentEpochTotalPendingRequests()
+            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess + 1 >= _getCurrentEpochTotalPendingRequests()
                 && pendingRequestsPerEpoch[targetEpoch].status != 2
         ) {
+            // convert pending withdrawal shares to amounts - minimize rounding errors
+            PendingWithdrawals storage pendingWithdrawals = pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
+
+            for (
+                uint256 withdrawalPriority = 0;
+                withdrawalPriority < tempPriorityTrancheWithdrawalShares.length;
+                ++withdrawalPriority
+            ) {
+                uint256 withdrawalPriorityAmountSum = 0;
+                for (
+                    uint256 trancheIndex = 0;
+                    trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
+                    ++trancheIndex
+                ) {
+                    withdrawalPriorityAmountSum += ILendingPoolTranche(_getTranche(trancheIndex)).convertToAssets(
+                        tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
+                    );
+                }
+                pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
+                pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] += withdrawalPriorityAmountSum;
+            }
+            // processing completed
             pendingRequestsPerEpoch[targetEpoch].status = 2;
         }
     }
@@ -104,10 +124,16 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
     }
 
     function getPendingDeposits(uint256 targetEpoch) external view returns (PendingDeposits memory) {
+        if (pendingRequestsPerEpoch[targetEpoch].status != 2) {
+            revert PendingRequestsPriorityCalculationIsNotCompleted(targetEpoch);
+        }
         return pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
     }
 
     function getPendingWithdrawals(uint256 targetEpoch) external view returns (PendingWithdrawals memory) {
+        if (pendingRequestsPerEpoch[targetEpoch].status != 2) {
+            revert PendingRequestsPriorityCalculationIsNotCompleted(targetEpoch);
+        }
         return pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
     }
 
@@ -126,7 +152,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         uint256 trancheCount = _getTrancheCount();
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
-        // pending deposits
+        // initialise pending deposits
         pendingRequestsPerEpoch[targetEpoch].pendingDeposits.totalDepositAmount = 0;
         pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
         pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts =
@@ -136,11 +162,19 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                 new uint256[](loyaltyLevelsCount);
         }
 
-        // pending withdrawals
+        // initialise pending withdrawals
+        // extra priority: forced withdrawals, withdrawals waiting >= 5 epochs
+        uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
         pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.totalWithdrawalsAmount = 0;
-        // loyaltyLevelsCount + 1: forced withdrawals, withdrawals waiting >= 5 epochs
         pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.priorityWithdrawalAmounts =
-            new uint256[](loyaltyLevelsCount + 1);
+            new uint256[](withdrawalPriorityLevels);
+
+        // initialise tempPriorityTrancheWithdrawalAmounts
+        pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
+            new uint256[][](withdrawalPriorityLevels);
+        for (uint256 i = 0; i < withdrawalPriorityLevels; ++i) {
+            pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] = new uint256[](trancheCount);
+        }
 
         pendingRequestsPerEpoch[targetEpoch].status = 1;
     }

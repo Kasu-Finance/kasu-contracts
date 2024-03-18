@@ -16,7 +16,7 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 1e6);
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 250 * 1e6);
         uint256 dNftId_carol = _requestDeposit(carol, lpd.lendingPool, lpd.tranches[0], 50 * 1e6);
-        uint256 dNftId_david = _requestDeposit(david, lpd.lendingPool, lpd.tranches[0], 10 * 1e6);
+        _requestDeposit(david, lpd.lendingPool, lpd.tranches[0], 10 * 1e6);
         _requestDeposit(userFive, lpd.lendingPool, lpd.tranches[0], 500 * 1e6);
 
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 1e6);
@@ -58,7 +58,6 @@ contract ClearingTest is LendingPoolTestUtils {
         // ### ACT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
         pendingPool.calculatePendingRequestsPriority(20, currentEpoch);
-
         // ### ASSERT ###
         PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
         assertEq(pendingDeposits.totalDepositAmount, 1100 * 1e6);

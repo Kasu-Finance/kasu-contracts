@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 struct PendingDeposits {
     uint256 totalDepositAmount;
     uint256[] trancheDepositsAmounts;
-    // array by tranche and priority
+    // array by trancheIndex and priority
     uint256[][] tranchePriorityDepositsAmounts;
 }
 
@@ -57,7 +57,13 @@ interface IPendingRequestsPriorityCalculation {
 
     /**
      * @dev Indicates task pending requests priority calculation task has already been processed
-     * @param targetEpoch The epoch task pending requests priority calculation task that has been processed
+     * @param targetEpoch The epoch of the pending requests priority calculation task that has been processed
      */
     error PendingRequestsPriorityCalculationAlreadyProcessed(uint256 targetEpoch);
+
+    /**
+     * @dev Indicates task pending requests priority calculation task is not completed
+     * @param targetEpoch The epoch of the  pending requests priority calculation task that is not completed
+     */
+    error PendingRequestsPriorityCalculationIsNotCompleted(uint256 targetEpoch);
 }
