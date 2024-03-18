@@ -129,6 +129,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _trancheIndex[tranche] != 0;
     }
 
+    function getTrancheIndex(address tranche) public view verifyTranche(tranche) returns (uint256) {
+        return _trancheIndex[tranche] - 1;
+    }
+
     /**
      * @notice Returns the balance of the tranche.
      * @param tranche The tranche address.
@@ -648,7 +652,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function _getTrancheConfiguration(address tranche) internal view returns (TrancheConfig storage) {
-        return _poolConfiguration.tranches[_trancheIndex[tranche] - 1];
+        return _poolConfiguration.tranches[getTrancheIndex(tranche)];
     }
 
     function _isLossIdValid(uint256 lossId) internal view {

@@ -48,6 +48,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.deal(bob, 1 << 128);
         vm.deal(carol, 1 << 128);
         vm.deal(david, 1 << 128);
+        vm.deal(userFive, 1 << 128);
+        vm.deal(userSix, 1 << 128);
+        vm.deal(userSeven, 1 << 128);
+        vm.deal(userEight, 1 << 128);
+        vm.deal(userNine, 1 << 128);
+        vm.deal(userTen, 1 << 128);
         vm.deal(userNotAllowed, 1 << 128);
 
         // usdc
@@ -113,7 +119,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
-        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList);
+        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager);
 
         // kasu allow list - allow users
         vm.startPrank(admin);
@@ -121,6 +127,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuAllowList.allowUser(bob);
         kasuAllowList.allowUser(carol);
         kasuAllowList.allowUser(david);
+        kasuAllowList.allowUser(userFive);
+        kasuAllowList.allowUser(userSix);
+        kasuAllowList.allowUser(userSeven);
+        kasuAllowList.allowUser(userEight);
+        kasuAllowList.allowUser(userNine);
+        kasuAllowList.allowUser(userTen);
         vm.stopPrank();
     }
 
