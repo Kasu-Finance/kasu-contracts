@@ -64,11 +64,7 @@ contract PendingPool is
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_
-    )
-        AssetFunctionsBase(underlyingAsset_)
-        LendingPoolHelpers(lendingPoolManager_)
-        PendingRequestsPriorityCalculation(userManger_, systemVariables_)
-    {
+    ) AssetFunctionsBase(underlyingAsset_) LendingPoolHelpers(lendingPoolManager_) {
         systemVariables = systemVariables_;
         userManager = userManger_;
         _disableInitializers();
@@ -472,6 +468,23 @@ contract PendingPool is
 
     function _getTranche(uint256 index) internal view override returns (address) {
         return _getOwnLendingPool().lendingPoolInfo().trancheAddresses[index];
+    }
+
+    function _isClearingTime(uint256 epoch) internal view override returns (bool) {
+        return systemVariables.isClearingTime();
+    }
+
+    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch)
+        internal
+        view
+        override
+        returns (uint256)
+    {
+        return userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
+    }
+
+    function _getLoyaltyLevelCount() internal view override returns (uint256) {
+        return systemVariables.loyaltyThresholds().length + 1;
     }
 
     // MODIFIERS

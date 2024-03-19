@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 import "forge-std/Test.sol";
 import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
 
-contract ClearingCalculationTest is Test {
+contract AcceptedRequestsCalculationTest is Test {
     AcceptedRequestsCalculation clearingCalculation;
 
     function setUp() public {

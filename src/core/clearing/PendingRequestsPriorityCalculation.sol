@@ -15,31 +15,23 @@ struct PendingRequestsEpoch {
     // array by priority and trancheIndex
     uint256[][] tempPriorityTrancheWithdrawalShares;
     uint256 nextIndexToProcess;
-    uint256 status; //0: uninitialised, 1: started, 2:ended
+    PendingRequestsTaskStatus status;
 }
 
 abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingRequestsPriorityCalculation {
-    IUserManager private immutable _userManager;
-    ISystemVariables private immutable _systemVariables;
-
     uint256 private REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION;
 
     mapping(uint256 => PendingRequestsEpoch) private pendingRequestsPerEpoch;
-
-    constructor(IUserManager userManger_, ISystemVariables systemVariables_) {
-        _userManager = userManger_;
-        _systemVariables = systemVariables_;
-    }
 
     function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
         REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
     }
 
-    function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) external {
-        if (!_systemVariables.isClearingTime()) {
+    function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) public {
+        if (!_isClearingTime(targetEpoch)) {
             revert CanOnlyExecuteDuringClearingTime();
         }
-        if (pendingRequestsPerEpoch[targetEpoch].status == 2) {
+        if (pendingRequestsPerEpoch[targetEpoch].status == PendingRequestsTaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
@@ -91,7 +83,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
         if (
             pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess + 1 >= _getCurrentEpochTotalPendingRequests()
-                && pendingRequestsPerEpoch[targetEpoch].status != 2
+                && pendingRequestsPerEpoch[targetEpoch].status != PendingRequestsTaskStatus.ENDED
         ) {
             // convert pending withdrawal shares to amounts - minimize rounding errors
             PendingWithdrawals storage pendingWithdrawals = pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
@@ -115,7 +107,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                 pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] += withdrawalPriorityAmountSum;
             }
             // processing completed
-            pendingRequestsPerEpoch[targetEpoch].status = 2;
+            pendingRequestsPerEpoch[targetEpoch].status = PendingRequestsTaskStatus.ENDED;
         }
     }
 
@@ -123,15 +115,15 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         return _getCurrentEpochTotalPendingRequests() - pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
-    function getPendingDeposits(uint256 targetEpoch) external view returns (PendingDeposits memory) {
-        if (pendingRequestsPerEpoch[targetEpoch].status != 2) {
+    function getPendingDeposits(uint256 targetEpoch) public view returns (PendingDeposits memory) {
+        if (pendingRequestsPerEpoch[targetEpoch].status != PendingRequestsTaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationIsNotCompleted(targetEpoch);
         }
         return pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
     }
 
-    function getPendingWithdrawals(uint256 targetEpoch) external view returns (PendingWithdrawals memory) {
-        if (pendingRequestsPerEpoch[targetEpoch].status != 2) {
+    function getPendingWithdrawals(uint256 targetEpoch) public view returns (PendingWithdrawals memory) {
+        if (pendingRequestsPerEpoch[targetEpoch].status != PendingRequestsTaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationIsNotCompleted(targetEpoch);
         }
         return pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
@@ -139,16 +131,8 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
     //*** Helper Methods ***/
 
-    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) private view returns (uint256) {
-        return _userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
-    }
-
-    function _getLoyaltyLevelCount() private view returns (uint256) {
-        return _systemVariables.loyaltyThresholds().length + 1;
-    }
-
     function _initialisePendingRequests(uint256 targetEpoch) private {
-        if (pendingRequestsPerEpoch[targetEpoch].status != 0) return;
+        if (pendingRequestsPerEpoch[targetEpoch].status != PendingRequestsTaskStatus.UNINITIALISED) return;
         uint256 trancheCount = _getTrancheCount();
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
@@ -176,7 +160,11 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] = new uint256[](trancheCount);
         }
 
-        pendingRequestsPerEpoch[targetEpoch].status = 1;
+        pendingRequestsPerEpoch[targetEpoch].status = PendingRequestsTaskStatus.PENDING;
+    }
+
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public returns (PendingRequestsTaskStatus) {
+        return pendingRequestsPerEpoch[targetEpoch].status;
     }
 
     //*** Virtual Methods ***/
@@ -212,4 +200,10 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
     function _getTrancheCount() internal view virtual returns (uint256);
 
     function _getTranche(uint256 index) internal view virtual returns (address);
+
+    function _isClearingTime(uint256 epoch) internal view virtual returns (bool);
+
+    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint256);
+
+    function _getLoyaltyLevelCount() internal view virtual returns (uint256);
 }
