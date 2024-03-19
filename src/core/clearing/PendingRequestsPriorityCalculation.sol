@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/clearing/IPendingRequestsPriorityCalculation.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../../shared/CommonErrors.sol";
-import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
@@ -129,6 +129,10 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         return pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
     }
 
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public returns (PendingRequestsTaskStatus) {
+        return pendingRequestsPerEpoch[targetEpoch].status;
+    }
+
     //*** Helper Methods ***/
 
     function _initialisePendingRequests(uint256 targetEpoch) private {
@@ -161,10 +165,6 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         }
 
         pendingRequestsPerEpoch[targetEpoch].status = PendingRequestsTaskStatus.PENDING;
-    }
-
-    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public returns (PendingRequestsTaskStatus) {
-        return pendingRequestsPerEpoch[targetEpoch].status;
     }
 
     //*** Virtual Methods ***/

@@ -14,6 +14,7 @@ import "../interfaces/IUserManager.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../clearing/PendingRequestsPriorityCalculation.sol";
+import "../clearing/ClearingManager.sol";
 
 /**
  * @dev
@@ -28,7 +29,7 @@ contract PendingPool is
     AssetFunctionsBase,
     LendingPoolHelpers,
     LendingPoolStoppable,
-    PendingRequestsPriorityCalculation
+    ClearingManager
 {
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;

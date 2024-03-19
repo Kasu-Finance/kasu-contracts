@@ -59,7 +59,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ACT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
-        pendingPool.calculatePendingRequestsPriority(20, currentEpoch);
+        pendingPool.doClearing(currentEpoch, 20, 10);
         // ### ASSERT ###
         PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
         assertEq(pendingDeposits.totalDepositAmount, 1070 * 1e6);
