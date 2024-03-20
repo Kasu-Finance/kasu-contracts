@@ -7,6 +7,9 @@ import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../Constants.sol";
 
 contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
+    // epochId => isCalculated
+    mapping(uint256 => bool) internal acceptedRequestsCalculationPerEpochStatus;
+
     struct Step1In {
         uint256 totalDepositAmount;
         uint256 totalWithdrawalsAmount;
@@ -56,8 +59,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
      * @return acceptedPriorityWithdrawalAmounts The accepted withdrawal amounts for each priority.
      */
     function calculateAcceptedRequests(ClearingInput memory input)
-        external
-        pure
+        public
         returns (
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts
@@ -97,6 +99,8 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
         // verify the result
         _verifyResult(input, outputData1, outputData2, outputData3, outputData4);
+
+        acceptedRequestsCalculationPerEpochStatus[input.targetEpoch] = true;
     }
 
     /**

@@ -19,16 +19,17 @@ struct PendingRequestsEpoch {
 }
 
 abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingRequestsPriorityCalculation {
-    uint256 private REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION;
+    uint256 internal REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION;
 
-    mapping(uint256 => PendingRequestsEpoch) private pendingRequestsPerEpoch;
+    // epochId => PendingRequestsEpoch
+    mapping(uint256 => PendingRequestsEpoch) internal pendingRequestsPerEpoch;
 
     function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
         REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
     }
 
     function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) public {
-        if (!_isClearingTime(targetEpoch)) {
+        if (!_isClearingTime()) {
             revert CanOnlyExecuteDuringClearingTime();
         }
         if (pendingRequestsPerEpoch[targetEpoch].status == PendingRequestsTaskStatus.ENDED) {
@@ -129,7 +130,11 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         return pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
     }
 
-    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public returns (PendingRequestsTaskStatus) {
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch)
+        public
+        view
+        returns (PendingRequestsTaskStatus)
+    {
         return pendingRequestsPerEpoch[targetEpoch].status;
     }
 
@@ -201,7 +206,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
     function _getTranche(uint256 index) internal view virtual returns (address);
 
-    function _isClearingTime(uint256 epoch) internal view virtual returns (bool);
+    function _isClearingTime() internal view virtual returns (bool);
 
     function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint256);
 

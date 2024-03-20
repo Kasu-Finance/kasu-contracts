@@ -445,7 +445,7 @@ contract PendingPool is
         }
     }
 
-    // OVERRIDES
+    // OVERRIDES: PendingRequestsPriorityCalculation
 
     function _getCurrentEpochTotalPendingRequests() internal view override returns (uint256) {
         return totalSupply();
@@ -471,7 +471,7 @@ contract PendingPool is
         return _getOwnLendingPool().lendingPoolInfo().trancheAddresses[index];
     }
 
-    function _isClearingTime(uint256 epoch) internal view override returns (bool) {
+    function _isClearingTime() internal view override returns (bool) {
         return systemVariables.isClearingTime();
     }
 
@@ -486,6 +486,36 @@ contract PendingPool is
 
     function _getLoyaltyLevelCount() internal view override returns (uint256) {
         return systemVariables.loyaltyThresholds().length + 1;
+    }
+
+    // OVERRIDES: AcceptedRequestsCalculation
+
+    function _createClearingConfigFromPoolConfig() internal override returns (ClearingConfiguration memory) {
+        PoolConfiguration memory poolConfig = _getOwnLendingPool().poolConfiguration();
+        uint256[] memory trancheRatios = new uint256[](poolConfig.tranches.length);
+        for (uint256 i; i < poolConfig.tranches.length; ++i) {
+            trancheRatios[i] = poolConfig.tranches[i].ratio;
+        }
+        uint256 lendingPoolBalance = _getOwnLendingPool().totalSupply();
+        uint256 borrowAmount = lendingPoolBalance < poolConfig.totalDesiredLoanAmount
+            ? 0
+            : lendingPoolBalance - poolConfig.totalDesiredLoanAmount;
+        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+            borrowAmount,
+            trancheRatios,
+            poolConfig.targetExcessLiquidityPercentage,
+            poolConfig.minimumExcessLiquidityPercentage,
+            false
+        );
+        return clearingConfiguration;
+    }
+
+    function _getLendingPoolBalance() internal override returns (LendingPoolBalance memory) {
+        LendingPoolBalance memory lendingPoolBalance = LendingPoolBalance(
+            _getOwnLendingPool().totalSupply() - _getOwnLendingPool().getBorrowedAmount(),
+            _getOwnLendingPool().getBorrowedAmount()
+        );
+        return lendingPoolBalance;
     }
 
     // MODIFIERS

@@ -75,6 +75,7 @@ interface IPendingRequestsPriorityCalculation {
      */
     function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch)
         external
+        view
         returns (PendingRequestsTaskStatus);
 
     //*** ERRORS ***//

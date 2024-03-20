@@ -15,12 +15,13 @@ struct ClearingInput {
     LendingPoolBalance balance;
     PendingDeposits pendingDeposits;
     PendingWithdrawals pendingWithdrawals;
+    uint256 targetEpoch;
 }
 
 /**
  * @notice Clearing configuration.
  * @custom:member borrowAmount Desired borrow amount for current clearing.
- * @custom:member trancheDesiredRatios Lending pool ranche desired ratios in percentages.
+ * @custom:member trancheDesiredRatios Lending pool tranche desired ratios in percentages.
  * @custom:member maxExcessPercentage Maximum excess balance percentage.
  * @custom:member minExcessPercentage Minimum excess balance percentage.
  */
@@ -29,6 +30,7 @@ struct ClearingConfiguration {
     uint256[] trancheDesiredRatios;
     uint256 maxExcessPercentage;
     uint256 minExcessPercentage;
+    bool isOverridden;
 }
 
 /**
@@ -44,7 +46,6 @@ struct LendingPoolBalance {
 interface IAcceptedRequestsCalculation {
     function calculateAcceptedRequests(ClearingInput calldata input)
         external
-        view
         returns (
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts

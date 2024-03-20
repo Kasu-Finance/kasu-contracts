@@ -502,6 +502,7 @@ contract AcceptedRequestsCalculationTest is Test {
         input.balance = balance;
         input.pendingDeposits = pendingDeposits;
         input.pendingWithdrawals = pendingWithdrawals;
+        input.targetEpoch = 0;
     }
 
     function _assertDepositAcceptedAlwaysZeroValues(uint256[][][] memory tranchePriorityDepositsAccepted) private {

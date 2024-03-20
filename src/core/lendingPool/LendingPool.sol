@@ -133,6 +133,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _trancheIndex[tranche] - 1;
     }
 
+    function getBorrowedAmount() external view returns (uint256) {
+        return borrowedAmount;
+    }
+
     /**
      * @notice Returns the balance of the tranche.
      * @param tranche The tranche address.
@@ -541,7 +545,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
     {
-        if (targetExcessLiquidityPercentage < _poolConfiguration.minumumExcessLiquidityPercentage) {
+        if (targetExcessLiquidityPercentage < _poolConfiguration.minimumExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
                 "Target excess liquidity percentage is less than minimum excess liquidity percentage"
             );
@@ -564,7 +568,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             );
         }
 
-        _poolConfiguration.minumumExcessLiquidityPercentage = minumumExcessLiquidityPercentage;
+        _poolConfiguration.minimumExcessLiquidityPercentage = minumumExcessLiquidityPercentage;
     }
 
     // functions to handle the delay of interest rates
