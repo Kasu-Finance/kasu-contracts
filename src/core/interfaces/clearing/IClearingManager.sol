@@ -4,14 +4,19 @@ pragma solidity 0.8.23;
 import "./IAcceptedRequestsCalculation.sol";
 import "./IPendingRequestsPriorityCalculation.sol";
 
-interface IClearingManager is IPendingRequestsPriorityCalculation, IAcceptedRequestsCalculation {
-    function registerClearingConfig(uint256 epoch, ClearingConfiguration calldata clearingConfig) external;
+interface IClearingManager {
+    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+        external;
 
     function doClearing(
+        address lendingPoolAddress,
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
     ) external;
 
-    function getClearingConfig(uint256 epoch) external view returns (ClearingConfiguration memory);
+    function getClearingConfig(address lendingPoolAddress, uint256 epoch)
+        external
+        view
+        returns (ClearingConfiguration memory);
 }

@@ -2,79 +2,124 @@
 pragma solidity 0.8.23;
 
 import "../interfaces/clearing/IClearingManager.sol";
+import "../interfaces/lendingPool/IPendingPool.sol";
+import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
-import "./PendingRequestsPriorityCalculation.sol";
-import "./AcceptedRequestsCalculation.sol";
 
-abstract contract ClearingManager is
-    IClearingManager,
-    PendingRequestsPriorityCalculation,
-    AcceptedRequestsCalculation
-{
-    // epochId => ClearingConfiguration
-    mapping(uint256 => ClearingConfiguration) public clearingConfigPerEpoch;
+contract ClearingManager is IClearingManager {
+    // lendingPool => epochId => ClearingConfiguration
+    mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
+    // lendingPool => epochId => isCalculated
+    mapping(address => mapping(uint256 => bool)) public acceptedRequestsCalculationPerEpochStatus;
+    IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
-    function registerClearingConfig(uint256 epoch, ClearingConfiguration calldata clearingConfig) external {
+    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
+        _acceptedRequestsCalculation = acceptedRequestsCalculation_;
+    }
+
+    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+        external
+    {
         // TODO: check values before setting
-        _setClearingConfig(epoch, clearingConfig, true);
+        _setClearingConfig(lendingPool, epoch, clearingConfig, true);
     }
 
     function doClearing(
+        address lendingPoolAddress,
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
     ) external {
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
         // step 1
-        if (pendingRequestsPerEpoch[targetEpoch].status != PendingRequestsTaskStatus.ENDED) {
-            calculatePendingRequestsPriority(pendingRequestsPriorityCalculationBatchSize, targetEpoch);
+        if (pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) != PendingRequestsTaskStatus.ENDED) {
+            pendingPool.calculatePendingRequestsPriority(pendingRequestsPriorityCalculationBatchSize, targetEpoch);
         }
         // step 2
         if (
-            pendingRequestsPerEpoch[targetEpoch].status == PendingRequestsTaskStatus.ENDED
-                && !acceptedRequestsCalculationPerEpochStatus[targetEpoch]
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == PendingRequestsTaskStatus.ENDED
+                && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
         ) {
             ClearingInput memory clearingInput = ClearingInput(
-                _createClearingConfig(targetEpoch),
-                _getLendingPoolBalance(),
-                pendingRequestsPerEpoch[targetEpoch].pendingDeposits,
-                pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals,
+                _createClearingConfig(lendingPoolAddress, targetEpoch),
+                _getLendingPoolBalance(lendingPoolAddress),
+                pendingPool.getPendingDeposits(targetEpoch),
+                pendingPool.getPendingWithdrawals(targetEpoch),
                 targetEpoch
             );
-            calculateAcceptedRequests(clearingInput);
+            _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
+            acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch] = true;
         }
     }
 
-    function getClearingConfig(uint256 epoch) external view returns (ClearingConfiguration memory) {
-        return clearingConfigPerEpoch[epoch];
+    function getClearingConfig(address lendingPool, uint256 epoch)
+        external
+        view
+        returns (ClearingConfiguration memory)
+    {
+        return clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch];
     }
 
     //*** Helper Methods ***/
 
-    function _createClearingConfig(uint256 targetEpoch) private returns (ClearingConfiguration memory) {
-        if (clearingConfigPerEpoch[targetEpoch].isOverridden) {
-            return clearingConfigPerEpoch[targetEpoch];
+    function _createClearingConfig(address lendingPoolAddress, uint256 targetEpoch)
+        private
+        returns (ClearingConfiguration memory)
+    {
+        if (clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].isOverridden) {
+            return clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch];
         }
-        ClearingConfiguration memory clearingConfiguration = _createClearingConfigFromPoolConfig();
-        _setClearingConfig(targetEpoch, clearingConfiguration, false);
+        ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPoolAddress);
+        _setClearingConfig(lendingPoolAddress, targetEpoch, clearingConfiguration, false);
         return clearingConfiguration;
     }
 
-    function _setClearingConfig(uint256 epoch, ClearingConfiguration memory clearingConfig, bool isOverridden)
-        private
-    {
-        clearingConfigPerEpoch[epoch].borrowAmount = clearingConfig.borrowAmount;
-        clearingConfigPerEpoch[epoch].maxExcessPercentage = clearingConfig.maxExcessPercentage;
-        clearingConfigPerEpoch[epoch].minExcessPercentage = clearingConfig.minExcessPercentage;
-        clearingConfigPerEpoch[epoch].trancheDesiredRatios = new uint256[](clearingConfig.trancheDesiredRatios.length);
+    function _setClearingConfig(
+        address lendingPool,
+        uint256 epoch,
+        ClearingConfiguration memory clearingConfig,
+        bool isOverridden
+    ) private {
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].borrowAmount = clearingConfig.borrowAmount;
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].maxExcessPercentage =
+            clearingConfig.maxExcessPercentage;
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].minExcessPercentage =
+            clearingConfig.minExcessPercentage;
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].trancheDesiredRatios =
+            new uint256[](clearingConfig.trancheDesiredRatios.length);
         for (uint256 i; i < clearingConfig.trancheDesiredRatios.length; ++i) {
-            clearingConfigPerEpoch[epoch].trancheDesiredRatios[i] = clearingConfig.trancheDesiredRatios[i];
+            clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].trancheDesiredRatios[i] =
+                clearingConfig.trancheDesiredRatios[i];
         }
-        clearingConfigPerEpoch[epoch].isOverridden = isOverridden;
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].isOverridden = isOverridden;
     }
 
-    //*** Virtual Methods ***/
+    function _getLendingPoolClearingConfig(address lendingPoolAddress) private returns (ClearingConfiguration memory) {
+        ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
+        PoolConfiguration memory poolConfig = lendingPool.poolConfiguration();
+        uint256[] memory trancheRatios = new uint256[](poolConfig.tranches.length);
+        for (uint256 i; i < poolConfig.tranches.length; ++i) {
+            trancheRatios[i] = poolConfig.tranches[i].ratio;
+        }
+        uint256 lendingPoolBalance = lendingPool.totalSupply();
+        uint256 borrowAmount = lendingPoolBalance < poolConfig.totalDesiredLoanAmount
+            ? 0
+            : lendingPoolBalance - poolConfig.totalDesiredLoanAmount;
+        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+            borrowAmount,
+            trancheRatios,
+            poolConfig.targetExcessLiquidityPercentage,
+            poolConfig.minimumExcessLiquidityPercentage,
+            false
+        );
+        return clearingConfiguration;
+    }
 
-    function _createClearingConfigFromPoolConfig() internal virtual returns (ClearingConfiguration memory);
-
-    function _getLendingPoolBalance() internal virtual returns (LendingPoolBalance memory);
+    function _getLendingPoolBalance(address lendingPoolAddress) private returns (LendingPoolBalance memory) {
+        ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
+        uint256 lendingPoolBorrowedAmount = lendingPool.getBorrowedAmount();
+        LendingPoolBalance memory lendingPoolBalance =
+            LendingPoolBalance(lendingPool.totalSupply() - lendingPoolBorrowedAmount, lendingPoolBorrowedAmount);
+        return lendingPoolBalance;
+    }
 }

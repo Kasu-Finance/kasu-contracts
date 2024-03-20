@@ -34,7 +34,7 @@ struct ForceWithdrawalInput {
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
  */
-interface IPendingPool is IERC721, IClearingManager {
+interface IPendingPool is IERC721, IPendingRequestsPriorityCalculation {
     // VIEWS
     function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
     function trancheWithdrawalNftDetails(uint256 wNftId)

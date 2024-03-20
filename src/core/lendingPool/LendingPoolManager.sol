@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
@@ -9,10 +10,10 @@ import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../interfaces/IKasuAllowList.sol";
 import "../interfaces/IUserManager.sol";
+import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
-import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
 contract LendingPoolManager is
     ILendingPoolManager,
@@ -28,6 +29,7 @@ contract LendingPoolManager is
     ILendingPoolFactory private lendingPoolFactory;
     IKasuAllowList private kasuAllowList;
     IUserManager private userManager;
+    IClearingManager private clearingManager;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
@@ -37,11 +39,13 @@ contract LendingPoolManager is
     function initialize(
         ILendingPoolFactory lendingPoolFactory_,
         IKasuAllowList kasuAllowList_,
-        IUserManager userManager_
+        IUserManager userManager_,
+        IClearingManager clearingManager_
     ) public initializer {
         lendingPoolFactory = lendingPoolFactory_;
         kasuAllowList = kasuAllowList_;
         userManager = userManager_;
+        clearingManager = clearingManager_;
     }
 
     // #### CREATE POOL #### //
@@ -244,6 +248,26 @@ contract LendingPoolManager is
         IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
         address wNftOwner = pendingPool.ownerOf(wNftID);
         pendingPool.cancelDepositRequest(wNftOwner, wNftID);
+    }
+
+    // clearing
+    // TODO: access control
+    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+        external
+    {
+        clearingManager.registerClearingConfig(lendingPool, epoch, clearingConfig);
+    }
+
+    // TODO: access control
+    function doClearing(
+        address lendingPool,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize
+    ) external {
+        clearingManager.doClearing(
+            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
+        );
     }
 
     // config

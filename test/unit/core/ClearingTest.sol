@@ -58,9 +58,9 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(20);
 
         // ### ACT ###
-        IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
-        pendingPool.doClearing(currentEpoch, 20, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 20, 10);
         // ### ASSERT ###
+        IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
         PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
         assertEq(pendingDeposits.totalDepositAmount, 1070 * 1e6);
 

@@ -117,9 +117,21 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
 
+        // clearing
+        AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
+        TransparentUpgradeableProxy acceptedRequestsCalculationProxy =
+            new TransparentUpgradeableProxy(address(acceptedRequestsCalculationImpl), address(proxyAdmin), "");
+        IAcceptedRequestsCalculation acceptedRequestsCalculation =
+            IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
+
+        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation);
+        TransparentUpgradeableProxy clearingManagerProxy =
+            new TransparentUpgradeableProxy(address(clearingManagerImpl), address(proxyAdmin), "");
+        IClearingManager clearingManager = IClearingManager(address(clearingManagerProxy));
+
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
-        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager);
+        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingManager);
 
         // kasu allow list - allow users
         vm.startPrank(admin);
