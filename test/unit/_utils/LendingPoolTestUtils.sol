@@ -18,6 +18,7 @@ import "../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
 import "../../../src/core/UserManager.sol";
 import "./LockingTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
+import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
 
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;

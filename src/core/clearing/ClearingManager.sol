@@ -32,12 +32,12 @@ contract ClearingManager is IClearingManager {
     ) external {
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
         // step 1
-        if (pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) != PendingRequestsTaskStatus.ENDED) {
-            pendingPool.calculatePendingRequestsPriority(pendingRequestsPriorityCalculationBatchSize, targetEpoch);
+        if (pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) != TaskStatus.ENDED) {
+            pendingPool.calculatePendingRequestsPriorityBatch(pendingRequestsPriorityCalculationBatchSize, targetEpoch);
         }
         // step 2
         if (
-            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == PendingRequestsTaskStatus.ENDED
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
         ) {
             ClearingInput memory clearingInput = ClearingInput(

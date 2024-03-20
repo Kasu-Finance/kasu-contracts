@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "./IClearingManager.sol";
+
 /**
  * @notice Pending deposits.
  * @custom:member totalDepositAmount Total deposit amount.
@@ -23,12 +25,6 @@ struct PendingWithdrawals {
     uint256[] priorityWithdrawalAmounts;
 }
 
-enum PendingRequestsTaskStatus {
-    UNINITIALISED,
-    PENDING,
-    ENDED
-}
-
 error PendingRequestsPriorityCalculationIsPending();
 
 interface IPendingRequestsPriorityCalculation {
@@ -43,7 +39,7 @@ interface IPendingRequestsPriorityCalculation {
      * @param batchSize The amount of pending user requests that will be processed in one transaction.
      * @param targetEpoch The epoch of pending user request.
      */
-    function calculatePendingRequestsPriority(uint256 batchSize, uint256 targetEpoch) external;
+    function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external;
 
     /**
      * @notice Returns the amount of pending user requests remaining to complete the task.
@@ -73,10 +69,7 @@ interface IPendingRequestsPriorityCalculation {
      * @param targetEpoch The epoch of pending user request.
      * @return The status of the pending requests priority calculation task.
      */
-    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch)
-        external
-        view
-        returns (PendingRequestsTaskStatus);
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) external view returns (TaskStatus);
 
     //*** ERRORS ***//
 

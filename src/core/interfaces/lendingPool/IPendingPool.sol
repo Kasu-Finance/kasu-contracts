@@ -14,6 +14,7 @@ struct DepositNftDetails {
     uint256 assetAmount;
     address tranche;
     uint256 epochId;
+    uint256 priority;
     RequestedFrom requestedFrom;
 }
 
@@ -21,6 +22,7 @@ struct WithdrawalNftDetails {
     uint256 sharesAmount;
     address tranche;
     uint256 epochId;
+    uint256 priority;
     RequestedFrom requestedFrom;
 }
 
