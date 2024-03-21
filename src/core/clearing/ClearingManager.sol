@@ -11,12 +11,6 @@ contract ClearingManager is IClearingManager {
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
     // lendingPoolAddress => epochId => isCalculated
     mapping(address => mapping(uint256 => bool)) public acceptedRequestsCalculationPerEpochStatus;
-    // lendingPoolAddress => epochId => tranchePriorityDepositsAccepted
-    mapping(address => mapping(uint256 => uint256[][][] tranchePriorityDepositsAccepted)) public
-        tranchePriorityDepositsAcceptedPerLendingPoolPerEpoch;
-    // lendingPoolAddress => epochId => acceptedPriorityWithdrawalAmounts
-    mapping(address => mapping(uint256 => uint256[] acceptedPriorityWithdrawalAmounts)) public
-        acceptedPriorityWithdrawalAmountsPerLendingPoolPerEpoch;
 
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
@@ -38,11 +32,14 @@ contract ClearingManager is IClearingManager {
         uint256 acceptedRequestsExecutionBatchSize
     ) external {
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
+
         // step 1
         if (pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) != TaskStatus.ENDED) {
             pendingPool.calculatePendingRequestsPriorityBatch(pendingRequestsPriorityCalculationBatchSize, targetEpoch);
         }
+
         // step 2
+        TaskStatus acceptedRequestsExecutionStatus = pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch);
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
@@ -57,29 +54,25 @@ contract ClearingManager is IClearingManager {
             (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
                 _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
 
-            tranchePriorityDepositsAcceptedPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch] =
-                tranchePriorityDepositsAccepted;
-            acceptedPriorityWithdrawalAmountsPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch] =
-                acceptedPriorityWithdrawalAmounts;
-
-            acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch] = true;
-        }
-        // step 3
-        TaskStatus acceptedRequestsExecutionStatus = pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch);
-        if (
-            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
-                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && acceptedRequestsExecutionStatus != TaskStatus.ENDED
-        ) {
             if (acceptedRequestsExecutionStatus == TaskStatus.UNINITIALISED) {
                 pendingPool.registerAcceptedRequestExecution(
                     targetEpoch,
                     pendingPool.getPendingDeposits(targetEpoch),
                     pendingPool.getPendingWithdrawals(targetEpoch),
-                    tranchePriorityDepositsAcceptedPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch],
-                    acceptedPriorityWithdrawalAmountsPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch]
+                    tranchePriorityDepositsAccepted,
+                    acceptedPriorityWithdrawalAmounts
                 );
             }
+
+            acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch] = true;
+        }
+
+        // step 3
+        if (
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
+                && acceptedRequestsExecutionStatus != TaskStatus.ENDED
+        ) {
             pendingPool.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
         }
     }

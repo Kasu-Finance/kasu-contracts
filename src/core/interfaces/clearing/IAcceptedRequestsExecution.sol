@@ -9,10 +9,10 @@ error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 interface IAcceptedRequestsExecution {
     function registerAcceptedRequestExecution(
         uint256 targetEpoch,
-        PendingDeposits memory pendingDeposits,
-        PendingWithdrawals memory pendingWithdrawals,
-        uint256[][][] memory tranchePriorityDepositsAccepted,
-        uint256[] memory acceptedPriorityWithdrawalAmounts
+        PendingDeposits calldata pendingDeposits,
+        PendingWithdrawals calldata pendingWithdrawals,
+        uint256[][][] calldata tranchePriorityDepositsAccepted,
+        uint256[] calldata acceptedPriorityWithdrawalAmounts
     ) external;
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external;
