@@ -172,16 +172,7 @@ contract PendingPool is
         isNftOwner(user, dNftID)
         onlyLendingPoolManager
     {
-        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
-
-        // Burn the deposit NFT
-        _update(address(0), dNftID, address(0));
-
-        // return funds directly to the user
-        // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
-        _transferAssets(user, depositNftDetails.assetAmount);
-
-        _deleteDNftDetails(user, dNftID);
+        _returnDepositRequest(dNftID, user);
 
         (address tranche,) = decomposeDepositId(dNftID);
 
@@ -313,7 +304,7 @@ contract PendingPool is
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
-    function _acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) internal nftExists(dNftID) {
+    function _acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) internal override nftExists(dNftID) {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
@@ -326,8 +317,7 @@ contract PendingPool is
         address user = ownerOf(dNftID);
 
         if (depositNftDetails.assetAmount == 0) {
-            // Burn the deposit NFT
-            _update(address(0), dNftID, address(0));
+            _burnDepositNft(dNftID);
 
             _deleteDNftDetails(user, dNftID);
         }
@@ -341,7 +331,31 @@ contract PendingPool is
         lendingPool.acceptDeposit(tranche, user, acceptedAmount);
     }
 
-    function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal nftExists(wNftID) {
+    function _rejectDepositRequest(uint256 dNftID) internal override nftExists(dNftID) {
+        address user = ownerOf(dNftID);
+        _returnDepositRequest(dNftID, user);
+        (address tranche,) = decomposeDepositId(dNftID);
+
+        emit DepositRequestRejected(user, tranche, dNftID);
+    }
+
+    function _returnDepositRequest(uint256 dNftID, address user) private {
+        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
+
+        _burnDepositNft(dNftID);
+
+        // return funds directly to the user
+        // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
+        _transferAssets(user, depositNftDetails.assetAmount);
+
+        _deleteDNftDetails(user, dNftID);
+    }
+
+    function _burnDepositNft(uint256 dNftID) internal nftExists(dNftID) {
+        _update(address(0), dNftID, address(0));
+    }
+
+    function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal override nftExists(wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount < acceptedShares) {
@@ -408,12 +422,7 @@ contract PendingPool is
         return uint256(uint160(tranche)) | (id << 160);
     }
 
-    function decomposeDepositId(uint256 id)
-        public
-        pure
-        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-        returns (address tranche, uint256 depositId)
-    {
+    function decomposeDepositId(uint256 id) public pure override returns (address tranche, uint256 depositId) {
         tranche = address(uint160(id << 96 >> 96));
         depositId = id >> 160;
     }
@@ -422,12 +431,7 @@ contract PendingPool is
         return uint256(uint160(tranche)) | ((id + TRANCHE_START_WITHDRAWAL_NFT_ID) << 160);
     }
 
-    function decomposeWithdrawalId(uint256 id)
-        public
-        pure
-        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-        returns (address tranche, uint256 withdrawalId)
-    {
+    function decomposeWithdrawalId(uint256 id) public pure override returns (address tranche, uint256 withdrawalId) {
         tranche = address(uint160(id << 96 >> 96));
         withdrawalId = (id >> 160) - TRANCHE_START_WITHDRAWAL_NFT_ID;
     }
@@ -492,7 +496,12 @@ contract PendingPool is
         return ownerOf(tokenId);
     }
 
-    function _getTrancheIndex(address tranche) internal view override returns (uint256) {
+    function _getTrancheIndex(address tranche)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (uint256)
+    {
         return _getOwnLendingPool().getTrancheIndex(tranche);
     }
 
@@ -500,7 +509,12 @@ contract PendingPool is
         return _getOwnLendingPool().lendingPoolInfo().trancheAddresses.length;
     }
 
-    function _getTranche(uint256 index) internal view override returns (address) {
+    function _getTranche(uint256 index)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (address)
+    {
         return _getOwnLendingPool().lendingPoolInfo().trancheAddresses[index];
     }
 

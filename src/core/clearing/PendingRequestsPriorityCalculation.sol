@@ -187,8 +187,6 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
     function decomposeDepositId(uint256 id) public pure virtual returns (address tranche, uint256 depositId);
 
-    function decomposeWithdrawalId(uint256 id) public pure virtual returns (address tranche, uint256 withdrawalId);
-
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view
