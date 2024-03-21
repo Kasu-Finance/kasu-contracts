@@ -16,4 +16,11 @@ interface IAcceptedRequestsExecution {
     ) external;
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external;
+
+    /**
+     * @notice Returns the status of the accepted requests execution task.
+     * @param targetEpoch The epoch of pending user request.
+     * @return The status of  the accepted requests execution task.
+     */
+    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) external view returns (TaskStatus);
 }

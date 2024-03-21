@@ -7,10 +7,17 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 
 contract ClearingManager is IClearingManager {
-    // lendingPool => epochId => ClearingConfiguration
+    // lendingPoolAddress => epochId => ClearingConfiguration
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
-    // lendingPool => epochId => isCalculated
+    // lendingPoolAddress => epochId => isCalculated
     mapping(address => mapping(uint256 => bool)) public acceptedRequestsCalculationPerEpochStatus;
+    // lendingPoolAddress => epochId => tranchePriorityDepositsAccepted
+    mapping(address => mapping(uint256 => uint256[][][] tranchePriorityDepositsAccepted)) public
+        tranchePriorityDepositsAcceptedPerLendingPoolPerEpoch;
+    // lendingPoolAddress => epochId => acceptedPriorityWithdrawalAmounts
+    mapping(address => mapping(uint256 => uint256[] acceptedPriorityWithdrawalAmounts)) public
+        acceptedPriorityWithdrawalAmountsPerLendingPoolPerEpoch;
+
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
     constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
@@ -47,8 +54,33 @@ contract ClearingManager is IClearingManager {
                 pendingPool.getPendingWithdrawals(targetEpoch),
                 targetEpoch
             );
-            _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
+            (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
+                _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
+
+            tranchePriorityDepositsAcceptedPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch] =
+                tranchePriorityDepositsAccepted;
+            acceptedPriorityWithdrawalAmountsPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch] =
+                acceptedPriorityWithdrawalAmounts;
+
             acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch] = true;
+        }
+        // step 3
+        TaskStatus acceptedRequestsExecutionStatus = pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch);
+        if (
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
+                && acceptedRequestsExecutionStatus != TaskStatus.ENDED
+        ) {
+            if (acceptedRequestsExecutionStatus == TaskStatus.UNINITIALISED) {
+                pendingPool.registerAcceptedRequestExecution(
+                    targetEpoch,
+                    pendingPool.getPendingDeposits(targetEpoch),
+                    pendingPool.getPendingWithdrawals(targetEpoch),
+                    tranchePriorityDepositsAcceptedPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch],
+                    acceptedPriorityWithdrawalAmountsPerLendingPoolPerEpoch[lendingPoolAddress][targetEpoch]
+                );
+            }
+            pendingPool.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
         }
     }
 

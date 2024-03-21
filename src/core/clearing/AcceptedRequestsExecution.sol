@@ -110,8 +110,13 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 }
             }
 
+            if (i == 0) acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
             if (i != 0 && i >= endingIndexInclusive) --i;
         }
+    }
+
+    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) external view returns (TaskStatus) {
+        return acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
     //*** Virtual Methods ***/

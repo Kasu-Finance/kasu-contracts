@@ -59,6 +59,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ACT ###
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 20, 10);
+
         // ### ASSERT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
         PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
