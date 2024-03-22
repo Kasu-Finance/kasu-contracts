@@ -84,7 +84,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
                 _setWithdrawalRequestPriority(userRequestId, withdrawLoyaltyLevel);
             }
-            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
+            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId + 1;
         }
 
         if (

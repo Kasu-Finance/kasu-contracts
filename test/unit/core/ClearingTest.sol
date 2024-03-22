@@ -90,4 +90,87 @@ contract ClearingTest is LendingPoolTestUtils {
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[2], 0);
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[3], 10 * 1e6);
     }
+
+    function test_executeAcceptedRequestsBatch() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // J0: 20K
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 4_000 * 1e6);
+        _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 6_000 * 1e6);
+        _requestDeposit(carol, lpd.lendingPool, lpd.tranches[0], 5_000 * 1e6);
+        _requestDeposit(david, lpd.lendingPool, lpd.tranches[0], 5_000 * 1e6);
+        // J1: 0
+        // J2: 30K
+        _requestDeposit(user16, lpd.lendingPool, lpd.tranches[0], 8_000 * 1e6);
+        _requestDeposit(user17, lpd.lendingPool, lpd.tranches[0], 7_000 * 1e6);
+        _requestDeposit(user18, lpd.lendingPool, lpd.tranches[0], 12_000 * 1e6);
+        _requestDeposit(user19, lpd.lendingPool, lpd.tranches[0], 3_000 * 1e6);
+        // M0: 10K
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user5, lpd.lendingPool, lpd.tranches[1], 4_000 * 1e6);
+        _requestDeposit(user6, lpd.lendingPool, lpd.tranches[1], 6_000 * 1e6);
+        // M1: 25K
+        _requestDeposit(user9, lpd.lendingPool, lpd.tranches[1], 6_000 * 1e6);
+        _requestDeposit(user10, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user11, lpd.lendingPool, lpd.tranches[1], 8_000 * 1e6);
+        _requestDeposit(user12, lpd.lendingPool, lpd.tranches[1], 9_000 * 1e6);
+        // M2: 5K
+        _requestDeposit(user16, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user19, lpd.lendingPool, lpd.tranches[1], 3_000 * 1e6);
+        // S0: 10K
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[2], 1_000 * 1e6);
+        _requestDeposit(david, lpd.lendingPool, lpd.tranches[2], 1_000 * 1e6);
+        _requestDeposit(user7, lpd.lendingPool, lpd.tranches[2], 5_000 * 1e6);
+        _requestDeposit(user8, lpd.lendingPool, lpd.tranches[2], 3_000 * 1e6);
+        // S1: 0
+        // S2: 25K
+        _requestDeposit(user17, lpd.lendingPool, lpd.tranches[0], 8_000 * 1e6);
+        _requestDeposit(user18, lpd.lendingPool, lpd.tranches[0], 7_000 * 1e6);
+        _requestDeposit(user19, lpd.lendingPool, lpd.tranches[0], 10_000 * 1e6);
+        _requestDeposit(user20, lpd.lendingPool, lpd.tranches[0], 5_000 * 1e6);
+
+        // loyalty levels: 0-1%: 0, 1%-3%:1, 3%+: 2
+        // P0: alice: 7k, bob: 6k, carol: 5K, david: 6K, user5: 4K, user6: 6K, user7: 5K, user8:3K
+        _lock(alice, 10_000 * 1e18, lockPeriod30);
+        _lock(bob, 10_000 * 1e18, lockPeriod30);
+        _lock(carol, 10_000 * 1e18, lockPeriod30);
+        _lock(david, 10_000 * 1e18, lockPeriod30);
+        _lock(user5, 10_000 * 1e18, lockPeriod30);
+        _lock(user6, 10_000 * 1e18, lockPeriod30);
+        _lock(user7, 10_000 * 1e18, lockPeriod30);
+        _lock(user8, 10_000 * 1e18, lockPeriod30);
+        // P1: user9: 6K, user10: 2K, user11: 8K, user12: 9K, user13, user14, user15
+        _lock(user9, 500_000 * 1e18, lockPeriod720);
+        _lock(user10, 200_000 * 1e18, lockPeriod720);
+        _lock(user11, 500_000 * 1e18, lockPeriod720);
+        _lock(user12, 500_000 * 1e18, lockPeriod720);
+        // P2: user16: 10K, user17: 15K, user18: 19K, user19: 16K, user20: 5K
+        _lock(user9, 500_000 * 1e18, lockPeriod720);
+        _lock(user10, 2_500_000 * 1e18, lockPeriod720);
+        _lock(user11, 3_000_000 * 1e18, lockPeriod720);
+        _lock(user12, 800_000 * 1e18, lockPeriod720);
+
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(20);
+
+        // ### ACT ###
+        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+
+        uint256[] memory trancheDesiredRatios = new uint256[](3);
+        trancheDesiredRatios[0] = 40_00;
+        trancheDesiredRatios[1] = 32_00;
+        trancheDesiredRatios[1] = 28_00;
+        ClearingConfiguration memory clearingConfiguration =
+            ClearingConfiguration(10_0000 * 1e6, trancheDesiredRatios, 10_00, 5_00, true);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch, clearingConfiguration);
+
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
+
+        // ### ASSERT ###
+    }
 }

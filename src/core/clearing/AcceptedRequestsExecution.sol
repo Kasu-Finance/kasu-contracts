@@ -8,6 +8,7 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "forge-std/console2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "forge-std/console2.sol";
 
 struct AcceptedRequestsExecutionEpoch {
     PendingDeposits pendingDeposits;
@@ -69,16 +70,16 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         }
 
         uint256 startingIndexInclusive = acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
-        uint256 batchSizeIndex = batchSize + 1;
+        uint256 batchSizeIndex = batchSize - 1;
         uint256 endingIndexInclusive =
-            startingIndexInclusive >= batchSizeIndex ? 0 : startingIndexInclusive - batchSizeIndex;
+            startingIndexInclusive >= batchSizeIndex ? startingIndexInclusive - batchSizeIndex : 0;
 
         AcceptedRequestsExecutionEpoch storage acceptedRequestsExecution =
             acceptedRequestsExecutionPerEpoch[targetEpoch];
 
         // internal loop from current tranche index to last
         uint256 i = startingIndexInclusive;
-        while (i != 0) {
+        while (i >= endingIndexInclusive) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
 
             if (isDepositNft(userRequestNftId)) {
@@ -89,6 +90,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                     .tranchePriorityDepositsAccepted[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails.priority];
 
                 uint256 depositNftTotalAmountAccepted = 0;
+
+                console2.log(
+                    "new requested deposit", _getPendingRequestOwner(userRequestNftId), depositNftDetails.assetAmount
+                );
                 for (
                     uint256 targetTrancheIndex = 0;
                     targetTrancheIndex < trancheDepositTargetAmounts.length;
@@ -102,7 +107,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             * depositNftDetails.assetAmount;
 
                     console2.log(
-                        "accepted deposit",
                         string.concat(
                             Strings.toString(_getTrancheIndex(depositNftDetails.tranche)),
                             Strings.toString(depositNftDetails.priority),
@@ -118,12 +122,17 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             Strings.toString(acceptedDepositAmount)
                         )
                     );
-
-                    _acceptDepositRequest(userRequestNftId, acceptedDepositAmount);
-                    depositNftTotalAmountAccepted += trancheDepositTargetAmounts[targetTrancheIndex];
+                    if (acceptedDepositAmount != 0) {
+                        console2.log("accepted", acceptedDepositAmount);
+                        _acceptDepositRequest(userRequestNftId, acceptedDepositAmount);
+                        depositNftTotalAmountAccepted += trancheDepositTargetAmounts[targetTrancheIndex];
+                    }
                 }
 
                 if (depositNftTotalAmountAccepted < depositNftDetails.assetAmount) {
+                    console2.log(
+                        "rejected", userRequestNftId, depositNftTotalAmountAccepted, depositNftDetails.assetAmount
+                    );
                     _rejectDepositRequest(userRequestNftId);
                 }
             } else {
@@ -152,7 +161,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             * withdrawalAmount;
 
                     console2.log(
-                        "accepted withdrawal",
                         string.concat(Strings.toString(targetPriorityIndex)),
                         string.concat(
                             Strings.toString(targetPriorityWithdrawAmounts[targetPriorityIndex]),
@@ -165,12 +173,20 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         )
                     );
 
-                    _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalAmount);
+                    if (acceptedWithdrawalAmount != 0) {
+                        _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalAmount);
+                    }
                 }
             }
 
-            if (i == 0) acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
-            if (i != 0 && i >= endingIndexInclusive) --i;
+            if (i >= endingIndexInclusive) {
+                if (i == 0) {
+                    acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+                    break;
+                }
+                --i;
+                acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
+            }
         }
     }
 
