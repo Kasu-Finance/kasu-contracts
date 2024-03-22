@@ -162,7 +162,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[1] = 32_00;
         trancheDesiredRatios[1] = 28_00;
         ClearingConfiguration memory clearingConfiguration =
-            ClearingConfiguration(10_0000 * 1e6, trancheDesiredRatios, 10_00, 5_00, true);
+            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 5_00, true);
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch, clearingConfiguration);
 
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
