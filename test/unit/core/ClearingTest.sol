@@ -17,7 +17,7 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 250 * 1e6);
         uint256 dNftId_carol = _requestDeposit(carol, lpd.lendingPool, lpd.tranches[0], 50 * 1e6);
         _requestDeposit(david, lpd.lendingPool, lpd.tranches[0], 10 * 1e6);
-        _requestDeposit(userFive, lpd.lendingPool, lpd.tranches[0], 500 * 1e6);
+        _requestDeposit(user5, lpd.lendingPool, lpd.tranches[0], 500 * 1e6);
 
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 1e6);
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 200 * 1e6);
@@ -27,20 +27,20 @@ contract ClearingTest is LendingPoolTestUtils {
         _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[0], 200 * 10 ** 18);
 
         // tranche 2
-        _requestDeposit(userSix, lpd.lendingPool, lpd.tranches[1], 150 * 1e6);
-        _requestDeposit(userSeven, lpd.lendingPool, lpd.tranches[1], 60 * 1e6);
+        _requestDeposit(user6, lpd.lendingPool, lpd.tranches[1], 150 * 1e6);
+        _requestDeposit(user7, lpd.lendingPool, lpd.tranches[1], 60 * 1e6);
 
         // tranche 3
-        uint256 dNftId_userEight = _requestDeposit(userEight, lpd.lendingPool, lpd.tranches[2], 80 * 1e6);
-        _requestDeposit(userNine, lpd.lendingPool, lpd.tranches[2], 20 * 1e6);
-        _requestDeposit(userTen, lpd.lendingPool, lpd.tranches[2], 180 * 1e6);
+        uint256 dNftId_user8 = _requestDeposit(user8, lpd.lendingPool, lpd.tranches[2], 80 * 1e6);
+        _requestDeposit(user9, lpd.lendingPool, lpd.tranches[2], 20 * 1e6);
+        _requestDeposit(user10, lpd.lendingPool, lpd.tranches[2], 180 * 1e6);
 
-        _acceptDepositRequest(lpd.lendingPool, dNftId_userEight, 40 * 1e6);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_user8, 40 * 1e6);
 
-        _requestWithdrawal(userEight, lpd.lendingPool, lpd.tranches[2], 20 * 10 ** 18);
+        _requestWithdrawal(user8, lpd.lendingPool, lpd.tranches[2], 20 * 10 ** 18);
 
         ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
-        input1[0] = ForceWithdrawalInput(lpd.tranches[2], userEight, 10 * 10 ** 18);
+        input1[0] = ForceWithdrawalInput(lpd.tranches[2], user8, 10 * 10 ** 18);
         _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input1)[0];
 
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
@@ -48,7 +48,7 @@ contract ClearingTest is LendingPoolTestUtils {
         // user locking
         // loyalty levels: 0-1%: 0, 1%-3%:1, 3%+: 2
         _lock(bob, 3 ether, lockPeriod180); // 0,25 * 3e18 * 2e18 / 1e18 / 1e12 = 1.5 usdc / 250 usdc -> 0.6% -> 0
-        _lock(userFive, 8 ether, lockPeriod360); // 0,5 * 8e18 * 2e18 / 1e18 / 1e12 = 8 usdc / 500 usdc- > 1.6% -> 1
+        _lock(user5, 8 ether, lockPeriod360); // 0,5 * 8e18 * 2e18 / 1e18 / 1e12 = 8 usdc / 500 usdc- > 1.6% -> 1
         _lock(alice, 25 ether, lockPeriod30); // 0,05 * 15e18 * 2e18 / 1e18 / 1e12 = 2.5 usdc / 100 usdc = 2.5% -> 1
         _lock(carol, 5 ether, lockPeriod360); // 0,5 * 5e18 * 2e18 / 1e18 / 1e12 = 5 usdc / 50 usdc- > 10% -> 2
         _lock(david, 5 ether, lockPeriod360); // 0,5 * 5e18 * 2e18 / 1e18 / 1e12 = 5 usdc / 50 usdc- > 50% -> 2

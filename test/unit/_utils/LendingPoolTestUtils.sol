@@ -49,12 +49,22 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.deal(bob, 1 << 128);
         vm.deal(carol, 1 << 128);
         vm.deal(david, 1 << 128);
-        vm.deal(userFive, 1 << 128);
-        vm.deal(userSix, 1 << 128);
-        vm.deal(userSeven, 1 << 128);
-        vm.deal(userEight, 1 << 128);
-        vm.deal(userNine, 1 << 128);
-        vm.deal(userTen, 1 << 128);
+        vm.deal(user5, 1 << 128);
+        vm.deal(user6, 1 << 128);
+        vm.deal(user7, 1 << 128);
+        vm.deal(user8, 1 << 128);
+        vm.deal(user9, 1 << 128);
+        vm.deal(user10, 1 << 128);
+        vm.deal(user11, 1 << 128);
+        vm.deal(user12, 1 << 128);
+        vm.deal(user13, 1 << 128);
+        vm.deal(user14, 1 << 128);
+        vm.deal(user15, 1 << 128);
+        vm.deal(user16, 1 << 128);
+        vm.deal(user17, 1 << 128);
+        vm.deal(user18, 1 << 128);
+        vm.deal(user19, 1 << 128);
+        vm.deal(user20, 1 << 128);
         vm.deal(userNotAllowed, 1 << 128);
 
         // usdc
@@ -140,12 +150,22 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuAllowList.allowUser(bob);
         kasuAllowList.allowUser(carol);
         kasuAllowList.allowUser(david);
-        kasuAllowList.allowUser(userFive);
-        kasuAllowList.allowUser(userSix);
-        kasuAllowList.allowUser(userSeven);
-        kasuAllowList.allowUser(userEight);
-        kasuAllowList.allowUser(userNine);
-        kasuAllowList.allowUser(userTen);
+        kasuAllowList.allowUser(user5);
+        kasuAllowList.allowUser(user6);
+        kasuAllowList.allowUser(user7);
+        kasuAllowList.allowUser(user8);
+        kasuAllowList.allowUser(user9);
+        kasuAllowList.allowUser(user10);
+        kasuAllowList.allowUser(user11);
+        kasuAllowList.allowUser(user12);
+        kasuAllowList.allowUser(user13);
+        kasuAllowList.allowUser(user14);
+        kasuAllowList.allowUser(user15);
+        kasuAllowList.allowUser(user16);
+        kasuAllowList.allowUser(user17);
+        kasuAllowList.allowUser(user18);
+        kasuAllowList.allowUser(user19);
+        kasuAllowList.allowUser(user20);
         vm.stopPrank();
     }
 
