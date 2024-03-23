@@ -49,7 +49,22 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 for (uint256 k = 0; k < tranchePriorityDepositsAccepted[i][j].length; ++k) {
                     acceptedRequestsExecutionPerEpoch[targetEpoch].tranchePriorityDepositsAccepted[i][j][k] =
                         tranchePriorityDepositsAccepted[i][j][k];
+                    console2.log(
+                        "tranchePriorityDepositsAccepted",
+                        string.concat(Strings.toString(i), Strings.toString(j), Strings.toString(k)),
+                        tranchePriorityDepositsAccepted[i][j][k]
+                    );
                 }
+            }
+        }
+
+        for (uint256 i = 0; i < pendingDeposits.tranchePriorityDepositsAmounts.length; ++i) {
+            for (uint256 j = 0; j < pendingDeposits.tranchePriorityDepositsAmounts[i].length; ++j) {
+                console2.log(
+                    "tranchePriorityDepositsAmounts",
+                    string.concat(Strings.toString(i), Strings.toString(j)),
+                    pendingDeposits.tranchePriorityDepositsAmounts[i][j]
+                );
             }
         }
 
@@ -86,7 +101,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
                 if (depositNftDetails.epochId != targetEpoch) break;
 
-                uint256[] storage trancheDepositTargetAmounts = acceptedRequestsExecution
+                uint256[] storage trancheDepositAcceptedAmounts = acceptedRequestsExecution
                     .tranchePriorityDepositsAccepted[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails.priority];
 
                 uint256 depositNftTotalAmountAccepted = 0;
@@ -96,15 +111,15 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 );
                 for (
                     uint256 targetTrancheIndex = 0;
-                    targetTrancheIndex < trancheDepositTargetAmounts.length;
+                    targetTrancheIndex < trancheDepositAcceptedAmounts.length;
                     ++targetTrancheIndex
                 ) {
                     uint256 acceptedDepositAmount = acceptedRequestsExecution.pendingDeposits.trancheDepositsAmounts[targetTrancheIndex]
                         == 0
                         ? 0
-                        : trancheDepositTargetAmounts[targetTrancheIndex]
-                            / acceptedRequestsExecution.pendingDeposits.trancheDepositsAmounts[targetTrancheIndex]
-                            * depositNftDetails.assetAmount;
+                        : trancheDepositAcceptedAmounts[targetTrancheIndex] * depositNftDetails.assetAmount
+                            / acceptedRequestsExecution.pendingDeposits.tranchePriorityDepositsAmounts[targetTrancheIndex][depositNftDetails
+                                .priority];
 
                     console2.log(
                         string.concat(
@@ -113,26 +128,25 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             Strings.toString(targetTrancheIndex)
                         ),
                         string.concat(
-                            Strings.toString(trancheDepositTargetAmounts[targetTrancheIndex]),
+                            Strings.toString(trancheDepositAcceptedAmounts[targetTrancheIndex]),
                             " ",
                             Strings.toString(
-                                acceptedRequestsExecution.pendingDeposits.trancheDepositsAmounts[targetTrancheIndex]
+                                acceptedRequestsExecution.pendingDeposits.tranchePriorityDepositsAmounts[targetTrancheIndex][depositNftDetails
+                                    .priority]
                             ),
                             " ",
                             Strings.toString(acceptedDepositAmount)
                         )
                     );
                     if (acceptedDepositAmount != 0) {
-                        console2.log("accepted", acceptedDepositAmount);
+                        //                        console2.log("accepted", acceptedDepositAmount);
                         _acceptDepositRequest(userRequestNftId, acceptedDepositAmount);
-                        depositNftTotalAmountAccepted += trancheDepositTargetAmounts[targetTrancheIndex];
+                        depositNftTotalAmountAccepted += trancheDepositAcceptedAmounts[targetTrancheIndex];
                     }
                 }
 
                 if (depositNftTotalAmountAccepted < depositNftDetails.assetAmount) {
-                    console2.log(
-                        "rejected", userRequestNftId, depositNftTotalAmountAccepted, depositNftDetails.assetAmount
-                    );
+                    //                    console2.log("rejected", depositNftTotalAmountAccepted, depositNftDetails.assetAmount);
                     _rejectDepositRequest(userRequestNftId);
                 }
             } else {
@@ -156,9 +170,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         .pendingWithdrawals
                         .priorityWithdrawalAmounts[targetPriorityIndex] == 0
                         ? 0
-                        : targetPriorityWithdrawAmounts[targetPriorityIndex]
-                            / acceptedRequestsExecution.pendingWithdrawals.priorityWithdrawalAmounts[targetPriorityIndex]
-                            * withdrawalAmount;
+                        : targetPriorityWithdrawAmounts[targetPriorityIndex] * withdrawalAmount
+                            / acceptedRequestsExecution.pendingWithdrawals.priorityWithdrawalAmounts[targetPriorityIndex];
 
                     console2.log(
                         string.concat(Strings.toString(targetPriorityIndex)),

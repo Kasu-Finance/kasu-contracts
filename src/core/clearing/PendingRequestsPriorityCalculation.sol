@@ -8,6 +8,7 @@ import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../../shared/CommonErrors.sol";
+import "forge-std/console2.sol";
 
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
@@ -56,6 +57,12 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
             if (isDepositNft(userRequestNftId)) {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
+                console2.log(
+                    "req deposit",
+                    pendingRequestOwner,
+                    _getTrancheIndex(depositNftDetails.tranche),
+                    depositNftDetails.assetAmount
+                );
                 if (depositNftDetails.epochId != targetEpoch) break;
                 (address trancheAddress,) = decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
