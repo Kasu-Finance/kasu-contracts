@@ -304,7 +304,11 @@ contract PendingPool is
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
-    function _acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) internal override nftExists(dNftID) {
+    function _acceptDepositRequest(uint256 dNftID, address tranche, uint256 acceptedAmount)
+        internal
+        override
+        nftExists(dNftID)
+    {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
@@ -321,8 +325,6 @@ contract PendingPool is
 
             _deleteDNftDetails(user, dNftID);
         }
-
-        (address tranche,) = decomposeDepositId(dNftID);
 
         ILendingPool lendingPool = _getOwnLendingPool();
 
@@ -540,12 +542,12 @@ contract PendingPool is
         return systemVariables.loyaltyThresholds().length + 1;
     }
 
-    function _setDepositRequestPriority(uint256 depositId, uint256 priority) internal override {
-        _trancheDepositNftDetails[depositId].priority = priority;
+    function _setDepositRequestPriority(uint256 dNftId, uint256 priority) internal override {
+        _trancheDepositNftDetails[dNftId].priority = priority;
     }
 
-    function _setWithdrawalRequestPriority(uint256 withdrawalId, uint256 priority) internal override {
-        _trancheWithdrawalNftDetails[withdrawalId].priority = priority;
+    function _setWithdrawalRequestPriority(uint256 wNftId, uint256 priority) internal override {
+        _trancheWithdrawalNftDetails[wNftId].priority = priority;
     }
 
     // MODIFIERS

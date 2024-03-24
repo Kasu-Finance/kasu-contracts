@@ -153,10 +153,13 @@ contract ClearingTest is LendingPoolTestUtils {
         _lock(user20, 8_000 * 1e18, lockPeriod720);
 
         skip(6 days);
-        userManager.batchCalculateUserLoyaltyLevels(20);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+
+        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
         // ### ACT ###
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
         uint256[] memory trancheDesiredRatios = new uint256[](3);
         trancheDesiredRatios[0] = 20_00;
@@ -173,5 +176,11 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
 
         // ### ASSERT ###
+
+        // assert balance tranche
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[0]), 20_000 * 1e6, 1);
+        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[1]), 20_000 * 1e6, 1);
+        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[2]), 25_000 * 1e6, 1);
     }
 }

@@ -49,22 +49,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 for (uint256 k = 0; k < tranchePriorityDepositsAccepted[i][j].length; ++k) {
                     acceptedRequestsExecutionPerEpoch[targetEpoch].tranchePriorityDepositsAccepted[i][j][k] =
                         tranchePriorityDepositsAccepted[i][j][k];
-                    console2.log(
-                        "tranchePriorityDepositsAccepted",
-                        string.concat(Strings.toString(i), Strings.toString(j), Strings.toString(k)),
-                        tranchePriorityDepositsAccepted[i][j][k]
-                    );
                 }
-            }
-        }
-
-        for (uint256 i = 0; i < pendingDeposits.tranchePriorityDepositsAmounts.length; ++i) {
-            for (uint256 j = 0; j < pendingDeposits.tranchePriorityDepositsAmounts[i].length; ++j) {
-                console2.log(
-                    "tranchePriorityDepositsAmounts",
-                    string.concat(Strings.toString(i), Strings.toString(j)),
-                    pendingDeposits.tranchePriorityDepositsAmounts[i][j]
-                );
             }
         }
 
@@ -89,9 +74,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         uint256 endingIndexInclusive =
             startingIndexInclusive >= batchSizeIndex ? startingIndexInclusive - batchSizeIndex : 0;
 
-        AcceptedRequestsExecutionEpoch storage acceptedRequestsExecution =
-            acceptedRequestsExecutionPerEpoch[targetEpoch];
-
         // internal loop from current tranche index to last
         uint256 i = startingIndexInclusive;
         while (i >= endingIndexInclusive) {
@@ -101,25 +83,38 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
                 if (depositNftDetails.epochId != targetEpoch) break;
 
-                uint256[] storage trancheDepositAcceptedAmounts = acceptedRequestsExecution
+                uint256[] storage trancheDepositAcceptedAmounts = acceptedRequestsExecutionPerEpoch[targetEpoch]
                     .tranchePriorityDepositsAccepted[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails.priority];
 
                 uint256 depositNftTotalAmountAccepted = 0;
 
                 console2.log(
-                    "new requested deposit", _getPendingRequestOwner(userRequestNftId), depositNftDetails.assetAmount
+                    "requested deposit:",
+                    _getPendingRequestOwner(userRequestNftId),
+                    string.concat(
+                        " ",
+                        Strings.toString(_getTrancheIndex(depositNftDetails.tranche)),
+                        " ",
+                        Strings.toString(depositNftDetails.priority),
+                        " ",
+                        Strings.toString(depositNftDetails.assetAmount)
+                    )
                 );
                 for (
                     uint256 targetTrancheIndex = 0;
                     targetTrancheIndex < trancheDepositAcceptedAmounts.length;
                     ++targetTrancheIndex
                 ) {
-                    uint256 acceptedDepositAmount = acceptedRequestsExecution.pendingDeposits.trancheDepositsAmounts[targetTrancheIndex]
-                        == 0
+                    uint256 totalAcceptedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
+                        .tranchePriorityDepositsAccepted[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails
+                        .priority][targetTrancheIndex];
+                    uint256 totalDepositedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
+                        .pendingDeposits
+                        .tranchePriorityDepositsAmounts[targetTrancheIndex][depositNftDetails.priority];
+
+                    uint256 acceptedDepositAmount = totalDepositedAmount == 0
                         ? 0
-                        : trancheDepositAcceptedAmounts[targetTrancheIndex] * depositNftDetails.assetAmount
-                            / acceptedRequestsExecution.pendingDeposits.tranchePriorityDepositsAmounts[targetTrancheIndex][depositNftDetails
-                                .priority];
+                        : totalAcceptedAmount * depositNftDetails.assetAmount / totalDepositedAmount;
 
                     console2.log(
                         string.concat(
@@ -128,25 +123,20 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             Strings.toString(targetTrancheIndex)
                         ),
                         string.concat(
-                            Strings.toString(trancheDepositAcceptedAmounts[targetTrancheIndex]),
+                            Strings.toString(totalAcceptedAmount),
                             " ",
-                            Strings.toString(
-                                acceptedRequestsExecution.pendingDeposits.tranchePriorityDepositsAmounts[targetTrancheIndex][depositNftDetails
-                                    .priority]
-                            ),
+                            Strings.toString(totalDepositedAmount),
                             " ",
                             Strings.toString(acceptedDepositAmount)
                         )
                     );
                     if (acceptedDepositAmount != 0) {
-                        //                        console2.log("accepted", acceptedDepositAmount);
-                        _acceptDepositRequest(userRequestNftId, acceptedDepositAmount);
+                        _acceptDepositRequest(userRequestNftId, _getTranche(targetTrancheIndex), acceptedDepositAmount);
                         depositNftTotalAmountAccepted += trancheDepositAcceptedAmounts[targetTrancheIndex];
                     }
                 }
 
                 if (depositNftTotalAmountAccepted < depositNftDetails.assetAmount) {
-                    //                    console2.log("rejected", depositNftTotalAmountAccepted, depositNftDetails.assetAmount);
                     _rejectDepositRequest(userRequestNftId);
                 }
             } else {
@@ -154,7 +144,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
 
                 uint256[] storage targetPriorityWithdrawAmounts =
-                    acceptedRequestsExecution.acceptedPriorityWithdrawalAmounts;
+                    acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts;
 
                 (address trancheAddress,) = decomposeWithdrawalId(userRequestNftId);
 
@@ -166,25 +156,13 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                     uint256 withdrawalAmount =
                         ILendingPoolTranche(trancheAddress).convertToAssets(withdrawalNftDetails.sharesAmount);
 
-                    uint256 acceptedWithdrawalAmount = acceptedRequestsExecution
+                    uint256 totalAcceptedAmount = targetPriorityWithdrawAmounts[targetPriorityIndex];
+                    uint256 totalDepositedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
                         .pendingWithdrawals
-                        .priorityWithdrawalAmounts[targetPriorityIndex] == 0
-                        ? 0
-                        : targetPriorityWithdrawAmounts[targetPriorityIndex] * withdrawalAmount
-                            / acceptedRequestsExecution.pendingWithdrawals.priorityWithdrawalAmounts[targetPriorityIndex];
+                        .priorityWithdrawalAmounts[targetPriorityIndex];
 
-                    console2.log(
-                        string.concat(Strings.toString(targetPriorityIndex)),
-                        string.concat(
-                            Strings.toString(targetPriorityWithdrawAmounts[targetPriorityIndex]),
-                            " ",
-                            Strings.toString(
-                                acceptedRequestsExecution.pendingWithdrawals.priorityWithdrawalAmounts[targetPriorityIndex]
-                            ),
-                            " ",
-                            Strings.toString(acceptedWithdrawalAmount)
-                        )
-                    );
+                    uint256 acceptedWithdrawalAmount =
+                        totalDepositedAmount == 0 ? 0 : totalAcceptedAmount * withdrawalAmount / totalDepositedAmount;
 
                     if (acceptedWithdrawalAmount != 0) {
                         _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalAmount);
@@ -239,7 +217,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
     function _getTranche(uint256 index) internal view virtual returns (address);
 
-    function _acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) internal virtual;
+    function _acceptDepositRequest(uint256 dNftID, address tranche, uint256 acceptedAmount) internal virtual;
 
     function _rejectDepositRequest(uint256 dNftID) internal virtual;
 

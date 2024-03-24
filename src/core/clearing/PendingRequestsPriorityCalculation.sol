@@ -57,12 +57,6 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
             if (isDepositNft(userRequestNftId)) {
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
-                console2.log(
-                    "req deposit",
-                    pendingRequestOwner,
-                    _getTrancheIndex(depositNftDetails.tranche),
-                    depositNftDetails.assetAmount
-                );
                 if (depositNftDetails.epochId != targetEpoch) break;
                 (address trancheAddress,) = decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
@@ -72,7 +66,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                 pendingDeposits.tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] +=
                     depositNftDetails.assetAmount;
 
-                _setDepositRequestPriority(userRequestId, ownerLoyaltyLevel);
+                _setDepositRequestPriority(userRequestNftId, ownerLoyaltyLevel);
             } else {
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
@@ -89,7 +83,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                 tempPriorityTrancheWithdrawalShares[withdrawLoyaltyLevel][trancheIndex] +=
                     withdrawalNftDetails.sharesAmount;
 
-                _setWithdrawalRequestPriority(userRequestId, withdrawLoyaltyLevel);
+                _setWithdrawalRequestPriority(userRequestNftId, withdrawLoyaltyLevel);
             }
             pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId + 1;
         }
@@ -218,7 +212,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
     function _getLoyaltyLevelCount() internal view virtual returns (uint256);
 
-    function _setDepositRequestPriority(uint256 depositId, uint256 priority) internal virtual;
+    function _setDepositRequestPriority(uint256 dNftId, uint256 priority) internal virtual;
 
-    function _setWithdrawalRequestPriority(uint256 withdrawalId, uint256 priority) internal virtual;
+    function _setWithdrawalRequestPriority(uint256 wNftId, uint256 priority) internal virtual;
 }
