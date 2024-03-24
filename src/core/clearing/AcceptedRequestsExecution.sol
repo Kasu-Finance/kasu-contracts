@@ -8,7 +8,6 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "forge-std/console2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "forge-std/console2.sol";
 
 struct AcceptedRequestsExecutionEpoch {
     PendingDeposits pendingDeposits;
@@ -108,13 +107,14 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                     uint256 totalAcceptedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
                         .tranchePriorityDepositsAccepted[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails
                         .priority][targetTrancheIndex];
-                    uint256 totalDepositedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
+                    uint256 totalTranchePriorityDepositedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
                         .pendingDeposits
-                        .tranchePriorityDepositsAmounts[targetTrancheIndex][depositNftDetails.priority];
+                        .tranchePriorityDepositsAmounts[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails
+                        .priority];
 
-                    uint256 acceptedDepositAmount = totalDepositedAmount == 0
+                    uint256 userAcceptedDepositAmount = totalTranchePriorityDepositedAmount == 0
                         ? 0
-                        : totalAcceptedAmount * depositNftDetails.assetAmount / totalDepositedAmount;
+                        : totalAcceptedAmount * depositNftDetails.assetAmount / totalTranchePriorityDepositedAmount;
 
                     console2.log(
                         string.concat(
@@ -125,13 +125,15 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         string.concat(
                             Strings.toString(totalAcceptedAmount),
                             " ",
-                            Strings.toString(totalDepositedAmount),
+                            Strings.toString(totalTranchePriorityDepositedAmount),
                             " ",
-                            Strings.toString(acceptedDepositAmount)
+                            Strings.toString(userAcceptedDepositAmount)
                         )
                     );
-                    if (acceptedDepositAmount != 0) {
-                        _acceptDepositRequest(userRequestNftId, _getTranche(targetTrancheIndex), acceptedDepositAmount);
+                    if (userAcceptedDepositAmount != 0) {
+                        _acceptDepositRequest(
+                            userRequestNftId, _getTranche(targetTrancheIndex), userAcceptedDepositAmount
+                        );
                         depositNftTotalAmountAccepted += trancheDepositAcceptedAmounts[targetTrancheIndex];
                     }
                 }

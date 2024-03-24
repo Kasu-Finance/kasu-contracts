@@ -95,6 +95,7 @@ contract ClearingTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
+        // deposit requests: total 100K
         // J0: 20K
         _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 4_000 * 1e6);
         _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 6_000 * 1e6);
@@ -130,7 +131,7 @@ contract ClearingTest is LendingPoolTestUtils {
         _requestDeposit(user19, lpd.lendingPool, lpd.tranches[2], 10_000 * 1e6);
         _requestDeposit(user20, lpd.lendingPool, lpd.tranches[2], 5_000 * 1e6);
 
-        // loyalty levels: 0-1%: 0, 1%-3%:1, 3%+: 2
+        // loyalty levels config: 0-1%: 0, 1%-3%:1, 3%+: 2
         // P0: alice: 7k, bob: 6k, carol: 5K, david: 6K, user5: 4K, user6: 6K, user7: 5K, user8:3K
         _lock(alice, 100 * 1e18, lockPeriod30);
         _lock(bob, 100 * 1e18, lockPeriod30);
@@ -180,7 +181,32 @@ contract ClearingTest is LendingPoolTestUtils {
         // assert balance tranche
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
         assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[0]), 20_000 * 1e6, 1);
-        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[1]), 20_000 * 1e6, 1);
-        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[2]), 25_000 * 1e6, 1);
+        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[1]), 30_000 * 1e6, 1);
+        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[2]), 50_000 * 1e6, 1);
+
+        // assert user balance per tranche
+        ILendingPoolTranche junior = ILendingPoolTranche(lpd.tranches[0]);
+        ILendingPoolTranche mezzo = ILendingPoolTranche(lpd.tranches[1]);
+        ILendingPoolTranche senior = ILendingPoolTranche(lpd.tranches[2]);
+
+        // algo: J2J1J0 M2J2M1J1M0J0 S2M2J2S1M1J1S0M0J0
+        // J2 30K -> J 20K
+        assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user16)), 5333_333_333, 1);
+        assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user17)), 4666_666_666, 1);
+        assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user18)), 8000_000_000, 1);
+        assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user19)), 2000_000_000, 1);
+        // M2 5K -> M 5K
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user16)), 2000_000_000, 1);
+        //        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user19)), 3000_000_000, 1);
+        // J2 30K -> M 10K
+        // M1 25K -> M 15K
+        // S2 25K -> S 25K
+        // M1 25K -> S 10K
+        // S0 10K -> S 10K
+        // M0 10K -> S 5K
+        // J0 -> rejected 20K
+        // M0 -> rejected 5K
+
+        // alice
     }
 }
