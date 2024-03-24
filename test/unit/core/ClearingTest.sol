@@ -178,35 +178,67 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
 
-        // assert balance tranche
+        // ## Assert tranche balance ##
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
         assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[0]), 20_000 * 1e6, 1);
         assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[1]), 30_000 * 1e6, 1);
         assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[2]), 50_000 * 1e6, 1);
 
-        // assert user balance per tranche
+        // ## Assert user balance per tranche ##
+        // algo: J2J1J0 M2J2M1J1M0J0 S2M2J2S1M1J1S0M0J0
         ILendingPoolTranche junior = ILendingPoolTranche(lpd.tranches[0]);
         ILendingPoolTranche mezzo = ILendingPoolTranche(lpd.tranches[1]);
         ILendingPoolTranche senior = ILendingPoolTranche(lpd.tranches[2]);
 
-        // algo: J2J1J0 M2J2M1J1M0J0 S2M2J2S1M1J1S0M0J0
+        // # P2 #
         // J2 30K -> J 20K
         assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user16)), 5333_333_333, 1);
         assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user17)), 4666_666_666, 1);
         assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user18)), 8000_000_000, 1);
         assertApproxEqAbs(junior.convertToAssets(junior.balanceOf(user19)), 2000_000_000, 1);
-        // M2 5K -> M 5K
-        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user16)), 2000_000_000, 1);
-        //        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user19)), 3000_000_000, 1);
-        // J2 30K -> M 10K
-        // M1 25K -> M 15K
+        // M2 5K -> M 5K,  J2 30K -> M 10K
+        // 2000 + 2666
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user16)), 4666_666_666, 1);
+        // 3000 + 1000
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user19)), 4000_000_000, 1);
         // S2 25K -> S 25K
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user17)), 6000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user18)), 4000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user19)), 10000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user20)), 5000_000_000, 1);
+        // # P1 #
+        // M1 25K -> M 15K
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user9)), 3600_000_000, 1);
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user10)), 1200_000_000, 1);
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user11)), 4800_000_000, 1);
+        assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user12)), 5400_000_000, 1);
         // M1 25K -> S 10K
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user9)), 2400_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user10)), 800_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user11)), 3200_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user12)), 3600_000_000, 1);
+        // # P0 #
         // S0 10K -> S 10K
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(david)), 1000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user7)), 5000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user8)), 3000_000_000, 1);
+        // S0 10K -> S 10K + M0 10K -> S 5K
+        // 1000 + 1000
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(alice)), 2000_000_000, 1);
         // M0 10K -> S 5K
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user5)), 1000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user6)), 3000_000_000, 1);
         // J0 -> rejected 20K
+        assertApproxEqAbs(mockUsdc.balanceOf(bob), 6000 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(carol), 5000 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(david), 5000 * 1e6, 1);
         // M0 -> rejected 5K
+        assertApproxEqAbs(mockUsdc.balanceOf(user5), 1000_000_000, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(user6), 3000_000_000, 1);
+        // J0 -> rejected 20K +  M0 -> rejected 5K
+        // 4000 + 1000
+        assertApproxEqAbs(mockUsdc.balanceOf(alice), 5000_000_000, 1);
 
-        // alice
+        assertEq(IPendingPool(lpd.pendingPool).totalSupply(), 0);
     }
 }

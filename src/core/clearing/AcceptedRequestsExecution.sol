@@ -131,14 +131,16 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         )
                     );
                     if (userAcceptedDepositAmount != 0) {
+                        console2.log("accepted");
                         _acceptDepositRequest(
                             userRequestNftId, _getTranche(targetTrancheIndex), userAcceptedDepositAmount
                         );
-                        depositNftTotalAmountAccepted += trancheDepositAcceptedAmounts[targetTrancheIndex];
+                        depositNftTotalAmountAccepted += userAcceptedDepositAmount;
                     }
                 }
 
                 if (depositNftTotalAmountAccepted < depositNftDetails.assetAmount) {
+                    console2.log("rejected");
                     _rejectDepositRequest(userRequestNftId);
                 }
             } else {

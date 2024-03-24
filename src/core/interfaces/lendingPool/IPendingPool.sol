@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "../clearing/IPendingRequestsPriorityCalculation.sol";
 import {IClearingManager} from "../clearing/IClearingManager.sol";
 import {IAcceptedRequestsExecution} from "../clearing/IAcceptedRequestsExecution.sol";
@@ -37,7 +37,7 @@ struct ForceWithdrawalInput {
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
  */
-interface IPendingPool is IERC721, IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
+interface IPendingPool is IERC721Enumerable, IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
     // VIEWS
     function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
     function trancheWithdrawalNftDetails(uint256 wNftId)
