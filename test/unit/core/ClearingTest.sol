@@ -125,11 +125,11 @@ contract ClearingTest is LendingPoolTestUtils {
         _requestDeposit(user7, lpd.lendingPool, lpd.tranches[2], 5_000 * 1e6);
         _requestDeposit(user8, lpd.lendingPool, lpd.tranches[2], 3_000 * 1e6);
         // S1: 0
-        // S2: 25K
+        // S2: 35K
         _requestDeposit(user17, lpd.lendingPool, lpd.tranches[2], 6_000 * 1e6);
         _requestDeposit(user18, lpd.lendingPool, lpd.tranches[2], 4_000 * 1e6);
         _requestDeposit(user19, lpd.lendingPool, lpd.tranches[2], 10_000 * 1e6);
-        _requestDeposit(user20, lpd.lendingPool, lpd.tranches[2], 5_000 * 1e6);
+        _requestDeposit(user20, lpd.lendingPool, lpd.tranches[2], 15_000 * 1e6);
 
         // loyalty levels config: 0-1%: 0, 1%-3%:1, 3%+: 2
         // P0: alice: 7k, bob: 6k, carol: 5K, david: 6K, user5: 4K, user6: 6K, user7: 5K, user8:3K
@@ -167,7 +167,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
         ClearingConfiguration memory clearingConfiguration =
-            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 0, 0, true);
+            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration);
 
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
@@ -182,7 +182,7 @@ contract ClearingTest is LendingPoolTestUtils {
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
         assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[0]), 20_000 * 1e6, 1);
         assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[1]), 30_000 * 1e6, 1);
-        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[2]), 50_000 * 1e6, 1);
+        assertApproxEqAbs(lendingPool.balanceOf(lpd.tranches[2]), 60_000 * 1e6, 1);
 
         // ## Assert user balance per tranche ##
         // algo: J2J1J0 M2J2M1J1M0J0 S2M2J2S1M1J1S0M0J0
@@ -201,11 +201,11 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user16)), 4666_666_666, 1);
         // 3000 + 1000
         assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user19)), 4000_000_000, 1);
-        // S2 25K -> S 25K
+        // S2 35K -> S 35K
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user17)), 6000_000_000, 1);
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user18)), 4000_000_000, 1);
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user19)), 10000_000_000, 1);
-        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user20)), 5000_000_000, 1);
+        assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user20)), 15000_000_000, 1);
 
         // # P1 #
         // M1 25K -> M 15K
