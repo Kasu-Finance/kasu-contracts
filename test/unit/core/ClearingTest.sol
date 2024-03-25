@@ -158,7 +158,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
         userManager.batchCalculateUserLoyaltyLevels(10);
 
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
 
         // ### ACT ###
 
@@ -168,13 +168,13 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[2] = 50_00;
         ClearingConfiguration memory clearingConfiguration =
             ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 0, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch, clearingConfiguration);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
 
         // ### ASSERT ###
 
@@ -206,6 +206,7 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user18)), 4000_000_000, 1);
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user19)), 10000_000_000, 1);
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user20)), 5000_000_000, 1);
+
         // # P1 #
         // M1 25K -> M 15K
         assertApproxEqAbs(mezzo.convertToAssets(mezzo.balanceOf(user9)), 3600_000_000, 1);
@@ -217,6 +218,7 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user10)), 800_000_000, 1);
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user11)), 3200_000_000, 1);
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(user12)), 3600_000_000, 1);
+
         // # P0 #
         // S0 10K -> S 10K
         assertApproxEqAbs(senior.convertToAssets(senior.balanceOf(david)), 1000_000_000, 1);
@@ -240,5 +242,45 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(mockUsdc.balanceOf(alice), 5000_000_000, 1);
 
         assertEq(IPendingPool(lpd.pendingPool).totalSupply(), 0);
+
+        // ### ARRANGE ###
+
+        skip(1 days);
+        // # P2 #
+        _requestWithdrawal(user16, lpd.lendingPool, lpd.tranches[1], 3000 * 1e18);
+        _requestWithdrawal(user17, lpd.lendingPool, lpd.tranches[2], 2000 * 1e18);
+        _requestWithdrawal(user18, lpd.lendingPool, lpd.tranches[2], 4000 * 1e18);
+
+        _requestWithdrawal(user16, lpd.lendingPool, lpd.tranches[0], 300 * 1e18);
+        _requestWithdrawal(user17, lpd.lendingPool, lpd.tranches[0], 600 * 1e18);
+
+        // # P1 #
+        _requestWithdrawal(user9, lpd.lendingPool, lpd.tranches[1], 1000 * 1e18);
+        _requestWithdrawal(user10, lpd.lendingPool, lpd.tranches[1], 200 * 1e18);
+        _requestWithdrawal(user11, lpd.lendingPool, lpd.tranches[1], 1800 * 1e18);
+
+        _requestWithdrawal(user9, lpd.lendingPool, lpd.tranches[2], 500 * 1e18);
+        _requestWithdrawal(user10, lpd.lendingPool, lpd.tranches[2], 800 * 1e18);
+
+        // # P0 #
+        _requestWithdrawal(user5, lpd.lendingPool, lpd.tranches[2], 1000 * 1e18);
+        _requestWithdrawal(user6, lpd.lendingPool, lpd.tranches[2], 2000 * 1e18);
+
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+
+        // ### ACT ###
+        uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
+
+        // ### ASSERT ###
+        //        assertApproxEqAbs(mockUsdc.balanceOf(user16), 6000 * 1e6, 1);
+        //        assertApproxEqAbs(mockUsdc.balanceOf(user17), 6000 * 1e6, 1);
+        //        assertApproxEqAbs(mockUsdc.balanceOf(user18), 6000 * 1e6, 1);
+        //        assertApproxEqAbs(mockUsdc.balanceOf(user9), 6000 * 1e6, 1);
+        //        assertApproxEqAbs(mockUsdc.balanceOf(user5), 6000 * 1e6, 1);
+        //        assertApproxEqAbs(mockUsdc.balanceOf(user6), 6000 * 1e6, 1);
     }
 }

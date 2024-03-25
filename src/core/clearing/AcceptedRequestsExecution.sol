@@ -87,18 +87,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
                 uint256 depositNftTotalAmountAccepted = 0;
 
-                console2.log(
-                    "requested deposit:",
-                    _getPendingRequestOwner(userRequestNftId),
-                    string.concat(
-                        " ",
-                        Strings.toString(_getTrancheIndex(depositNftDetails.tranche)),
-                        " ",
-                        Strings.toString(depositNftDetails.priority),
-                        " ",
-                        Strings.toString(depositNftDetails.assetAmount)
-                    )
-                );
                 for (
                     uint256 targetTrancheIndex = 0;
                     targetTrancheIndex < trancheDepositAcceptedAmounts.length;
@@ -116,22 +104,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         ? 0
                         : totalAcceptedAmount * depositNftDetails.assetAmount / totalTranchePriorityDepositedAmount;
 
-                    console2.log(
-                        string.concat(
-                            Strings.toString(_getTrancheIndex(depositNftDetails.tranche)),
-                            Strings.toString(depositNftDetails.priority),
-                            Strings.toString(targetTrancheIndex)
-                        ),
-                        string.concat(
-                            Strings.toString(totalAcceptedAmount),
-                            " ",
-                            Strings.toString(totalTranchePriorityDepositedAmount),
-                            " ",
-                            Strings.toString(userAcceptedDepositAmount)
-                        )
-                    );
                     if (userAcceptedDepositAmount != 0) {
-                        console2.log("accepted");
                         _acceptDepositRequest(
                             userRequestNftId, _getTranche(targetTrancheIndex), userAcceptedDepositAmount
                         );
@@ -140,7 +113,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 }
 
                 if (depositNftTotalAmountAccepted < depositNftDetails.assetAmount) {
-                    console2.log("rejected");
                     _rejectDepositRequest(userRequestNftId);
                 }
             } else {
@@ -152,25 +124,33 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
                 (address trancheAddress,) = decomposeWithdrawalId(userRequestNftId);
 
-                for (
-                    uint256 targetPriorityIndex = 0;
-                    targetPriorityIndex < targetPriorityWithdrawAmounts.length;
-                    ++targetPriorityIndex
-                ) {
-                    uint256 withdrawalAmount =
-                        ILendingPoolTranche(trancheAddress).convertToAssets(withdrawalNftDetails.sharesAmount);
+                uint256 withdrawalAmount =
+                    ILendingPoolTranche(trancheAddress).convertToAssets(withdrawalNftDetails.sharesAmount);
 
-                    uint256 totalAcceptedAmount = targetPriorityWithdrawAmounts[targetPriorityIndex];
-                    uint256 totalDepositedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
-                        .pendingWithdrawals
-                        .priorityWithdrawalAmounts[targetPriorityIndex];
+                uint256 totalAcceptedAmount = targetPriorityWithdrawAmounts[withdrawalNftDetails.priority];
+                uint256 totalWithdrawalAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
+                    .pendingWithdrawals
+                    .priorityWithdrawalAmounts[withdrawalNftDetails.priority];
 
-                    uint256 acceptedWithdrawalAmount =
-                        totalDepositedAmount == 0 ? 0 : totalAcceptedAmount * withdrawalAmount / totalDepositedAmount;
+                uint256 acceptedWithdrawalAmount =
+                    totalWithdrawalAmount == 0 ? 0 : totalAcceptedAmount * withdrawalAmount / totalWithdrawalAmount;
 
-                    if (acceptedWithdrawalAmount != 0) {
-                        _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalAmount);
-                    }
+                console2.log(
+                    string.concat(
+                        Strings.toString(_getTrancheIndex(withdrawalNftDetails.tranche)),
+                        Strings.toString(withdrawalNftDetails.priority)
+                    ),
+                    string.concat(
+                        Strings.toString(totalAcceptedAmount),
+                        " ",
+                        Strings.toString(totalWithdrawalAmount),
+                        " ",
+                        Strings.toString(withdrawalAmount)
+                    )
+                );
+
+                if (acceptedWithdrawalAmount != 0) {
+                    _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalAmount);
                 }
             }
 
