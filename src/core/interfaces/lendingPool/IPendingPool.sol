@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "../clearing/IPendingRequestsPriorityCalculation.sol";
+import {IClearingManager} from "../clearing/IClearingManager.sol";
+import {IAcceptedRequestsExecution} from "../clearing/IAcceptedRequestsExecution.sol";
 
 enum RequestedFrom {
     USER,
@@ -13,6 +15,7 @@ struct DepositNftDetails {
     uint256 assetAmount;
     address tranche;
     uint256 epochId;
+    uint256 priority;
     RequestedFrom requestedFrom;
 }
 
@@ -20,6 +23,7 @@ struct WithdrawalNftDetails {
     uint256 sharesAmount;
     address tranche;
     uint256 epochId;
+    uint256 priority;
     RequestedFrom requestedFrom;
 }
 
@@ -33,7 +37,7 @@ struct ForceWithdrawalInput {
  * @notice Interface for the LendingPool contract.
  * @dev Can only be called by the LendingPoolManager contract.
  */
-interface IPendingPool is IERC721, IPendingRequestsPriorityCalculation {
+interface IPendingPool is IERC721Enumerable, IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
     // VIEWS
     function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
     function trancheWithdrawalNftDetails(uint256 wNftId)
@@ -81,6 +85,7 @@ interface IPendingPool is IERC721, IPendingRequestsPriorityCalculation {
         address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 epochId, uint256 amount
     );
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
+    event DepositRequestRejected(address indexed user, address indexed tranche, uint256 indexed dNftID);
     event WithdrawalRequested(
         address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 epochId, uint256 amount
     );

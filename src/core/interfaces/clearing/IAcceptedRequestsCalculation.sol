@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "./IPendingRequestsPriorityCalculation.sol";
+
 /**
  * @notice Clearing calculation input.
  * @custom:member config Clearing configuration.
@@ -13,12 +15,13 @@ struct ClearingInput {
     LendingPoolBalance balance;
     PendingDeposits pendingDeposits;
     PendingWithdrawals pendingWithdrawals;
+    uint256 targetEpoch;
 }
 
 /**
  * @notice Clearing configuration.
  * @custom:member borrowAmount Desired borrow amount for current clearing.
- * @custom:member trancheDesiredRatios Lending pool ranche desired ratios in percentages.
+ * @custom:member trancheDesiredRatios Lending pool tranche desired ratios in percentages.
  * @custom:member maxExcessPercentage Maximum excess balance percentage.
  * @custom:member minExcessPercentage Minimum excess balance percentage.
  */
@@ -27,6 +30,7 @@ struct ClearingConfiguration {
     uint256[] trancheDesiredRatios;
     uint256 maxExcessPercentage;
     uint256 minExcessPercentage;
+    bool isOverridden;
 }
 
 /**
@@ -39,32 +43,10 @@ struct LendingPoolBalance {
     uint256 owed;
 }
 
-/**
- * @notice Pending deposits.
- * @custom:member totalDepositAmount Total deposit amount.
- * @custom:member trancheDepositsAmounts Deposit amounts for each tranche.
- * @custom:member tranchePriorityDepositsAmounts Deposit amounts for each tranche and priority.
- */
-struct PendingDeposits {
-    uint256 totalDepositAmount;
-    uint256[] trancheDepositsAmounts;
-    uint256[][] tranchePriorityDepositsAmounts;
-}
-
-/**
- * @notice Pending withdrawals.
- * @custom:member totalWithdrawalsAmount Total withdrawal amount.
- * @custom:member priorityWithdrawalAmounts Withdrawal amounts for each priority.
- */
-struct PendingWithdrawals {
-    uint256 totalWithdrawalsAmount;
-    uint256[] priorityWithdrawalAmounts;
-}
-
-interface IClearingCalculation {
-    function doClearing(ClearingInput calldata input)
+interface IAcceptedRequestsCalculation {
+    function calculateAcceptedRequests(ClearingInput calldata input)
         external
-        view
+        pure
         returns (
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts

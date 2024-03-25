@@ -14,6 +14,8 @@ import "../interfaces/IUserManager.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../clearing/PendingRequestsPriorityCalculation.sol";
+import "../clearing/ClearingManager.sol";
+import "../clearing/AcceptedRequestsExecution.sol";
 
 /**
  * @dev
@@ -28,7 +30,8 @@ contract PendingPool is
     AssetFunctionsBase,
     LendingPoolHelpers,
     LendingPoolStoppable,
-    PendingRequestsPriorityCalculation
+    PendingRequestsPriorityCalculation,
+    AcceptedRequestsExecution
 {
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;
@@ -64,11 +67,7 @@ contract PendingPool is
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_
-    )
-        AssetFunctionsBase(underlyingAsset_)
-        LendingPoolHelpers(lendingPoolManager_)
-        PendingRequestsPriorityCalculation(userManger_, systemVariables_)
-    {
+    ) AssetFunctionsBase(underlyingAsset_) LendingPoolHelpers(lendingPoolManager_) {
         systemVariables = systemVariables_;
         userManager = userManger_;
         _disableInitializers();
@@ -100,7 +99,7 @@ contract PendingPool is
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view
-        override(IPendingPool, PendingRequestsPriorityCalculation)
+        override(IPendingPool, PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (DepositNftDetails memory depositNftDetails)
     {
         return _trancheDepositNftDetails[dNftId];
@@ -109,7 +108,7 @@ contract PendingPool is
     function trancheWithdrawalNftDetails(uint256 wNftId)
         public
         view
-        override(IPendingPool, PendingRequestsPriorityCalculation)
+        override(IPendingPool, PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (WithdrawalNftDetails memory withdrawalNftDetails)
     {
         return _trancheWithdrawalNftDetails[wNftId];
@@ -149,7 +148,8 @@ contract PendingPool is
             _trancheDepositNFTs[tranche].push(dNftID);
             _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, requestEpochId, RequestedFrom.USER);
+            _trancheDepositNftDetails[dNftID] =
+                DepositNftDetails(amount, tranche, requestEpochId, 0, RequestedFrom.USER);
 
             _mint(user, dNftID);
         } else {
@@ -172,16 +172,7 @@ contract PendingPool is
         isNftOwner(user, dNftID)
         onlyLendingPoolManager
     {
-        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
-
-        // Burn the deposit NFT
-        _update(address(0), dNftID, address(0));
-
-        // return funds directly to the user
-        // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
-        _transferAssets(user, depositNftDetails.assetAmount);
-
-        _deleteDNftDetails(user, dNftID);
+        _returnDepositRequest(dNftID, user);
 
         (address tranche,) = decomposeDepositId(dNftID);
 
@@ -280,7 +271,7 @@ contract PendingPool is
         address tranche,
         uint256 sharesToWithdraw,
         uint256 requestEpochId,
-        RequestedFrom priority
+        RequestedFrom requestedFrom
     ) internal returns (uint256 wNftID) {
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
@@ -292,7 +283,7 @@ contract PendingPool is
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
         // get user's dNftID for current epoch
-        wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][priority];
+        wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom];
 
         if (wNftID == 0) {
             // create new wNft
@@ -300,12 +291,12 @@ contract PendingPool is
             _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
 
             _trancheWithdrawalNFTs[tranche].push(wNftID);
-            _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][priority] = wNftID;
+            _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom] = wNftID;
 
             _mint(user, wNftID);
 
             _trancheWithdrawalNftDetails[wNftID] =
-                WithdrawalNftDetails(sharesToWithdraw, tranche, requestEpochId, priority);
+                WithdrawalNftDetails(sharesToWithdraw, tranche, requestEpochId, 0, requestedFrom);
         } else {
             // update existing wNft
             _trancheWithdrawalNftDetails[wNftID].sharesAmount += sharesToWithdraw;
@@ -313,7 +304,11 @@ contract PendingPool is
     }
 
     // DEPOSIT/WITHDRAWAL ACCEPTANCE
-    function _acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) internal nftExists(dNftID) {
+    function _acceptDepositRequest(uint256 dNftID, address tranche, uint256 acceptedAmount)
+        internal
+        override
+        nftExists(dNftID)
+    {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
         if (depositNftDetails.assetAmount < acceptedAmount) {
             revert TooManyAssetsRequested(dNftID, depositNftDetails.assetAmount, acceptedAmount);
@@ -326,13 +321,10 @@ contract PendingPool is
         address user = ownerOf(dNftID);
 
         if (depositNftDetails.assetAmount == 0) {
-            // Burn the deposit NFT
-            _update(address(0), dNftID, address(0));
+            _burnDepositNft(dNftID);
 
             _deleteDNftDetails(user, dNftID);
         }
-
-        (address tranche,) = decomposeDepositId(dNftID);
 
         ILendingPool lendingPool = _getOwnLendingPool();
 
@@ -341,7 +333,31 @@ contract PendingPool is
         lendingPool.acceptDeposit(tranche, user, acceptedAmount);
     }
 
-    function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal nftExists(wNftID) {
+    function _rejectDepositRequest(uint256 dNftID) internal override nftExists(dNftID) {
+        address user = ownerOf(dNftID);
+        _returnDepositRequest(dNftID, user);
+        (address tranche,) = decomposeDepositId(dNftID);
+
+        emit DepositRequestRejected(user, tranche, dNftID);
+    }
+
+    function _returnDepositRequest(uint256 dNftID, address user) private {
+        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
+
+        _burnDepositNft(dNftID);
+
+        // return funds directly to the user
+        // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
+        _transferAssets(user, depositNftDetails.assetAmount);
+
+        _deleteDNftDetails(user, dNftID);
+    }
+
+    function _burnDepositNft(uint256 dNftID) internal nftExists(dNftID) {
+        _update(address(0), dNftID, address(0));
+    }
+
+    function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal override nftExists(wNftID) {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.sharesAmount < acceptedShares) {
@@ -422,7 +438,12 @@ contract PendingPool is
         withdrawalId = (id >> 160) - TRANCHE_START_WITHDRAWAL_NFT_ID;
     }
 
-    function isDepositNft(uint256 nftId) public pure override returns (bool) {
+    function isDepositNft(uint256 nftId)
+        public
+        pure
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (bool)
+    {
         return (nftId >> 160) < TRANCHE_START_WITHDRAWAL_NFT_ID;
     }
 
@@ -448,21 +469,41 @@ contract PendingPool is
         }
     }
 
-    // OVERRIDES
+    // OVERRIDES: PendingRequestsPriorityCalculation
 
-    function _getCurrentEpochTotalPendingRequests() internal view override returns (uint256) {
+    function _getTotalPendingRequests()
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (uint256)
+    {
         return totalSupply();
     }
 
-    function _getPendingRequestIdByIndex(uint256 index) internal view override returns (uint256) {
+    function _getPendingRequestIdByIndex(uint256 index)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (uint256)
+    {
         return tokenByIndex(index);
     }
 
-    function _getPendingRequestOwner(uint256 tokenId) internal view override returns (address) {
+    function _getPendingRequestOwner(uint256 tokenId)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (address)
+    {
         return ownerOf(tokenId);
     }
 
-    function _getTrancheIndex(address tranche) internal view override returns (uint256) {
+    function _getTrancheIndex(address tranche)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (uint256)
+    {
         return _getOwnLendingPool().getTrancheIndex(tranche);
     }
 
@@ -470,8 +511,43 @@ contract PendingPool is
         return _getOwnLendingPool().lendingPoolInfo().trancheAddresses.length;
     }
 
-    function _getTranche(uint256 index) internal view override returns (address) {
+    function _getTranche(uint256 index)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (address)
+    {
         return _getOwnLendingPool().lendingPoolInfo().trancheAddresses[index];
+    }
+
+    function _isClearingTime()
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (bool)
+    {
+        return systemVariables.isClearingTime();
+    }
+
+    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch)
+        internal
+        view
+        override
+        returns (uint256)
+    {
+        return userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
+    }
+
+    function _getLoyaltyLevelCount() internal view override returns (uint256) {
+        return systemVariables.loyaltyThresholds().length + 1;
+    }
+
+    function _setDepositRequestPriority(uint256 dNftId, uint256 priority) internal override {
+        _trancheDepositNftDetails[dNftId].priority = priority;
+    }
+
+    function _setWithdrawalRequestPriority(uint256 wNftId, uint256 priority) internal override {
+        _trancheWithdrawalNftDetails[wNftId].priority = priority;
     }
 
     // MODIFIERS

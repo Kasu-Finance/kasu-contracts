@@ -18,6 +18,7 @@ import "../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
 import "../../../src/core/UserManager.sol";
 import "./LockingTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
+import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
 
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
@@ -48,12 +49,22 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.deal(bob, 1 << 128);
         vm.deal(carol, 1 << 128);
         vm.deal(david, 1 << 128);
-        vm.deal(userFive, 1 << 128);
-        vm.deal(userSix, 1 << 128);
-        vm.deal(userSeven, 1 << 128);
-        vm.deal(userEight, 1 << 128);
-        vm.deal(userNine, 1 << 128);
-        vm.deal(userTen, 1 << 128);
+        vm.deal(user5, 1 << 128);
+        vm.deal(user6, 1 << 128);
+        vm.deal(user7, 1 << 128);
+        vm.deal(user8, 1 << 128);
+        vm.deal(user9, 1 << 128);
+        vm.deal(user10, 1 << 128);
+        vm.deal(user11, 1 << 128);
+        vm.deal(user12, 1 << 128);
+        vm.deal(user13, 1 << 128);
+        vm.deal(user14, 1 << 128);
+        vm.deal(user15, 1 << 128);
+        vm.deal(user16, 1 << 128);
+        vm.deal(user17, 1 << 128);
+        vm.deal(user18, 1 << 128);
+        vm.deal(user19, 1 << 128);
+        vm.deal(user20, 1 << 128);
         vm.deal(userNotAllowed, 1 << 128);
 
         // usdc
@@ -117,9 +128,21 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
 
+        // clearing
+        AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
+        TransparentUpgradeableProxy acceptedRequestsCalculationProxy =
+            new TransparentUpgradeableProxy(address(acceptedRequestsCalculationImpl), address(proxyAdmin), "");
+        IAcceptedRequestsCalculation acceptedRequestsCalculation =
+            IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
+
+        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation);
+        TransparentUpgradeableProxy clearingManagerProxy =
+            new TransparentUpgradeableProxy(address(clearingManagerImpl), address(proxyAdmin), "");
+        IClearingManager clearingManager = IClearingManager(address(clearingManagerProxy));
+
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
-        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager);
+        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingManager);
 
         // kasu allow list - allow users
         vm.startPrank(admin);
@@ -127,12 +150,22 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuAllowList.allowUser(bob);
         kasuAllowList.allowUser(carol);
         kasuAllowList.allowUser(david);
-        kasuAllowList.allowUser(userFive);
-        kasuAllowList.allowUser(userSix);
-        kasuAllowList.allowUser(userSeven);
-        kasuAllowList.allowUser(userEight);
-        kasuAllowList.allowUser(userNine);
-        kasuAllowList.allowUser(userTen);
+        kasuAllowList.allowUser(user5);
+        kasuAllowList.allowUser(user6);
+        kasuAllowList.allowUser(user7);
+        kasuAllowList.allowUser(user8);
+        kasuAllowList.allowUser(user9);
+        kasuAllowList.allowUser(user10);
+        kasuAllowList.allowUser(user11);
+        kasuAllowList.allowUser(user12);
+        kasuAllowList.allowUser(user13);
+        kasuAllowList.allowUser(user14);
+        kasuAllowList.allowUser(user15);
+        kasuAllowList.allowUser(user16);
+        kasuAllowList.allowUser(user17);
+        kasuAllowList.allowUser(user18);
+        kasuAllowList.allowUser(user19);
+        kasuAllowList.allowUser(user20);
         vm.stopPrank();
     }
 
@@ -340,7 +373,8 @@ contract PendingPoolHarness is PendingPool {
     ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_) {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
-        return _acceptDepositRequest(dNftID, acceptedAmount);
+        (address tranche,) = decomposeDepositId(dNftID);
+        return _acceptDepositRequest(dNftID, tranche, acceptedAmount);
     }
 
     function acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external {
