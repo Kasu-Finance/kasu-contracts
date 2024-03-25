@@ -166,9 +166,9 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[0] = 20_00;
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
-        ClearingConfiguration memory clearingConfiguration =
+        ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
@@ -243,24 +243,29 @@ contract ClearingTest is LendingPoolTestUtils {
 
         assertEq(IPendingPool(lpd.pendingPool).totalSupply(), 0);
 
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 110_000 * 1e6, 2);
+
         // ### ARRANGE ###
 
         skip(1 days);
+        // # P3 #
+        ForceWithdrawalInput[] memory input = new ForceWithdrawalInput[](4);
+        input[0] = ForceWithdrawalInput(lpd.tranches[0], user16, 300 * 1e18);
+        input[1] = ForceWithdrawalInput(lpd.tranches[0], user17, 600 * 1e18);
+        input[2] = ForceWithdrawalInput(lpd.tranches[1], user9, 500 * 1e18);
+        input[3] = ForceWithdrawalInput(lpd.tranches[1], user10, 800 * 1e18);
+        _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input);
+        // total: 2200
+
         // # P2 #
         _requestWithdrawal(user16, lpd.lendingPool, lpd.tranches[1], 3000 * 1e18);
         _requestWithdrawal(user17, lpd.lendingPool, lpd.tranches[2], 2000 * 1e18);
         _requestWithdrawal(user18, lpd.lendingPool, lpd.tranches[2], 4000 * 1e18);
 
-        _requestWithdrawal(user16, lpd.lendingPool, lpd.tranches[0], 300 * 1e18);
-        _requestWithdrawal(user17, lpd.lendingPool, lpd.tranches[0], 600 * 1e18);
-
         // # P1 #
         _requestWithdrawal(user9, lpd.lendingPool, lpd.tranches[1], 1000 * 1e18);
         _requestWithdrawal(user10, lpd.lendingPool, lpd.tranches[1], 200 * 1e18);
         _requestWithdrawal(user11, lpd.lendingPool, lpd.tranches[1], 1800 * 1e18);
-
-        _requestWithdrawal(user9, lpd.lendingPool, lpd.tranches[2], 500 * 1e18);
-        _requestWithdrawal(user10, lpd.lendingPool, lpd.tranches[2], 800 * 1e18);
 
         // # P0 #
         _requestWithdrawal(user5, lpd.lendingPool, lpd.tranches[2], 1000 * 1e18);
@@ -270,17 +275,36 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
         userManager.batchCalculateUserLoyaltyLevels(10);
 
+        // borrowing ~100K, totalSupply ~110K => excess 10K
+        _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, 99_999_999_998);
+
         // ### ACT ###
         uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();
+        ClearingConfiguration memory clearingConfiguration2 =
+            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch2, clearingConfiguration2);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
 
         // ### ASSERT ###
-        //        assertApproxEqAbs(mockUsdc.balanceOf(user16), 6000 * 1e6, 1);
-        //        assertApproxEqAbs(mockUsdc.balanceOf(user17), 6000 * 1e6, 1);
-        //        assertApproxEqAbs(mockUsdc.balanceOf(user18), 6000 * 1e6, 1);
-        //        assertApproxEqAbs(mockUsdc.balanceOf(user9), 6000 * 1e6, 1);
-        //        assertApproxEqAbs(mockUsdc.balanceOf(user5), 6000 * 1e6, 1);
-        //        assertApproxEqAbs(mockUsdc.balanceOf(user6), 6000 * 1e6, 1);
+
+        // accepted: 1000
+        // P3 total: 2200, accepted: 2200, left: 7800,
+        // P2 total: 9000, accepted: 7800, left: 0
+
+        // P3
+        assertApproxEqAbs(mockUsdc.balanceOf(user9), 500 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(user10), 800 * 1e6, 1);
+
+        // P3 + P2
+        // 300 + (7800/9000)*3000=2600
+        assertApproxEqAbs(mockUsdc.balanceOf(user16), 2900 * 1e6, 1);
+        // 600 + (7800/9000)*2000=23333,333
+        assertApproxEqAbs(mockUsdc.balanceOf(user17), 2333333333, 1);
+
+        // P2
+        // (7800/9000)*4000=3466,666
+        assertApproxEqAbs(mockUsdc.balanceOf(user18), 3466666666, 1);
     }
 }

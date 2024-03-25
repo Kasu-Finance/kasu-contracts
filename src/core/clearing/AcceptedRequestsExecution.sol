@@ -119,7 +119,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
 
-                uint256[] storage targetPriorityWithdrawAmounts =
+                uint256[] storage acceptedPriorityWithdrawAmounts =
                     acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts;
 
                 (address trancheAddress,) = decomposeWithdrawalId(userRequestNftId);
@@ -127,7 +127,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 uint256 withdrawalAmount =
                     ILendingPoolTranche(trancheAddress).convertToAssets(withdrawalNftDetails.sharesAmount);
 
-                uint256 totalAcceptedAmount = targetPriorityWithdrawAmounts[withdrawalNftDetails.priority];
+                uint256 totalAcceptedAmount = acceptedPriorityWithdrawAmounts[withdrawalNftDetails.priority];
                 uint256 totalWithdrawalAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
                     .pendingWithdrawals
                     .priorityWithdrawalAmounts[withdrawalNftDetails.priority];
@@ -135,22 +135,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 uint256 acceptedWithdrawalAmount =
                     totalWithdrawalAmount == 0 ? 0 : totalAcceptedAmount * withdrawalAmount / totalWithdrawalAmount;
 
-                console2.log(
-                    string.concat(
-                        Strings.toString(_getTrancheIndex(withdrawalNftDetails.tranche)),
-                        Strings.toString(withdrawalNftDetails.priority)
-                    ),
-                    string.concat(
-                        Strings.toString(totalAcceptedAmount),
-                        " ",
-                        Strings.toString(totalWithdrawalAmount),
-                        " ",
-                        Strings.toString(withdrawalAmount)
-                    )
-                );
-
                 if (acceptedWithdrawalAmount != 0) {
-                    _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalAmount);
+                    uint256 acceptedWithdrawalShares =
+                        ILendingPoolTranche(trancheAddress).convertToShares(acceptedWithdrawalAmount);
+                    _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
                 }
             }
 
