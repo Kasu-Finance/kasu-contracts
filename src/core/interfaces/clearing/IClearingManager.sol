@@ -23,11 +23,10 @@ interface IClearingManager {
         external;
 
     /**
-     * @notice Runs all the tasks required for clearing to succeed. Tasks run in sequence. Some tasks can be
-     * accomplished in multiple transactions.
+     * @notice Runs all the tasks required for clearing to succeed. Tasks run in sequence.
      * @dev
      * This task can be completed in multiple transactions.
-     * @param lendingPool The lending pool that clearing config will be registered.
+     * @param lendingPoolAddress The lending pool that clearing config will be registered.
      * @param targetEpoch The epoch to run clearing against.
      * @param pendingRequestsPriorityCalculationBatchSize The amount of user requests that `pending requests priority
      * calculation` will process in one transaction.
@@ -43,9 +42,9 @@ interface IClearingManager {
 
     /**
      * @notice Returns the active config for the clearing task.
-     * @param lendingPool The lending pool of the clearing config.
+     * @param lendingPoolAddress The lending pool of the clearing config.
      * @param epoch The epoch of the clearing config.
-     * @param clearingConfig The clearing config that will overwrite the default one.
+     * @return clearingConfig The clearing config that will overwrite the default one.
      */
     function getClearingConfig(address lendingPoolAddress, uint256 epoch)
         external

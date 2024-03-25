@@ -7,9 +7,9 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 
 contract ClearingManager is IClearingManager {
-    // lendingPoolAddress => epochId => ClearingConfiguration
+    /// @notice lendingPoolAddress => epochId => ClearingConfiguration
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
-    // lendingPoolAddress => epochId => isCalculated
+    /// @notice lendingPoolAddress => epochId => isCalculated
     mapping(address => mapping(uint256 => bool)) public acceptedRequestsCalculationPerEpochStatus;
 
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
@@ -147,7 +147,7 @@ contract ClearingManager is IClearingManager {
         return clearingConfiguration;
     }
 
-    function _getLendingPoolBalance(address lendingPoolAddress) private returns (LendingPoolBalance memory) {
+    function _getLendingPoolBalance(address lendingPoolAddress) private view returns (LendingPoolBalance memory) {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
         uint256 lendingPoolBorrowedAmount = lendingPool.getBorrowedAmount();
         LendingPoolBalance memory lendingPoolBalance =

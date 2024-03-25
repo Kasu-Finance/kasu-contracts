@@ -8,7 +8,6 @@ import "../interfaces/IUserManager.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../../shared/CommonErrors.sol";
-import "forge-std/console2.sol";
 
 struct PendingRequestsEpoch {
     PendingDeposits pendingDeposits;
@@ -23,7 +22,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
     uint256 internal REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION;
 
     // epochId => PendingRequestsEpoch
-    mapping(uint256 => PendingRequestsEpoch) internal pendingRequestsPerEpoch;
+    mapping(uint256 => PendingRequestsEpoch) internal _pendingRequestsPerEpoch;
 
     function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
         REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
@@ -34,20 +33,20 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             revert CanOnlyExecuteDuringClearingTime();
         }
 
-        if (pendingRequestsPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
+        if (_pendingRequestsPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
         uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
         uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
-        uint256 startingIndexInclusive = pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+        uint256 startingIndexInclusive = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endingIndexInclusive = startingIndexInclusive + batchSize_ - 1;
 
         _initialisePendingRequests(targetEpoch);
 
-        PendingDeposits storage pendingDeposits = pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
+        PendingDeposits storage pendingDeposits = _pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
-            pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
+            _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
         uint256 loyaltyLevelCount = _getLoyaltyLevelCount();
 
@@ -94,15 +93,15 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
                 _setWithdrawalRequestPriority(userRequestNftId, withdrawLoyaltyLevel);
             }
-            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId + 1;
+            _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId + 1;
         }
 
         if (
-            pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess + 1 >= _getTotalPendingRequests()
-                && pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
+            _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess + 1 >= _getTotalPendingRequests()
+                && _pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
         ) {
             // convert pending withdrawal shares to amounts - minimize rounding errors
-            PendingWithdrawals storage pendingWithdrawals = pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
+            PendingWithdrawals storage pendingWithdrawals = _pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
 
             for (
                 uint256 withdrawalPriority = 0;
@@ -123,64 +122,64 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                 pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] += withdrawalPriorityAmountSum;
             }
             // processing completed
-            pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+            _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
         }
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        return _getTotalPendingRequests() - pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+        return _getTotalPendingRequests() - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
     function getPendingDeposits(uint256 targetEpoch) public view returns (PendingDeposits memory) {
-        if (pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED) {
+        if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationIsNotCompleted(targetEpoch);
         }
-        return pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
+        return _pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
     }
 
     function getPendingWithdrawals(uint256 targetEpoch) public view returns (PendingWithdrawals memory) {
-        if (pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED) {
+        if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationIsNotCompleted(targetEpoch);
         }
-        return pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
+        return _pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals;
     }
 
     function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
-        return pendingRequestsPerEpoch[targetEpoch].status;
+        return _pendingRequestsPerEpoch[targetEpoch].status;
     }
 
     //*** Helper Methods ***/
 
     function _initialisePendingRequests(uint256 targetEpoch) private {
-        if (pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) return;
+        if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) return;
         uint256 trancheCount = _getTrancheCount();
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
         // initialise pending deposits
-        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.totalDepositAmount = 0;
-        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
-        pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts =
+        _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.totalDepositAmount = 0;
+        _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
+        _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts =
             new uint256[][](trancheCount);
         for (uint256 i = 0; i < trancheCount; ++i) {
-            pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts[i] =
+            _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts[i] =
                 new uint256[](loyaltyLevelsCount);
         }
 
         // initialise pending withdrawals
         // extra priority: forced withdrawals, withdrawals waiting >= 5 epochs
         uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
-        pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.totalWithdrawalsAmount = 0;
-        pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.priorityWithdrawalAmounts =
+        _pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.totalWithdrawalsAmount = 0;
+        _pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.priorityWithdrawalAmounts =
             new uint256[](withdrawalPriorityLevels);
 
         // initialise tempPriorityTrancheWithdrawalAmounts
-        pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
+        _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
             new uint256[][](withdrawalPriorityLevels);
         for (uint256 i = 0; i < withdrawalPriorityLevels; ++i) {
-            pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] = new uint256[](trancheCount);
+            _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] = new uint256[](trancheCount);
         }
 
-        pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
+        _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
     //*** Virtual Methods ***/
