@@ -126,6 +126,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             } else {
                 // ### Withdrawal Requests Processing ###
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
+
+                // only consider all past withdrawal requests
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
 
                 // instructions of how this request withdrawal will be accepted in different tranches

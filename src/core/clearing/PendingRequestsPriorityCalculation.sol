@@ -55,9 +55,14 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
             uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
+
             if (isDepositNft(userRequestNftId)) {
+                // ### Deposit Requests Processing ###
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
+
+                // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId != targetEpoch) break;
+
                 (address trancheAddress,) = decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
 
@@ -68,9 +73,13 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
                 _setDepositRequestPriority(userRequestNftId, ownerLoyaltyLevel);
             } else {
+                // ### Withdrawal Requests Processing ###
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
+
+                // only consider all past withdrawal requests
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
 
+                // we explicitly set max priority for longstanding pending withdrawals and admin enforced
                 uint256 withdrawLoyaltyLevel = ownerLoyaltyLevel;
                 if (
                     targetEpoch - withdrawalNftDetails.epochId >= REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION
