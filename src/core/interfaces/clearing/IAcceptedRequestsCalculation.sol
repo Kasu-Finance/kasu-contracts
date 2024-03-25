@@ -46,6 +46,7 @@ struct LendingPoolBalance {
 interface IAcceptedRequestsCalculation {
     function calculateAcceptedRequests(ClearingInput calldata input)
         external
+        pure
         returns (
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts

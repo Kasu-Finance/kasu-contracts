@@ -57,6 +57,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
      */
     function calculateAcceptedRequests(ClearingInput memory input)
         public
+        pure
         returns (
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts
