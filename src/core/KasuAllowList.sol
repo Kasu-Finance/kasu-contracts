@@ -3,10 +3,13 @@ pragma solidity 0.8.23;
 
 import "../shared/access/KasuAccessControllable.sol";
 import "./interfaces/IKasuAllowList.sol";
-import "../shared/access/KasuController.sol";
+import "../../vendor/nexeraID/TxAuthDataVerifierUpgradeable.sol";
+import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 
-contract KasuAllowList is IKasuAllowList, KasuAccessControllable {
-    constructor(KasuController kasuController_) KasuAccessControllable(kasuController_) {}
+contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVerifierUpgradeable {
+    address public lendingPoolManager;
+
+    constructor(IKasuController kasuController_) KasuAccessControllable(kasuController_) {}
 
     /// @notice Manual allow list of users.
     mapping(address => bool) public allowList;
@@ -14,6 +17,15 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable {
     /// @notice Block list of users.
     /// @dev If a user is in the block list, it will be blocked even if it is in the allow list or KYCd.
     mapping(address => bool) public blockList;
+
+    function initialize(address lendingPoolManager_, address signer) public initializer {
+        lendingPoolManager = lendingPoolManager_;
+        __TxAuthDataVerifierUpgradeable_init(signer);
+    }
+
+    function setNexeraIDSigner(address signer) external onlyAdmin {
+        _setSigner(signer);
+    }
 
     function allowUser(address user) external onlyAdmin {
         if (!allowList[user]) {
@@ -43,7 +55,19 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable {
         }
     }
 
-    function isAllowed(address user) external view returns (bool) {
-        return !blockList[user] && allowList[user];
+    /**
+     * @notice Verifies the user's KYC status via Nexera ID.
+     * @dev Can only be called by the Lending Pool Manager as verifying increments the nonce of the user.
+     * @param user The user's address.
+     * @param blockExpiration The block number after which the kyc signature is considered expired.
+     * @param signature The signature of the user's KYC status.
+     * @return A boolean indicating whether the user KYC is verified.
+     */
+    function verifyUserKyc(address user, uint256 blockExpiration, bytes calldata signature) external returns (bool) {
+        if (msg.sender != lendingPoolManager) {
+            revert ILendingPoolErrors.OnlyLendingPoolManager();
+        }
+
+        return _verifyTxAuthData(_msgData(), user, blockExpiration, signature);
     }
 }

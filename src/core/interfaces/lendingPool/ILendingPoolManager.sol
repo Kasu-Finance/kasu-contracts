@@ -21,6 +21,13 @@ interface ILendingPoolManager {
 
     // #### USER #### //
     function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);
+    function requestDepositWithKyc(
+        address lendingPool,
+        address tranche,
+        uint256 amount,
+        uint256 blockExpiration,
+        bytes calldata signature
+    ) external returns (uint256 dNftID);
 
     function cancelDepositRequest(address lendingPool, uint256 dNftID) external;
 

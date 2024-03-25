@@ -2,7 +2,7 @@
 solc = "0.8.23"
 src = "src"
 out = "out"
-libs = ["lib"]
+libs = ["lib", "vendor"]
 
 # optimizer
 optimizer = true

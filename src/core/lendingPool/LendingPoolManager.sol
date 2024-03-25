@@ -67,9 +67,30 @@ contract LendingPoolManager is
     function requestDeposit(address lendingPool, address tranche, uint256 amount)
         external
         validLendingPool(lendingPool)
+        isUserNotBlocked(msg.sender)
         isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
+        return _reqestDeposit(lendingPool, tranche, amount);
+    }
+
+    function requestDepositWithKyc(
+        address lendingPool,
+        address tranche,
+        uint256 amount,
+        uint256 blockExpiration,
+        bytes calldata signature
+    )
+        external
+        validLendingPool(lendingPool)
+        isUserNotBlocked(msg.sender)
+        isUserKycd(msg.sender, blockExpiration, signature)
+        returns (uint256 dNftID)
+    {
+        return _reqestDeposit(lendingPool, tranche, amount);
+    }
+
+    function _reqestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
@@ -333,9 +354,23 @@ contract LendingPoolManager is
         _;
     }
 
+    modifier isUserNotBlocked(address user) {
+        if (kasuAllowList.blockList(user)) {
+            revert IKasuAllowList.UserBlocked(user);
+        }
+        _;
+    }
+
     modifier isUserAllowed(address user) {
-        if (!kasuAllowList.isAllowed(user)) {
+        if (!kasuAllowList.allowList(user)) {
             revert IKasuAllowList.UserNotInAllowList(user);
+        }
+        _;
+    }
+
+    modifier isUserKycd(address user, uint256 blockExpiration, bytes calldata signature) {
+        if (kasuAllowList.verifyUserKyc(user, blockExpiration, signature)) {
+            revert IKasuAllowList.UserNotKycd(user);
         }
         _;
     }
