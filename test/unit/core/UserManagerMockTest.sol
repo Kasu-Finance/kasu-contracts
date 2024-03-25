@@ -20,14 +20,16 @@ contract UserManagerMockTest is BaseTestUtils {
     address pendingPool1 = address(0x11ff);
     address lendingPool2 = address(0x2222);
     address pendingPool2 = address(0x22ff);
+    address lendingPool3 = address(0x3333);
+    address pendingPool3 = address(0x33ff);
+    address lendingPool4 = address(0x4444);
+    address pendingPool4 = address(0x44ff);
 
     uint256[] loyaltyThresholds;
 
     function setUp() public {
         ksuLocking = IKSULocking(address(0xeeee));
         systemVariables = ISystemVariables(address(0xffff));
-
-        ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
 
         UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking);
         TransparentUpgradeableProxy userManagerProxy =
@@ -36,25 +38,21 @@ contract UserManagerMockTest is BaseTestUtils {
 
         vm.mockCall(address(ksuLocking), abi.encodeWithSelector(IAccessControl.hasRole.selector), abi.encode(false));
 
-        vm.mockCall(
-            address(lendingPool1),
-            abi.encodeWithSelector(ILendingPool.getPendingPool.selector),
-            abi.encode(pendingPool1)
-        );
-
-        vm.mockCall(
-            address(lendingPool2),
-            abi.encodeWithSelector(ILendingPool.getPendingPool.selector),
-            abi.encode(pendingPool2)
-        );
-
-        _mockLendingPool(lendingPool1, 0, 0);
-        _mockLendingPool(lendingPool2, 0, 0);
+        _mockDefaultLendingPool(lendingPool1, pendingPool1);
+        _mockDefaultLendingPool(lendingPool2, pendingPool2);
+        _mockDefaultLendingPool(lendingPool3, pendingPool3);
+        _mockDefaultLendingPool(lendingPool4, pendingPool4);
 
         vm.mockCall(
             address(systemVariables),
             abi.encodeWithSelector(ISystemVariables.getCurrentEpochNumber.selector),
             abi.encode(0)
+        );
+
+        vm.mockCall(
+            address(systemVariables),
+            abi.encodeWithSelector(ISystemVariables.isClearingTime.selector),
+            abi.encode(false)
         );
 
         _mockKSUPrice(2e18);
@@ -100,7 +98,7 @@ contract UserManagerMockTest is BaseTestUtils {
         uint256 alicePendingDeposit = 150 * 1e6;
         uint256 aliceRKSU = 5 * 1e18;
 
-        _mockLendingPool(lendingPool1, aliceAvailableBalance, alicePendingDeposit);
+        _mockUserLendingPoolBalance(alice, lendingPool1, aliceAvailableBalance, alicePendingDeposit);
         _mockRKSU(alice, aliceRKSU);
 
         userManager.userRequestedDeposit(alice, lendingPool1);
@@ -123,7 +121,7 @@ contract UserManagerMockTest is BaseTestUtils {
         uint256 alicePendingDeposit = 150 * 1e6;
         uint256 aliceRKSU = 15 * 1e18;
 
-        _mockLendingPool(lendingPool1, aliceAvailableBalance, alicePendingDeposit);
+        _mockUserLendingPoolBalance(alice, lendingPool1, aliceAvailableBalance, alicePendingDeposit);
         _mockRKSU(alice, aliceRKSU);
 
         userManager.userRequestedDeposit(alice, lendingPool1);
@@ -140,24 +138,150 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(loyaltyLevel, 2);
     }
 
-    function _mockLendingPool(address lendingPool, uint256 userAvailableBalance, uint256 pendingDeposit) internal {
+    function test_updateUserLendingPools_removeUserIfItHasNoDeposits() public {
+        // ARRANGE
+        userManager.userRequestedDeposit(alice, lendingPool1);
+        userManager.userRequestedDeposit(alice, lendingPool2);
+        userManager.userRequestedDeposit(alice, lendingPool3);
+        userManager.userRequestedDeposit(alice, lendingPool4);
+        address[] memory allUsersBefore = userManager.getAllUsers();
+        assertEq(allUsersBefore.length, 1);
+
+        address[] memory userLendingPoolBefore = userManager.getUserLendingPools(alice);
+        assertEq(userLendingPoolBefore.length, 4);
+
+        // ACT
+        userManager.updateUserLendingPools(0, 0);
+
+        // ASSERT
+        address[] memory allUsers = userManager.getAllUsers();
+        assertEq(allUsers.length, 0);
+
+        address[] memory userLendingPool = userManager.getUserLendingPools(alice);
+        assertEq(userLendingPool.length, 0);
+    }
+
+    function test_updateUserLendingPools_removeMultipleUsers() public {
+        // ARRANGE
+        userManager.userRequestedDeposit(alice, lendingPool1);
+        userManager.userRequestedDeposit(bob, lendingPool1);
+        userManager.userRequestedDeposit(carol, lendingPool1);
+        address[] memory allUsersBefore = userManager.getAllUsers();
+        assertEq(allUsersBefore.length, 3);
+
+        // ACT
+        userManager.updateUserLendingPools(0, 2);
+
+        // ASSERT
+        address[] memory allUsers = userManager.getAllUsers();
+        assertEq(allUsers.length, 0);
+    }
+
+    function test_updateUserLendingPools_removeSelectedUsers() public {
+        // ARRANGE
+        userManager.userRequestedDeposit(alice, lendingPool1);
+        userManager.userRequestedDeposit(alice, lendingPool1);
+
+        userManager.userRequestedDeposit(bob, lendingPool1);
+        userManager.userRequestedDeposit(bob, lendingPool2);
+
+        userManager.userRequestedDeposit(carol, lendingPool1);
+        userManager.userRequestedDeposit(carol, lendingPool4);
+
+        userManager.userRequestedDeposit(david, lendingPool1);
+        userManager.userRequestedDeposit(david, lendingPool2);
+        userManager.userRequestedDeposit(david, lendingPool3);
+
+        userManager.userRequestedDeposit(userFive, lendingPool1);
+
+        _mockUserLendingPoolBalance(bob, lendingPool1, 100 * 1e6, 0);
+        _mockUserLendingPoolBalance(david, lendingPool2, 0, 100 * 1e6);
+        _mockUserLendingPoolBalance(david, lendingPool3, 1, 0);
+
+        // ACT
+        userManager.updateUserLendingPools(3, 4);
+        userManager.updateUserLendingPools(0, 2);
+
+        // ASSERT
+        address[] memory allUsers = userManager.getAllUsers();
+        assertEq(allUsers.length, 2);
+        assertEq(allUsers[0], david);
+        assertEq(allUsers[1], bob);
+
+        address[] memory userLendingPools = userManager.getUserLendingPools(alice);
+        assertEq(userLendingPools.length, 0);
+
+        userLendingPools = userManager.getUserLendingPools(bob);
+        assertEq(userLendingPools.length, 1);
+        assertEq(userLendingPools[0], lendingPool1);
+
+        userLendingPools = userManager.getUserLendingPools(carol);
+        assertEq(userLendingPools.length, 0);
+
+        userLendingPools = userManager.getUserLendingPools(david);
+        assertEq(userLendingPools.length, 2);
+        assertEq(userLendingPools[0], lendingPool3);
+        assertEq(userLendingPools[1], lendingPool2);
+
+        userLendingPools = userManager.getUserLendingPools(userFive);
+        assertEq(userLendingPools.length, 0);
+    }
+
+    function test_updateUserLendingPools_revertIfCalledDuringClearing() public {
+        // ARRANGE
         vm.mockCall(
-            address(lendingPool),
-            abi.encodeWithSelector(ILendingPool.getUserBalance.selector),
-            abi.encode(userAvailableBalance)
+            address(systemVariables), abi.encodeWithSelector(ISystemVariables.isClearingTime.selector), abi.encode(true)
+        );
+
+        // ACT & ASSERT
+        vm.expectRevert(CannotExecuteDuringClearingTime.selector);
+        userManager.updateUserLendingPools(0, 0);
+    }
+
+    function test_updateUserLendingPools_revertIfFromIndexIsMoreThanToIndex() public {
+        // ARRANGE
+        userManager.userRequestedDeposit(alice, lendingPool1);
+        userManager.userRequestedDeposit(bob, lendingPool1);
+        userManager.userRequestedDeposit(carol, lendingPool1);
+        userManager.userRequestedDeposit(david, lendingPool1);
+
+        // ACT & ASSERT
+        vm.expectRevert(IUserManager.BadUserIndex.selector);
+        userManager.updateUserLendingPools(3, 2);
+    }
+
+    function _mockDefaultLendingPool(address lendingPool, address pendingPool) internal {
+        vm.mockCall(
+            address(lendingPool), abi.encodeWithSelector(ILendingPool.getUserBalance.selector), abi.encode(uint256(0))
         );
 
         vm.mockCall(
-            address(lendingPool),
-            abi.encodeWithSelector(ILendingPool.getPendingPool.selector),
-            abi.encode(address(0x11ff))
+            address(lendingPool), abi.encodeWithSelector(ILendingPool.getPendingPool.selector), abi.encode(pendingPool)
         );
-
-        address pendingPool = ILendingPool(lendingPool).getPendingPool();
 
         vm.mockCall(
             address(pendingPool),
             abi.encodeWithSelector(IPendingPool.getUserPendingDepositAmount.selector),
+            abi.encode(uint256(0))
+        );
+    }
+
+    function _mockUserLendingPoolBalance(
+        address user,
+        address lendingPool,
+        uint256 userAvailableBalance,
+        uint256 pendingDeposit
+    ) internal {
+        vm.mockCall(
+            address(lendingPool), abi.encodeCall(ILendingPool.getUserBalance, (user)), abi.encode(userAvailableBalance)
+        );
+
+        address pendingPool = ILendingPool(lendingPool).getPendingPool();
+        uint256 epochId = systemVariables.getCurrentEpochNumber() + 1;
+
+        vm.mockCall(
+            address(pendingPool),
+            abi.encodeCall(IPendingPool.getUserPendingDepositAmount, (user, epochId)),
             abi.encode(pendingDeposit)
         );
     }

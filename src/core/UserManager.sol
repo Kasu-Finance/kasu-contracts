@@ -46,6 +46,34 @@ contract UserManager is IUserManager {
         return _userLendingPools[user];
     }
 
+    function getAllUsers() external view returns (address[] memory) {
+        return allUsers;
+    }
+
+    /**
+     * @notice Get the total pending and active deposited amount.
+     * @dev Returns the amount including pending deposits for the next epoch.
+     * @param user The address of the user.
+     * @return The total deposited amount for the user.
+     */
+    function getUserTotalPendingAndActiveDepositedAmount(address user) external view returns (uint256) {
+        uint256 nextEpoch = systemVariables.getCurrentEpochNumber() + 1;
+
+        return _getUserTotalPendingAndActiveDepositedAmount(user, nextEpoch);
+    }
+
+    /**
+     * @notice Get the total pending and active deposited amount for the user for the current epoch.
+     * @dev Only returns the amount that will be used to calculate the user's loyalty level this clearing period.
+     * @param user The address of the user.
+     * @return The total deposited amount for the user for the current epoch.
+     */
+    function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user) external view returns (uint256) {
+        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+
+        return _getUserTotalPendingAndActiveDepositedAmount(user, currentEpoch);
+    }
+
     function hasUserRKSU(address user) public view returns (bool) {
         return ksuLocking.balanceOf(user) > 0;
     }
@@ -125,23 +153,8 @@ contract UserManager is IUserManager {
         view
         returns (uint256 loyaltyLevel)
     {
-        uint256 userDepositAmount;
-
-        // loop through all user lending pools
-        for (uint256 i; i < _userLendingPools[user].length; ++i) {
-            // get the user's available lending pool balance
-            ILendingPool lendingPool = ILendingPool(_userLendingPools[user][i]);
-            uint256 userLendingPoolBalance = lendingPool.getUserBalance(user);
-
-            // get user pending deposit amount
-            // get user pending withdrawal amount
-            IPendingPool pendingPool = IPendingPool(lendingPool.getPendingPool());
-
-            uint256 pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, params.currentEpoch);
-
-            // sum up
-            userDepositAmount += userLendingPoolBalance + pendingDepositAmount;
-        }
+        // get user deposit amount for the current epoch
+        uint256 userDepositAmount = _getUserTotalPendingAndActiveDepositedAmount(user, params.currentEpoch);
 
         // get user rKSU balance
         uint256 userRKSU = ksuLocking.balanceOf(user);
@@ -168,6 +181,32 @@ contract UserManager is IUserManager {
         }
     }
 
+    function _getUserTotalPendingAndActiveDepositedAmount(address user, uint256 epochId)
+        private
+        view
+        returns (uint256 userDepositAmount)
+    {
+        // loop through all user lending pools
+        for (uint256 i; i < _userLendingPools[user].length; ++i) {
+            userDepositAmount += _getUserLendingPoolActiveAndPendingBalance(user, _userLendingPools[user][i], epochId);
+        }
+    }
+
+    function _getUserLendingPoolActiveAndPendingBalance(address user, address lendingPool, uint256 epochId)
+        private
+        view
+        returns (uint256)
+    {
+        ILendingPool lendingPool = ILendingPool(lendingPool);
+        uint256 userLendingPoolBalance = lendingPool.getUserBalance(user);
+
+        // get user pending deposit amount
+        IPendingPool pendingPool = IPendingPool(lendingPool.getPendingPool());
+        uint256 pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, epochId);
+
+        return userLendingPoolBalance + pendingDepositAmount;
+    }
+
     function _getRKSUInUSDC(uint256 rKSUAmount, uint256 ksuPrice) internal pure returns (uint256 rKSUInUSDC) {
         // NOTE: 1e12 is the difference in decimal places between rKSU and USDC
         rKSUInUSDC = rKSUAmount * ksuPrice / KSU_PRICE_MULTIPLIER / 1e12;
@@ -186,16 +225,82 @@ contract UserManager is IUserManager {
         }
     }
 
-    function _removeLendingPoolFromUser(address user, address lendingPool) internal {
-        // TODO: not during clearing period
-        for (uint256 i; i < _userLendingPools[user].length; ++i) {
-            if (_userLendingPools[user][i] == lendingPool) {
-                _userLendingPools[user][i] = _userLendingPools[user][_userLendingPools[user].length - 1];
-                _userLendingPools[user].pop();
-                break;
+    /**
+     * @notice Update users and user lending pools arrays. Removes user from all users if it has no balance in lending pools left.
+     * @dev
+     * This function is used to remove users and its lending pools and from arrays if balance is 0.
+     * Processing of users and user lending pools is done in reverse order. From `toIndex` to `fromIndex`.
+     * `fromIndex` is strictly less or equal to `toIndex`.
+     * @param fromIndex The starting index to process of the all users array.
+     * @param toIndex The ending index to process of the all users array. Including the desired processed index.
+     */
+    function updateUserLendingPools(uint256 fromIndex, uint256 toIndex) external {
+        if (systemVariables.isClearingTime()) {
+            revert CannotExecuteDuringClearingTime();
+        }
+
+        if (allUsers.length == 0) {
+            return;
+        }
+
+        if (toIndex >= allUsers.length) {
+            unchecked {
+                toIndex = allUsers.length - 1;
             }
         }
 
-        isUserPartOfLendingPool[lendingPool][user] = false;
+        if (toIndex < fromIndex) {
+            revert BadUserIndex();
+        }
+
+        uint256 nextEpoch = systemVariables.getCurrentEpochNumber() + 1;
+
+        while (fromIndex <= toIndex) {
+            address user = allUsers[toIndex];
+            uint256 userLendingPoolsIndex = _userLendingPools[user].length;
+
+            // check every user lending pool and remove if balance is 0
+            while (true) {
+                if (userLendingPoolsIndex == 0) {
+                    break;
+                }
+
+                unchecked {
+                    --userLendingPoolsIndex;
+                }
+
+                uint256 userLendingPoolBalance = _getUserLendingPoolActiveAndPendingBalance(
+                    user, _userLendingPools[user][userLendingPoolsIndex], nextEpoch
+                );
+
+                if (userLendingPoolBalance == 0) {
+                    _removeLendingPoolFromUser(user, userLendingPoolsIndex);
+                }
+            }
+
+            // if user has no lending pools left remove it from all users
+            if (_userLendingPools[user].length == 0) {
+                _removeUserFromAllUsers(toIndex);
+            }
+
+            if (toIndex == 0) {
+                break;
+            }
+
+            unchecked {
+                --toIndex;
+            }
+        }
+    }
+
+    function _removeLendingPoolFromUser(address user, uint256 userLendingPoolIndex) internal {
+        _userLendingPools[user][userLendingPoolIndex] = _userLendingPools[user][_userLendingPools[user].length - 1];
+        _userLendingPools[user].pop();
+    }
+
+    function _removeUserFromAllUsers(uint256 userIndex) internal {
+        isUser[allUsers[userIndex]] = false;
+        allUsers[userIndex] = allUsers[allUsers.length - 1];
+        allUsers.pop();
     }
 }
