@@ -68,25 +68,31 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             revert AcceptedRequestsExecutionAlreadyProcessed(targetEpoch);
         }
 
+        // calculate current transaction userRequest indexes
         uint256 startingIndexInclusive = acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 batchSizeIndex = batchSize - 1;
         uint256 endingIndexInclusive =
             startingIndexInclusive >= batchSizeIndex ? startingIndexInclusive - batchSizeIndex : 0;
 
-        // internal loop from current tranche index to last
+        // internal loop current transaction userRequest
         uint256 i = startingIndexInclusive;
         while (i >= endingIndexInclusive) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
 
             if (isDepositNft(userRequestNftId)) {
+                // ### Deposit Requests Processing ###
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
+
+                // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId != targetEpoch) break;
 
+                // instructions of how this request deposit will be accepted in different tranches
                 uint256[] storage trancheDepositAcceptedAmounts = acceptedRequestsExecutionPerEpoch[targetEpoch]
                     .tranchePriorityDepositsAccepted[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails.priority];
 
-                uint256 depositNftTotalAmountAccepted = 0;
+                uint256 depositRequestTotalAmountAccepted = 0;
 
+                // loop through the target tranches that the deposit request will accepted
                 for (
                     uint256 targetTrancheIndex = 0;
                     targetTrancheIndex < trancheDepositAcceptedAmounts.length;
@@ -100,6 +106,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         .tranchePriorityDepositsAmounts[_getTrancheIndex(depositNftDetails.tranche)][depositNftDetails
                         .priority];
 
+                    // calculate the amount that will be accepted in this tranche
                     uint256 userAcceptedDepositAmount = totalTranchePriorityDepositedAmount == 0
                         ? 0
                         : totalAcceptedAmount * depositNftDetails.assetAmount / totalTranchePriorityDepositedAmount;
@@ -108,17 +115,20 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         _acceptDepositRequest(
                             userRequestNftId, _getTranche(targetTrancheIndex), userAcceptedDepositAmount
                         );
-                        depositNftTotalAmountAccepted += userAcceptedDepositAmount;
+                        depositRequestTotalAmountAccepted += userAcceptedDepositAmount;
                     }
                 }
 
-                if (depositNftTotalAmountAccepted < depositNftDetails.assetAmount) {
+                // whatever is not accepted will be rejected, deposit requests are not carried in next epochs
+                if (depositRequestTotalAmountAccepted < depositNftDetails.assetAmount) {
                     _rejectDepositRequest(userRequestNftId);
                 }
             } else {
+                // ### Withdrawal Requests Processing ###
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
 
+                // instructions of how this request withdrawal will be accepted in different tranches
                 uint256[] storage acceptedPriorityWithdrawAmounts =
                     acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts;
 
@@ -132,6 +142,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                     .pendingWithdrawals
                     .priorityWithdrawalAmounts[withdrawalNftDetails.priority];
 
+                // calculate the amount that will be accepted in this tranche
                 uint256 acceptedWithdrawalAmount =
                     totalWithdrawalAmount == 0 ? 0 : totalAcceptedAmount * withdrawalAmount / totalWithdrawalAmount;
 

@@ -25,4 +25,6 @@ interface IClearingManager {
         external
         view
         returns (ClearingConfiguration memory);
+
+    error ClearingAlreadyExecuted(uint256 epoch);
 }

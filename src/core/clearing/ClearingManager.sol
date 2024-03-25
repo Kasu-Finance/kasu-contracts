@@ -32,6 +32,13 @@ contract ClearingManager is IClearingManager {
         uint256 acceptedRequestsExecutionBatchSize
     ) external {
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
+        if (
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
+                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
+        ) {
+            revert ClearingAlreadyExecuted(targetEpoch);
+        }
 
         // step 1
         if (pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) != TaskStatus.ENDED) {

@@ -7,6 +7,16 @@ error AcceptedRequestsExecutionAlreadyInitialised(uint256 epoch);
 error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 
 interface IAcceptedRequestsExecution {
+    /**
+     * @notice Initialises the task and saves all data from previous tasks to run it.
+     * @dev
+     * Must be called before executeAcceptedRequestsBatch. Called once.
+     * @param targetEpoch The epoch to run the task against.
+     * @param pendingDeposits The result of PendingRequestsPriorityCalculation task.
+     * @param pendingWithdrawals The result of PendingRequestsPriorityCalculation task.
+     * @param tranchePriorityDepositsAccepted The result of AcceptedRequestsCalculation task.
+     * @param acceptedPriorityWithdrawalAmounts The result of AcceptedRequestsCalculation task.
+     */
     function registerAcceptedRequestExecution(
         uint256 targetEpoch,
         PendingDeposits calldata pendingDeposits,
@@ -15,6 +25,14 @@ interface IAcceptedRequestsExecution {
         uint256[] calldata acceptedPriorityWithdrawalAmounts
     ) external;
 
+    /**
+     * @notice Processes as many userRequests as defined by batchSize. This task accepts user requests, either deposits
+     * or withdrawals, by following instructions from previous steps.
+     * @dev
+     * Can be run in multiple transactions.
+     * @param targetEpoch The epoch to run the task against
+     * @param batchSize The amount of userRequests that you want to process in this transaction.
+     */
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external;
 
     /**
