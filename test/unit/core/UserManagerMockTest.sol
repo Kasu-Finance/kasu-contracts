@@ -192,7 +192,7 @@ contract UserManagerMockTest is BaseTestUtils {
         userManager.userRequestedDeposit(david, lendingPool2);
         userManager.userRequestedDeposit(david, lendingPool3);
 
-        userManager.userRequestedDeposit(userFive, lendingPool1);
+        userManager.userRequestedDeposit(user5, lendingPool1);
 
         _mockUserLendingPoolBalance(bob, lendingPool1, 100 * 1e6, 0);
         _mockUserLendingPoolBalance(david, lendingPool2, 0, 100 * 1e6);
@@ -223,7 +223,7 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(userLendingPools[0], lendingPool3);
         assertEq(userLendingPools[1], lendingPool2);
 
-        userLendingPools = userManager.getUserLendingPools(userFive);
+        userLendingPools = userManager.getUserLendingPools(user5);
         assertEq(userLendingPools.length, 0);
     }
 
