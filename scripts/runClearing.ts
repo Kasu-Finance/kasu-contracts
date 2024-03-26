@@ -4,6 +4,7 @@ import fs from 'fs';
 import {
     ClearingManager__factory,
     SystemVariables__factory,
+    UserManager__factory,
 } from '../typechain-types';
 import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearing/ClearingManager';
 
@@ -20,6 +21,11 @@ async function main() {
     const admin = namedSigners['admin'];
 
     // contracts
+    const userManager = UserManager__factory.connect(
+        deploymentAddresses.UserManager.address,
+        admin,
+    );
+
     const clearingManager = ClearingManager__factory.connect(
         deploymentAddresses.ClearingManager.address,
         admin,
@@ -33,7 +39,14 @@ async function main() {
     let tx;
 
     // overwrite clearing config - optional
-    const lendingPoolAddress = '0x991d2d2791d42447FC4A20E1AD5Da87995217A26';
+    const CalculateUserLoyaltyLevelsBatch = 10;
+    tx = await userManager.batchCalculateUserLoyaltyLevels(
+        CalculateUserLoyaltyLevelsBatch,
+    );
+    await tx.wait(1);
+
+    // overwrite clearing config - optional
+    const lendingPoolAddress = '0x4B15DF7f000E8490a06d85837d11405CD2791F22';
     const currentEpochNumber = await systemVariables.getCurrentEpochNumber();
 
     const clearingConfiguration: ClearingConfigurationStruct = {
