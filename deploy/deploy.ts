@@ -150,7 +150,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions(deployer, [
             mockUsdcDeployment.address,
             kasuControllerDeployment.address,
-            userManagerDeployment.address,
         ]),
     );
 
@@ -196,6 +195,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions(deployer, []),
     );
 
+    // clearing
+
+    const acceptedRequestsCalculationDeployment = await deployTransparentProxy(
+        'AcceptedRequestsCalculation',
+        deployOptions(admin, []),
+    );
+
+    const clearingManagerDeployment = await deployTransparentProxy(
+        'ClearingManager',
+        deployOptions(admin, [acceptedRequestsCalculationDeployment.address]),
+    );
+
     // initialise
     const kasuController = KasuController__factory.connect(
         kasuControllerDeployment.address,
@@ -211,6 +222,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     tx = await lendingPoolManager.initialize(
         lendingPoolFactory.address,
         kasuAllowListDeployment.address,
+        userManagerDeployment.address,
+        clearingManagerDeployment.address,
     );
     await tx.wait(1);
 
