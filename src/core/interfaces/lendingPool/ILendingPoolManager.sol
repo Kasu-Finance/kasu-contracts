@@ -45,8 +45,6 @@ interface ILendingPoolManager {
     // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoanImmediate(address lendingPool, uint256 amount) external;
 
-    function borrowLoan(address lendingPool, uint256 amount) external;
-
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
     function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens) external returns (uint256 lossId);

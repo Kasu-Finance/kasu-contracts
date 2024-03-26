@@ -137,14 +137,6 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).borrowLoanImmediate(amount);
     }
 
-    function borrowLoan(address lendingPool, uint256 amount)
-        external
-        onlyAdmin // TODO: change that
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).borrowLoan(amount);
-    }
-
     /**
      * @notice Reort loss to the lending pool.
      * @param lendingPool Address of the lending pool.

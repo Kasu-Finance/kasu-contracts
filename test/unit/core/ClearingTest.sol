@@ -166,6 +166,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[0] = 20_00;
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
+
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
@@ -177,6 +178,8 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
 
         // ### ASSERT ###
+
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 10_000 * 1e6, 2);
 
         // ## Assert tranche balance ##
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
@@ -243,8 +246,6 @@ contract ClearingTest is LendingPoolTestUtils {
 
         assertEq(IPendingPool(lpd.pendingPool).totalSupply(), 0);
 
-        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 110_000 * 1e6, 2);
-
         // ### ARRANGE ###
 
         skip(1 days);
@@ -275,14 +276,12 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
         userManager.batchCalculateUserLoyaltyLevels(10);
 
-        // borrowing ~100K, totalSupply ~110K => excess 10K
-        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 99_999_999_998);
-
         // ### ACT ###
         uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();
         ClearingConfiguration memory clearingConfiguration2 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch2, clearingConfiguration2);
+
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, type(uint256).max, type(uint256).max);
 
         // ### ASSERT ###

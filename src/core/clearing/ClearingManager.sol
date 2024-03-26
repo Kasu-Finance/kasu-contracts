@@ -50,7 +50,6 @@ contract ClearingManager is IClearingManager, LendingPoolHelpers {
         }
 
         // step 2
-        TaskStatus acceptedRequestsExecutionStatus = pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch);
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
@@ -65,7 +64,7 @@ contract ClearingManager is IClearingManager, LendingPoolHelpers {
             (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
                 _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
 
-            if (acceptedRequestsExecutionStatus == TaskStatus.UNINITIALISED) {
+            if (pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
                 pendingPool.registerAcceptedRequestExecution(
                     targetEpoch,
                     pendingPool.getPendingDeposits(targetEpoch),
@@ -82,22 +81,21 @@ contract ClearingManager is IClearingManager, LendingPoolHelpers {
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && acceptedRequestsExecutionStatus != TaskStatus.ENDED
+                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) != TaskStatus.ENDED
         ) {
             pendingPool.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
         }
 
-        //        // step 4
-        //        if (
-        //            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
-        //                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-        //                && acceptedRequestsExecutionStatus == TaskStatus.ENDED
-        //        ) {
-        //            //borrow
-        //            ILendingPool(lendingPoolAddress).borrowLoan(
-        //                clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount
-        //            );
-        //        }
+        // step 4
+        if (
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
+                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
+        ) {
+            ILendingPool(lendingPoolAddress).borrowLoan(
+                clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount
+            );
+        }
     }
 
     function getClearingConfig(address lendingPool, uint256 epoch)

@@ -237,20 +237,24 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param borrowAmount the amount that the pool delegate requests
      */
     function borrowLoanImmediate(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
+        if (borrowAmount == 0) {
+            revert AmountShouldBeGreaterThanZero();
+        }
         _borrowLoan(borrowAmount);
         emit LoanBorrowedImmediate(borrowAmount);
     }
 
-    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
+    // TODO: add access control
+    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped {
+        if (!systemVariables.isClearingTime()) {
+            revert CanOnlyExecuteDuringClearingTime();
+        }
         _borrowLoan(borrowAmount);
         emit LoanBorrowed(borrowAmount);
     }
 
     function _borrowLoan(uint256 borrowAmount) internal {
-        if (borrowAmount == 0) {
-            revert AmountShouldBeGreaterThanZero();
-        }
-
+        if (borrowAmount == 0) return;
         uint256 availableAmount = underlyingAsset.balanceOf(address(this));
         if (availableAmount < borrowAmount) {
             revert BorrowAmountCantBeGreaterThanAvailableAmount(borrowAmount, availableAmount);
