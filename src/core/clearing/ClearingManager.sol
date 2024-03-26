@@ -5,8 +5,9 @@ import "../interfaces/clearing/IClearingManager.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
+import "../lendingPool/LendingPoolHelpers.sol";
 
-contract ClearingManager is IClearingManager {
+contract ClearingManager is IClearingManager, LendingPoolHelpers {
     /// @notice lendingPoolAddress => epochId => ClearingConfiguration
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
     /// @notice lendingPoolAddress => epochId => isCalculated
@@ -14,12 +15,15 @@ contract ClearingManager is IClearingManager {
 
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
-    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
+    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_, ILendingPoolManager lendingPoolManager_)
+        LendingPoolHelpers(lendingPoolManager_)
+    {
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 
     function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
         external
+        onlyLendingPoolManager
     {
         // TODO: check values before setting
         _setClearingConfig(lendingPool, epoch, clearingConfig, true);
@@ -30,7 +34,7 @@ contract ClearingManager is IClearingManager {
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
-    ) external {
+    ) external onlyLendingPoolManager {
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED

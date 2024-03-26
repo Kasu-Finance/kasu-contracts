@@ -2,14 +2,14 @@ import path from 'path';
 import * as hre from 'hardhat';
 import fs from 'fs';
 import {
-    ClearingManager__factory,
+    LendingPoolManager__factory,
     SystemVariablesTestable__factory,
     UserManager__factory,
 } from '../typechain-types';
 import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearing/ClearingManager';
 import { ethers } from 'ethers';
 
-const lendingPoolAddress = '0x14a667F38e16ab7d21f7E16b5765C972C70dB646';
+const lendingPoolAddress = '0xEaCed9c07C0eC9cbABFA7aB081b6C55e8C2799a0';
 const clearingBorrowAmount = 400_000_000; // 400 USDC
 
 async function main() {
@@ -30,8 +30,8 @@ async function main() {
         admin,
     );
 
-    const clearingManager = ClearingManager__factory.connect(
-        deploymentAddresses.ClearingManager.address,
+    const lendingPoolManager = LendingPoolManager__factory.connect(
+        deploymentAddresses.LendingPoolManager.address,
         admin,
     );
 
@@ -70,7 +70,7 @@ async function main() {
     };
 
     console.log('Overwrite clearing config');
-    tx = await clearingManager.registerClearingConfig(
+    tx = await lendingPoolManager.registerClearingConfig(
         lendingPoolAddress,
         currentEpochNumber,
         clearingConfiguration,
@@ -82,7 +82,7 @@ async function main() {
     const acceptedRequestsExecutionBatchSize = ethers.MaxUint256;
 
     console.log('Run clearing');
-    tx = await clearingManager.doClearing(
+    tx = await lendingPoolManager.doClearing(
         lendingPoolAddress,
         currentEpochNumber,
         pendingRequestsPriorityCalculationBatchSize,

@@ -74,6 +74,17 @@ interface ILendingPoolManager {
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
+    // clearing
+    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+        external;
+
+    function doClearing(
+        address lendingPoolAddress,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize
+    ) external;
+
     // config
 
     function updateBorrowRecipient(address lendingPool, address borrowRecipient) external;

@@ -135,7 +135,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         IAcceptedRequestsCalculation acceptedRequestsCalculation =
             IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
 
-        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation);
+        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation, lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
             new TransparentUpgradeableProxy(address(clearingManagerImpl), address(proxyAdmin), "");
         IClearingManager clearingManager = IClearingManager(address(clearingManagerProxy));
