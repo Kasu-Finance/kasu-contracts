@@ -3,10 +3,14 @@ import * as hre from 'hardhat';
 import fs from 'fs';
 import {
     ClearingManager__factory,
-    SystemVariables__factory,
+    SystemVariablesTestable__factory,
     UserManager__factory,
 } from '../typechain-types';
 import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearing/ClearingManager';
+import { ethers } from 'ethers';
+
+const lendingPoolAddress = '0x14a667F38e16ab7d21f7E16b5765C972C70dB646';
+const clearingBorrowAmount = 400_000_000; // 400 USDC
 
 async function main() {
     const deploymentAddressesPath = path.join(
@@ -31,32 +35,41 @@ async function main() {
         admin,
     );
 
-    const systemVariables = SystemVariables__factory.connect(
+    const systemVariablesTestable = SystemVariablesTestable__factory.connect(
         deploymentAddresses.SystemVariables.address,
         admin,
     );
 
     let tx;
 
+    // start clearing period
+    console.log('Manually start clearing period');
+    tx = await systemVariablesTestable.startClearing();
+    await tx.wait(1);
+
     // overwrite clearing config - optional
-    const CalculateUserLoyaltyLevelsBatch = 10;
+    const calculateUserLoyaltyLevelsBatchSize = 10000;
+
+    console.log('Calculate user loyalty levels');
     tx = await userManager.batchCalculateUserLoyaltyLevels(
-        CalculateUserLoyaltyLevelsBatch,
+        calculateUserLoyaltyLevelsBatchSize,
     );
     await tx.wait(1);
 
     // overwrite clearing config - optional
-    const lendingPoolAddress = '0x4B15DF7f000E8490a06d85837d11405CD2791F22';
-    const currentEpochNumber = await systemVariables.getCurrentEpochNumber();
+
+    const currentEpochNumber =
+        await systemVariablesTestable.getCurrentEpochNumber();
 
     const clearingConfiguration: ClearingConfigurationStruct = {
-        borrowAmount: 100_000_000_000, // 100K
+        borrowAmount: clearingBorrowAmount, // 400 usdc
         trancheDesiredRatios: [20_00, 30_00, 50_00], // 20%, 30%, 50%
         maxExcessPercentage: 10_00, // 10%
         minExcessPercentage: 0, // 0%
         isOverridden: true,
     };
 
+    console.log('Overwrite clearing config');
     tx = await clearingManager.registerClearingConfig(
         lendingPoolAddress,
         currentEpochNumber,
@@ -65,15 +78,21 @@ async function main() {
     await tx.wait(1);
 
     // run clearing
-    const pendingRequestsPriorityCalculationBatchSize = 10;
-    const acceptedRequestsExecutionBatchSize = 10;
+    const pendingRequestsPriorityCalculationBatchSize = ethers.MaxUint256;
+    const acceptedRequestsExecutionBatchSize = ethers.MaxUint256;
 
+    console.log('Run clearing');
     tx = await clearingManager.doClearing(
         lendingPoolAddress,
         currentEpochNumber,
         pendingRequestsPriorityCalculationBatchSize,
         acceptedRequestsExecutionBatchSize,
     );
+    await tx.wait(1);
+
+    // start clearing period
+    console.log('Manually stop clearing period');
+    tx = await systemVariablesTestable.endClearing();
     await tx.wait(1);
 }
 

@@ -39,7 +39,14 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts =
             acceptedPriorityWithdrawalAmounts;
 
-        acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = _getTotalPendingRequests() - 1;
+        uint256 totalPendingRequests = _getTotalPendingRequests();
+
+        if (totalPendingRequests == 0) {
+            acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = 0;
+        } else {
+            acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
+        }
+
         acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
@@ -52,8 +59,15 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             revert AcceptedRequestsExecutionAlreadyProcessed(targetEpoch);
         }
 
+        uint256 nextIndexToProcess = acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
+
+        if (nextIndexToProcess == 0) {
+            acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+            return;
+        }
+
         // calculate current transaction userRequest indexes
-        uint256 startingIndexInclusive = acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
+        uint256 startingIndexInclusive = nextIndexToProcess;
 
         // TODO: add check for batch size > 0
         uint256 batchSizeIndex = batchSize - 1;
