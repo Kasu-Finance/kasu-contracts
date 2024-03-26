@@ -88,12 +88,14 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
                 // only consider all past withdrawal requests
                 if (withdrawalNftDetails.epochId > targetEpoch) break;
 
-                // we explicitly set max priority for longstanding pending withdrawals and admin enforced
+                // we explicitly set priority for admin enforced withdrawals
                 uint256 withdrawLoyaltyLevel = ownerLoyaltyLevel;
-                if (
-                    targetEpoch - withdrawalNftDetails.epochId >= REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION
-                        || withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM
-                ) {
+                // we explicitly set priority to longstanding pending withdrawals and
+                if (targetEpoch - withdrawalNftDetails.epochId >= REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION) {
+                    withdrawLoyaltyLevel = loyaltyLevelCount - 1;
+                }
+
+                if (withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM) {
                     withdrawLoyaltyLevel = loyaltyLevelCount;
                 }
 
