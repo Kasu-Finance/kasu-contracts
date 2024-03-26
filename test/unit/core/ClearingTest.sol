@@ -276,7 +276,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
 
         // borrowing ~100K, totalSupply ~110K => excess 10K
-        _borrowLoan(lendingPoolLoanManagerAccount, lpd.lendingPool, 99_999_999_998);
+        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 99_999_999_998);
 
         // ### ACT ###
         uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();

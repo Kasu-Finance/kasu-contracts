@@ -86,6 +86,18 @@ contract ClearingManager is IClearingManager, LendingPoolHelpers {
         ) {
             pendingPool.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
         }
+
+        //        // step 4
+        //        if (
+        //            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+        //                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
+        //                && acceptedRequestsExecutionStatus == TaskStatus.ENDED
+        //        ) {
+        //            //borrow
+        //            ILendingPool(lendingPoolAddress).borrowLoan(
+        //                clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount
+        //            );
+        //        }
     }
 
     function getClearingConfig(address lendingPool, uint256 epoch)

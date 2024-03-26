@@ -291,8 +291,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     // POOL DELEGATE
 
-    function _borrowLoan(address caller, address lendingPool, uint256 amount) internal prank(caller) {
-        lendingPoolManager.borrowLoan(lendingPool, amount);
+    function _borrowLoanImmediate(address caller, address lendingPool, uint256 amount) internal prank(caller) {
+        lendingPoolManager.borrowLoanImmediate(lendingPool, amount);
     }
 
     function _repayLoan(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
