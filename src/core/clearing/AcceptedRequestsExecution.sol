@@ -66,6 +66,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             return;
         }
 
+        if (batchSize == 0) {
+            revert BatchSizeShouldNotBeZero();
+        }
+
         // calculate current transaction userRequest indexes
         uint256 startingIndexInclusive = nextIndexToProcess;
 
