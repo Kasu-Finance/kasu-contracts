@@ -124,6 +124,10 @@ async function main() {
     const createdPendingPoolAddress = lastEvent.args[1].pendingPool;
     const createdTrancheAddresses = lastEvent.args[1].tranches;
 
+    console.info('LendingPool Address:', createdLendingPoolAddress);
+    console.info('PendingPool Address:', createdPendingPoolAddress);
+    console.info('Tranche Addresses"', createdTrancheAddresses);
+
     // add users to allow list
     console.info('Add users to allow list');
     const kasuAllowListAdmin = KasuAllowList__factory.connect(
