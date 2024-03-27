@@ -135,7 +135,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         IAcceptedRequestsCalculation acceptedRequestsCalculation =
             IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
 
-        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation);
+        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation, lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
             new TransparentUpgradeableProxy(address(clearingManagerImpl), address(proxyAdmin), "");
         IClearingManager clearingManager = IClearingManager(address(clearingManagerProxy));
@@ -291,8 +291,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     // POOL DELEGATE
 
-    function _borrowLoan(address caller, address lendingPool, uint256 amount) internal prank(caller) {
-        lendingPoolManager.borrowLoan(lendingPool, amount);
+    function _borrowLoanImmediate(address caller, address lendingPool, uint256 amount) internal prank(caller) {
+        lendingPoolManager.borrowLoanImmediate(lendingPool, amount);
     }
 
     function _repayLoan(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {

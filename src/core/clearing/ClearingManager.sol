@@ -5,8 +5,9 @@ import "../interfaces/clearing/IClearingManager.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
+import "../lendingPool/LendingPoolHelpers.sol";
 
-contract ClearingManager is IClearingManager {
+contract ClearingManager is IClearingManager, LendingPoolHelpers {
     /// @notice lendingPoolAddress => epochId => ClearingConfiguration
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
     /// @notice lendingPoolAddress => epochId => isCalculated
@@ -14,12 +15,15 @@ contract ClearingManager is IClearingManager {
 
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
-    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
+    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_, ILendingPoolManager lendingPoolManager_)
+        LendingPoolHelpers(lendingPoolManager_)
+    {
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 
     function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
         external
+        onlyLendingPoolManager
     {
         // TODO: check values before setting
         _setClearingConfig(lendingPool, epoch, clearingConfig, true);
@@ -30,7 +34,7 @@ contract ClearingManager is IClearingManager {
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
-    ) external {
+    ) external onlyLendingPoolManager {
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
@@ -46,7 +50,6 @@ contract ClearingManager is IClearingManager {
         }
 
         // step 2
-        TaskStatus acceptedRequestsExecutionStatus = pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch);
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
@@ -61,7 +64,7 @@ contract ClearingManager is IClearingManager {
             (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
                 _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
 
-            if (acceptedRequestsExecutionStatus == TaskStatus.UNINITIALISED) {
+            if (pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
                 pendingPool.registerAcceptedRequestExecution(
                     targetEpoch,
                     pendingPool.getPendingDeposits(targetEpoch),
@@ -78,9 +81,20 @@ contract ClearingManager is IClearingManager {
         if (
             pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && acceptedRequestsExecutionStatus != TaskStatus.ENDED
+                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) != TaskStatus.ENDED
         ) {
             pendingPool.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
+        }
+
+        // step 4
+        if (
+            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
+                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
+        ) {
+            ILendingPool(lendingPoolAddress).borrowLoan(
+                clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount
+            );
         }
     }
 

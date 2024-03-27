@@ -129,12 +129,12 @@ contract LendingPoolManager is
     }
 
     // #### LENDING POOL LOAN MANAGER #### //
-    function borrowLoan(address lendingPool, uint256 amount)
+    function borrowLoanImmediate(address lendingPool, uint256 amount)
         external
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).borrowLoan(amount);
+        ILendingPool(lendingPool).borrowLoanImmediate(amount);
     }
 
     /**

@@ -217,7 +217,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const clearingManagerDeployment = await deployTransparentProxy(
         'ClearingManager',
-        deployOptions(admin, [acceptedRequestsCalculationDeployment.address]),
+        deployOptions(admin, [
+            acceptedRequestsCalculationDeployment.address,
+            lendingPoolManagerDeployment.address,
+        ]),
     );
 
     // initialise

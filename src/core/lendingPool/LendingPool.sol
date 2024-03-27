@@ -236,11 +236,25 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Transfers USDC from lending pool to pool delegate
      * @param borrowAmount the amount that the pool delegate requests
      */
-    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
+    function borrowLoanImmediate(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
         if (borrowAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
+        _borrowLoan(borrowAmount);
+        emit LoanBorrowedImmediate(borrowAmount);
+    }
 
+    // TODO: add access control
+    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped {
+        if (!systemVariables.isClearingTime()) {
+            revert CanOnlyExecuteDuringClearingTime();
+        }
+        _borrowLoan(borrowAmount);
+        emit LoanBorrowed(borrowAmount);
+    }
+
+    function _borrowLoan(uint256 borrowAmount) internal {
+        if (borrowAmount == 0) return;
         uint256 availableAmount = underlyingAsset.balanceOf(address(this));
         if (availableAmount < borrowAmount) {
             revert BorrowAmountCantBeGreaterThanAvailableAmount(borrowAmount, availableAmount);
@@ -248,8 +262,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         borrowedAmount += borrowAmount;
         _transferAssets(_poolConfiguration.borrowRecipient, borrowAmount);
-
-        emit LoanBorrowed(borrowAmount);
     }
 
     function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {

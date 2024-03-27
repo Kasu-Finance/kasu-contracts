@@ -53,6 +53,8 @@ interface ILendingPool is IERC20 {
         returns (uint256 assetAmount);
 
     // #### POOL DELEGATE #### //
+    function borrowLoanImmediate(uint256 amount) external;
+
     function borrowLoan(uint256 amount) external;
 
     function repayLoan(uint256 amount, address repaymentAddress) external;
@@ -103,6 +105,8 @@ interface ILendingPool is IERC20 {
     event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
 
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
+
+    event LoanBorrowedImmediate(uint256 amount);
 
     event LoanBorrowed(uint256 amount);
 

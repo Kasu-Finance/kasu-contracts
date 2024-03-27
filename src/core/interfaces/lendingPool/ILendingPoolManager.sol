@@ -43,7 +43,7 @@ interface ILendingPoolManager {
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 
     // #### LENDING POOL LOAN MANAGER #### //
-    function borrowLoan(address lendingPool, uint256 amount) external;
+    function borrowLoanImmediate(address lendingPool, uint256 amount) external;
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
@@ -73,6 +73,17 @@ interface ILendingPoolManager {
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID) external;
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
+
+    // clearing
+    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+        external;
+
+    function doClearing(
+        address lendingPoolAddress,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize
+    ) external;
 
     // config
 
