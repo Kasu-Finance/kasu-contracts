@@ -31,16 +31,24 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
             'shared',
             'DependenciesFix.sol',
         );
+        const systemVariablesTestable = path.join(
+            hre.config.paths.root,
+            'test',
+            'shared',
+            'SystemVariablesTestable.sol',
+        );
 
         const mockUSDCPath = glob.sync(mockUSDC);
         const mockKsuPricePath = glob.sync(mockKsuPrice);
         const dependenciesFixPath = glob.sync(dependenciesFix);
+        const systemVariablesTestablePath = glob.sync(systemVariablesTestable);
 
         return [
             ...paths,
             ...mockUSDCPath,
             ...mockKsuPricePath,
             ...dependenciesFixPath,
+            ...systemVariablesTestablePath,
         ];
     },
 );

@@ -283,9 +283,7 @@ contract ClearingTest is LendingPoolTestUtils {
         ClearingConfiguration memory clearingConfiguration2 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch2, clearingConfiguration2);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, 10, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, type(uint256).max, type(uint256).max);
 
         // ### ASSERT ###
 
@@ -306,5 +304,69 @@ contract ClearingTest is LendingPoolTestUtils {
         // P2
         // (7800/9000)*4000=3466,666
         assertApproxEqAbs(mockUsdc.balanceOf(user18), 3466666666, 1);
+    }
+
+    function test_doClearing_noUserRequests() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+
+        // ### ACT ###
+        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+
+        uint256[] memory trancheDesiredRatios = new uint256[](3);
+        trancheDesiredRatios[0] = 20_00;
+        trancheDesiredRatios[1] = 30_00;
+        trancheDesiredRatios[2] = 50_00;
+        ClearingConfiguration memory clearingConfiguration1 =
+            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+    }
+
+    function test_doClearing_zeroBatch() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+
+        // ### ACT ###
+        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+
+        uint256[] memory trancheDesiredRatios = new uint256[](3);
+        trancheDesiredRatios[0] = 20_00;
+        trancheDesiredRatios[1] = 30_00;
+        trancheDesiredRatios[2] = 50_00;
+        ClearingConfiguration memory clearingConfiguration1 =
+            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+
+        vm.expectRevert(abi.encodeWithSelector(BatchSizeShouldNotBeZero.selector));
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 0, 0);
+    }
+
+    function test_doClearing_noUserRequests_maxUint256BatchSize() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(10);
+
+        // ### ACT ###
+        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+
+        uint256[] memory trancheDesiredRatios = new uint256[](3);
+        trancheDesiredRatios[0] = 20_00;
+        trancheDesiredRatios[1] = 30_00;
+        trancheDesiredRatios[2] = 50_00;
+        ClearingConfiguration memory clearingConfiguration1 =
+            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, type(uint256).max, type(uint256).max);
     }
 }

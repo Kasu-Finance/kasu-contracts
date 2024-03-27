@@ -34,3 +34,5 @@ error NonTransferable();
 error CannotExecuteDuringClearingTime();
 
 error CanOnlyExecuteDuringClearingTime();
+
+error BatchSizeShouldNotBeZero();

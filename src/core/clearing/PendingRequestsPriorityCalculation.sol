@@ -37,12 +37,22 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
+        if (batchSize == 0) {
+            revert BatchSizeShouldNotBeZero();
+        }
+
+        _initialisePendingRequests(targetEpoch);
+
         uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
+
+        if (remainingPendingRequests == 0) {
+            _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+            return;
+        }
+
         uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
         uint256 startingIndexInclusive = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endingIndexInclusive = startingIndexInclusive + batchSize_ - 1;
-
-        _initialisePendingRequests(targetEpoch);
 
         PendingDeposits storage pendingDeposits = _pendingRequestsPerEpoch[targetEpoch].pendingDeposits;
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
@@ -156,7 +166,6 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
         // initialise pending deposits
-        _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.totalDepositAmount = 0;
         _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
         _pendingRequestsPerEpoch[targetEpoch].pendingDeposits.tranchePriorityDepositsAmounts =
             new uint256[][](trancheCount);
@@ -166,7 +175,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         }
 
         // initialise pending withdrawals
-        // extra priority: forced withdrawals, withdrawals waiting >= 5 epochs
+        // extra priority: forced withdrawals
         uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
         _pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.totalWithdrawalsAmount = 0;
         _pendingRequestsPerEpoch[targetEpoch].pendingWithdrawals.priorityWithdrawalAmounts =
