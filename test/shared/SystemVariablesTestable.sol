@@ -7,6 +7,7 @@ import "../../src/core/interfaces/IKsuPrice.sol";
 import "../../src/shared/access/KasuAccessControllable.sol";
 import "../../src/shared/CommonErrors.sol";
 import "../../src/core/Constants.sol";
+import "../../src/core/interfaces/ISystemVariables.sol";
 
 /**
  * @notice Kasu system variables contract setup structure.
@@ -51,6 +52,8 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     uint256 private _minTrancheCountPerLendingPool;
     uint256 private _maxTrancheCountPerLendingPool;
 
+    TrancheInfo[] public _trancheInfo;
+
     // FAKE EPOCH
     uint256 private _epochNumber;
     bool private _isClearingTime;
@@ -87,6 +90,10 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         _maxTrancheInterestRate = 5_00;
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
+
+        _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
+        _trancheInfo.push(TrancheInfo("Mezzo Tranche", "MZ"));
+        _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
     }
 
     function startClearing() external {
@@ -340,5 +347,13 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      */
     function maxTrancheCountPerLendingPool() external view returns (uint256) {
         return _maxTrancheCountPerLendingPool;
+    }
+
+    /**
+     * @notice Returns the default names and symbols for tranches
+     * @return The default names and symbols for tranches
+     */
+    function getTrancheInfo(uint256 index) external returns (TrancheInfo memory) {
+        return _trancheInfo[index];
     }
 }

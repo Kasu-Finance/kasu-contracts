@@ -51,6 +51,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _minTrancheCountPerLendingPool;
     uint256 private _maxTrancheCountPerLendingPool;
 
+    TrancheInfo[] public _trancheInfo;
+
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
         ksuPrice = ksuPrice_;
         _disableInitializers();
@@ -83,6 +85,10 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _maxTrancheInterestRate = 5_00;
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
+
+        _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
+        _trancheInfo.push(TrancheInfo("Mezzo Tranche", "MZ"));
+        _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
     }
 
     // EPOCH
@@ -329,5 +335,14 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function maxTrancheCountPerLendingPool() external view returns (uint256) {
         return _maxTrancheCountPerLendingPool;
+    }
+
+    /**
+     * @notice Returns the default names and symbols for tranche
+     * @param index The index of the tranche
+     * @return The default name and symbol for tranche
+     */
+    function getTrancheInfo(uint256 index) external returns (TrancheInfo memory) {
+        return _trancheInfo[index];
     }
 }
