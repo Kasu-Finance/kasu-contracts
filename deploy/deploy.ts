@@ -200,6 +200,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             lendingPoolTrancheBeacon.address,
             kasuControllerDeployment.address,
             lendingPoolManagerDeployment.address,
+            systemVariablesDeployment.address,
         ]),
     );
 
