@@ -342,7 +342,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param index The index of the tranche
      * @return The default name and symbol for tranche
      */
-    function getTrancheInfo(uint256 index) external returns (TrancheInfo memory) {
+    function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheInfo[index];
     }
 }

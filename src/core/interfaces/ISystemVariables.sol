@@ -45,7 +45,7 @@ interface ISystemVariables {
     function minTrancheCountPerLendingPool() external view returns (uint256);
     function maxTrancheCountPerLendingPool() external view returns (uint256);
 
-    function getTrancheInfo(uint256 index) external returns (TrancheInfo memory);
+    function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory);
 
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
