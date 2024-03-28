@@ -106,9 +106,17 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
 
+        // clearing
+        AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
+        TransparentUpgradeableProxy acceptedRequestsCalculationProxy =
+            new TransparentUpgradeableProxy(address(acceptedRequestsCalculationImpl), address(proxyAdmin), "");
+        IAcceptedRequestsCalculation acceptedRequestsCalculation =
+            IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
+
         // pending pool
-        PendingPool pendingPoolIml =
-            new PendingPoolHarness(systemVariables, address(mockUsdc), lendingPoolManager, userManager);
+        PendingPool pendingPoolIml = new PendingPoolHarness(
+            systemVariables, address(mockUsdc), lendingPoolManager, userManager, acceptedRequestsCalculation
+        );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
@@ -129,20 +137,15 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
 
         // clearing
-        AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
-        TransparentUpgradeableProxy acceptedRequestsCalculationProxy =
-            new TransparentUpgradeableProxy(address(acceptedRequestsCalculationImpl), address(proxyAdmin), "");
-        IAcceptedRequestsCalculation acceptedRequestsCalculation =
-            IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
 
-        ClearingManager clearingManagerImpl = new ClearingManager(acceptedRequestsCalculation, lendingPoolManager);
+        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
-            new TransparentUpgradeableProxy(address(clearingManagerImpl), address(proxyAdmin), "");
-        IClearingManager clearingManager = IClearingManager(address(clearingManagerProxy));
+            new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
+        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
-        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingManager);
+        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator);
 
         // kasu allow list - allow users
         vm.startPrank(admin);
@@ -369,8 +372,9 @@ contract PendingPoolHarness is PendingPool {
         ISystemVariables systemVariables_,
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
-        IUserManager userManger_
-    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_) {}
+        IUserManager userManger_,
+        IAcceptedRequestsCalculation acceptedRequestsCalculation_
+    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_, acceptedRequestsCalculation_) {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         (address tranche,) = decomposeDepositId(dNftID);

@@ -6,20 +6,15 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../lendingPool/LendingPoolHelpers.sol";
+import "../interfaces/clearing/IClearingSteps.sol";
 
-contract ClearingManager is IClearingManager, LendingPoolHelpers {
+contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     /// @notice lendingPoolAddress => epochId => ClearingConfiguration
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
     /// @notice lendingPoolAddress => epochId => isCalculated
     mapping(address => mapping(uint256 => bool)) public acceptedRequestsCalculationPerEpochStatus;
 
-    IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
-
-    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_, ILendingPoolManager lendingPoolManager_)
-        LendingPoolHelpers(lendingPoolManager_)
-    {
-        _acceptedRequestsCalculation = acceptedRequestsCalculation_;
-    }
+    constructor(ILendingPoolManager lendingPoolManager_) LendingPoolHelpers(lendingPoolManager_) {}
 
     function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
         external
@@ -35,40 +30,43 @@ contract ClearingManager is IClearingManager, LendingPoolHelpers {
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
     ) external onlyLendingPoolManager {
-        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPoolAddress).getPendingPool());
+        IClearingSteps _clearingSteps =
+            IClearingSteps(ILendingPool(lendingPoolAddress).lendingPoolInfo().pendingPoolAddress);
         if (
-            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
+                && _clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
         ) {
             revert ClearingAlreadyExecuted(targetEpoch);
         }
 
         // step 1
-        if (pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) != TaskStatus.ENDED) {
-            pendingPool.calculatePendingRequestsPriorityBatch(pendingRequestsPriorityCalculationBatchSize, targetEpoch);
+        if (_clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) != TaskStatus.ENDED) {
+            _clearingSteps.calculatePendingRequestsPriorityBatch(
+                pendingRequestsPriorityCalculationBatchSize, targetEpoch
+            );
         }
 
         // step 2
         if (
-            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
         ) {
             ClearingInput memory clearingInput = ClearingInput(
                 _createClearingConfig(lendingPoolAddress, targetEpoch),
                 _getLendingPoolBalance(lendingPoolAddress),
-                pendingPool.getPendingDeposits(targetEpoch),
-                pendingPool.getPendingWithdrawals(targetEpoch),
+                _clearingSteps.getPendingDeposits(targetEpoch),
+                _clearingSteps.getPendingWithdrawals(targetEpoch),
                 targetEpoch
             );
             (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
-                _acceptedRequestsCalculation.calculateAcceptedRequests(clearingInput);
+                _clearingSteps.calculateAcceptedRequests(clearingInput);
 
-            if (pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
-                pendingPool.registerAcceptedRequestExecution(
+            if (_clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
+                _clearingSteps.registerAcceptedRequestExecution(
                     targetEpoch,
-                    pendingPool.getPendingDeposits(targetEpoch),
-                    pendingPool.getPendingWithdrawals(targetEpoch),
+                    _clearingSteps.getPendingDeposits(targetEpoch),
+                    _clearingSteps.getPendingWithdrawals(targetEpoch),
                     tranchePriorityDepositsAccepted,
                     acceptedPriorityWithdrawalAmounts
                 );
@@ -79,18 +77,18 @@ contract ClearingManager is IClearingManager, LendingPoolHelpers {
 
         // step 3
         if (
-            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) != TaskStatus.ENDED
+                && _clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) != TaskStatus.ENDED
         ) {
-            pendingPool.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
+            _clearingSteps.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
         }
 
         // step 4
         if (
-            pendingPool.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
+            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && pendingPool.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
+                && _clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
         ) {
             ILendingPool(lendingPoolAddress).borrowLoan(
                 clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount

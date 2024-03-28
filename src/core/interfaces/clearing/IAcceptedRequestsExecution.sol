@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "./IPendingRequestsPriorityCalculation.sol";
+import "./IClearingStepsData.sol";
 
 error AcceptedRequestsExecutionAlreadyInitialised(uint256 epoch);
 error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
