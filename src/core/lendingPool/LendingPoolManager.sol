@@ -52,6 +52,7 @@ contract LendingPoolManager is
 
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
+        whenNotPaused
         onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
@@ -66,6 +67,7 @@ contract LendingPoolManager is
     // #### USER DEPOSITS #### //
     function requestDeposit(address lendingPool, address tranche, uint256 amount)
         external
+        whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
         isUserAllowed(msg.sender)
@@ -82,6 +84,7 @@ contract LendingPoolManager is
         bytes calldata signature
     )
         external
+        whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
         isUserKycd(msg.sender, blockExpiration, signature)
@@ -98,19 +101,28 @@ contract LendingPoolManager is
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
     }
 
-    function cancelDepositRequest(address lendingPool, uint256 dNftID) external validLendingPool(lendingPool) {
+    function cancelDepositRequest(address lendingPool, uint256 dNftID)
+        external
+        whenNotPaused
+        validLendingPool(lendingPool)
+    {
         IPendingPool(lendingPools[lendingPool].pendingPool).cancelDepositRequest(msg.sender, dNftID);
     }
 
     function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
         external
+        whenNotPaused
         validLendingPool(lendingPool)
         returns (uint256 wNftID)
     {
         wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
-    function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external validLendingPool(lendingPool) {
+    function cancelWithdrawalRequest(address lendingPool, uint256 wNftID)
+        external
+        whenNotPaused
+        validLendingPool(lendingPool)
+    {
         IPendingPool(lendingPools[lendingPool].pendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
@@ -122,6 +134,7 @@ contract LendingPoolManager is
      */
     function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
         external
+        whenNotPaused
         validLendingPool(lendingPool)
         returns (uint256 claimedAmount)
     {
@@ -131,6 +144,7 @@ contract LendingPoolManager is
     // #### LENDING POOL LOAN MANAGER #### //
     function borrowLoanImmediate(address lendingPool, uint256 amount)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -138,7 +152,7 @@ contract LendingPoolManager is
     }
 
     /**
-     * @notice Reort loss to the lending pool.
+     * @notice Report loss to the lending pool.
      * @param lendingPool Address of the lending pool.
      * @param amount Amount of loss.
      * @param doMintLossTokens Whether to mint loss tokens to all the users.
@@ -146,6 +160,7 @@ contract LendingPoolManager is
      */
     function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
         returns (uint256 lossId)
@@ -155,6 +170,7 @@ contract LendingPoolManager is
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -163,6 +179,7 @@ contract LendingPoolManager is
 
     function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -171,6 +188,7 @@ contract LendingPoolManager is
 
     function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -180,6 +198,7 @@ contract LendingPoolManager is
     // TODO: Pool Repayer role
     function depositFirstLossCapital(address lendingPool, uint256 amount)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -191,6 +210,7 @@ contract LendingPoolManager is
     // TODO: Pool Repayer role
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -208,6 +228,7 @@ contract LendingPoolManager is
      */
     function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_BORROWER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -220,6 +241,7 @@ contract LendingPoolManager is
 
     function updateBorrowRecipient(address lendingPool, address borrowRecipient)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -228,6 +250,7 @@ contract LendingPoolManager is
 
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -236,6 +259,7 @@ contract LendingPoolManager is
 
     function batchForceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
         returns (uint256[] memory wNftIDs)
@@ -245,6 +269,7 @@ contract LendingPoolManager is
 
     function stopLendingPool(address lendingPool, address firstLossCapitalReceiver)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -253,6 +278,7 @@ contract LendingPoolManager is
 
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -263,6 +289,7 @@ contract LendingPoolManager is
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -275,6 +302,7 @@ contract LendingPoolManager is
     // TODO: access control
     function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
         external
+        whenNotPaused
     {
         clearingManager.registerClearingConfig(lendingPool, epoch, clearingConfig);
     }
@@ -285,7 +313,7 @@ contract LendingPoolManager is
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
-    ) external {
+    ) external whenNotPaused {
         clearingManager.doClearing(
             lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
         );
@@ -295,6 +323,7 @@ contract LendingPoolManager is
 
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -303,6 +332,7 @@ contract LendingPoolManager is
 
     function updateMaximumDepositAmount(address lendingPool, address tranche, uint256 maximumDepositAmount)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -311,6 +341,7 @@ contract LendingPoolManager is
 
     function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -319,6 +350,7 @@ contract LendingPoolManager is
 
     function updateTrancheDesiredRatios(address lendingPool, uint256[] calldata desiredRatios)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -327,6 +359,7 @@ contract LendingPoolManager is
 
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_KASU_ADMIN, msg.sender)
         validLendingPool(lendingPool)
     {
@@ -335,6 +368,7 @@ contract LendingPoolManager is
 
     function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)
         external
+        whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
