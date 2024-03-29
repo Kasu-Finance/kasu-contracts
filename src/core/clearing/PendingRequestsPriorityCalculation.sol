@@ -18,17 +18,13 @@ struct PendingRequestsEpoch {
     TaskStatus status;
 }
 
-abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingRequestsPriorityCalculation {
-    uint256 internal REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION;
+abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriorityCalculation {
+    uint256 constant private REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
 
     // epochId => PendingRequestsEpoch
     mapping(uint256 => PendingRequestsEpoch) internal _pendingRequestsPerEpoch;
 
-    function __CalculatePendingRequestsPriority__init() internal onlyInitializing {
-        REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
-    }
-
-    function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) public {
+    function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external {
         if (!_isClearingTime()) {
             revert CanOnlyExecuteDuringClearingTime();
         }
@@ -105,6 +101,8 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
 
                 _setWithdrawalRequestPriority(userRequestNftId, withdrawLoyaltyLevel);
             }
+
+            // TODO: can be put outside of loop
             _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId + 1;
         }
 
@@ -116,13 +114,13 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             PendingWithdrawals storage pendingWithdrawals = _getClearingData(targetEpoch).pendingWithdrawals;
 
             for (
-                uint256 withdrawalPriority = 0;
+                uint256 withdrawalPriority;
                 withdrawalPriority < tempPriorityTrancheWithdrawalShares.length;
                 ++withdrawalPriority
             ) {
-                uint256 withdrawalPriorityAmountSum = 0;
+                uint256 withdrawalPriorityAmountSum;
                 for (
-                    uint256 trancheIndex = 0;
+                    uint256 trancheIndex;
                     trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
                     ++trancheIndex
                 ) {
@@ -139,6 +137,7 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
+        // TODO: what happens if new deposits are added?
         return _getTotalPendingRequests() - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
@@ -153,25 +152,26 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
         uint256 trancheCount = _getTrancheCount();
         uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
+        ClearingData storage clearingData = _getClearingData(targetEpoch);
+
         // initialise pending deposits
-        _getClearingData(targetEpoch).pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
-        _getClearingData(targetEpoch).pendingDeposits.tranchePriorityDepositsAmounts = new uint256[][](trancheCount);
-        for (uint256 i = 0; i < trancheCount; ++i) {
-            _getClearingData(targetEpoch).pendingDeposits.tranchePriorityDepositsAmounts[i] =
+        clearingData.pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
+        clearingData.pendingDeposits.tranchePriorityDepositsAmounts = new uint256[][](trancheCount);
+        for (uint256 i; i < trancheCount; ++i) {
+            clearingData.pendingDeposits.tranchePriorityDepositsAmounts[i] =
                 new uint256[](loyaltyLevelsCount);
         }
 
         // initialise pending withdrawals
         // extra priority: forced withdrawals
         uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
-        _getClearingData(targetEpoch).pendingWithdrawals.totalWithdrawalsAmount = 0;
-        _getClearingData(targetEpoch).pendingWithdrawals.priorityWithdrawalAmounts =
+        clearingData.pendingWithdrawals.priorityWithdrawalAmounts =
             new uint256[](withdrawalPriorityLevels);
 
         // initialise tempPriorityTrancheWithdrawalAmounts
         _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
             new uint256[][](withdrawalPriorityLevels);
-        for (uint256 i = 0; i < withdrawalPriorityLevels; ++i) {
+        for (uint256 i; i < withdrawalPriorityLevels; ++i) {
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] = new uint256[](trancheCount);
         }
 

@@ -15,10 +15,6 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 
-    function __Clearing__init() internal onlyInitializing {
-        __CalculatePendingRequestsPriority__init();
-    }
-
     // Getters
 
     function getPendingDeposits(uint256 epoch) public view returns (PendingDeposits memory) {

@@ -37,21 +37,15 @@ contract PendingPool is
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;
 
-    /// @dev tranche => nftIDs[]
-    mapping(address => uint256[]) private _trancheDepositNFTs;
     mapping(address => uint256) private _nextTrancheDepositNFTId;
 
     /// @dev deposit NFT id => DepositNftDetails
     mapping(uint256 => DepositNftDetails) private _trancheDepositNftDetails;
 
-    /// @dev tranche => nftIDs[]
-    mapping(address => uint256[]) private _trancheWithdrawalNFTs;
     mapping(address => uint256) private _nextTrancheWithdrawalNFTId;
 
     /// @dev withdrawal NFT id => WithdrawalNftDetails.
     mapping(uint256 => WithdrawalNftDetails) private _trancheWithdrawalNftDetails;
-    /// @dev user total requested withdrawal tranche shares.
-    mapping(address => uint256) private _userRequestedWithdrawalShares;
 
     // user => epoch => tranche => dNftId
     mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftIdPerUserPerEpochPerTranche;
@@ -85,7 +79,6 @@ contract PendingPool is
     function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC721_init(name_, symbol_);
         __LendingPoolHelpers_init(lendingPool_);
-        __CalculatePendingRequestsPriority__init();
     }
 
     function setUpTranches() public {
@@ -149,7 +142,6 @@ contract PendingPool is
             dNftID = _nextTrancheDepositNFTId[tranche];
             _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
 
-            _trancheDepositNFTs[tranche].push(dNftID);
             _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
             _trancheDepositNftDetails[dNftID] =
@@ -294,7 +286,6 @@ contract PendingPool is
             wNftID = _nextTrancheWithdrawalNFTId[tranche];
             _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
 
-            _trancheWithdrawalNFTs[tranche].push(wNftID);
             _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom] = wNftID;
 
             _mint(user, wNftID);
