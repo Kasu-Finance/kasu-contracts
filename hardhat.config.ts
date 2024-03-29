@@ -69,12 +69,12 @@ const config: HardhatUserConfig = {
             saveDeployments: true,
             tags: ['local'],
         },
-        'base-testnet': {
-            url: 'https://goerli.base.org',
-            chainId: 84531,
+        'base-sepolia': {
+            url: 'https://sepolia.base.org',
+            chainId: 84532,
             live: true,
             saveDeployments: true,
-            tags: ['baseGoerli'],
+            tags: ['baseSepolia'],
             accounts: [
                 process.env.DEPLOYER_KEY ||
                     '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
@@ -84,7 +84,7 @@ const config: HardhatUserConfig = {
     namedAccounts: {
         admin: {
             default: 0,
-            'base-testnet': 0,
+            'base-sepolia': 0,
         },
         alice: 1,
         bob: 2,

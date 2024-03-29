@@ -175,6 +175,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         lendingPoolShouldNotBeStopped
         onlyPendingPool
         verifyTranche(tranche)
+        returns (uint256 trancheSharesMinted)
     {
         // transfer usdc from pending pool to lending pool - pre-approved
         _transferAssetsFrom(msg.sender, address(this), acceptedAmount);
@@ -183,7 +184,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _mint(address(this), acceptedAmount);
 
         // transfer lending pool tokens from lending pool to the user in tranche - creates tranche shares for user
-        ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
+        trancheSharesMinted = ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
 
         emit DepositAccepted(user, tranche, acceptedAmount);
     }

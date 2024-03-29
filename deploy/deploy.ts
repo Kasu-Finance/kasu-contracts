@@ -6,6 +6,7 @@ import {
     DeployResult,
 } from 'hardhat-deploy/types';
 import {
+    KasuAllowList__factory,
     KasuController__factory,
     KSU__factory,
     KSULocking__factory,
@@ -39,6 +40,7 @@ export const ksuBonusMultiplier720 = 70_00;
 
 let deploymentPath = path.join('./deployment-addresses-none.json');
 let blockNumber = 0;
+const NEXERA_ID_SIGNER = '0x0BAd9DaD98143b2E946e8A40E4f27537be2f55E2';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (!fs.existsSync(path.join(`./deployments/${hre.network.name}`))) {
@@ -52,7 +54,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     blockNumber = await hre.ethers.provider.getBlockNumber();
 
     const isLocalDeployment = () => {
-        return hre.network.name === 'localhost';
+        return hre.network.name === 'localhost' || hre.network.name === 'hardhat';
     };
 
     const addressFile = addressFileFactory(
@@ -116,11 +118,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     await tx.wait(1);
 
-    const kasuAllowListDeployment = await deployTransparentProxy(
-        'KasuAllowList',
-        deployOptions(deployer, [kasuControllerDeployment.address]),
-    );
-
     const mockKsuPriceDeployment = await deployTransparentProxy(
         'MockKsuPrice',
         deployOptions(admin, []),
@@ -165,6 +162,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             kasuControllerDeployment.address,
         ]),
     );
+
+    const kasuAllowListDeployment = await deployTransparentProxy(
+        'KasuAllowList',
+        deployOptions(deployer, [kasuControllerDeployment.address]),
+    );
+    const kasuAllowlist = KasuAllowList__factory.connect(
+        kasuAllowListDeployment.address,
+        adminSigner,
+    );
+    tx = await kasuAllowlist.initialize(lendingPoolManagerDeployment.address, NEXERA_ID_SIGNER);
+    await tx.wait(1);
 
     const pendingPoolBeacon = await deployBeacon(
         'PendingPool',
@@ -251,7 +259,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         firstEpochStartTimestamp: Math.round(Date.now() / 1000) + 3600 * 24 * 3,
         clearingPeriodLength: 1,
         protocolFee: 10_00,
-        loyaltyThresholds: [10_00, 20_00, 30_00],
+        loyaltyThresholds: [10_00, 30_00],
         defaultTrancheInterestChangeEpochDelay: 1,
     };
     console.info('Initializing System Variables');
@@ -300,7 +308,7 @@ function deployOptions(
     constructorArgs: unknown[],
 ): DeployOptions {
     return {
-        deterministicDeployment: true,
+        deterministicDeployment: false,
         from: deployer,
         args: constructorArgs,
         log: true,

@@ -46,7 +46,9 @@ interface ILendingPool is IERC20 {
     function getBorrowedAmount() external view returns (uint256);
 
     // #### CLEARING #### //
-    function acceptDeposit(address tranche, address user, uint256 acceptedAmount) external;
+    function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
+        external
+        returns (uint256 trancheShares);
 
     function acceptWithdrawal(address tranche, address user, uint256 acceptedShares)
         external

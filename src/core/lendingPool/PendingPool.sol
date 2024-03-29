@@ -330,7 +330,9 @@ contract PendingPool is
 
         _approveAsset(address(lendingPool), acceptedAmount);
 
-        lendingPool.acceptDeposit(tranche, user, acceptedAmount);
+        uint256 trancheSharesMinted = lendingPool.acceptDeposit(tranche, user, acceptedAmount);
+
+        emit DepositRequestAccepted(user, tranche, dNftID, acceptedAmount, trancheSharesMinted);
     }
 
     function _rejectDepositRequest(uint256 dNftID) internal override nftExists(dNftID) {
@@ -380,7 +382,9 @@ contract PendingPool is
         (address tranche,) = decomposeWithdrawalId(wNftID);
 
         ILendingPool lendingPool = _getOwnLendingPool();
-        lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
+        uint256 assetsWithdrawn = lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
+
+        emit WithdrawalRequestAccepted(user, tranche, wNftID, acceptedShares, assetsWithdrawn);
     }
 
     function _deleteDNftDetails(address user, uint256 dNftID) private {

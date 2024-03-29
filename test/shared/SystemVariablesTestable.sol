@@ -84,7 +84,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         _updateKsuTokenPrice();
 
         _defaultTrancheInterestChangeEpochDelay = 4;
-        _maxTrancheInterestRate = 5_00;
+        _maxTrancheInterestRate = 1e17;
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
     }
