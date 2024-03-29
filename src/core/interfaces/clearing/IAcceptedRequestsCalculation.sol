@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "./IPendingRequestsPriorityCalculation.sol";
+import "./IClearingStepsData.sol";
 
 /**
  * @notice Clearing calculation input.
@@ -19,21 +19,6 @@ struct ClearingInput {
 }
 
 /**
- * @notice Clearing configuration.
- * @custom:member borrowAmount Desired borrow amount for current clearing.
- * @custom:member trancheDesiredRatios Lending pool tranche desired ratios in percentages.
- * @custom:member maxExcessPercentage Maximum excess balance percentage.
- * @custom:member minExcessPercentage Minimum excess balance percentage.
- */
-struct ClearingConfiguration {
-    uint256 borrowAmount;
-    uint256[] trancheDesiredRatios;
-    uint256 maxExcessPercentage;
-    uint256 minExcessPercentage;
-    bool isOverridden;
-}
-
-/**
  * @notice Lending pool balances.
  * @custom:member excess Lending pool excess balance. Lending pool available assets.
  * @custom:member owed Owed balance.
@@ -46,7 +31,7 @@ struct LendingPoolBalance {
 interface IAcceptedRequestsCalculation {
     function calculateAcceptedRequests(ClearingInput calldata input)
         external
-        pure
+        view
         returns (
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts

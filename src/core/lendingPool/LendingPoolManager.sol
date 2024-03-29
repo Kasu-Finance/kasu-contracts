@@ -29,7 +29,7 @@ contract LendingPoolManager is
     ILendingPoolFactory private lendingPoolFactory;
     IKasuAllowList private kasuAllowList;
     IUserManager private userManager;
-    IClearingManager private clearingManager;
+    IClearingCoordinator private clearingManager;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
@@ -40,7 +40,7 @@ contract LendingPoolManager is
         ILendingPoolFactory lendingPoolFactory_,
         IKasuAllowList kasuAllowList_,
         IUserManager userManager_,
-        IClearingManager clearingManager_
+        IClearingCoordinator clearingManager_
     ) public initializer {
         lendingPoolFactory = lendingPoolFactory_;
         kasuAllowList = kasuAllowList_;

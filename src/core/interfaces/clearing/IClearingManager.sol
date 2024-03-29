@@ -4,13 +4,7 @@ pragma solidity 0.8.23;
 import "./IAcceptedRequestsCalculation.sol";
 import "./IPendingRequestsPriorityCalculation.sol";
 
-enum TaskStatus {
-    UNINITIALISED,
-    PENDING,
-    ENDED
-}
-
-interface IClearingManager {
+interface IClearingCoordinator {
     /**
      * @notice Should be called if you need to overwrite the default clearing configuration.
      * @dev
