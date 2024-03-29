@@ -80,7 +80,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _updateKsuTokenPrice();
 
         _defaultTrancheInterestChangeEpochDelay = 4;
-        _maxTrancheInterestRate = 5_00;
+        _maxTrancheInterestRate = 1e17; // 10% TODO: update value
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
     }

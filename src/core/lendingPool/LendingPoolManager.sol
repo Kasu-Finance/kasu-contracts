@@ -369,7 +369,7 @@ contract LendingPoolManager is
     }
 
     modifier isUserKycd(address user, uint256 blockExpiration, bytes calldata signature) {
-        if (kasuAllowList.verifyUserKyc(user, blockExpiration, signature)) {
+        if (!kasuAllowList.verifyUserKyc(user, blockExpiration, signature)) {
             revert IKasuAllowList.UserNotKycd(user);
         }
         _;

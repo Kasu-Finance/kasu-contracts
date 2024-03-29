@@ -85,11 +85,25 @@ interface IPendingPool is IERC721Enumerable, IPendingRequestsPriorityCalculation
         address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 epochId, uint256 amount
     );
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
+    event DepositRequestAccepted(
+        address indexed user,
+        address indexed tranche,
+        uint256 indexed dNftID,
+        uint256 acceptedAmount,
+        uint256 trancheSharesMinted
+    );
     event DepositRequestRejected(address indexed user, address indexed tranche, uint256 indexed dNftID);
     event WithdrawalRequested(
         address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 epochId, uint256 amount
     );
     event WithdrawalRequestCancelled(address indexed user, address indexed tranche, uint256 indexed wNftID);
+    event WithdrawalRequestAccepted(
+        address indexed user,
+        address indexed tranche,
+        uint256 indexed wNftID,
+        uint256 acceptedShares,
+        uint256 assetsWithdrawn
+    );
     event ForceWithdrawalRequested(
         address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 epochId, uint256 amount
     );
