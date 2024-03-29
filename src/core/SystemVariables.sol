@@ -200,7 +200,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @dev Sets the protocol fee.
      * @param protocolFee_ The new protocol fee.
      */
-    function setProtocolFee(uint256 protocolFee_) external onlyAdmin {
+    function setProtocolFee(uint256 protocolFee_) external whenNotPaused onlyAdmin {
         _setProtocolFee(protocolFee_);
     }
 
@@ -236,7 +236,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Sets the loyalty thresholds.
      * @param loyaltyThresholds_ The new loyalty thresholds array.
      */
-    function setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) external onlyAdmin {
+    function setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) external whenNotPaused onlyAdmin {
         if (isClearingTime()) {
             revert CannotConfigureDuringClearingPeriod();
         }
@@ -274,7 +274,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Sets whether users are allowed to deposit only when the own rKSU
      * @param value Set to true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
      */
-    function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external onlyAdmin {
+    function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external whenNotPaused onlyAdmin {
         _userCanDepositToJuniorTrancheWhenHeHasRKSU = value;
     }
 
@@ -294,6 +294,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function setDefaultTrancheInterestChangeEpochDelay(uint256 defaultTrancheInterestChangeEpochDelay_)
         public
+        whenNotPaused
         onlyAdmin
     {
         _defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
@@ -311,7 +312,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Sets the maximum allowed interest rate per tranche
      * @param maxTrancheInterestRate_ maximum allowed interest rate per tranche
      */
-    function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public onlyAdmin {
+    function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public whenNotPaused onlyAdmin {
         _maxTrancheInterestRate = maxTrancheInterestRate_;
     }
 

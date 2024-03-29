@@ -35,6 +35,14 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         return super.paused();
     }
 
+    function requirePaused() external view {
+        _requirePaused();
+    }
+
+    function requireNotPaused() external view {
+        _requireNotPaused();
+    }
+
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function grantLendingPoolRole(address lendingPool, bytes32 role, address account)

@@ -62,6 +62,10 @@ interface IKasuController is IAccessControl {
 
     function paused() external view returns (bool);
 
+    function requirePaused() external view;
+
+    function requireNotPaused() external view;
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**

@@ -39,7 +39,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-setKSULockBonus}.
      */
-    function setKSULockBonus(address ksuBonusTokens_) external onlyAdmin {
+    function setKSULockBonus(address ksuBonusTokens_) external whenNotPaused onlyAdmin {
         ksuBonusTokens = ksuBonusTokens_;
     }
 
@@ -56,7 +56,11 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-addLockPeriod}.
      */
-    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external onlyAdmin {
+    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier)
+        external
+        whenNotPaused
+        onlyAdmin
+    {
         if (_lockDetails[lockPeriod].isActive) {
             revert LockPeriodAlreadyExists(lockPeriod);
         }
@@ -68,7 +72,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-lock}.
      */
-    function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId) {
+    function lock(uint256 amount, uint256 lockPeriod) external whenNotPaused returns (uint256 userLockId) {
         return _lock(amount, lockPeriod);
     }
 
@@ -77,6 +81,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      */
     function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20PermitPayload calldata ksuPermit)
         external
+        whenNotPaused
         returns (uint256)
     {
         IERC20Permit(address(ksuToken)).permit(
@@ -89,7 +94,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-unlock}.
      */
-    function unlock(uint256 unlockAmount, uint256 userLockId) external {
+    function unlock(uint256 unlockAmount, uint256 userLockId) external whenNotPaused {
         // check if lock is ok and unlocked
         UserLock storage userLock_ = _userLocks[msg.sender][userLockId];
 
@@ -138,7 +143,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-emitFees}.
      */
-    function emitFees(uint256 amount) external {
+    function emitFees(uint256 amount) external whenNotPaused {
         feeToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // update reward details
@@ -151,7 +156,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /**
      * @dev See {IKSULocking-claimFees}.
      */
-    function claimFees() external returns (uint256 earned) {
+    function claimFees() external whenNotPaused returns (uint256 earned) {
         _updateUserRewards(msg.sender);
 
         earned = rewards[msg.sender];
