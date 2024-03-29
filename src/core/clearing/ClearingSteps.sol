@@ -81,13 +81,6 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
 
     // Pending Pool
 
-    function isDepositNft(uint256 nftId)
-        public
-        pure
-        virtual
-        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-        returns (bool);
-
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view

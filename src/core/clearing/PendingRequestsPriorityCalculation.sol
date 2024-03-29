@@ -9,6 +9,7 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/clearing/IClearingStepsData.sol";
+import "../lendingPool/UserRequestIds.sol";
 
 struct PendingRequestsEpoch {
     // array by priority and trancheIndex
@@ -64,14 +65,14 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
             uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
 
-            if (isDepositNft(userRequestNftId)) {
+            if (UserRequestIds.isDepositNft(userRequestNftId)) {
                 // ### Deposit Requests Processing ###
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
 
                 // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId != targetEpoch) break;
 
-                (address trancheAddress,) = decomposeDepositId(userRequestNftId);
+                (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
 
                 pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
@@ -187,9 +188,6 @@ abstract contract PendingRequestsPriorityCalculation is Initializable, IPendingR
     function _getPendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
 
     // Pending Pool
-    function isDepositNft(uint256 nftId) public pure virtual returns (bool);
-
-    function decomposeDepositId(uint256 id) public pure virtual returns (address tranche, uint256 depositId);
 
     function trancheDepositNftDetails(uint256 dNftId)
         public

@@ -377,7 +377,7 @@ contract PendingPoolHarness is PendingPool {
     ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_, acceptedRequestsCalculation_) {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
-        (address tranche,) = decomposeDepositId(dNftID);
+        (address tranche,) = UserRequestIds.decomposeDepositId(dNftID);
         return _acceptDepositRequest(dNftID, tranche, acceptedAmount);
     }
 

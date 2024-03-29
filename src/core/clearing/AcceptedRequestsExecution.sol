@@ -6,6 +6,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPoolManager.sol";
+import "../lendingPool/UserRequestIds.sol";
 
 struct AcceptedRequestsExecutionEpoch {
     PendingDeposits pendingDeposits;
@@ -82,7 +83,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         while (i >= endingIndexInclusive) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
 
-            if (isDepositNft(userRequestNftId)) {
+            if (UserRequestIds.isDepositNft(userRequestNftId)) {
                 // ### Deposit Requests Processing ###
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
 
@@ -174,7 +175,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function _getPendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
 
     // Pending Pool
-    function isDepositNft(uint256 nftId) public pure virtual returns (bool);
 
     function trancheDepositNftDetails(uint256 dNftId)
         public
@@ -187,8 +187,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         view
         virtual
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
-
-    function decomposeWithdrawalId(uint256 id) public pure virtual returns (address tranche, uint256 withdrawalId);
 
     function _isClearingTime() internal view virtual returns (bool);
 
