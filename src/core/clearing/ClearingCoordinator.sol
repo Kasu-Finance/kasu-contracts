@@ -59,17 +59,11 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
                 _clearingSteps.getPendingWithdrawals(targetEpoch),
                 targetEpoch
             );
-            (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
-                _clearingSteps.calculateAcceptedRequests(clearingInput);
+
+            _clearingSteps.calculateAndSaveAcceptedRequests(clearingInput);
 
             if (_clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
-                _clearingSteps.registerAcceptedRequestExecution(
-                    targetEpoch,
-                    _clearingSteps.getPendingDeposits(targetEpoch),
-                    _clearingSteps.getPendingWithdrawals(targetEpoch),
-                    tranchePriorityDepositsAccepted,
-                    acceptedPriorityWithdrawalAmounts
-                );
+                _clearingSteps.init(targetEpoch);
             }
 
             acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch] = true;

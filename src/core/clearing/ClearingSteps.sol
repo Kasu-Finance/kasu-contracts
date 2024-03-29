@@ -41,18 +41,29 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return _clearingDataPerEpoch[epoch];
     }
 
-    // IAcceptedRequestsCalculation
+    function calculateAndSaveAcceptedRequests(ClearingInput calldata input) external {
+        (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
+            _acceptedRequestsCalculation.calculateAcceptedRequests(input);
 
-    function calculateAcceptedRequests(ClearingInput calldata input)
-        external
-        view
-        override
-        returns (
-            uint256[][][] memory tranchePriorityDepositsAccepted,
-            uint256[] memory acceptedPriorityWithdrawalAmounts
-        )
-    {
-        return _acceptedRequestsCalculation.calculateAcceptedRequests(input);
+        _getClearingData(input.targetEpoch).tranchePriorityDepositsAccepted = tranchePriorityDepositsAccepted;
+        _getClearingData(input.targetEpoch).acceptedPriorityWithdrawalAmounts = acceptedPriorityWithdrawalAmounts;
+    }
+
+    //*** Virtual Methods ***/
+    function _getPendingDeposits(uint256 epoch) internal view override returns (PendingDeposits memory) {
+        return getPendingDeposits(epoch);
+    }
+
+    function _getPendingWithdrawals(uint256 epoch) internal view override returns (PendingWithdrawals memory) {
+        return getPendingWithdrawals(epoch);
+    }
+
+    function _getTranchePriorityDepositsAccepted(uint256 epoch) internal view override returns (uint256[][][] memory) {
+        return getTranchePriorityDepositsAccepted(epoch);
+    }
+
+    function _getAcceptedPriorityWithdrawalAmounts(uint256 epoch) internal view override returns (uint256[] memory) {
+        return getAcceptedPriorityWithdrawalAmounts(epoch);
     }
 
     //*** Common Virtual Methods ***/

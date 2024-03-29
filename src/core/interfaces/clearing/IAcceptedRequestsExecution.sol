@@ -12,18 +12,8 @@ interface IAcceptedRequestsExecution {
      * @dev
      * Must be called before executeAcceptedRequestsBatch. Called once.
      * @param targetEpoch The epoch to run the task against.
-     * @param pendingDeposits The result of PendingRequestsPriorityCalculation task.
-     * @param pendingWithdrawals The result of PendingRequestsPriorityCalculation task.
-     * @param tranchePriorityDepositsAccepted The result of AcceptedRequestsCalculation task.
-     * @param acceptedPriorityWithdrawalAmounts The result of AcceptedRequestsCalculation task.
      */
-    function registerAcceptedRequestExecution(
-        uint256 targetEpoch,
-        PendingDeposits calldata pendingDeposits,
-        PendingWithdrawals calldata pendingWithdrawals,
-        uint256[][][] calldata tranchePriorityDepositsAccepted,
-        uint256[] calldata acceptedPriorityWithdrawalAmounts
-    ) external;
+    function init(uint256 targetEpoch) external;
 
     /**
      * @notice Processes as many userRequests as defined by batchSize. This task accepts user requests, either deposits

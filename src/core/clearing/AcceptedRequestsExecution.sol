@@ -9,10 +9,6 @@ import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../lendingPool/UserRequestIds.sol";
 
 struct AcceptedRequestsExecutionEpoch {
-    PendingDeposits pendingDeposits;
-    PendingWithdrawals pendingWithdrawals;
-    uint256[][][] tranchePriorityDepositsAccepted;
-    uint256[] acceptedPriorityWithdrawalAmounts;
     uint256 nextIndexToProcess;
     TaskStatus status;
 }
@@ -21,24 +17,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) public acceptedRequestsExecutionPerEpoch;
 
-    function registerAcceptedRequestExecution(
-        uint256 targetEpoch,
-        PendingDeposits calldata pendingDeposits,
-        PendingWithdrawals calldata pendingWithdrawals,
-        uint256[][][] memory tranchePriorityDepositsAccepted,
-        uint256[] calldata acceptedPriorityWithdrawalAmounts
-    ) external {
+    function init(uint256 targetEpoch) external {
         if (acceptedRequestsExecutionPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) {
             revert AcceptedRequestsExecutionAlreadyInitialised(targetEpoch);
         }
-        // TODO: validate arguments ?
-        acceptedRequestsExecutionPerEpoch[targetEpoch].pendingDeposits = pendingDeposits;
-        acceptedRequestsExecutionPerEpoch[targetEpoch].pendingWithdrawals = pendingWithdrawals;
-
-        acceptedRequestsExecutionPerEpoch[targetEpoch].tranchePriorityDepositsAccepted = tranchePriorityDepositsAccepted;
-
-        acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts =
-            acceptedPriorityWithdrawalAmounts;
 
         uint256 totalPendingRequests = _getTotalPendingRequests();
 
@@ -91,8 +73,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 if (depositNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request deposit will be accepted in different tranches
                     uint256 requestTrancheIndex = _getTrancheIndex(depositNftDetails.tranche);
-                    uint256[] memory trancheDepositAcceptedAmounts = acceptedRequestsExecutionPerEpoch[targetEpoch]
-                        .tranchePriorityDepositsAccepted[requestTrancheIndex][depositNftDetails.priority];
+                    uint256[] memory trancheDepositAcceptedAmounts = _getTranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails
+                        .priority];
 
                     // loop through the target tranches that the deposit request will accepted
                     // accepted tranche index is always same or greater than the request tranche index
@@ -104,8 +86,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[targetTrancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
-                        uint256 totalTranchePriorityDepositedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
-                            .pendingDeposits
+                        uint256 totalTranchePriorityDepositedAmount = _getPendingDeposits(targetEpoch)
                             .tranchePriorityDepositsAmounts[requestTrancheIndex][depositNftDetails.priority];
 
                         // calculate the amount that will be accepted in this tranche
@@ -130,12 +111,11 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // only consider all past withdrawal requests
                 if (withdrawalNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request withdrawal will be accepted in different tranches
-                    uint256 totalAcceptedAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
-                        .acceptedPriorityWithdrawalAmounts[withdrawalNftDetails.priority];
+                    uint256 totalAcceptedAmount =
+                        _getAcceptedPriorityWithdrawalAmounts(targetEpoch)[withdrawalNftDetails.priority];
                     if (totalAcceptedAmount > 0) {
-                        uint256 totalWithdrawalAmount = acceptedRequestsExecutionPerEpoch[targetEpoch]
-                            .pendingWithdrawals
-                            .priorityWithdrawalAmounts[withdrawalNftDetails.priority];
+                        uint256 totalWithdrawalAmount =
+                            _getPendingWithdrawals(targetEpoch).priorityWithdrawalAmounts[withdrawalNftDetails.priority];
 
                         // calculate the amount withdrawn that will be accepted in this tranche
                         if (totalWithdrawalAmount > 0) {
@@ -199,4 +179,13 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function _rejectDepositRequest(uint256 dNftID) internal virtual;
 
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal virtual;
+
+    // Clearing Steps
+    function _getPendingDeposits(uint256 epoch) internal view virtual returns (PendingDeposits memory);
+
+    function _getPendingWithdrawals(uint256 epoch) internal view virtual returns (PendingWithdrawals memory);
+
+    function _getTranchePriorityDepositsAccepted(uint256 epoch) internal view virtual returns (uint256[][][] memory);
+
+    function _getAcceptedPriorityWithdrawalAmounts(uint256 epoch) internal view virtual returns (uint256[] memory);
 }

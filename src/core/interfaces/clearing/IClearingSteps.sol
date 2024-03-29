@@ -6,11 +6,8 @@ import "./IAcceptedRequestsCalculation.sol";
 import "./IPendingRequestsPriorityCalculation.sol";
 import "./IClearingStepsData.sol";
 
-interface IClearingSteps is
-    IPendingRequestsPriorityCalculation,
-    IAcceptedRequestsExecution,
-    IAcceptedRequestsCalculation
-{
+interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
+    function calculateAndSaveAcceptedRequests(ClearingInput calldata input) external;
     // Getters
 
     function getPendingDeposits(uint256 epoch) external view returns (PendingDeposits memory);
