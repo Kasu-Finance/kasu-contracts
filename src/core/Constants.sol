@@ -12,3 +12,5 @@ int256 constant FULL_PERCENT_INT = 100_00;
 
 // TODO: update this value when the price oracle is known
 uint256 constant KSU_PRICE_MULTIPLIER = 1e18;
+
+uint256 constant INTEREST_RATE_FULL_PERCENT = 1e18;

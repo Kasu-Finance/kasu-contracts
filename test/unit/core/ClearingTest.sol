@@ -12,6 +12,16 @@ contract ClearingTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
+        // set interest rates to 0%
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
+
+        vm.startPrank(lendingPoolManagerAccount);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
+        vm.stopPrank();
+
         // tranche 1
         uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 1e6);
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 250 * 1e6);
@@ -94,6 +104,16 @@ contract ClearingTest is LendingPoolTestUtils {
     function test_executeAcceptedRequestsBatch() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // set interest rates to 0%
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
+
+        vm.startPrank(lendingPoolManagerAccount);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
+        vm.stopPrank();
 
         // deposit requests: total 100K
         // J0: 20K
