@@ -23,32 +23,32 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
         __TxAuthDataVerifierUpgradeable_init(signer);
     }
 
-    function setNexeraIDSigner(address signer) external onlyAdmin {
+    function setNexeraIDSigner(address signer) external whenNotPaused onlyAdmin {
         _setSigner(signer);
     }
 
-    function allowUser(address user) external onlyAdmin {
+    function allowUser(address user) external whenNotPaused onlyAdmin {
         if (!allowList[user]) {
             allowList[user] = true;
             emit IKasuAllowList.UserAddedInAllowList(user);
         }
     }
 
-    function disallowUser(address user) external onlyAdmin {
+    function disallowUser(address user) external whenNotPaused onlyAdmin {
         if (allowList[user]) {
             allowList[user] = false;
             emit IKasuAllowList.UserRemovedFromAllowList(user);
         }
     }
 
-    function blockUser(address user) external onlyAdmin {
+    function blockUser(address user) external whenNotPaused onlyAdmin {
         if (!blockList[user]) {
             blockList[user] = true;
             emit IKasuAllowList.UserBlockedFromAllowList(user);
         }
     }
 
-    function unblockUser(address user) external onlyAdmin {
+    function unblockUser(address user) external whenNotPaused onlyAdmin {
         if (blockList[user]) {
             blockList[user] = false;
             emit IKasuAllowList.UserUnblockedFromAllowList(user);
