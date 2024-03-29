@@ -17,49 +17,56 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
 
     // Getters
 
-    function getPendingDeposits(uint256 epoch) public view returns (PendingDeposits memory) {
-        return _clearingDataPerEpoch[epoch].pendingDeposits;
+    function getPendingDeposits(uint256 epoch) external view returns (PendingDeposits memory) {
+        return _getPendingDeposits(epoch);
     }
 
-    function getPendingWithdrawals(uint256 epoch) public view returns (PendingWithdrawals memory) {
-        return _clearingDataPerEpoch[epoch].pendingWithdrawals;
+    function getPendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory) {
+        return _getPendingWithdrawals(epoch);
     }
 
-    function getTranchePriorityDepositsAccepted(uint256 epoch) public view returns (uint256[][][] memory) {
-        return _clearingDataPerEpoch[epoch].tranchePriorityDepositsAccepted;
-    }
-
-    function getAcceptedPriorityWithdrawalAmounts(uint256 epoch) public view returns (uint256[] memory) {
-        return _clearingDataPerEpoch[epoch].acceptedPriorityWithdrawalAmounts;
+    function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory) {
+        return (_getTranchePriorityDepositsAccepted(epoch), _getAcceptedPriorityWithdrawalAmounts(epoch));
     }
 
     function _getClearingData(uint256 epoch) internal view override returns (ClearingData storage) {
         return _clearingDataPerEpoch[epoch];
     }
 
-    function calculateAndSaveAcceptedRequests(ClearingInput calldata input) external {
-        (uint256[][][] memory tranchePriorityDepositsAccepted, uint256[] memory acceptedPriorityWithdrawalAmounts) =
-            _acceptedRequestsCalculation.calculateAcceptedRequests(input);
+    function calculateAndSaveAcceptedRequests(
+        ClearingConfiguration memory config,
+        LendingPoolBalance memory balance,
+        uint256 targetEpoch
+    ) external {
+        ClearingInput memory input = ClearingInput({
+            config: config,
+            balance: balance,
+            pendingDeposits: _getPendingDeposits(targetEpoch),
+            pendingWithdrawals: _getPendingWithdrawals(targetEpoch),
+            targetEpoch: targetEpoch
+        });
 
-        _getClearingData(input.targetEpoch).tranchePriorityDepositsAccepted = tranchePriorityDepositsAccepted;
-        _getClearingData(input.targetEpoch).acceptedPriorityWithdrawalAmounts = acceptedPriorityWithdrawalAmounts;
+        (
+            _clearingDataPerEpoch[targetEpoch].tranchePriorityDepositsAccepted,
+            _clearingDataPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts
+        ) = _acceptedRequestsCalculation.calculateAcceptedRequests(input);
     }
 
     //*** Virtual Methods ***/
     function _getPendingDeposits(uint256 epoch) internal view override returns (PendingDeposits memory) {
-        return getPendingDeposits(epoch);
+        return _clearingDataPerEpoch[epoch].pendingDeposits;
     }
 
     function _getPendingWithdrawals(uint256 epoch) internal view override returns (PendingWithdrawals memory) {
-        return getPendingWithdrawals(epoch);
+        return _clearingDataPerEpoch[epoch].pendingWithdrawals;
     }
 
     function _getTranchePriorityDepositsAccepted(uint256 epoch) internal view override returns (uint256[][][] memory) {
-        return getTranchePriorityDepositsAccepted(epoch);
+        return _clearingDataPerEpoch[epoch].tranchePriorityDepositsAccepted;
     }
 
     function _getAcceptedPriorityWithdrawalAmounts(uint256 epoch) internal view override returns (uint256[] memory) {
-        return getAcceptedPriorityWithdrawalAmounts(epoch);
+        return _clearingDataPerEpoch[epoch].acceptedPriorityWithdrawalAmounts;
     }
 
     //*** Common Virtual Methods ***/
@@ -115,11 +122,4 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         virtual
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (address);
-
-    function _isClearingTime()
-        internal
-        view
-        virtual
-        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-        returns (bool);
 }

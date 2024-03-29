@@ -7,14 +7,17 @@ import "./IPendingRequestsPriorityCalculation.sol";
 import "./IClearingStepsData.sol";
 
 interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
-    function calculateAndSaveAcceptedRequests(ClearingInput calldata input) external;
+    function calculateAndSaveAcceptedRequests(
+        ClearingConfiguration memory config,
+        LendingPoolBalance memory balance,
+        uint256 targetEpoch
+    ) external;
+
     // Getters
 
     function getPendingDeposits(uint256 epoch) external view returns (PendingDeposits memory);
 
     function getPendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory);
 
-    function getTranchePriorityDepositsAccepted(uint256 epoch) external view returns (uint256[][][] memory);
-
-    function getAcceptedPriorityWithdrawalAmounts(uint256 epoch) external view returns (uint256[] memory);
+    function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory);
 }

@@ -52,15 +52,11 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
                 && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
         ) {
-            ClearingInput memory clearingInput = ClearingInput(
+            _clearingSteps.calculateAndSaveAcceptedRequests(
                 _createClearingConfig(lendingPoolAddress, targetEpoch),
                 _getLendingPoolBalance(lendingPoolAddress),
-                _clearingSteps.getPendingDeposits(targetEpoch),
-                _clearingSteps.getPendingWithdrawals(targetEpoch),
                 targetEpoch
             );
-
-            _clearingSteps.calculateAndSaveAcceptedRequests(clearingInput);
 
             if (_clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
                 _clearingSteps.init(targetEpoch);

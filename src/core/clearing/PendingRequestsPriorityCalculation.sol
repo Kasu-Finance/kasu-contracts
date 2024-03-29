@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/clearing/IPendingRequestsPriorityCalculation.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/IUserManager.sol";
@@ -19,16 +18,12 @@ struct PendingRequestsEpoch {
 }
 
 abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriorityCalculation {
-    uint256 constant private REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
+    uint256 private constant REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
 
     // epochId => PendingRequestsEpoch
     mapping(uint256 => PendingRequestsEpoch) internal _pendingRequestsPerEpoch;
 
     function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external {
-        if (!_isClearingTime()) {
-            revert CanOnlyExecuteDuringClearingTime();
-        }
-
         if (_pendingRequestsPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
@@ -149,30 +144,32 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     function _initialisePendingRequests(uint256 targetEpoch) private {
         if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) return;
-        uint256 trancheCount = _getTrancheCount();
-        uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
-        ClearingData storage clearingData = _getClearingData(targetEpoch);
+        unchecked {
+            uint256 trancheCount = _getTrancheCount();
+            uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
-        // initialise pending deposits
-        clearingData.pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
-        clearingData.pendingDeposits.tranchePriorityDepositsAmounts = new uint256[][](trancheCount);
-        for (uint256 i; i < trancheCount; ++i) {
-            clearingData.pendingDeposits.tranchePriorityDepositsAmounts[i] =
-                new uint256[](loyaltyLevelsCount);
-        }
+            ClearingData storage clearingData = _getClearingData(targetEpoch);
 
-        // initialise pending withdrawals
-        // extra priority: forced withdrawals
-        uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
-        clearingData.pendingWithdrawals.priorityWithdrawalAmounts =
-            new uint256[](withdrawalPriorityLevels);
+            // initialise pending deposits
+            clearingData.pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
+            clearingData.pendingDeposits.tranchePriorityDepositsAmounts = new uint256[][](trancheCount);
+            for (uint256 i; i < trancheCount; ++i) {
+                clearingData.pendingDeposits.tranchePriorityDepositsAmounts[i] = new uint256[](loyaltyLevelsCount);
+            }
 
-        // initialise tempPriorityTrancheWithdrawalAmounts
-        _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
-            new uint256[][](withdrawalPriorityLevels);
-        for (uint256 i; i < withdrawalPriorityLevels; ++i) {
-            _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] = new uint256[](trancheCount);
+            // initialise pending withdrawals
+            // extra priority: forced withdrawals
+            uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
+            clearingData.pendingWithdrawals.priorityWithdrawalAmounts = new uint256[](withdrawalPriorityLevels);
+
+            // initialise tempPriorityTrancheWithdrawalAmounts
+            _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
+                new uint256[][](withdrawalPriorityLevels);
+            for (uint256 i; i < withdrawalPriorityLevels; ++i) {
+                _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares[i] =
+                    new uint256[](trancheCount);
+            }
         }
 
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
@@ -206,8 +203,6 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     function _getTrancheCount() internal view virtual returns (uint256);
 
     function _getTranche(uint256 index) internal view virtual returns (address);
-
-    function _isClearingTime() internal view virtual returns (bool);
 
     function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint256);
 
