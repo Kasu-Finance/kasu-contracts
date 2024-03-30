@@ -12,7 +12,6 @@ import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "./LendingPoolStoppable.sol";
 import "../Constants.sol";
-import "forge-std/console2.sol";
 
 /**
  * @dev
@@ -239,18 +238,19 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _updateTrancheInterestRateConfig(epoch);
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
-            _applyTrancheInterest(_lendingPoolInfo.trancheAddresses[i]);
+            _applyTrancheInterest(_lendingPoolInfo.trancheAddresses[i], epoch);
         }
     }
 
-    function _applyTrancheInterest(address tranche) internal {
+    function _applyTrancheInterest(address tranche, uint256 epoch) internal {
         uint256 trancheAssetBalance = balanceOf(tranche);
+        if (trancheAssetBalance == 0) return;
 
         uint256 interestAmount =
             trancheAssetBalance * _getTrancheConfiguration(tranche).interestRate / INTEREST_RATE_FULL_PERCENT;
 
         // calculate fees
-        uint256 feesAmount = interestAmount * systemVariables.protocolFee() / FULL_PERCENT;
+        uint256 feesAmount = interestAmount * systemVariables.performanceFee() / FULL_PERCENT;
 
         // decrease by the fee percentage
         interestAmount -= feesAmount;
@@ -262,8 +262,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // mint the lending pool tokens to the lending pool tranche
         _mint(tranche, interestAmount);
 
-        emit InterestApplied(tranche, interestAmount);
-        emit FeesOwedIncreased(feesAmount);
+        emit InterestApplied(tranche, epoch, interestAmount);
+        emit FeesOwedIncreased(epoch, feesAmount);
     }
 
     /**
@@ -556,12 +556,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
         uint256 applicableEpoch = currentEpoch + epochDelay;
 
-        console2.log("current epoch", currentEpoch);
-        console2.log("applicable epoch", applicableEpoch);
-
         for (uint256 i = _futureTrancheInterests[tranche].length - 1; i > 0; --i) {
             if (_futureTrancheInterests[tranche][i].epoch >= applicableEpoch) {
-                console2.log("removing", i);
                 FutureTrancheInterestRates memory futureTrancheInterest = _futureTrancheInterests[tranche][i];
                 _futureTrancheInterests[tranche].pop();
 
@@ -660,10 +656,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             address tranche = _lendingPoolInfo.trancheAddresses[i];
             uint256 index = _getTrancheInterestRateIndex(tranche, epoch);
             uint256 oldIndex = _trancheInterestIndex[tranche];
-
-            console2.log("tranche", tranche);
-            console2.log("index", index);
-            console2.log("old index", oldIndex);
 
             if (index > oldIndex) {
                 _trancheInterestIndex[tranche] = index;

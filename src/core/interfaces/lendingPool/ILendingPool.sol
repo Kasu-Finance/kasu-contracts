@@ -130,9 +130,9 @@ interface ILendingPool is IERC20 {
 
     event RemovedTracheInterestRateUpdate(address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex);
 
-    event InterestApplied(address indexed tranche, uint256 interestAmount);
+    event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
 
-    event FeesOwedIncreased(uint256 feesAmount);
+    event FeesOwedIncreased(uint256 indexed epoch, uint256 feesAmount);
 
     // Errors
 
