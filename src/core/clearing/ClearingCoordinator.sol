@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "../interfaces/clearing/IClearingManager.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";

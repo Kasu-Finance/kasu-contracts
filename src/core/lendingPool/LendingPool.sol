@@ -7,6 +7,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/ISystemVariables.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
@@ -21,6 +22,7 @@ import "../Constants.sol";
  */
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     ISystemVariables public immutable systemVariables;
+    IClearingCoordinator public immutable clearingCoordinator;
 
     LendingPoolInfo private _lendingPoolInfo;
     PoolConfiguration private _poolConfiguration;
@@ -42,8 +44,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     uint256 public firstLossCapital;
     uint256 public nextLossId;
 
-    constructor(ISystemVariables systemVariables_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
+    constructor(ISystemVariables systemVariables_, IClearingCoordinator clearingCoordinator_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
         systemVariables = systemVariables_;
+        clearingCoordinator = clearingCoordinator_;
     }
 
     /**
@@ -229,8 +232,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit WithdrawalAccepted(user, tranche, acceptedShares);
     }
 
-    // TODO: add access control
-    function applyInterests(uint256 epoch) external {
+    function applyInterests(uint256 epoch) onlyClearingCoordinator external {
         _applyInterests(epoch);
     }
 
@@ -726,6 +728,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function _onlyClearingCoordinator() private view {
+        if (msg.sender != address(clearingCoordinator)) {
+            revert OnlyClearingCoordinator();
+        }
+    }
+
     function _verifyTranche(address tranche) private view {
         if (!isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(this), tranche);
@@ -755,6 +763,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     modifier onlyLendingPoolManager() {
         _onlyLendingPoolManager();
+        _;
+    }
+
+    modifier onlyClearingCoordinator() {
+        _onlyClearingCoordinator();
         _;
     }
 

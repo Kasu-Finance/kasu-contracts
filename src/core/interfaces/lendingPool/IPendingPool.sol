@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "../clearing/IPendingRequestsPriorityCalculation.sol";
-import {IClearingCoordinator} from "../clearing/IClearingManager.sol";
 import {IAcceptedRequestsExecution} from "../clearing/IAcceptedRequestsExecution.sol";
 import {IClearingSteps} from "../clearing/IClearingSteps.sol";
 

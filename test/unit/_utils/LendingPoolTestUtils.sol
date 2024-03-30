@@ -113,13 +113,20 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         IAcceptedRequestsCalculation acceptedRequestsCalculation =
             IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
 
+        // clearing
+
+        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
+        TransparentUpgradeableProxy clearingManagerProxy =
+            new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
+        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
+
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(
             systemVariables, address(mockUsdc), lendingPoolManager, userManager, acceptedRequestsCalculation
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
+        LendingPool lendingPoolImp = new LendingPool(systemVariables, clearingCoordinator, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
@@ -136,13 +143,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         TransparentUpgradeableProxy lendingPoolFactoryProxy =
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
-
-        // clearing
-
-        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
-        TransparentUpgradeableProxy clearingManagerProxy =
-            new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
-        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));

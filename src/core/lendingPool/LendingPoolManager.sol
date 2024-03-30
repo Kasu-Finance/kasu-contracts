@@ -11,6 +11,7 @@ import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../interfaces/IKasuAllowList.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";

@@ -889,4 +889,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
         lendingPoolManager.createPool(createPoolConfig);
         vm.stopPrank();
     }
+
+    function test_applyInterests_onlyClearingCoordinator() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // ### ACT ###
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.OnlyClearingCoordinator.selector));
+        ILendingPool(lpd.lendingPool).applyInterests(1);
+    }
 }
