@@ -13,24 +13,28 @@ import "./LendingPool.sol";
 import "./LendingPoolManager.sol";
 import "./PendingPool.sol";
 import "./LendingPoolTranche.sol";
+import "../SystemVariables.sol";
 
 contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;
     address private immutable lendingPoolBeacon;
     address private immutable lendingPoolTrancheBeacon;
     IKasuController private immutable kasuController;
+    ISystemVariables private immutable systemVariables;
 
     constructor(
         address pendingPoolBeacon_,
         address lendingPoolBeacon_,
         address lendingPoolTrancheBeacon_,
         IKasuController kasuController_,
-        ILendingPoolManager lendingPoolManager_
+        ILendingPoolManager lendingPoolManager_,
+        ISystemVariables systemVariables_
     ) LendingPoolHelpers(lendingPoolManager_) {
         pendingPoolBeacon = pendingPoolBeacon_;
         lendingPoolBeacon = lendingPoolBeacon_;
         lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
         kasuController = kasuController_;
+        systemVariables = systemVariables_;
     }
 
     function createPool(CreatePoolConfig calldata createPoolConfig)
@@ -43,18 +47,15 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
 
         // tranches deploy
+        uint256 trancheCount = createPoolConfig.tranches.length;
         lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
-        lendingPoolDeployment.tranches = new address[](createPoolConfig.tranches.length);
+        lendingPoolDeployment.tranches = new address[](trancheCount);
 
-        address[] memory trancheAddresses = new address[](createPoolConfig.tranches.length);
+        address[] memory trancheAddresses = new address[](trancheCount);
 
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             trancheAddresses[i] = _deployLendingPoolTranche(
-                createPoolConfig.poolName,
-                createPoolConfig.poolSymbol,
-                createPoolConfig.tranches[i].trancheName,
-                createPoolConfig.tranches[i].trancheSymbol,
-                lendingPool
+                createPoolConfig.poolName, createPoolConfig.poolSymbol, i, trancheCount, lendingPool
             );
             lendingPoolDeployment.tranches[i] = trancheAddresses[i];
         }
@@ -87,18 +88,48 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     function _deployLendingPoolTranche(
         string memory poolName,
         string memory poolSymbol,
-        string memory trancheName,
-        string memory trancheSymbol,
+        uint256 trancheIndex,
+        uint256 trancheCount,
         ILendingPool lendingPool
     ) internal returns (address) {
         BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(lendingPoolTrancheBeacon, "");
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
 
-        string memory fullTrancheName = string.concat(poolName, " - ", trancheName);
-        string memory fullTrancheSymbol = string.concat(trancheSymbol, "_", poolSymbol);
+        (string memory fullTrancheName, string memory fullTrancheSymbol) =
+            getTrancheName(poolName, poolSymbol, trancheIndex, trancheCount);
 
         lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
 
         return address(lendingPoolTranche);
+    }
+
+    function getTrancheName(
+        string memory lendingPoolName,
+        string memory lendingPoolSymbol,
+        uint256 trancheIndex,
+        uint256 trancheCount
+    ) internal returns (string memory, string memory) {
+        if (trancheCount < systemVariables.minTrancheCountPerLendingPool()) {
+            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count less than minimum");
+        }
+
+        if (trancheCount > systemVariables.maxTrancheCountPerLendingPool()) {
+            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count more than maximum");
+        }
+
+        uint256 trancheNameIndex = trancheIndex;
+        if (trancheCount == 2) trancheNameIndex = trancheIndex + 1;
+        if (trancheCount == 3) trancheNameIndex = trancheIndex + 2;
+
+        if (trancheIndex > 3) {
+            revert InvalidConfiguration();
+        }
+
+        TrancheInfo memory trancheInfo = systemVariables.getTrancheInfo(trancheIndex);
+
+        return (
+            string.concat(lendingPoolName, " - ", trancheInfo.trancheName),
+            string.concat(trancheInfo.tokenSymbol, "_", lendingPoolSymbol)
+        );
     }
 }
