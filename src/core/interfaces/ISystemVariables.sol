@@ -47,6 +47,10 @@ interface ISystemVariables {
 
     function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory);
 
+    // FEES
+    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate);
+    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external;
+
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);

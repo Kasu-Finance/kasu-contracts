@@ -51,6 +51,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _minTrancheCountPerLendingPool;
     uint256 private _maxTrancheCountPerLendingPool;
 
+    uint256 private _ecosystemFeeRate;
+    uint256 private _protocolFeeRate;
+
     TrancheInfo[] public _trancheInfo;
 
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
@@ -89,6 +92,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
         _trancheInfo.push(TrancheInfo("Mezzanine Tranche", "MZ"));
         _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
+
+        _ecosystemFeeRate = 50_00;
+        _protocolFeeRate = 50_00;
     }
 
     // EPOCH
@@ -345,5 +351,28 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheInfo[index];
+    }
+
+    // FEES
+
+    /**
+     * @notice Returns the protocol fee rate
+     * @return ecosystemFeeRate The ecosystem fee rate
+     * @return protocolFeeRate The protocol fee rate
+     */
+    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
+        return (_ecosystemFeeRate, _protocolFeeRate);
+    }
+
+    /**
+     * @notice Sets the split ratio for the fees.
+     * @param ecosystemFeeRate The ecosystem fee rate
+     */
+    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external {
+        if (ecosystemFeeRate + protocolFeeRate != FULL_PERCENT) {
+            revert InvalidConfiguration();
+        }
+        _ecosystemFeeRate = ecosystemFeeRate;
+        _protocolFeeRate = protocolFeeRate;
     }
 }
