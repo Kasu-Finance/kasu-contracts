@@ -44,7 +44,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     uint256 public firstLossCapital;
     uint256 public nextLossId;
 
-    constructor(ISystemVariables systemVariables_, IClearingCoordinator clearingCoordinator_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
+    constructor(ISystemVariables systemVariables_, IClearingCoordinator clearingCoordinator_, address underlyingAsset_)
+        AssetFunctionsBase(underlyingAsset_)
+    {
         systemVariables = systemVariables_;
         clearingCoordinator = clearingCoordinator_;
     }
@@ -232,7 +234,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit WithdrawalAccepted(user, tranche, acceptedShares);
     }
 
-    function applyInterests(uint256 epoch) onlyClearingCoordinator external {
+    function applyInterests(uint256 epoch) external onlyClearingCoordinator {
         _applyInterests(epoch);
     }
 
