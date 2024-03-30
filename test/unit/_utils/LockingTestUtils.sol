@@ -12,7 +12,6 @@ import "../../../src/shared/access/KasuController.sol";
 
 abstract contract LockingTestUtils is BaseTestUtils {
     ERC20Permit internal _ksu;
-    IERC20 internal _usdc;
 
     KasuController internal _kasuController;
     KSULocking internal _KSULocking;
@@ -38,7 +37,6 @@ abstract contract LockingTestUtils is BaseTestUtils {
 
     function __locking_setUp() internal virtual {
         _ksu = new MockERC20Permit("KSU", "KSU", 18);
-        _usdc = new MockUSDC();
 
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =
@@ -49,7 +47,7 @@ abstract contract LockingTestUtils is BaseTestUtils {
         _kasuController.initialize(admin, address(0));
 
         _KSULocking = new KSULocking(_kasuController);
-        _KSULocking.initialize(_ksu, _usdc);
+        _KSULocking.initialize(_ksu, mockUsdc);
 
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
         _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180, ksuBonusMultiplier180);
@@ -72,8 +70,8 @@ abstract contract LockingTestUtils is BaseTestUtils {
     }
 
     function _emitFees(uint256 rewardAmount) internal prank(admin) {
-        deal(address(_usdc), admin, rewardAmount, true);
-        _usdc.approve(address(_KSULocking), rewardAmount);
+        deal(address(mockUsdc), admin, rewardAmount, true);
+        mockUsdc.approve(address(_KSULocking), rewardAmount);
         _KSULocking.emitFees(rewardAmount);
     }
 

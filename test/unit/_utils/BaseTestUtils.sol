@@ -4,8 +4,12 @@ pragma solidity 0.8.23;
 import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "../../shared/MockUSDC.sol";
 
 abstract contract BaseTestUtils is Test {
+    MockUSDC internal mockUsdc;
+
     address internal admin = address(0xad1);
 
     address internal alice = address(0x1);
@@ -32,6 +36,15 @@ abstract contract BaseTestUtils is Test {
     address internal userNotAllowed = address(0x15);
 
     ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
+
+    function __baseTestUtils_setUp() internal {
+        // usdc
+        MockUSDC mockUsdcImpl = new MockUSDC();
+        TransparentUpgradeableProxy mockUsdcProxy =
+            new TransparentUpgradeableProxy(address(mockUsdcImpl), address(proxyAdmin), "");
+        mockUsdc = MockUSDC(address(mockUsdcProxy));
+        mockUsdc.initialize(admin);
+    }
 
     function test_baseUtils() external pure {}
 

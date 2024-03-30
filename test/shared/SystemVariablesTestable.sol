@@ -392,7 +392,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Returns the protocol fee receiver
      * @return The protocol fee receiver
      */
-    function getProtocolFeeReceiver() public returns (address) {
+    function getProtocolFeeReceiver() public view returns (address) {
         return _protocolFeeReceiver;
     }
 

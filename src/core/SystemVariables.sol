@@ -381,7 +381,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the protocol fee receiver
      * @return The protocol fee receiver
      */
-    function getProtocolFeeReceiver() public returns (address) {
+    function getProtocolFeeReceiver() public view returns (address) {
         return _protocolFeeReceiver;
     }
 

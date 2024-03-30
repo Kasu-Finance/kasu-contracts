@@ -14,6 +14,7 @@ import "../../../src/shared/access/Roles.sol";
 
 contract KSULockingTest is LockingTestUtils {
     function setUp() public {
+        __baseTestUtils_setUp();
         __locking_setUp();
     }
 
@@ -37,15 +38,15 @@ contract KSULockingTest is LockingTestUtils {
 
         // ACT / ASSERT
         vm.startPrank(admin);
-        _usdc.approve(address(_KSULocking), rewardAmount);
+        mockUsdc.approve(address(_KSULocking), rewardAmount);
         vm.expectEmit(true, false, false, true, address(_KSULocking));
         emit IKSULocking.FeesEmitted(address(admin), rewardAmount);
-        deal(address(_usdc), admin, rewardAmount, true);
+        deal(address(mockUsdc), admin, rewardAmount, true);
         _KSULocking.emitFees(rewardAmount);
         vm.stopPrank();
 
         // ASSERT
-        assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
+        assertEq(mockUsdc.balanceOf(address(_KSULocking)), rewardAmount);
     }
 
     function testLock() public {
@@ -174,7 +175,7 @@ contract KSULockingTest is LockingTestUtils {
 
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
-        assertEq(_usdc.balanceOf(address(_KSULocking)), rewardAmount);
+        assertEq(mockUsdc.balanceOf(address(_KSULocking)), rewardAmount);
 
         // ACT
         vm.startPrank(alice);
@@ -184,8 +185,8 @@ contract KSULockingTest is LockingTestUtils {
         vm.stopPrank();
 
         // ASSERT
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), rewardAmount, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 0, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), rewardAmount, 1);
     }
 
     function testLockRewardsForTwoUsersOneDeposit() public {
@@ -203,8 +204,8 @@ contract KSULockingTest is LockingTestUtils {
         _claimFees(bob);
 
         // ASSERT
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 25 * 1e6, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(bob)), 75 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 25 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6, 1);
     }
 
     function testLockRewardsForTwoUsersMultipleDepositsAndRewards() public {
@@ -232,8 +233,8 @@ contract KSULockingTest is LockingTestUtils {
         _KSULocking.claimFees();
 
         // ASSERT
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 25 * 1e6 + 1875 * 1e4, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 25 * 1e6 + 1875 * 1e4, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
     }
 
     function testUnlock() public {

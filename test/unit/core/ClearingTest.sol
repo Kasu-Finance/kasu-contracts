@@ -5,6 +5,8 @@ import "../_utils/LendingPoolTestUtils.sol";
 
 contract ClearingTest is LendingPoolTestUtils {
     function setUp() public {
+        __baseTestUtils_setUp();
+        __locking_setUp();
         __lendingPool_setUp();
     }
 
