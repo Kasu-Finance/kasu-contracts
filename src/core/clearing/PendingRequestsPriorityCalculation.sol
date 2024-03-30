@@ -14,6 +14,7 @@ struct PendingRequestsEpoch {
     // array by priority and trancheIndex
     uint256[][] tempPriorityTrancheWithdrawalShares;
     uint256 nextIndexToProcess;
+    uint256 totalPendingRequestsToProcess;
     TaskStatus status;
 }
 
@@ -132,8 +133,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        // TODO: what happens if new deposits are added?
-        return _getTotalPendingRequests() - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+        return _pendingRequestsPerEpoch[targetEpoch].totalPendingRequestsToProcess
+            - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
     function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
@@ -172,6 +173,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             }
         }
 
+        _pendingRequestsPerEpoch[targetEpoch].totalPendingRequestsToProcess = _getTotalPendingRequests();
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
