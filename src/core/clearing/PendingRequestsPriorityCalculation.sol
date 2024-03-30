@@ -62,7 +62,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
 
                 // only consider deposit requests from current epoch
-                if (depositNftDetails.epochId != targetEpoch) break;
+                if (depositNftDetails.epochId != targetEpoch) continue;
 
                 (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
@@ -78,7 +78,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
 
                 // only consider all past withdrawal requests
-                if (withdrawalNftDetails.epochId > targetEpoch) break;
+                if (withdrawalNftDetails.epochId > targetEpoch) continue;
 
                 // we explicitly set priority for admin enforced withdrawals
                 uint256 withdrawLoyaltyLevel = ownerLoyaltyLevel;
