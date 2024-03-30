@@ -51,6 +51,9 @@ interface ISystemVariables {
     function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate);
     function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external;
 
+    function getProtocolFeeReceiver() external returns (address);
+    function setProtocolFeeReceiver(address receiver) external;
+
     // EVENTS
     event ProtocolFeeUpdated(uint256 protocolFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);

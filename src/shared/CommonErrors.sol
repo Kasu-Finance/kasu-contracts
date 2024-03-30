@@ -23,6 +23,11 @@ error InvalidConfiguration();
 error AddressNotContract(address address_);
 
 /**
+ * @notice Used when address is zero.
+ */
+error EmptyAddress();
+
+/**
  * @notice Used when the external call is not supported.
  */
 error NotSupported();

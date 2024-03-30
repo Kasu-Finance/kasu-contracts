@@ -54,6 +54,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
 
     uint256 private _ecosystemFeeRate;
     uint256 private _protocolFeeRate;
+    address private _protocolFeeReceiver;
 
     TrancheInfo[] public _trancheInfo;
 
@@ -385,5 +386,24 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         }
         _ecosystemFeeRate = ecosystemFeeRate;
         _protocolFeeRate = protocolFeeRate;
+    }
+
+    /**
+     * @notice Returns the protocol fee receiver
+     * @return The protocol fee receiver
+     */
+    function getProtocolFeeReceiver() public returns (address) {
+        return _protocolFeeReceiver;
+    }
+
+    /**
+     * @notice Sets the protocol fee receiver
+     * @param receiver The protocol fee receiver
+     */
+    function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
+        if (receiver == address(0)) {
+            revert EmptyAddress();
+        }
+        _protocolFeeReceiver = receiver;
     }
 }
