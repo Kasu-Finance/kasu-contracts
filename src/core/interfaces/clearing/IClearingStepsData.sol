@@ -34,6 +34,7 @@ struct ClearingData {
     PendingWithdrawals pendingWithdrawals;
     uint256[][][] tranchePriorityDepositsAccepted;
     uint256[] acceptedPriorityWithdrawalAmounts;
+    uint256 totalPendingRequestsToProcess;
 }
 
 /**

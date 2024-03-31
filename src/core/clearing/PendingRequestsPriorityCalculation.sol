@@ -14,7 +14,6 @@ struct PendingRequestsEpoch {
     // array by priority and trancheIndex
     uint256[][] tempPriorityTrancheWithdrawalShares;
     uint256 nextIndexToProcess;
-    uint256 totalPendingRequestsToProcess;
     TaskStatus status;
 }
 
@@ -133,7 +132,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        return _pendingRequestsPerEpoch[targetEpoch].totalPendingRequestsToProcess
+        return _getClearingData(targetEpoch).totalPendingRequestsToProcess
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
@@ -173,7 +172,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             }
         }
 
-        _pendingRequestsPerEpoch[targetEpoch].totalPendingRequestsToProcess = _getTotalPendingRequests();
+        _getClearingData(targetEpoch).totalPendingRequestsToProcess = _getTotalPendingRequests();
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
