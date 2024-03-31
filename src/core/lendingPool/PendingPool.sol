@@ -59,11 +59,12 @@ contract PendingPool is
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_,
+        IClearingCoordinator clearingCoordinator_,
         IAcceptedRequestsCalculation acceptedRequestsCalculation_
     )
         AssetFunctionsBase(underlyingAsset_)
         LendingPoolHelpers(lendingPoolManager_)
-        ClearingSteps(acceptedRequestsCalculation_)
+        ClearingSteps(clearingCoordinator_, acceptedRequestsCalculation_)
     {
         systemVariables = systemVariables_;
         userManager = userManger_;
@@ -419,6 +420,12 @@ contract PendingPool is
         }
     }
 
+    function _canCancel() private view {
+        if (_clearingCoordinator.isLendingPoolClearingPending(address(_getOwnLendingPool()))) {
+            revert CannotCancelDepositIfClearingIsPending();
+        }
+    }
+
     function _isNftOwner(address user, uint256 nftId) private view {
         if (ownerOf(nftId) != user) {
             revert UserIsNotOwnerOfNFT(user, nftId);
@@ -495,9 +502,7 @@ contract PendingPool is
     // MODIFIERS
 
     modifier canCancel() {
-        if (systemVariables.isClearingTime()) {
-            revert CannotCancelDepositDuringClearingPeriod();
-        }
+        _canCancel();
         _;
     }
 

@@ -26,6 +26,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     LendingPoolInfo private _lendingPoolInfo;
     PoolConfiguration private _poolConfiguration;
+
     /// @notice The index of lending pool info and pool configuration
     mapping(address => uint256) private _trancheIndex;
 
@@ -477,6 +478,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
+        verifyClearingNotPending
         returns (uint256 assetAmount)
     {
         // transfer lending pool tokens from tranche to lending pool and burn tranche user shares
@@ -756,6 +758,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function _verifyClearingNotPending() private view {
+        if (clearingCoordinator.isLendingPoolClearingPending(address(this))) {
+            revert ClearingIsPending();
+        }
+    }
+
     // Modifiers
 
     modifier onlyPendingPool() {
@@ -780,6 +788,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     modifier verifyLossId(uint256 lossId) {
         _isLossIdValid(lossId);
+        _;
+    }
+
+    modifier verifyClearingNotPending() {
+        _verifyClearingNotPending();
         _;
     }
 }

@@ -145,4 +145,5 @@ interface ILendingPool is IERC20 {
     error LendingPoolIsStopped();
     error PoolConfigurationIsIncorrect(string reason);
     error LossIdNotValid(uint256 lossId);
+    error ClearingIsPending();
 }

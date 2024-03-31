@@ -104,14 +104,20 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // clearing
 
-        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
+        ClearingCoordinator clearingCoordinatorImpl =
+            new ClearingCoordinator(systemVariables, userManager, lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
             new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
         IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
 
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(
-            systemVariables, address(mockUsdc), lendingPoolManager, userManager, acceptedRequestsCalculation
+            systemVariables,
+            address(mockUsdc),
+            lendingPoolManager,
+            userManager,
+            clearingCoordinator,
+            acceptedRequestsCalculation
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
@@ -371,8 +377,18 @@ contract PendingPoolHarness is PendingPool {
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_,
+        IClearingCoordinator clearingCoordinator_,
         IAcceptedRequestsCalculation acceptedRequestsCalculation_
-    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_, acceptedRequestsCalculation_) {}
+    )
+        PendingPool(
+            systemVariables_,
+            underlyingAsset_,
+            lendingPoolManager_,
+            userManger_,
+            clearingCoordinator_,
+            acceptedRequestsCalculation_
+        )
+    {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         (address tranche,) = UserRequestIds.decomposeDepositId(dNftID);

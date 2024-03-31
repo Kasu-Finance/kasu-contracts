@@ -4,14 +4,17 @@ pragma solidity 0.8.23;
 import "./PendingRequestsPriorityCalculation.sol";
 import "./AcceptedRequestsCalculation.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import {AcceptedRequestsExecution} from "./AcceptedRequestsExecution.sol";
 
 abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalculation, AcceptedRequestsExecution {
+    IClearingCoordinator internal immutable _clearingCoordinator;
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
     mapping(uint256 => ClearingData) internal _clearingDataPerEpoch;
 
-    constructor(IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
+    constructor(IClearingCoordinator clearingCoordinator_, IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
+        _clearingCoordinator = clearingCoordinator_;
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 

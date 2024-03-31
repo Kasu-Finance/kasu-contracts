@@ -30,7 +30,7 @@ contract LendingPoolManager is
     ILendingPoolFactory private lendingPoolFactory;
     IKasuAllowList private kasuAllowList;
     IUserManager private userManager;
-    IClearingCoordinator private clearingManager;
+    IClearingCoordinator private clearingCoordinator;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
@@ -41,12 +41,12 @@ contract LendingPoolManager is
         ILendingPoolFactory lendingPoolFactory_,
         IKasuAllowList kasuAllowList_,
         IUserManager userManager_,
-        IClearingCoordinator clearingManager_
+        IClearingCoordinator clearingCoordinator_
     ) public initializer {
         lendingPoolFactory = lendingPoolFactory_;
         kasuAllowList = kasuAllowList_;
         userManager = userManager_;
-        clearingManager = clearingManager_;
+        clearingCoordinator = clearingCoordinator_;
     }
 
     // #### CREATE POOL #### //
@@ -63,6 +63,7 @@ contract LendingPoolManager is
 
     function _registerLendingPool(LendingPoolDeployment memory lendingPoolDeployment) internal {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
+        clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
     }
 
     // #### USER DEPOSITS #### //
@@ -305,7 +306,7 @@ contract LendingPoolManager is
         external
         whenNotPaused
     {
-        clearingManager.registerClearingConfig(lendingPool, epoch, clearingConfig);
+        clearingCoordinator.registerClearingConfig(lendingPool, epoch, clearingConfig);
     }
 
     // TODO: access control
@@ -315,7 +316,7 @@ contract LendingPoolManager is
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
     ) external whenNotPaused {
-        clearingManager.doClearing(
+        clearingCoordinator.doClearing(
             lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
         );
     }
