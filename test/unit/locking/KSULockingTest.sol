@@ -40,7 +40,7 @@ contract KSULockingTest is LockingTestUtils {
         vm.startPrank(admin);
         mockUsdc.approve(address(_KSULocking), rewardAmount);
         vm.expectEmit(true, false, false, true, address(_KSULocking));
-        emit IKSULocking.FeesEmitted(address(admin), rewardAmount);
+        emit IKSULocking.EcosystemFeesEmitted(address(admin), rewardAmount);
         deal(address(mockUsdc), admin, rewardAmount, true);
         _KSULocking.emitFees(rewardAmount);
         vm.stopPrank();
@@ -180,7 +180,7 @@ contract KSULockingTest is LockingTestUtils {
         // ACT
         vm.startPrank(alice);
         vm.expectEmit();
-        emit IKSULocking.FeesClaimed(address(alice), rewardAmount);
+        emit IKSULocking.EcosystemFeesClaimed(address(alice), rewardAmount);
         _KSULocking.claimFees();
         vm.stopPrank();
 

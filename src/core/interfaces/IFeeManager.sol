@@ -15,4 +15,10 @@ interface IFeeManager {
      * @notice Transfers protocol fees to receiver.
      */
     function claimProtocolFees() external;
+
+    // EVENTS
+
+    event ProtocolFeesEmitted(address indexed lendingPoolAddress, uint256 amount);
+
+    event ProtocolFeesClaimed(address indexed user, uint256 amount);
 }

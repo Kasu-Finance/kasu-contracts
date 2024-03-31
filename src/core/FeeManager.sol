@@ -25,7 +25,8 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     }
 
     function emitFees(uint256 amount) external whenNotPaused {
-        _transferAssetsFrom(msg.sender, address(this), amount);
+        address lendingPoolAddress = msg.sender;
+        _transferAssetsFrom(lendingPoolAddress, address(this), amount);
 
         (uint256 ecosystemFeeRate, uint256 protocolFreeRate) = _systemVariables.getFeeRates();
 
@@ -35,6 +36,8 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
 
         uint256 protocolFeeAmount = protocolFreeRate * amount / FULL_PERCENT;
         totalProtocolFeeAmount += protocolFeeAmount;
+
+        emit ProtocolFeesEmitted(lendingPoolAddress, protocolFeeAmount);
     }
 
     function claimProtocolFees() external whenNotPaused {
@@ -44,5 +47,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         }
         _transferAssets(protocolFeeReceiver, totalProtocolFeeAmount);
         totalProtocolFeeAmount = 0;
+
+        emit ProtocolFeesClaimed(protocolFeeReceiver, totalProtocolFeeAmount);
     }
 }

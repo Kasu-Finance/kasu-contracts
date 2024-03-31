@@ -100,9 +100,9 @@ interface IKSULocking is IERC20 {
 
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned);
 
-    event FeesClaimed(address indexed user, uint256 amount);
+    event EcosystemFeesClaimed(address indexed user, uint256 amount);
 
-    event FeesEmitted(address indexed user, uint256 amount);
+    event EcosystemFeesEmitted(address indexed user, uint256 amount);
 
     event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
 
