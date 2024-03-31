@@ -20,6 +20,8 @@ struct SystemVariablesSetup {
     uint256 protocolFee;
     uint256[] loyaltyThresholds;
     uint256 defaultTrancheInterestChangeEpochDelay;
+    uint256 ecosystemFeeRate;
+    uint256 protocolFeeRate;
 }
 
 /**
@@ -94,8 +96,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _trancheInfo.push(TrancheInfo("Mezzanine Tranche", "MZ"));
         _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
 
-        _ecosystemFeeRate = 50_00;
-        _protocolFeeRate = 50_00;
+        _ecosystemFeeRate = systemVariablesSetup.ecosystemFeeRate;
+        _protocolFeeRate = systemVariablesSetup.protocolFeeRate;
     }
 
     // EPOCH

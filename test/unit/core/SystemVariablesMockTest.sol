@@ -260,6 +260,8 @@ contract SystemVariablesMockTest is BaseTestUtils {
         systemVariablesSetup.loyaltyThresholds[0] = 1_00;
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
         systemVariablesSetup.defaultTrancheInterestChangeEpochDelay = 4;
+        systemVariablesSetup.ecosystemFeeRate = 50_00;
+        systemVariablesSetup.protocolFeeRate = 50_00;
 
         systemVariables.initialize(systemVariablesSetup);
     }
