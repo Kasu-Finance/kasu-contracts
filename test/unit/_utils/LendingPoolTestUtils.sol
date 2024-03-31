@@ -113,13 +113,20 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         IAcceptedRequestsCalculation acceptedRequestsCalculation =
             IAcceptedRequestsCalculation(address(acceptedRequestsCalculationProxy));
 
+        // clearing
+
+        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
+        TransparentUpgradeableProxy clearingManagerProxy =
+            new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
+        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
+
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(
             systemVariables, address(mockUsdc), lendingPoolManager, userManager, acceptedRequestsCalculation
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp = new LendingPool(systemVariables, address(mockUsdc));
+        LendingPool lendingPoolImp = new LendingPool(systemVariables, clearingCoordinator, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
@@ -136,13 +143,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         TransparentUpgradeableProxy lendingPoolFactoryProxy =
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
-
-        // clearing
-
-        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
-        TransparentUpgradeableProxy clearingManagerProxy =
-            new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
-        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
@@ -196,7 +196,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         SystemVariablesSetup memory systemVariablesSetup;
         systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
         systemVariablesSetup.clearingPeriodLength = 1 days;
-        systemVariablesSetup.protocolFee = 10_00;
+        systemVariablesSetup.performanceFee = 10_00;
         systemVariablesSetup.loyaltyThresholds = new uint256[](2);
         systemVariablesSetup.loyaltyThresholds[0] = 1_00;
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
@@ -226,9 +226,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 totalDesiredLoanAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
-        createTrancheConfig[0] = CreateTrancheConfig(10_00, 5_00, minDepositAmount, maxDepositAmount);
-        createTrancheConfig[1] = CreateTrancheConfig(20_00, 4_00, minDepositAmount, maxDepositAmount);
-        createTrancheConfig[2] = CreateTrancheConfig(70_00, 3_00, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[0] = CreateTrancheConfig(10_00, 2500000000000000, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[1] = CreateTrancheConfig(20_00, 2000000000000000, minDepositAmount, maxDepositAmount);
+        createTrancheConfig[2] = CreateTrancheConfig(70_00, 1500000000000000, minDepositAmount, maxDepositAmount);
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",

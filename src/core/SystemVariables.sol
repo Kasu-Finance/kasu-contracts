@@ -12,12 +12,12 @@ import "./Constants.sol";
  * @notice Kasu system variables contract setup structure.
  * @custom:member firstEpochStartTimestamp The timestamp of the start of the first epoch. Should be in the past.
  * @custom:member clearingPeriodLength The length of the clearing period.
- * @custom:member protocolFee The protocol fee.
+ * @custom:member performanceFee The performance fee.
  */
 struct SystemVariablesSetup {
     uint256 firstEpochStartTimestamp;
     uint256 clearingPeriodLength;
-    uint256 protocolFee;
+    uint256 performanceFee;
     uint256[] loyaltyThresholds;
     uint256 defaultTrancheInterestChangeEpochDelay;
 }
@@ -38,7 +38,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _priceUpdateEpoch;
     uint256 private _ksuTokenPrice;
 
-    uint256 private _protocolFee;
+    uint256 private _performanceFee;
 
     uint256[] private _loyaltyThresholds;
 
@@ -76,13 +76,13 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
         _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
-        _setProtocolFee(systemVariablesSetup.protocolFee);
+        _setPerformanceFee(systemVariablesSetup.performanceFee);
         _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
 
         _updateKsuTokenPrice();
 
         _defaultTrancheInterestChangeEpochDelay = 4;
-        _maxTrancheInterestRate = 1e17; // 10% TODO: update value
+        _maxTrancheInterestRate = INTEREST_RATE_FULL_PERCENT / 20; // 5%
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
 
@@ -200,32 +200,32 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
     }
 
-    // PROTOCOL FEE
+    // performance fee
 
     /**
-     * @dev Sets the protocol fee.
-     * @param protocolFee_ The new protocol fee.
+     * @dev Sets the performance fee.
+     * @param performanceFee_ The new performance fee.
      */
-    function setProtocolFee(uint256 protocolFee_) external whenNotPaused onlyAdmin {
-        _setProtocolFee(protocolFee_);
+    function setPerformanceFee(uint256 performanceFee_) external whenNotPaused onlyAdmin {
+        _setPerformanceFee(performanceFee_);
     }
 
-    function _setProtocolFee(uint256 protocolFee_) internal {
-        if (protocolFee_ > FULL_PERCENT) {
+    function _setPerformanceFee(uint256 performanceFee_) internal {
+        if (performanceFee_ > FULL_PERCENT) {
             revert InvalidConfiguration();
         }
 
-        _protocolFee = protocolFee_;
+        _performanceFee = performanceFee_;
 
-        emit ProtocolFeeUpdated(protocolFee_);
+        emit PerformanceFeeUpdated(performanceFee_);
     }
 
     /**
-     * @notice Returns the protocol fee.
-     * @return The protocol fee.
+     * @notice Returns the performance fee.
+     * @return The performance fee.
      */
-    function protocolFee() external view returns (uint256) {
-        return _protocolFee;
+    function performanceFee() external view returns (uint256) {
+        return _performanceFee;
     }
 
     // LOYALTY THRESHOLDS

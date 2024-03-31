@@ -11,6 +11,7 @@ import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../interfaces/IKasuAllowList.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
@@ -360,7 +361,7 @@ contract LendingPoolManager is
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay)
         external
         whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_KASU_ADMIN, msg.sender)
+        onlyRole(ROLE_KASU_ADMIN, msg.sender)
         validLendingPool(lendingPool)
     {
         ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
