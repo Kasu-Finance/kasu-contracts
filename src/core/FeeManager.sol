@@ -44,8 +44,9 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         if (protocolFeeReceiver == address(0)) {
             revert EmptyAddress();
         }
-        _transferAssets(protocolFeeReceiver, totalProtocolFeeAmount);
+        uint256 totalProtocolFeeAmount_ = totalProtocolFeeAmount;
         totalProtocolFeeAmount = 0;
+        _transferAssets(protocolFeeReceiver, totalProtocolFeeAmount_);
 
         emit ProtocolFeesClaimed(protocolFeeReceiver, totalProtocolFeeAmount);
     }
