@@ -389,8 +389,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
         // ### ACT ###
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 350 * 10 ** 6);
@@ -413,8 +413,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
 
         // ### ACT ###
         vm.expectRevert(
@@ -422,15 +422,11 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 ILendingPool.WithdrawAmountCantBeGreaterThanFirstLostCapital.selector, 61 * 10 ** 6, 60 * 10 ** 6
             )
         );
-        _withdrawFirstLossCapital(
-            lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 61 * 10 ** 6
-        );
-        _withdrawFirstLossCapital(
-            lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 20 * 10 ** 6
-        );
+        _withdrawFirstLossCapital(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 61 * 10 ** 6);
+        _withdrawFirstLossCapital(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 20 * 10 ** 6);
 
         // ### ASSERT ###
-        assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 20 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(poolFundsManagerAccount), 20 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 330 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), ILendingPool(lpd.lendingPool).totalSupply());
     }
@@ -451,7 +447,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
 
         uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
 
@@ -461,12 +457,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 ILendingPool.DrawAmountCantBeGreaterThanAvailableAmount.selector, 341 * 10 ** 6, 340 * 10 ** 6
             )
         );
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 341 * 10 ** 6);
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 341 * 10 ** 6);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 140 * 10 ** 6);
-        assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 200 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(poolFundsManagerAccount), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
         assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 200 * 10 ** 6);
     }
@@ -486,6 +482,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         uint256 owedAmount = 200 * 10 ** 6;
         _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, owedAmount);
@@ -503,16 +500,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 ILendingPool.RepayAmountCantBeGreaterThanOwedAmount.selector, owedAmount + 1, owedAmount
             )
         );
-        // _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, owedAmount + 1);
-        lendingPoolManager.repayLoan(lpd.lendingPool, owedAmount + 1, lendingPoolLoanManagerAccount);
+        lendingPoolManager.repayLoan(lpd.lendingPool, owedAmount + 1, poolFundsManagerAccount);
 
-        // _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 100 * 10 ** 6);
-        lendingPoolManager.repayLoan(lpd.lendingPool, 100 * 10 ** 6, lendingPoolLoanManagerAccount);
+        lendingPoolManager.repayLoan(lpd.lendingPool, 100 * 10 ** 6, poolFundsManagerAccount);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 100 * 10 ** 6);
-        assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 200 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(poolFundsManagerAccount), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
     }
 
@@ -673,9 +668,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
 
         // ### ACT / ASSERT ###
 
@@ -683,7 +678,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.UserOwedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
         _stop(lendingPoolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
 
-        _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _repayLoan(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         _stop(lendingPoolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
         assertEq(mockUsdc.balanceOf(lendingPoolAdminAccount), 50 * 10 ** 6);
@@ -697,8 +692,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.stopPrank();
 
         // deposit first lost capital after stop - not allowed
-        vm.startPrank(lendingPoolLoanManagerAccount);
-        deal(address(mockUsdc), lendingPoolLoanManagerAccount, 10 * 10 ** 6, true);
+        vm.startPrank(poolFundsManagerAccount);
+        deal(address(mockUsdc), poolFundsManagerAccount, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         lendingPoolManager.depositFirstLossCapital(lpd.lendingPool, 10 * 10 ** 6);
@@ -706,7 +701,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // draw loan after stop - even though balance is zero not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
 
         // accept deposit after stop - not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
@@ -919,7 +914,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
             targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
-            lendingPoolLoanManagerAccount,
+            poolFundsManagerAccount,
             desiredDrawAmount
         );
 
@@ -952,7 +947,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
             targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
-            lendingPoolLoanManagerAccount,
+            poolFundsManagerAccount,
             desiredDrawAmount
         );
 

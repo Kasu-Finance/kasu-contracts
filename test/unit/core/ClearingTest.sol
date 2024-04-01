@@ -933,7 +933,7 @@ contract ClearingTest is LendingPoolTestUtils {
             _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(alice));
         _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(bob));
 
-        _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 20_000 * 1e6);
+        _repayLoan(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 20_000 * 1e6);
 
         skip(5 days);
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
@@ -959,7 +959,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         assertEq(pendingPool.totalSupply(), 2);
 
-        _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 10_000 * 1e6);
+        _repayLoan(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 10_000 * 1e6);
 
         skip(7 days);
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);

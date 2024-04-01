@@ -33,11 +33,10 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
-    address internal lendingPoolLoanManagerAccount = address(0xad2);
+    address internal poolFundsManagerAccount = address(0xad2);
     address internal lendingPoolCreatorAccount = address(0xad3);
     address internal lendingPoolAdminAccount = address(0xad4);
     address internal lendingPoolManagerAccount = address(0xad5);
-    address internal lendingPoolBorrowerAccount = address(0xad6);
 
     function test_mock() external pure {}
 
@@ -240,7 +239,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
-            lendingPoolLoanManagerAccount,
+            poolFundsManagerAccount,
             desiredDrawAmount
         );
         vm.prank(lendingPoolCreatorAccount);
@@ -248,13 +247,13 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // access control - grant
         vm.startPrank(lendingPoolAdminAccount);
         kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, lendingPoolLoanManagerAccount
+            lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_MANAGER, lendingPoolManagerAccount
         );
         kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_BORROWER, lendingPoolBorrowerAccount
+            lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
         vm.stopPrank();
     }
