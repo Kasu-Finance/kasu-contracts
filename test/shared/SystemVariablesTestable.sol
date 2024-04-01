@@ -21,6 +21,8 @@ struct SystemVariablesSetup {
     uint256 performanceFee;
     uint256[] loyaltyThresholds;
     uint256 defaultTrancheInterestChangeEpochDelay;
+    uint256 ecosystemFeeRate;
+    uint256 protocolFeeRate;
 }
 
 /**
