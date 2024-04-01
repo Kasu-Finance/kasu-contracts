@@ -150,8 +150,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updatePoolRewards(amount);
 
         // emit event
-        // TODO: user lending pool address instead of msg.sender
-        emit EcosystemFeesEmitted(msg.sender, amount);
+        emit FeesEmitted(msg.sender, amount);
     }
 
     /**
@@ -168,7 +167,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
         _updateUserRewardDebt(msg.sender);
 
-        emit EcosystemFeesClaimed(msg.sender, earned);
+        emit FeesClaimed(msg.sender, earned);
     }
 
     /**
