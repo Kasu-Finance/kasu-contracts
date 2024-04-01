@@ -32,7 +32,12 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return (_getTranchePriorityDepositsAccepted(epoch), _getAcceptedPriorityWithdrawalAmounts(epoch));
     }
 
-    function _getClearingData(uint256 epoch) internal view override returns (ClearingData storage) {
+    function _getClearingData(uint256 epoch)
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (ClearingData storage)
+    {
         return _clearingDataPerEpoch[epoch];
     }
 

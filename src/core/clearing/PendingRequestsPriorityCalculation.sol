@@ -45,7 +45,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endIndex = userRequestId + batchSize_;
 
-        PendingDeposits storage pendingDeposits = _getClearingData(targetEpoch).pendingDeposits;
+        ClearingData storage clearingData = _getClearingData(targetEpoch);
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
@@ -66,9 +66,9 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
 
-                pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
-                pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
-                pendingDeposits.tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] +=
+                clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
+                clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
+                clearingData.pendingDeposits.tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] +=
                     depositNftDetails.assetAmount;
 
                 _setDepositRequestPriority(userRequestNftId, ownerLoyaltyLevel);
@@ -101,12 +101,10 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
 
         if (
-            userRequestId >= _getTotalPendingRequests()
+            userRequestId >= clearingData.totalPendingRequestsToProcess
                 && _pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
         ) {
             // convert pending withdrawal shares to amounts - minimize rounding errors
-            PendingWithdrawals storage pendingWithdrawals = _getClearingData(targetEpoch).pendingWithdrawals;
-
             for (
                 uint256 withdrawalPriority;
                 withdrawalPriority < tempPriorityTrancheWithdrawalShares.length;
@@ -122,8 +120,9 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                         tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
                     );
                 }
-                pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
-                pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] += withdrawalPriorityAmountSum;
+                clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
+                clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] +=
+                    withdrawalPriorityAmountSum;
             }
             // processing completed
             _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
@@ -131,8 +130,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        // TODO: what happens if new deposits are added?
-        return _getTotalPendingRequests() - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+        return _getClearingData(targetEpoch).totalPendingRequestsToProcess
+            - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
     function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
@@ -171,6 +170,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             }
         }
 
+        _getClearingData(targetEpoch).totalPendingRequestsToProcess = _getTotalPendingRequests();
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
