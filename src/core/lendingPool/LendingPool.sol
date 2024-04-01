@@ -271,6 +271,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FeesOwedIncreased(epoch, feesAmount);
     }
 
+    // TODO: remove
     /**
      * @notice Transfers USDC from lending pool to pool delegate
      * @param borrowAmount the amount that the pool delegate requests
@@ -283,11 +284,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit LoanBorrowedImmediate(borrowAmount);
     }
 
-    // TODO: add access control
-    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped {
-        if (!systemVariables.isClearingTime()) {
-            revert CanOnlyExecuteDuringClearingTime();
-        }
+    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyClearingCoordinator {
         _borrowLoan(borrowAmount);
         emit LoanBorrowed(borrowAmount);
     }

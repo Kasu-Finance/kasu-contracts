@@ -95,7 +95,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         }
 
         if (lendingPoolClearingStatus[lendingPool][targetEpoch] > ClearingStatus.STEP3_PENDING) {
-            revert CannotOverrideClearingConfig(targetEpoch);
+            revert CannotOverrideClearingConfig(lendingPool, targetEpoch);
         }
 
         // TODO: check values before setting
@@ -125,9 +125,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         bool isPastClearingTime;
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
-        if (targetEpoch > currentEpoch) {
-            revert TargetEpochNotStarted(targetEpoch, currentEpoch);
-        } else if (targetEpoch == currentEpoch) {
+        if (targetEpoch == currentEpoch) {
             if (!systemVariables.isClearingTime()) {
                 revert TargetEpochClearingNotStarted(targetEpoch);
             }
@@ -189,10 +187,6 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // Step 4 - Process accepted deposit and accepted withdrawal requests
         if (clearingStatus == ClearingStatus.STEP4_PENDING) {
-            if (_clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.UNINITIALISED) {
-                _clearingSteps.init(targetEpoch);
-            }
-
             _clearingSteps.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
 
             if (_clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED) {
@@ -270,6 +264,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         for (uint256 i; i < poolConfig.tranches.length; ++i) {
             trancheRatios[i] = poolConfig.tranches[i].ratio;
         }
+
+        // TODO: fix borrow amount calculation
         uint256 lendingPoolBalance = lendingPool.totalSupply();
         uint256 borrowAmount = lendingPoolBalance < poolConfig.totalDesiredLoanAmount
             ? 0

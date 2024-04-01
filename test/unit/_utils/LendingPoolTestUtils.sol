@@ -29,6 +29,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     IKasuAllowList internal kasuAllowList;
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
+    IClearingCoordinator internal clearingCoordinator;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -108,7 +109,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new ClearingCoordinator(systemVariables, userManager, lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
             new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
-        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
+        clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
 
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(

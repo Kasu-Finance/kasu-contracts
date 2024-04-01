@@ -130,10 +130,11 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
+        // TODO: verify the request is between min and max deposit amount
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        uint256 requestEpochId = systemVariables.getCurrentEpochNumber();
+        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
 
         // get user's dNftID for current epoch
         dNftID = _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche];
@@ -422,7 +423,7 @@ contract PendingPool is
 
     function _canCancel() private view {
         if (_clearingCoordinator.isLendingPoolClearingPending(address(_getOwnLendingPool()))) {
-            revert CannotCancelDepositIfClearingIsPending();
+            revert CannotCancelRequestIfClearingIsPending();
         }
     }
 

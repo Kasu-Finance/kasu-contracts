@@ -21,6 +21,8 @@ interface IClearingCoordinator {
         returns (ClearingStatus status);
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending);
 
+    function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);
+
     /**
      * @notice Initializes the newly created lending pool in the clearing coordinator.
      * @param lendingPool The lending pool address.
@@ -75,5 +77,5 @@ interface IClearingCoordinator {
     error UserLoyaltyLevelsNotYetProcessed(uint256 targetEpoch);
     error ClearingNotEndedForPreviousEpoch(uint256 previousEpoch);
     error InvalidClearingTargetEpochForLendingPool(address lendingPool, uint256 targetEpoch, uint256 nextEpoch);
-    error CannotOverrideClearingConfig(uint256 epoch);
+    error CannotOverrideClearingConfig(address lendingPool, uint256 epoch);
 }
