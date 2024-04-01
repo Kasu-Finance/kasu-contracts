@@ -145,6 +145,17 @@ contract LendingPoolManager is
         claimedAmount = ILendingPool(lendingPool).claimRepaidLoss(msg.sender, tranche, lossId);
     }
 
+    // #### POOL ADMIN #### //
+
+    function updateDrawRecipient(address lendingPool, address drawRecipient)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_ADMIN, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        ILendingPool(lendingPool).updateDrawRecipient(drawRecipient);
+    }
+
     // #### POOL FUNDS MANAGER #### //
     function drawFundsImmediate(address lendingPool, uint256 amount)
         external
@@ -220,15 +231,6 @@ contract LendingPoolManager is
     }
 
     // #### LENDING POOL MANAGER #### //
-
-    function updateDrawRecipient(address lendingPool, address drawRecipient)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).updateDrawRecipient(drawRecipient);
-    }
 
     function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
         external
