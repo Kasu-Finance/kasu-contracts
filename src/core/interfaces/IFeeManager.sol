@@ -18,9 +18,7 @@ interface IFeeManager {
 
     // EVENTS
 
-    event ProtocolFeesEmitted(
-        address indexed lendingPoolAddress, uint256 ecosystemFeeAmount, uint256 protocolFeeAmount
-    );
+    event FeesEmitted(address indexed lendingPoolAddress, uint256 ecosystemFeeAmount, uint256 protocolFeeAmount);
 
     event ProtocolFeesClaimed(address indexed user, uint256 amount);
 }

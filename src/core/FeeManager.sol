@@ -36,7 +36,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         uint256 protocolFeeAmount = amount - ecosystemFeeAmount;
         totalProtocolFeeAmount += protocolFeeAmount;
 
-        emit ProtocolFeesEmitted(msg.sender, ecosystemFeeAmount, protocolFeeAmount);
+        emit FeesEmitted(msg.sender, ecosystemFeeAmount, protocolFeeAmount);
     }
 
     function claimProtocolFees() external whenNotPaused onlyRole(PROTOCOL_FEE_CLAIM_CALLER, msg.sender) {
