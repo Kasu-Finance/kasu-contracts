@@ -113,7 +113,7 @@ interface ILendingPool is IERC20 {
 
     event FundsDrawn(uint256 amount);
 
-    event LoanRepaid(uint256 amount);
+    event LoanRepaid(uint256 amountForUsers, uint256 amountForFees);
 
     event FirstLossCapitalLossReported(uint256 indexed lossId, uint256 amount);
 
@@ -129,7 +129,9 @@ interface ILendingPool is IERC20 {
 
     event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
 
-    event FeesOwedIncreased(uint256 indexed epoch, uint256 feesAmount);
+    event FeesOwedIncreased(uint256 indexed epoch, uint256 feesIncreasedAmount);
+
+    event PaidFees(uint256 feesPaid);
 
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
 
