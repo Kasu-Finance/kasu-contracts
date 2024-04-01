@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/IUserManager.sol";
 import "./interfaces/ISystemVariables.sol";
 import "./interfaces/lendingPool/ILendingPool.sol";
 import "./interfaces/lendingPool/IPendingPool.sol";
+import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../locking/interfaces/IKSULocking.sol";
 import "../shared/CommonErrors.sol";
 import "./Constants.sol";
@@ -15,9 +17,10 @@ struct LoyaltyGlobalParameters {
     uint256[] loyaltyThresholds;
 }
 
-contract UserManager is IUserManager {
+contract UserManager is IUserManager, Initializable {
     ISystemVariables public immutable systemVariables;
     IKSULocking public immutable ksuLocking;
+    address public lendingPoolManager;
 
     address[] public allUsers;
     mapping(address => bool) public isUser;
@@ -32,6 +35,12 @@ contract UserManager is IUserManager {
     constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_) {
         systemVariables = systemVariables_;
         ksuLocking = ksuLocking_;
+
+        _disableInitializers();
+    }
+
+    function initialize(address lendingPoolManager_) external initializer {
+        lendingPoolManager = lendingPoolManager_;
     }
 
     function getCalculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint256) {
@@ -211,8 +220,11 @@ contract UserManager is IUserManager {
         rKSUInUSDC = rKSUAmount * ksuPrice / KSU_PRICE_MULTIPLIER / 1e12;
     }
 
-    // TODO: add access control
     function userRequestedDeposit(address user, address lendingPool) external {
+        if (msg.sender != lendingPoolManager) {
+            revert ILendingPoolErrors.OnlyLendingPoolManager();
+        }
+
         if (!isUser[user]) {
             allUsers.push(user);
             isUser[user] = true;

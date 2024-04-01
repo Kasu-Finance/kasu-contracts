@@ -25,7 +25,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     KasuController internal kasuController;
     KsuPrice internal ksuPrice;
     SystemVariables internal systemVariables;
-    IUserManager internal userManager;
+    UserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
@@ -33,11 +33,11 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
-    address internal lendingPoolLoanManagerAccount = address(0xad2);
+    address internal poolFundsManagerAccount = address(0xad2);
     address internal lendingPoolCreatorAccount = address(0xad3);
     address internal lendingPoolAdminAccount = address(0xad4);
-    address internal lendingPoolManagerAccount = address(0xad5);
-    address internal lendingPoolBorrowerAccount = address(0xad6);
+    address internal poolManagerAccount = address(0xad5);
+    address internal poolClearingManagerAccount = address(0xad5);
 
     function test_mock() external pure {}
 
@@ -94,13 +94,15 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
-        userManager = IUserManager(address(userManagerProxy));
+        userManager = UserManager(address(userManagerProxy));
 
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
         TransparentUpgradeableProxy lendingPoolManagerProxy =
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
+
+        userManager.initialize(address(lendingPoolManager));
 
         // clearing
         AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
@@ -240,7 +242,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             targetExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
-            lendingPoolLoanManagerAccount,
+            poolFundsManagerAccount,
             desiredDrawAmount
         );
         vm.prank(lendingPoolCreatorAccount);
@@ -248,13 +250,14 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // access control - grant
         vm.startPrank(lendingPoolAdminAccount);
         kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, lendingPoolLoanManagerAccount
+            lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
+        );
+        kasuController.grantLendingPoolRole(lendingPoolDeployment.lendingPool, ROLE_POOL_MANAGER, poolManagerAccount);
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
         kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_MANAGER, lendingPoolManagerAccount
-        );
-        kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_BORROWER, lendingPoolBorrowerAccount
+            lendingPoolDeployment.lendingPool, ROLE_POOL_CLEARING_MANAGER, poolClearingManagerAccount
         );
         vm.stopPrank();
     }
@@ -370,6 +373,27 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         returns (uint256 claimedAmount)
     {
         return lendingPoolManager.claimRepaidLoss(lendingPool, tranche, lossId);
+    }
+
+    function _registerClearingConfig(
+        address caller,
+        address lendingPool,
+        uint256 targetEpoch,
+        ClearingConfiguration memory clearingConfig
+    ) internal prank(caller) {
+        lendingPoolManager.registerClearingConfig(lendingPool, targetEpoch, clearingConfig);
+    }
+
+    function _doClearing(
+        address caller,
+        address lendingPool,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize
+    ) internal prank(caller) {
+        lendingPoolManager.doClearing(
+            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
+        );
     }
 }
 

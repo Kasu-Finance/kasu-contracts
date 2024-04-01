@@ -80,7 +80,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
     /* ========== INTERNAL FUNCTIONS ========== */
 
     function _onlyAdminOrVaultAdmin(address lendingPool, address account) private view {
-        bytes32 vaultAdminRole = _getLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN);
+        bytes32 vaultAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);
         if (!hasRole(DEFAULT_ADMIN_ROLE, account) && !hasRole(vaultAdminRole, account)) {
             // TODO: DEFAULT_ADMIN_ROLE not reported
             revert MissingRole(vaultAdminRole, account);
@@ -105,12 +105,10 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
     }
 
     modifier onlyPoolAdminOrFactory(address lendingPool, address account) {
-        if (
-            !hasRole(ROLE_LENDING_POOL_FACTORY, account)
-                && !hasLendingPoolRole(lendingPool, ROLE_LENDING_POOL_ADMIN, account)
-        ) {
+        if (!hasRole(ROLE_LENDING_POOL_FACTORY, account) && !hasLendingPoolRole(lendingPool, ROLE_POOL_ADMIN, account))
+        {
             // TODO: ROLE_LENDING_POOL_FACTORY not reported
-            revert MissingRole(ROLE_LENDING_POOL_ADMIN, account);
+            revert MissingRole(ROLE_POOL_ADMIN, account);
         }
         _;
     }

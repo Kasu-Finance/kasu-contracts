@@ -21,13 +21,13 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 firstLossCapitalAmount = 50_000 * 10 ** 6;
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
 
         // ### ACT ###
         uint256 lossAmount = firstLossCapitalAmount;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
 
         // ### ASSERT ###
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
@@ -42,16 +42,16 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 firstLossCapitalAmount = 50_000 * 10 ** 6;
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
 
         uint256 totalUserDeposits = 100_000 * 10 ** 6;
         _requestAndAcceptUserDeposits(lpd.lendingPool, 3, lpd.tranches[0], totalUserDeposits);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
 
         // ### ACT ###
         uint256 lossAmount = firstLossCapitalAmount + totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
 
         // ### ASSERT ###
 
@@ -76,7 +76,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 firstLossCapitalAmount = 50_000 * 10 ** 6;
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
 
         uint256 trancheDeposits0 = 100_000 * 10 ** 6;
         _requestAndAcceptUserDeposits(lpd.lendingPool, 3, lpd.tranches[0], trancheDeposits0);
@@ -88,11 +88,11 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         _requestAndAcceptUserDeposits(lpd.lendingPool, 5, lpd.tranches[2], trancheDeposits2);
 
         uint256 drawAmount = firstLossCapitalAmount + trancheDeposits0 + trancheDeposits1 + trancheDeposits2;
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, drawAmount);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, drawAmount);
 
         // ### ACT ###
         uint256 lossAmount = firstLossCapitalAmount + trancheDeposits0 + trancheDeposits1 + trancheDeposits2 / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
 
         // ### ASSERT ###
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
@@ -130,19 +130,19 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 firstLossCapitalAmount = 50_000 * 10 ** 6;
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
 
         uint256 totalUserDeposits = 100_000 * 10 ** 6;
         uint256 usersCount = 20;
         (address[] memory userAddresses, uint256[] memory amounts) =
             _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
 
         uint256 lossAmount = firstLossCapitalAmount + totalUserDeposits / 2;
 
         // ### ACT ###
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, true);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, true);
         uint256 trancheLossId = 1;
 
         // ### ASSERT ###
@@ -169,17 +169,17 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 firstLossCapitalAmount = 50_000 * 10 ** 6;
-        _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
+        _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount);
 
         uint256 totalUserDeposits = 100_000 * 10 ** 6;
         uint256 usersCount = 20;
         (address[] memory userAddresses, uint256[] memory amounts) =
             _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, firstLossCapitalAmount + totalUserDeposits);
 
         uint256 lossAmount = firstLossCapitalAmount + totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
         uint256 trancheLossId = 1;
 
         // ### ACT - mint half users ###
@@ -222,21 +222,21 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         (address[] memory userAddresses, uint256[] memory amounts) =
             _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, totalUserDeposits);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, totalUserDeposits);
 
         // ### ACT ###
         uint256 lossAmount1 = totalUserDeposits / 8;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount1, true);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount1, true);
 
         uint256 lossAmount2 = totalUserDeposits / 4;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount2, true);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount2, true);
 
         uint256 lossAmount3 = totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount3, true);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount3, true);
 
-        _repayLoss(lendingPoolBorrowerAccount, lpd.lendingPool, lpd.tranches[0], 1, lossAmount1);
-        _repayLoss(lendingPoolBorrowerAccount, lpd.lendingPool, lpd.tranches[0], 2, lossAmount2);
-        _repayLoss(lendingPoolBorrowerAccount, lpd.lendingPool, lpd.tranches[0], 3, lossAmount3);
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], 1, lossAmount1);
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], 2, lossAmount2);
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], 3, lossAmount3);
 
         // ### ASSERT ###
         {
@@ -281,17 +281,17 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         uint256 usersCount = 20;
         _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, totalUserDeposits);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, totalUserDeposits);
 
         uint256 lossAmount = totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
 
         uint256 lossId = 1;
         LendingPoolTranche(lpd.tranches[0]).batchMintLossTokens(lossId, usersCount);
 
         // ### ACT ###
         uint256 repayAmount = lossAmount / 2;
-        _repayLoss(lendingPoolBorrowerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
 
         // ### ASSERT ###
         LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).getLossDetails(lossId);
@@ -308,15 +308,15 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         (address[] memory userAddresses, uint256[] memory amounts) =
             _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
 
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, totalUserDeposits);
+        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, totalUserDeposits);
 
         uint256 lossAmount = totalUserDeposits / 2;
-        _reportLoss(lendingPoolLoanManagerAccount, lpd.lendingPool, lossAmount, false);
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
 
         uint256 lossId = 1;
         LendingPoolTranche(lpd.tranches[0]).batchMintLossTokens(lossId, usersCount);
         uint256 repayAmount = lossAmount / 4;
-        _repayLoss(lendingPoolBorrowerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
 
         // ### ACT / ASSERT ###
         // claim first half of users
@@ -334,7 +334,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         // ### ARRANGE - repay loss again ###
         uint256 repayAmount2 = lossAmount / 2;
-        _repayLoss(lendingPoolBorrowerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount2);
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount2);
 
         // ### ACT / ASSERT ###
         // claim first half of users
