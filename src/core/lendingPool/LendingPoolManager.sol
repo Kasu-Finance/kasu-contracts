@@ -75,7 +75,7 @@ contract LendingPoolManager is
         isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
-        return _reqestDeposit(lendingPool, tranche, amount);
+        return _requestDeposit(lendingPool, tranche, amount);
     }
 
     function requestDepositWithKyc(
@@ -92,10 +92,10 @@ contract LendingPoolManager is
         isUserKycd(msg.sender, blockExpiration, signature)
         returns (uint256 dNftID)
     {
-        return _reqestDeposit(lendingPool, tranche, amount);
+        return _requestDeposit(lendingPool, tranche, amount);
     }
 
-    function _reqestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
+    function _requestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
         // TODO: more than 0
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
