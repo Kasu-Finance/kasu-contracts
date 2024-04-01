@@ -52,6 +52,10 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     uint256 private _minTrancheCountPerLendingPool;
     uint256 private _maxTrancheCountPerLendingPool;
 
+    uint256 private _ecosystemFeeRate;
+    uint256 private _protocolFeeRate;
+    address private _protocolFeeReceiver;
+
     TrancheInfo[] public _trancheInfo;
 
     // FAKE EPOCH
@@ -94,6 +98,9 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
         _trancheInfo.push(TrancheInfo("Mezzo Tranche", "MZ"));
         _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
+
+        _ecosystemFeeRate = 50_00;
+        _protocolFeeRate = 50_00;
     }
 
     function startClearing() external {
@@ -355,5 +362,48 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      */
     function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheInfo[index];
+    }
+
+    // FEES
+
+    /**
+     * @notice Returns the protocol fee rate
+     * @return ecosystemFeeRate The ecosystem fee rate
+     * @return protocolFeeRate The protocol fee rate
+     */
+    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
+        return (_ecosystemFeeRate, _protocolFeeRate);
+    }
+
+    /**
+     * @notice Sets the split ratio for the fees.
+     * @param ecosystemFeeRate The ecosystem fee rate
+     * @param protocolFeeRate The protocol fee rate
+     */
+    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external {
+        if (ecosystemFeeRate + protocolFeeRate != FULL_PERCENT) {
+            revert InvalidConfiguration();
+        }
+        _ecosystemFeeRate = ecosystemFeeRate;
+        _protocolFeeRate = protocolFeeRate;
+    }
+
+    /**
+     * @notice Returns the protocol fee receiver
+     * @return The protocol fee receiver
+     */
+    function getProtocolFeeReceiver() public view returns (address) {
+        return _protocolFeeReceiver;
+    }
+
+    /**
+     * @notice Sets the protocol fee receiver
+     * @param receiver The protocol fee receiver
+     */
+    function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
+        if (receiver == address(0)) {
+            revert ConfigurationAddressZero();
+        }
+        _protocolFeeReceiver = receiver;
     }
 }

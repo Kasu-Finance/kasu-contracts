@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "forge-std/Test.sol";
 import "./BaseTestUtils.sol";
-import "../../shared/MockUSDC.sol";
 import "../../shared/MockKsuPrice.sol";
 import "../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../src/core/lendingPool/LendingPoolFactory.sol";
@@ -19,16 +18,17 @@ import "../../../src/core/UserManager.sol";
 import "./LockingTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
 import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
+import "../../../src/core/FeeManager.sol";
 
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
     KsuPrice internal ksuPrice;
     SystemVariables internal systemVariables;
-    MockUSDC internal mockUsdc;
     IUserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
-    ILendingPoolFactory private lendingPoolFactory;
+    ILendingPoolFactory internal lendingPoolFactory;
+    IFeeManager internal feeManager;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -41,8 +41,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     function test_mock() external pure {}
 
     function __lendingPool_setUp() internal {
-        __locking_setUp();
-
         // fund accounts
         vm.deal(admin, 1 << 128);
         vm.deal(alice, 1 << 128);
@@ -66,15 +64,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.deal(user19, 1 << 128);
         vm.deal(user20, 1 << 128);
         vm.deal(userNotAllowed, 1 << 128);
-
-        // usdc
-        {
-            MockUSDC mockUsdcImpl = new MockUSDC();
-            TransparentUpgradeableProxy mockUsdcProxy =
-                new TransparentUpgradeableProxy(address(mockUsdcImpl), address(proxyAdmin), "");
-            mockUsdc = MockUSDC(address(mockUsdcProxy));
-            mockUsdc.initialize(admin);
-        }
 
         // access control - setup
         KasuController kasuControllerImpl = new KasuController();
@@ -144,6 +133,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
 
+        // fee manager
+        FeeManager feeManagerImpl = new FeeManager(address(mockUsdc), systemVariables, kasuController, _KSULocking);
+        TransparentUpgradeableProxy feeManagerProxy =
+            new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
+        feeManager = IFeeManager(address(feeManagerProxy));
+
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
         lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator);
@@ -200,6 +195,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariablesSetup.loyaltyThresholds = new uint256[](2);
         systemVariablesSetup.loyaltyThresholds[0] = 1_00;
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
+        systemVariablesSetup.ecosystemFeeRate = 50_00;
+        systemVariablesSetup.protocolFeeRate = 50_00;
 
         systemVariables.initialize(systemVariablesSetup);
     }
