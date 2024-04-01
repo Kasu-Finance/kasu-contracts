@@ -39,7 +39,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         emit FeesEmitted(msg.sender, ecosystemFeeAmount, protocolFeeAmount);
     }
 
-    function claimProtocolFees() external whenNotPaused onlyRole(PROTOCOL_FEE_CLAIM_CALLER, msg.sender) {
+    function claimProtocolFees() external whenNotPaused onlyRole(ROLE_PROTOCOL_FEE_CLAIMER, msg.sender) {
         address protocolFeeReceiver = _systemVariables.getProtocolFeeReceiver();
         if (protocolFeeReceiver == address(0)) {
             revert ConfigurationAddressZero();

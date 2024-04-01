@@ -13,7 +13,7 @@ contract FeeManagerTest is LendingPoolTestUtils {
     function test_FeeManager() public {
         // ARRANGE
         vm.prank(admin);
-        kasuController.grantRole(PROTOCOL_FEE_CLAIM_CALLER, alice);
+        kasuController.grantRole(ROLE_PROTOCOL_FEE_CLAIMER, alice);
 
         vm.prank(admin);
         systemVariables.setProtocolFeeReceiver(bob);
