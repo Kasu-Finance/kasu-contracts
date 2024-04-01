@@ -15,13 +15,13 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 100_000 * 1e6;
+        input.config.drawAmount = 100_000 * 1e6;
 
         input.balance.owed = 900_000 * 1e6;
         input.balance.excess = 100_000 * 1e6;
 
         // new accepted deposit should be 100_000 * 1e6
-        // (balance.owed + input.config.borrowAmount) * config.maxExcessPercentage = (950_000 * 1e6 + 100_000 * 1e6) * 10% = 100_000 * 1e6
+        // (balance.owed + input.config.drawAmount) * config.maxExcessPercentage = (950_000 * 1e6 + 100_000 * 1e6) * 10% = 100_000 * 1e6
 
         // total deposit
         input.pendingDeposits.totalDepositAmount = 100_000 * 1e6;
@@ -57,13 +57,13 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 100_000 * 1e6;
+        input.config.drawAmount = 100_000 * 1e6;
 
         input.balance.owed = 900_000 * 1e6;
         input.balance.excess = 100_000 * 1e6;
 
         // new accepted deposit should be 100_000 * 1e6
-        // ((balance.owed + input.config.borrowAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.borrowAmount
+        // ((balance.owed + input.config.drawAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.drawAmount
         // ((900_000 * 1e6 + 100_000 * 1e6) * 10%) - 100_000 * 1e6 + 100_000 * 1e6 = 100_000 * 1e6
 
         // total deposit
@@ -119,13 +119,13 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 0;
+        input.config.drawAmount = 0;
 
         input.balance.owed = 1_000_000 * 1e6;
         input.balance.excess = 0;
 
         // new accepted deposit should be 100_000 * 1e6 to seniors as we only accept the excess amount
-        // ((balance.owed + input.config.borrowAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.borrowAmount
+        // ((balance.owed + input.config.drawAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.drawAmount
         // ((900_000 * 1e6 + 100_000 * 1e6) * 10%) - 100_000 * 1e6 + 100_000 * 1e6 = 100_000 * 1e6
 
         // total deposit
@@ -181,13 +181,13 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 100_000 * 1e6;
+        input.config.drawAmount = 100_000 * 1e6;
 
         input.balance.owed = 900_000 * 1e6;
         input.balance.excess = 300_000 * 1e6;
 
         // new accepted deposit should be 0
-        // ((balance.owed + input.config.borrowAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.borrowAmount
+        // ((balance.owed + input.config.drawAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.drawAmount
         // ((900_000 * 1e6 + 100_000 * 1e6) * 10%) - 300_000 * 1e6 + 100_000 * 1e6 = -100_000 * 1e6 (value is negative, so 0)
 
         // total deposit
@@ -224,7 +224,7 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 100_000 * 1e6;
+        input.config.drawAmount = 100_000 * 1e6;
 
         input.balance.owed = 900_000 * 1e6;
         input.balance.excess = 100_000 * 1e6;
@@ -234,7 +234,7 @@ contract AcceptedRequestsCalculationTest is Test {
         input.config.trancheDesiredRatios[1] = 75_00;
 
         // new accepted deposit should be 100_000 * 1e6
-        // ((balance.owed + input.config.borrowAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.borrowAmount
+        // ((balance.owed + input.config.drawAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.drawAmount
         // ((900_000 * 1e6 + 100_000 * 1e6) * 10%) - 100_000 * 1e6 + 100_000 * 1e6 = 100_000 * 1e6
 
         input.pendingDeposits.trancheDepositsAmounts = new uint256[](2);
@@ -282,7 +282,7 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 100_000 * 1e6;
+        input.config.drawAmount = 100_000 * 1e6;
 
         input.balance.owed = 900_000 * 1e6;
         input.balance.excess = 100_000 * 1e6;
@@ -291,7 +291,7 @@ contract AcceptedRequestsCalculationTest is Test {
         input.config.trancheDesiredRatios[0] = 100_00;
 
         // new accepted deposit should be 100_000 * 1e6
-        // ((balance.owed + input.config.borrowAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.borrowAmount
+        // ((balance.owed + input.config.drawAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.drawAmount
         // ((900_000 * 1e6 + 100_000 * 1e6) * 10%) - 100_000 * 1e6 + 100_000 * 1e6 = 100_000 * 1e6
 
         input.pendingDeposits.trancheDepositsAmounts = new uint256[](1);
@@ -399,13 +399,13 @@ contract AcceptedRequestsCalculationTest is Test {
         // ARRANGE
         ClearingInput memory input = _getDefaultClearingInput();
 
-        input.config.borrowAmount = 100_000 * 1e6;
+        input.config.drawAmount = 100_000 * 1e6;
 
         input.balance.owed = 900_000 * 1e6;
         input.balance.excess = 100_000 * 1e6;
 
         // new maximum accepted deposit should be 100_000 * 1e6 + withdrawal amount
-        // ((balance.owed + input.config.borrowAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.borrowAmount
+        // ((balance.owed + input.config.drawAmount) * config.maxExcessPercentage) - input.balance.excess + input.config.drawAmount
         // ((900_000 * 1e6 + 100_000 * 1e6) * 10%) - 100_000 * 1e6 + 100_000 * 1e6 = 100_000 * 1e6
 
         // total deposit
@@ -476,7 +476,7 @@ contract AcceptedRequestsCalculationTest is Test {
 
     function _getDefaultClearingInput() private pure returns (ClearingInput memory input) {
         ClearingConfiguration memory config;
-        config.borrowAmount = 0;
+        config.drawAmount = 0;
         config.trancheDesiredRatios = new uint256[](3);
         config.trancheDesiredRatios[0] = 20_00;
         config.trancheDesiredRatios[1] = 30_00;

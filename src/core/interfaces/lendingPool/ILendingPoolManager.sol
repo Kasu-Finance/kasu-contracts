@@ -43,7 +43,7 @@ interface ILendingPoolManager {
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 
     // #### LENDING POOL LOAN MANAGER #### //
-    function borrowLoanImmediate(address lendingPool, uint256 amount) external;
+    function drawFundsImmediate(address lendingPool, uint256 amount) external;
 
     function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
 
@@ -87,7 +87,7 @@ interface ILendingPoolManager {
 
     // config
 
-    function updateBorrowRecipient(address lendingPool, address borrowRecipient) external;
+    function updateDrawRecipient(address lendingPool, address drawRecipient) external;
 
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount) external;
 
@@ -99,7 +99,7 @@ interface ILendingPoolManager {
 
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay) external;
 
-    function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount) external;
+    function updateDesiredDrawAmount(address lendingPool, uint256 amount) external;
 
     function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
         external;

@@ -8,14 +8,6 @@ error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 
 interface IAcceptedRequestsExecution {
     /**
-     * @notice Initialises the task and saves all data from previous tasks to run it.
-     * @dev
-     * Must be called before executeAcceptedRequestsBatch. Called once.
-     * @param targetEpoch The epoch to run the task against.
-     */
-    function init(uint256 targetEpoch) external;
-
-    /**
      * @notice Processes as many userRequests as defined by batchSize. This task accepts user requests, either deposits
      * or withdrawals, by following instructions from previous steps.
      * @dev

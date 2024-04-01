@@ -27,8 +27,8 @@ struct CreatePoolConfig {
     uint256 targetExcessLiquidityPercentage;
     CreateTrancheConfig[] tranches;
     address poolAdmin;
-    address borrowRecipient;
-    uint256 totalDesiredLoanAmount;
+    address drawRecipient;
+    uint256 desiredDrawAmount;
 }
 
 interface ILendingPoolFactory {

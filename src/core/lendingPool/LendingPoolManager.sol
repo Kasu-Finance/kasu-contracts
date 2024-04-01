@@ -30,7 +30,7 @@ contract LendingPoolManager is
     ILendingPoolFactory private lendingPoolFactory;
     IKasuAllowList private kasuAllowList;
     IUserManager private userManager;
-    IClearingCoordinator private clearingManager;
+    IClearingCoordinator private clearingCoordinator;
 
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
@@ -41,12 +41,12 @@ contract LendingPoolManager is
         ILendingPoolFactory lendingPoolFactory_,
         IKasuAllowList kasuAllowList_,
         IUserManager userManager_,
-        IClearingCoordinator clearingManager_
+        IClearingCoordinator clearingCoordinator_
     ) public initializer {
         lendingPoolFactory = lendingPoolFactory_;
         kasuAllowList = kasuAllowList_;
         userManager = userManager_;
-        clearingManager = clearingManager_;
+        clearingCoordinator = clearingCoordinator_;
     }
 
     // #### CREATE POOL #### //
@@ -63,6 +63,7 @@ contract LendingPoolManager is
 
     function _registerLendingPool(LendingPoolDeployment memory lendingPoolDeployment) internal {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
+        clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
     }
 
     // #### USER DEPOSITS #### //
@@ -74,7 +75,7 @@ contract LendingPoolManager is
         isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
-        return _reqestDeposit(lendingPool, tranche, amount);
+        return _requestDeposit(lendingPool, tranche, amount);
     }
 
     function requestDepositWithKyc(
@@ -91,10 +92,11 @@ contract LendingPoolManager is
         isUserKycd(msg.sender, blockExpiration, signature)
         returns (uint256 dNftID)
     {
-        return _reqestDeposit(lendingPool, tranche, amount);
+        return _requestDeposit(lendingPool, tranche, amount);
     }
 
-    function _reqestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
+    function _requestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
+        // TODO: more than 0
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
@@ -116,6 +118,7 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
         returns (uint256 wNftID)
     {
+        // TODO: more than 0
         wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
@@ -143,13 +146,13 @@ contract LendingPoolManager is
     }
 
     // #### LENDING POOL LOAN MANAGER #### //
-    function borrowLoanImmediate(address lendingPool, uint256 amount)
+    function drawFundsImmediate(address lendingPool, uint256 amount)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).borrowLoanImmediate(amount);
+        ILendingPool(lendingPool).drawFundsImmediate(amount);
     }
 
     /**
@@ -240,13 +243,13 @@ contract LendingPoolManager is
 
     // #### LENDING POOL MANAGER #### //
 
-    function updateBorrowRecipient(address lendingPool, address borrowRecipient)
+    function updateDrawRecipient(address lendingPool, address drawRecipient)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).updateBorrowRecipient(borrowRecipient);
+        ILendingPool(lendingPool).updateDrawRecipient(drawRecipient);
     }
 
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
@@ -305,7 +308,7 @@ contract LendingPoolManager is
         external
         whenNotPaused
     {
-        clearingManager.registerClearingConfig(lendingPool, epoch, clearingConfig);
+        clearingCoordinator.registerClearingConfig(lendingPool, epoch, clearingConfig);
     }
 
     // TODO: access control
@@ -315,7 +318,7 @@ contract LendingPoolManager is
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
     ) external whenNotPaused {
-        clearingManager.doClearing(
+        clearingCoordinator.doClearing(
             lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
         );
     }
@@ -367,13 +370,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
-    function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)
+    function updateDesiredDrawAmount(address lendingPool, uint256 amount)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).updateTotalDesiredLoanAmount(amount);
+        ILendingPool(lendingPool).updateDesiredDrawAmount(amount);
     }
 
     function _validLendingPool(address lendingPool) internal view {

@@ -29,6 +29,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     IKasuAllowList internal kasuAllowList;
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
+    IClearingCoordinator internal clearingCoordinator;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -104,14 +105,20 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // clearing
 
-        ClearingCoordinator clearingCoordinatorImpl = new ClearingCoordinator(lendingPoolManager);
+        ClearingCoordinator clearingCoordinatorImpl =
+            new ClearingCoordinator(systemVariables, userManager, lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
             new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
-        IClearingCoordinator clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
+        clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
 
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(
-            systemVariables, address(mockUsdc), lendingPoolManager, userManager, acceptedRequestsCalculation
+            systemVariables,
+            address(mockUsdc),
+            lendingPoolManager,
+            userManager,
+            clearingCoordinator,
+            acceptedRequestsCalculation
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
@@ -221,7 +228,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         uint256 minDepositAmount = 500 * 1e6;
         uint256 maxDepositAmount = 100_000 * 1e6;
         uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
-        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
         createTrancheConfig[0] = CreateTrancheConfig(10_00, 2500000000000000, minDepositAmount, maxDepositAmount);
         createTrancheConfig[1] = CreateTrancheConfig(20_00, 2000000000000000, minDepositAmount, maxDepositAmount);
@@ -233,7 +240,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
-            totalDesiredLoanAmount
+            desiredDrawAmount
         );
         vm.prank(lendingPoolCreatorAccount);
         lendingPoolDeployment = createLendingPool(createPoolConfig);
@@ -292,8 +299,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     // POOL DELEGATE
 
-    function _borrowLoanImmediate(address caller, address lendingPool, uint256 amount) internal prank(caller) {
-        lendingPoolManager.borrowLoanImmediate(lendingPool, amount);
+    function _drawFundsImmediate(address caller, address lendingPool, uint256 amount) internal prank(caller) {
+        lendingPoolManager.drawFundsImmediate(lendingPool, amount);
     }
 
     function _repayLoan(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
@@ -371,8 +378,18 @@ contract PendingPoolHarness is PendingPool {
         address underlyingAsset_,
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_,
+        IClearingCoordinator clearingCoordinator_,
         IAcceptedRequestsCalculation acceptedRequestsCalculation_
-    ) PendingPool(systemVariables_, underlyingAsset_, lendingPoolManager_, userManger_, acceptedRequestsCalculation_) {}
+    )
+        PendingPool(
+            systemVariables_,
+            underlyingAsset_,
+            lendingPoolManager_,
+            userManger_,
+            clearingCoordinator_,
+            acceptedRequestsCalculation_
+        )
+    {}
 
     function acceptDepositRequest(uint256 dNftID, uint256 acceptedAmount) external {
         (address tranche,) = UserRequestIds.decomposeDepositId(dNftID);
