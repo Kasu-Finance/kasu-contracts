@@ -48,6 +48,6 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         totalProtocolFeeAmount = 0;
         _transferAssets(protocolFeeReceiver, totalProtocolFeeAmount_);
 
-        emit ProtocolFeesClaimed(protocolFeeReceiver, totalProtocolFeeAmount);
+        emit ProtocolFeesClaimed(protocolFeeReceiver, totalProtocolFeeAmount_);
     }
 }
