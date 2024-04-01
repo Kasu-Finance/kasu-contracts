@@ -393,7 +393,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
         if (receiver == address(0)) {
-            revert EmptyAddress();
+            revert ConfigurationAddressZero();
         }
         _protocolFeeReceiver = receiver;
     }
