@@ -27,7 +27,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     function emitFees(uint256 amount) external whenNotPaused {
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        (uint256 ecosystemFeeRate, uint256 protocolFreeRate) = _systemVariables.getFeeRates();
+        (uint256 ecosystemFeeRate,) = _systemVariables.getFeeRates();
 
         uint256 ecosystemFeeAmount = ecosystemFeeRate * amount / FULL_PERCENT;
         _approveAsset(address(_ksuLocking), ecosystemFeeAmount);
