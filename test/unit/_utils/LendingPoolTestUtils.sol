@@ -37,6 +37,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal lendingPoolCreatorAccount = address(0xad3);
     address internal lendingPoolAdminAccount = address(0xad4);
     address internal poolManagerAccount = address(0xad5);
+    address internal poolClearingManagerAccount = address(0xad5);
 
     function test_mock() external pure {}
 
@@ -253,6 +254,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
+        kasuController.grantLendingPoolRole(
+            lendingPoolDeployment.lendingPool, ROLE_POOL_CLEARING_MANAGER, poolClearingManagerAccount
+        );
         vm.stopPrank();
     }
 
@@ -367,6 +371,27 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         returns (uint256 claimedAmount)
     {
         return lendingPoolManager.claimRepaidLoss(lendingPool, tranche, lossId);
+    }
+
+    function _registerClearingConfig(
+        address caller,
+        address lendingPool,
+        uint256 targetEpoch,
+        ClearingConfiguration memory clearingConfig
+    ) internal prank(caller) {
+        lendingPoolManager.registerClearingConfig(lendingPool, targetEpoch, clearingConfig);
+    }
+
+    function _doClearing(
+        address caller,
+        address lendingPool,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize
+    ) internal prank(caller) {
+        lendingPoolManager.doClearing(
+            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
+        );
     }
 }
 

@@ -157,6 +157,7 @@ contract LendingPoolManager is
     }
 
     // #### POOL FUNDS MANAGER #### //
+
     function drawFundsImmediate(address lendingPool, uint256 amount)
         external
         whenNotPaused
@@ -230,7 +231,28 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).repayLoss(tranche, lossId, amount);
     }
 
-    // #### LENDING POOL MANAGER #### //
+    // #### POOL CLEARING MANAGER #### //
+
+    function registerClearingConfig(
+        address lendingPool,
+        uint256 targetEpoch,
+        ClearingConfiguration calldata clearingConfig
+    ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
+        clearingCoordinator.registerClearingConfig(lendingPool, targetEpoch, clearingConfig);
+    }
+
+    function doClearing(
+        address lendingPool,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize
+    ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
+        clearingCoordinator.doClearing(
+            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
+        );
+    }
+
+    // #### POOL MANAGER #### //
 
     function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
         external
@@ -298,27 +320,6 @@ contract LendingPoolManager is
         IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
         address wNftOwner = pendingPool.ownerOf(wNftID);
         pendingPool.cancelDepositRequest(wNftOwner, wNftID);
-    }
-
-    // clearing
-    // TODO: access control
-    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
-        external
-        whenNotPaused
-    {
-        clearingCoordinator.registerClearingConfig(lendingPool, epoch, clearingConfig);
-    }
-
-    // TODO: access control
-    function doClearing(
-        address lendingPool,
-        uint256 targetEpoch,
-        uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize
-    ) external whenNotPaused {
-        clearingCoordinator.doClearing(
-            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
-        );
     }
 
     // config

@@ -71,7 +71,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(20);
 
         // ### ACT ###
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 20, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch, 20, 0);
 
         // ### ASSERT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
@@ -192,13 +192,13 @@ contract ClearingTest is LendingPoolTestUtils {
 
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
 
         // ### ASSERT ###
 
@@ -303,9 +303,9 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();
         ClearingConfiguration memory clearingConfiguration2 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch2, clearingConfiguration2);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch2, clearingConfiguration2);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch2, type(uint256).max, type(uint256).max);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch2, type(uint256).max, type(uint256).max);
 
         // ### ASSERT ###
 
@@ -344,9 +344,9 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[2] = 50_00;
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 10, 10);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
     }
 
     function test_doClearing_zeroBatch() public {
@@ -365,7 +365,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[2] = 50_00;
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
     }
 
     function test_doClearing_noUserRequests_maxBatchSize() public {
@@ -384,9 +384,9 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[2] = 50_00;
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, type(uint256).max, type(uint256).max);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, type(uint256).max, type(uint256).max);
     }
 
     function test_applyInterests() public {
@@ -476,9 +476,9 @@ contract ClearingTest is LendingPoolTestUtils {
 
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 30, 30);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 30, 30);
 
         skip(7 days);
         userManager.batchCalculateUserLoyaltyLevels(30);
@@ -486,8 +486,8 @@ contract ClearingTest is LendingPoolTestUtils {
         // users should get interests
         ClearingConfiguration memory clearingConfiguration2 =
             ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1 + 1, clearingConfiguration2);
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1 + 1, 30, 30);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1 + 1, clearingConfiguration2);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1 + 1, 30, 30);
 
         // ### ASSERT ###
 
@@ -676,7 +676,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(30);
 
         // users should get interests
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1 + 2, 30, 30);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1 + 2, 30, 30);
 
         // ### ASSERT ###
 
@@ -753,10 +753,10 @@ contract ClearingTest is LendingPoolTestUtils {
                 nextClearingEpoch
             )
         );
-        lendingPoolManager.doClearing(lpd.lendingPool, 0, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, 0, 1, 0);
 
         vm.expectRevert(abi.encodeWithSelector(IClearingCoordinator.TargetEpochClearingNotStarted.selector, 1));
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
 
         assertFalse(clearingCoordinator.isLendingPoolClearingPending(lpd.lendingPool));
 
@@ -778,13 +778,13 @@ contract ClearingTest is LendingPoolTestUtils {
                     nextClearingEpoch
                 )
             );
-            lendingPoolManager.doClearing(lpd.lendingPool, invalidTargetEpoch, 1, 0);
+            _doClearing(poolClearingManagerAccount, lpd.lendingPool, invalidTargetEpoch, 1, 0);
         }
 
         assertTrue(clearingCoordinator.isLendingPoolClearingPending(lpd.lendingPool));
 
         // as clearing period is not active anymore, it should just apply yield (if any) and end
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 0);
         nextClearingEpoch++;
 
         assertEq(
@@ -802,10 +802,10 @@ contract ClearingTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(IClearingCoordinator.UserLoyaltyLevelsNotYetProcessed.selector, nextClearingEpoch)
         );
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
 
         userManager.batchCalculateUserLoyaltyLevels(2);
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
 
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
@@ -816,7 +816,7 @@ contract ClearingTest is LendingPoolTestUtils {
         skip(1 days);
 
         // as clearing period is not active anymore, it should stop processing and end clearing
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 0);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.ENDED)
@@ -832,12 +832,12 @@ contract ClearingTest is LendingPoolTestUtils {
 
         userManager.batchCalculateUserLoyaltyLevels(3);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.STEP2_PENDING)
         );
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.STEP2_PENDING)
@@ -855,7 +855,7 @@ contract ClearingTest is LendingPoolTestUtils {
         ClearingConfiguration memory clearingConfiguration =
             ClearingConfiguration(50_000 * 1e6, trancheDesiredRatios, 0, 0, true);
 
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
 
         // should fail as we requested to draw 50k, but there are only 30k deposits
         vm.expectRevert(
@@ -863,7 +863,7 @@ contract ClearingTest is LendingPoolTestUtils {
                 IAcceptedRequestsCalculation.DrawAmountExceedsAvailable.selector, 50_000 * 1e6, 30_000 * 1e6
             )
         );
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
 
         clearingConfiguration.drawAmount = 30_000 * 1e6;
 
@@ -875,12 +875,12 @@ contract ClearingTest is LendingPoolTestUtils {
                 nextClearingEpoch
             )
         );
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch + 1, clearingConfiguration);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch + 1, clearingConfiguration);
 
         // override clearing configuration to accept 30k draw amount
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.STEP4_PENDING)
@@ -891,15 +891,15 @@ contract ClearingTest is LendingPoolTestUtils {
                 IClearingCoordinator.CannotOverrideClearingConfig.selector, lpd.lendingPool, nextClearingEpoch
             )
         );
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
 
         // process step 4 one by one
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, 1);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 1);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.STEP4_PENDING)
         );
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, 1);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 1);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.STEP4_PENDING)
@@ -915,7 +915,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         _requestDeposit(david, lpd.lendingPool, lpd.tranches[2], 10_000 * 1e6);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, 1);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 1);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.ENDED)
@@ -939,8 +939,8 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
 
         clearingConfiguration.drawAmount = 0;
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, type(uint256).max, 0);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, type(uint256).max, 0);
 
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(IPendingPool.CannotCancelRequestIfClearingIsPending.selector));
@@ -950,7 +950,7 @@ contract ClearingTest is LendingPoolTestUtils {
         vm.prank(poolManagerAccount);
         lendingPoolManager.forceImmediateWithdrawal(lpd.lendingPool, lpd.tranches[2], alice, 1);
 
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, type(uint256).max);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, type(uint256).max);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.ENDED)
@@ -964,8 +964,8 @@ contract ClearingTest is LendingPoolTestUtils {
         skip(7 days);
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
 
-        lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
-        lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, type(uint256).max, type(uint256).max);
+        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, type(uint256).max, type(uint256).max);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.ENDED)
