@@ -33,7 +33,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         _approveAsset(address(_ksuLocking), ecosystemFeeAmount);
         _ksuLocking.emitFees(ecosystemFeeAmount);
 
-        uint256 protocolFeeAmount = protocolFreeRate * amount / FULL_PERCENT;
+        uint256 protocolFeeAmount = amount - ecosystemFeeAmount;
         totalProtocolFeeAmount += protocolFeeAmount;
 
         emit ProtocolFeesEmitted(msg.sender, protocolFeeAmount);
