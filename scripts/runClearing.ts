@@ -6,10 +6,10 @@ import {
     SystemVariablesTestable__factory,
     UserManager__factory,
 } from '../typechain-types';
-import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearing/ClearingManager';
 import { ethers } from 'ethers';
+import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearing/ClearingSteps';
 
-const lendingPoolAddress = '0xEaCed9c07C0eC9cbABFA7aB081b6C55e8C2799a0';
+const lendingPoolAddress = '0x7bc9A7e2bDf4c4f6b1Ff8Cff272310a4b17F783d';
 const clearingDrawAmount = 400_000_000; // 400 USDC
 
 async function main() {
@@ -57,7 +57,6 @@ async function main() {
     await tx.wait(1);
 
     // overwrite clearing config - optional
-
     const currentEpochNumber =
         await systemVariablesTestable.getCurrentEpochNumber();
 
