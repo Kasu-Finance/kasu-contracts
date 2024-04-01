@@ -435,7 +435,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), ILendingPool(lpd.lendingPool).totalSupply());
     }
 
-    function test_borrowLoan() public {
+    function test_drawFunds() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -458,11 +458,11 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ACT ###
         vm.expectRevert(
             abi.encodeWithSelector(
-                ILendingPool.BorrowAmountCantBeGreaterThanAvailableAmount.selector, 341 * 10 ** 6, 340 * 10 ** 6
+                ILendingPool.DrawAmountCantBeGreaterThanAvailableAmount.selector, 341 * 10 ** 6, 340 * 10 ** 6
             )
         );
-        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 341 * 10 ** 6);
-        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 341 * 10 ** 6);
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 140 * 10 ** 6);
@@ -485,7 +485,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
-        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ACT ###
         uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
@@ -599,14 +599,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
 
-        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         _depositFirstLossCapital(lendingPoolLoanManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
 
         // ### ACT / ASSERT ###
 
-        // stop without repaying all borrowed loan
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.BorrowedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
+        // stop without repaying full owed amount
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.UserOwedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
         _stop(lendingPoolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
 
         _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
@@ -630,9 +630,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         lendingPoolManager.depositFirstLossCapital(lpd.lendingPool, 10 * 10 ** 6);
         vm.stopPrank();
 
-        // borrow loan after stop - even though balance is zero not allowed
+        // draw loan after stop - even though balance is zero not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
-        _borrowLoanImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
 
         // accept deposit after stop - not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
@@ -724,7 +724,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         ratios[1] = 25_00;
         ratios[2] = 60_00;
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, ratios);
-        lendingPoolManager.updateTotalDesiredLoanAmount(lpd.lendingPool, 400_000 * 1e6);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 400_000 * 1e6);
 
         // wrong ratios
         uint256[] memory wrongRatios = new uint256[](3);
@@ -745,7 +745,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         ILendingPool lendingPool = ILendingPool(address(lpd.lendingPool));
         PoolConfiguration memory poolConfiguration = lendingPool.poolConfiguration();
 
-        assertEq(poolConfiguration.totalDesiredLoanAmount, 400_000 * 1e6);
+        assertEq(poolConfiguration.desiredDrawAmount, 400_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[0].ratio, 15_00);
         assertEq(poolConfiguration.tranches[0].interestRate, 2500000000000000);
@@ -837,7 +837,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
 
         uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
-        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](0);
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
@@ -846,7 +846,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
-            totalDesiredLoanAmount
+            desiredDrawAmount
         );
 
         vm.startPrank(lendingPoolCreatorAccount);
@@ -866,7 +866,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 minDepositAmount = 500 * 1e6;
         uint256 maxDepositAmount = 100_000 * 1e6;
         uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
-        uint256 totalDesiredLoanAmount = 600_000 * 1e6;
+        uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](4);
         createTrancheConfig[0] = CreateTrancheConfig(10_00, 5_00, minDepositAmount, maxDepositAmount);
         createTrancheConfig[1] = CreateTrancheConfig(20_00, 4_00, minDepositAmount, maxDepositAmount);
@@ -879,7 +879,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
             createTrancheConfig,
             lendingPoolAdminAccount,
             lendingPoolLoanManagerAccount,
-            totalDesiredLoanAmount
+            desiredDrawAmount
         );
 
         vm.startPrank(lendingPoolCreatorAccount);

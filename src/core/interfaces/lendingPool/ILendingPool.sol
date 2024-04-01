@@ -19,9 +19,8 @@ struct TrancheConfig {
 struct PoolConfiguration {
     TrancheConfig[] tranches;
     address poolAdmin;
-    address borrowRecipient;
-    // TODO: constrain: poolConfig.totalDesiredLoanAmount >= LendingPool balance
-    uint256 totalDesiredLoanAmount;
+    address drawRecipient;
+    uint256 desiredDrawAmount;
     uint256 trancheInterestChangeEpochDelay;
     uint256 targetExcessLiquidityPercentage;
     uint256 minimumExcessLiquidityPercentage;
@@ -59,13 +58,11 @@ interface ILendingPool is IERC20 {
     function applyInterests(uint256 epoch) external;
 
     // #### POOL DELEGATE #### //
-    function borrowLoanImmediate(uint256 amount) external;
+    function drawFundsImmediate(uint256 amount) external;
 
-    function borrowLoan(uint256 amount) external;
+    function drawFunds(uint256 amount) external;
 
     function repayLoan(uint256 amount, address repaymentAddress) external;
-
-    //     function updateLoanAmount(uint256 amount) external;
 
     function reportLoss(uint256 lossAmount, bool doMintLossTokens) external returns (uint256 appliedLoss);
 
@@ -87,7 +84,7 @@ interface ILendingPool is IERC20 {
 
     // #### CONFIG #### //
 
-    function updateBorrowRecipient(address borrowRecipient) external;
+    function updateDrawRecipient(address drawRecipient) external;
 
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount) external;
 
@@ -99,7 +96,7 @@ interface ILendingPool is IERC20 {
 
     function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external;
 
-    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external;
+    function updateDesiredDrawAmount(uint256 desiredDrawAmount) external;
 
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) external;
 
@@ -112,9 +109,9 @@ interface ILendingPool is IERC20 {
 
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
 
-    event LoanBorrowedImmediate(uint256 amount);
+    event FundsDrawnImmediate(uint256 amount);
 
-    event LoanBorrowed(uint256 amount);
+    event FundsDrawn(uint256 amount);
 
     event LoanRepaid(uint256 amount);
 
@@ -134,14 +131,17 @@ interface ILendingPool is IERC20 {
 
     event FeesOwedIncreased(uint256 indexed epoch, uint256 feesAmount);
 
+    event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
+
     // Errors
 
-    error BorrowAmountCantBeGreaterThanAvailableAmount(uint256 borrowAmount, uint256 availableAmount);
-    error RepayAmountCantBeGreaterThanBorrowedAmount(uint256 repayAmount, uint256 borrowedAmount);
+    error DrawAmountCantBeGreaterThanAvailableAmount(uint256 drawAmount, uint256 availableAmount);
+    error RepayAmountCantBeGreaterThanOwedAmount(uint256 repayAmount, uint256 owedAmount);
     error WithdrawAmountCantBeGreaterThanFirstLostCapital(uint256 withdrawAmount, uint256 firstLostCapital);
     error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
     error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
-    error BorrowedAmountIsGreaterThanZero(uint256 borrowedAmoun);
+    error UserOwedAmountIsGreaterThanZero(uint256 userOwedAmount);
+    error FeesOwedAmountIsGreaterThanZero(uint256 feesOwedAmount);
     error LendingPoolIsStopped();
     error PoolConfigurationIsIncorrect(string reason);
     error LossIdNotValid(uint256 lossId);

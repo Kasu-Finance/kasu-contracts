@@ -38,13 +38,13 @@ struct ClearingData {
 
 /**
  * @notice Clearing configuration.
- * @custom:member borrowAmount Desired borrow amount for current clearing.
+ * @custom:member drawAmount Desired draw amount for the current clearing.
  * @custom:member trancheDesiredRatios Lending pool tranche desired ratios in percentages.
  * @custom:member maxExcessPercentage Maximum excess balance percentage.
  * @custom:member minExcessPercentage Minimum excess balance percentage.
  */
 struct ClearingConfiguration {
-    uint256 borrowAmount;
+    uint256 drawAmount;
     uint256[] trancheDesiredRatios;
     uint256 maxExcessPercentage;
     uint256 minExcessPercentage;

@@ -71,9 +71,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // copy memory to storage
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
         _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
-        _poolConfiguration.borrowRecipient = createPoolConfig.borrowRecipient;
-        _poolConfiguration.totalDesiredLoanAmount = createPoolConfig.totalDesiredLoanAmount;
+        _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
         _poolConfiguration.trancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay;
+
+        _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
 
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             // copy memory to storage
@@ -274,30 +275,40 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     // TODO: remove
     /**
      * @notice Transfers USDC from lending pool to pool delegate
-     * @param borrowAmount the amount that the pool delegate requests
+     * @param drawAmount the amount that the pool delegate requests
      */
-    function borrowLoanImmediate(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
-        if (borrowAmount == 0) {
+    function drawFundsImmediate(uint256 drawAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
+        if (drawAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
-        _borrowLoan(borrowAmount);
-        emit LoanBorrowedImmediate(borrowAmount);
+        _draw(drawAmount);
+        emit FundsDrawnImmediate(drawAmount);
     }
 
-    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyClearingCoordinator {
-        _borrowLoan(borrowAmount);
-        emit LoanBorrowed(borrowAmount);
+    function drawFunds(uint256 drawAmount) external lendingPoolShouldNotBeStopped onlyClearingCoordinator {
+        _draw(drawAmount);
+        emit FundsDrawn(drawAmount);
     }
 
-    function _borrowLoan(uint256 borrowAmount) internal {
-        if (borrowAmount == 0) return;
-        uint256 availableAmount = underlyingAsset.balanceOf(address(this));
-        if (availableAmount < borrowAmount) {
-            revert BorrowAmountCantBeGreaterThanAvailableAmount(borrowAmount, availableAmount);
+    function _draw(uint256 drawAmount) internal {
+        if (drawAmount == 0) return;
+
+        uint256 availableAmount = _myAssetBalance();
+        if (availableAmount < drawAmount) {
+            revert DrawAmountCantBeGreaterThanAvailableAmount(drawAmount, availableAmount);
         }
 
-        _userOwedAmount += borrowAmount;
-        _transferAssets(_poolConfiguration.borrowRecipient, borrowAmount);
+        _userOwedAmount += drawAmount;
+
+        if (_poolConfiguration.desiredDrawAmount > drawAmount) {
+            unchecked {
+                _updateDesiredDrawAmount(_poolConfiguration.desiredDrawAmount - drawAmount);
+            }
+        } else {
+            _updateDesiredDrawAmount(0);
+        }
+
+        _transferAssets(_poolConfiguration.drawRecipient, drawAmount);
     }
 
     function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
@@ -305,8 +316,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert AmountShouldBeGreaterThanZero();
         }
 
-        if (amount > _userOwedAmount) {
-            revert RepayAmountCantBeGreaterThanBorrowedAmount(amount, _userOwedAmount);
+        if (amount > _userOwedAmount + _feesOwed) {
+            revert RepayAmountCantBeGreaterThanOwedAmount(amount, _userOwedAmount + _feesOwed);
         }
 
         _transferAssetsFrom(repaymentAddress, address(this), amount);
@@ -491,7 +502,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
         if (_userOwedAmount > 0) {
-            revert BorrowedAmountIsGreaterThanZero(_userOwedAmount);
+            revert UserOwedAmountIsGreaterThanZero(_userOwedAmount);
+        }
+
+        if (_feesOwed > 0) {
+            revert FeesOwedAmountIsGreaterThanZero(_feesOwed);
         }
 
         if (firstLossCapital > 0) {
@@ -512,7 +527,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _futureTrancheInterests[tranche].push(FutureTrancheInterestRates({epoch: 0, interestRate: 0}));
         }
 
-        _poolConfiguration.totalDesiredLoanAmount = 0;
+        _updateDesiredDrawAmount(0);
 
         IPendingPool(getPendingPool()).stop();
 
@@ -523,8 +538,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     // config
 
-    function updateBorrowRecipient(address borrowRecipient) external onlyLendingPoolManager {
-        _poolConfiguration.borrowRecipient = borrowRecipient;
+    function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
+        _poolConfiguration.drawRecipient = drawRecipient;
     }
 
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount)
@@ -577,10 +592,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             );
         }
 
-        // _futureTrancheInterests[tranche].push(
-        //     FutureTrancheInterestRates({epoch: applicableEpoch, interestRate: interestRate})
-        // );
-
         emit UpdatedTrancheInterestRate(tranche, applicableEpoch, interestRate);
     }
 
@@ -600,8 +611,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
     }
 
-    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
-        _poolConfiguration.totalDesiredLoanAmount = totalDesiredLoanAmount;
+    function updateDesiredDrawAmount(uint256 desiredDrawAmount) external onlyLendingPoolManager {
+        _updateDesiredDrawAmount(desiredDrawAmount);
+    }
+
+    function _updateDesiredDrawAmount(uint256 desiredDrawAmount) private {
+        _poolConfiguration.desiredDrawAmount = desiredDrawAmount;
+        emit UpdatedDesiredDrawAmount(desiredDrawAmount);
     }
 
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
@@ -674,15 +690,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _verifyPoolConfiguration() private view {
         // verify addresses
-        if (_poolConfiguration.borrowRecipient == address(0)) {
-            revert PoolConfigurationIsIncorrect("borrow receipient is zero address");
+        if (_poolConfiguration.drawRecipient == address(0)) {
+            revert PoolConfigurationIsIncorrect("draw receipient is zero address");
         }
         if (_poolConfiguration.poolAdmin == address(0)) {
             revert PoolConfigurationIsIncorrect("pool admin is zero address");
         }
 
-        // totalDesiredLoanAmount
-        if (_poolConfiguration.totalDesiredLoanAmount == 0) {
+        // desiredDrawAmount
+        if (_poolConfiguration.desiredDrawAmount == 0) {
             revert PoolConfigurationIsIncorrect("desired loan amount is zero");
         }
 

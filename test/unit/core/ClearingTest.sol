@@ -22,6 +22,7 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 0);
         vm.stopPrank();
 
         // tranche 1
@@ -70,7 +71,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(20);
 
         // ### ACT ###
-        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 20, 10);
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch, 20, 0);
 
         // ### ASSERT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
@@ -459,6 +460,7 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], INTEREST_RATE_FULL_PERCENT / 100);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], INTEREST_RATE_FULL_PERCENT / 200);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], INTEREST_RATE_FULL_PERCENT / 400);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 0);
         vm.stopPrank();
 
         skip(6 days);
@@ -733,7 +735,7 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
-        lendingPoolManager.updateTotalDesiredLoanAmount(lpd.lendingPool, 0);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 0);
         vm.stopPrank();
 
         // ### ACT ###
@@ -858,12 +860,12 @@ contract ClearingTest is LendingPoolTestUtils {
         // should fail as we requested to draw 50k, but there are only 30k deposits
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAcceptedRequestsCalculation.BorrowAmountExceedsAvailable.selector, 50_000 * 1e6, 30_000 * 1e6
+                IAcceptedRequestsCalculation.DrawAmountExceedsAvailable.selector, 50_000 * 1e6, 30_000 * 1e6
             )
         );
         lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 1, 0);
 
-        clearingConfiguration.borrowAmount = 30_000 * 1e6;
+        clearingConfiguration.drawAmount = 30_000 * 1e6;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -936,7 +938,7 @@ contract ClearingTest is LendingPoolTestUtils {
         skip(5 days);
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
 
-        clearingConfiguration.borrowAmount = 0;
+        clearingConfiguration.drawAmount = 0;
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
         lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, type(uint256).max, 0);
 

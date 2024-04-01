@@ -196,9 +196,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // Step 5 - Draw funds
         if (clearingStatus == ClearingStatus.STEP5_PENDING) {
-            if (clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount > 0) {
-                ILendingPool(lendingPoolAddress).borrowLoan(
-                    clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount
+            if (clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].drawAmount > 0) {
+                ILendingPool(lendingPoolAddress).drawFunds(
+                    clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].drawAmount
                 );
             }
 
@@ -243,7 +243,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         ClearingConfiguration memory clearingConfig,
         bool isOverridden
     ) private {
-        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].borrowAmount = clearingConfig.borrowAmount;
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].drawAmount = clearingConfig.drawAmount;
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].maxExcessPercentage =
             clearingConfig.maxExcessPercentage;
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].minExcessPercentage =
@@ -259,19 +259,16 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
     function _getLendingPoolClearingConfig(address lendingPoolAddress) private returns (ClearingConfiguration memory) {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
+
+        // TODO: ideally update to only fetch necessary data
         PoolConfiguration memory poolConfig = lendingPool.poolConfiguration();
         uint256[] memory trancheRatios = new uint256[](poolConfig.tranches.length);
         for (uint256 i; i < poolConfig.tranches.length; ++i) {
             trancheRatios[i] = poolConfig.tranches[i].ratio;
         }
 
-        // TODO: fix borrow amount calculation
-        uint256 lendingPoolBalance = lendingPool.totalSupply();
-        uint256 borrowAmount = lendingPoolBalance < poolConfig.totalDesiredLoanAmount
-            ? 0
-            : lendingPoolBalance - poolConfig.totalDesiredLoanAmount;
         ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
-            borrowAmount,
+            poolConfig.desiredDrawAmount,
             trancheRatios,
             poolConfig.targetExcessLiquidityPercentage,
             poolConfig.minimumExcessLiquidityPercentage,

@@ -146,13 +146,13 @@ contract LendingPoolManager is
     }
 
     // #### LENDING POOL LOAN MANAGER #### //
-    function borrowLoanImmediate(address lendingPool, uint256 amount)
+    function drawFundsImmediate(address lendingPool, uint256 amount)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_LOAN_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).borrowLoanImmediate(amount);
+        ILendingPool(lendingPool).drawFundsImmediate(amount);
     }
 
     /**
@@ -243,13 +243,13 @@ contract LendingPoolManager is
 
     // #### LENDING POOL MANAGER #### //
 
-    function updateBorrowRecipient(address lendingPool, address borrowRecipient)
+    function updateDrawRecipient(address lendingPool, address drawRecipient)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).updateBorrowRecipient(borrowRecipient);
+        ILendingPool(lendingPool).updateDrawRecipient(drawRecipient);
     }
 
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
@@ -370,13 +370,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
-    function updateTotalDesiredLoanAmount(address lendingPool, uint256 amount)
+    function updateDesiredDrawAmount(address lendingPool, uint256 amount)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_LENDING_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).updateTotalDesiredLoanAmount(amount);
+        ILendingPool(lendingPool).updateDesiredDrawAmount(amount);
     }
 
     function _validLendingPool(address lendingPool) internal view {

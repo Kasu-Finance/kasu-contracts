@@ -10,7 +10,7 @@ import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearin
 import { ethers } from 'ethers';
 
 const lendingPoolAddress = '0xEaCed9c07C0eC9cbABFA7aB081b6C55e8C2799a0';
-const clearingBorrowAmount = 400_000_000; // 400 USDC
+const clearingDrawAmount = 400_000_000; // 400 USDC
 
 async function main() {
     const deploymentAddressesPath = path.join(
@@ -62,7 +62,7 @@ async function main() {
         await systemVariablesTestable.getCurrentEpochNumber();
 
     const clearingConfiguration: ClearingConfigurationStruct = {
-        borrowAmount: clearingBorrowAmount, // 400 usdc
+        drawAmount: clearingDrawAmount, // 400 usdc
         trancheDesiredRatios: [20_00, 30_00, 50_00], // 20%, 30%, 50%
         maxExcessPercentage: 10_00, // 10%
         minExcessPercentage: 0, // 0%
