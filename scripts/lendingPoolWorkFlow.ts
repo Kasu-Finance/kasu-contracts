@@ -25,7 +25,7 @@ async function main() {
     const unNamedSigners = await hre.ethers.getUnnamedSigners();
     const poolCreatorAccount = unNamedSigners[0];
     const poolAdminAccount = unNamedSigners[1];
-    const borrowRecipientAccount = unNamedSigners[2];
+    const drawRecipientAccount = unNamedSigners[2];
 
     // fund accounts
     console.info('Finding accounts with USDC');
@@ -99,8 +99,8 @@ async function main() {
             seniorTrancheConfig,
         ],
         poolAdmin: poolAdminAccount.address,
-        borrowRecipient: borrowRecipientAccount.address,
-        totalDesiredLoanAmount: BigInt(100_000_000_000),
+        drawRecipient: drawRecipientAccount.address,
+        desiredDrawAmount: BigInt(100_000_000_000),
     };
 
     tx = await lendingPoolManagerAdmin.createPool(createPoolConfig);

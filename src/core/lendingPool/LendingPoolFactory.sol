@@ -108,7 +108,7 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         string memory lendingPoolSymbol,
         uint256 trancheIndex,
         uint256 trancheCount
-    ) internal returns (string memory, string memory) {
+    ) internal view returns (string memory, string memory) {
         if (trancheCount < systemVariables.minTrancheCountPerLendingPool()) {
             revert ILendingPool.PoolConfigurationIsIncorrect("tranche count less than minimum");
         }

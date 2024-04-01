@@ -12,14 +12,16 @@ import "./Constants.sol";
  * @notice Kasu system variables contract setup structure.
  * @custom:member firstEpochStartTimestamp The timestamp of the start of the first epoch. Should be in the past.
  * @custom:member clearingPeriodLength The length of the clearing period.
- * @custom:member protocolFee The protocol fee.
+ * @custom:member performanceFee The performance fee.
  */
 struct SystemVariablesSetup {
     uint256 firstEpochStartTimestamp;
     uint256 clearingPeriodLength;
-    uint256 protocolFee;
+    uint256 performanceFee;
     uint256[] loyaltyThresholds;
     uint256 defaultTrancheInterestChangeEpochDelay;
+    uint256 ecosystemFeeRate;
+    uint256 protocolFeeRate;
 }
 
 /**
@@ -38,7 +40,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _priceUpdateEpoch;
     uint256 private _ksuTokenPrice;
 
-    uint256 private _protocolFee;
+    uint256 private _performanceFee;
 
     uint256[] private _loyaltyThresholds;
 
@@ -50,6 +52,10 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     uint256 private _minTrancheCountPerLendingPool;
     uint256 private _maxTrancheCountPerLendingPool;
+
+    uint256 private _ecosystemFeeRate;
+    uint256 private _protocolFeeRate;
+    address private _protocolFeeReceiver;
 
     TrancheInfo[] public _trancheInfo;
 
@@ -76,19 +82,22 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
         _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
-        _setProtocolFee(systemVariablesSetup.protocolFee);
+        _setPerformanceFee(systemVariablesSetup.performanceFee);
         _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
 
         _updateKsuTokenPrice();
 
         _defaultTrancheInterestChangeEpochDelay = 4;
-        _maxTrancheInterestRate = 1e17; // 10% TODO: update value
+        _maxTrancheInterestRate = INTEREST_RATE_FULL_PERCENT / 20; // 5%
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
 
         _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
         _trancheInfo.push(TrancheInfo("Mezzanine Tranche", "MZ"));
         _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
+
+        _ecosystemFeeRate = systemVariablesSetup.ecosystemFeeRate;
+        _protocolFeeRate = systemVariablesSetup.protocolFeeRate;
     }
 
     // EPOCH
@@ -200,32 +209,32 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
     }
 
-    // PROTOCOL FEE
+    // performance fee
 
     /**
-     * @dev Sets the protocol fee.
-     * @param protocolFee_ The new protocol fee.
+     * @dev Sets the performance fee.
+     * @param performanceFee_ The new performance fee.
      */
-    function setProtocolFee(uint256 protocolFee_) external whenNotPaused onlyAdmin {
-        _setProtocolFee(protocolFee_);
+    function setPerformanceFee(uint256 performanceFee_) external whenNotPaused onlyAdmin {
+        _setPerformanceFee(performanceFee_);
     }
 
-    function _setProtocolFee(uint256 protocolFee_) internal {
-        if (protocolFee_ > FULL_PERCENT) {
+    function _setPerformanceFee(uint256 performanceFee_) internal {
+        if (performanceFee_ > FULL_PERCENT) {
             revert InvalidConfiguration();
         }
 
-        _protocolFee = protocolFee_;
+        _performanceFee = performanceFee_;
 
-        emit ProtocolFeeUpdated(protocolFee_);
+        emit PerformanceFeeUpdated(performanceFee_);
     }
 
     /**
-     * @notice Returns the protocol fee.
-     * @return The protocol fee.
+     * @notice Returns the performance fee.
+     * @return The performance fee.
      */
-    function protocolFee() external view returns (uint256) {
-        return _protocolFee;
+    function performanceFee() external view returns (uint256) {
+        return _performanceFee;
     }
 
     // LOYALTY THRESHOLDS
@@ -345,5 +354,47 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheInfo[index];
+    }
+
+    // FEES
+
+    /**
+     * @notice Returns the protocol fee rate
+     * @return ecosystemFeeRate The ecosystem fee rate
+     * @return protocolFeeRate The protocol fee rate
+     */
+    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
+        return (_ecosystemFeeRate, _protocolFeeRate);
+    }
+
+    /**
+     * @notice Sets the split ratio for the fees.
+     * @param ecosystemFeeRate The ecosystem fee rate
+     */
+    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external whenNotPaused onlyAdmin {
+        if (ecosystemFeeRate + protocolFeeRate != FULL_PERCENT) {
+            revert InvalidConfiguration();
+        }
+        _ecosystemFeeRate = ecosystemFeeRate;
+        _protocolFeeRate = protocolFeeRate;
+    }
+
+    /**
+     * @notice Returns the protocol fee receiver
+     * @return The protocol fee receiver
+     */
+    function getProtocolFeeReceiver() public view returns (address) {
+        return _protocolFeeReceiver;
+    }
+
+    /**
+     * @notice Sets the protocol fee receiver
+     * @param receiver The protocol fee receiver
+     */
+    function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
+        if (receiver == address(0)) {
+            revert ConfigurationAddressZero();
+        }
+        _protocolFeeReceiver = receiver;
     }
 }

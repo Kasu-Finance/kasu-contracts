@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "../clearing/IPendingRequestsPriorityCalculation.sol";
-import {IClearingCoordinator} from "../clearing/IClearingManager.sol";
 import {IAcceptedRequestsExecution} from "../clearing/IAcceptedRequestsExecution.sol";
 import {IClearingSteps} from "../clearing/IClearingSteps.sol";
 
@@ -117,6 +116,6 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         address user, address lendingPool, address tranche, uint256 availableShares, uint256 requestedShares
     );
     error WithdrawalRequestIsForced(address user, address lendingPool, uint256 wNftID);
-    error CannotCancelDepositDuringClearingPeriod();
+    error CannotCancelRequestIfClearingIsPending();
     error UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(address user);
 }

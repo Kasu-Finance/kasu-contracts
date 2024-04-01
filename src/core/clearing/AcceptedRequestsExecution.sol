@@ -17,7 +17,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) public acceptedRequestsExecutionPerEpoch;
 
-    function init(uint256 targetEpoch) external {
+    function _initialiseAcceptedRequests(uint256 targetEpoch) private {
         if (acceptedRequestsExecutionPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) {
             revert AcceptedRequestsExecutionAlreadyInitialised(targetEpoch);
         }
@@ -25,43 +25,42 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         uint256 totalPendingRequests = _getClearingData(targetEpoch).totalPendingRequestsToProcess;
 
         if (totalPendingRequests == 0) {
-            acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = 0;
+            acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
         } else {
-            acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
+            unchecked {
+                acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
+            }
+            acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
         }
-
-        acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
-        if (!_isClearingTime()) {
-            revert CanOnlyExecuteDuringClearingTime();
+        if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALISED) {
+            _initialiseAcceptedRequests(targetEpoch);
+
+            // if there are no pending requests, we can skip the processing
+            if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
+                return;
+            }
+        } else if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
+            revert AcceptedRequestsExecutionAlreadyProcessed(targetEpoch);
         }
 
-        if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
-            revert AcceptedRequestsExecutionAlreadyProcessed(targetEpoch);
+        if (batchSize == 0) {
+            return;
         }
 
         uint256 nextIndexToProcess = acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
 
-        if (nextIndexToProcess == 0) {
-            acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
-            return;
+        uint256 endingIndexInclusive;
+        if (batchSize <= nextIndexToProcess) {
+            unchecked {
+                endingIndexInclusive = nextIndexToProcess - (batchSize - 1);
+            }
         }
-
-        if (batchSize == 0) {
-            revert BatchSizeShouldNotBeZero();
-        }
-
-        // calculate current transaction userRequest indexes
-        uint256 startingIndexInclusive = nextIndexToProcess;
-
-        uint256 batchSizeIndex = batchSize - 1;
-        uint256 endingIndexInclusive =
-            startingIndexInclusive >= batchSizeIndex ? startingIndexInclusive - batchSizeIndex : 0;
 
         // internal loop current transaction userRequest
-        uint256 i = startingIndexInclusive;
+        uint256 i = nextIndexToProcess;
         while (i >= endingIndexInclusive) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
 
@@ -69,7 +68,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // ### Deposit Requests Processing ###
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
 
-                // only consider deposit requests from current epoch
+                // only consider deposit requests from current and past epochs
                 if (depositNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request deposit will be accepted in different tranches
                     uint256 requestTrancheIndex = _getTrancheIndex(depositNftDetails.tranche);
@@ -108,9 +107,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // ### Withdrawal Requests Processing ###
                 WithdrawalNftDetails memory withdrawalNftDetails = trancheWithdrawalNftDetails(userRequestNftId);
 
-                // only consider all past withdrawal requests
+                // only consider withdrawals from current and past epochs
                 if (withdrawalNftDetails.epochId <= targetEpoch) {
-                    // instructions of how this request withdrawal will be accepted in different tranches
                     uint256 totalAcceptedAmount =
                         _getAcceptedPriorityWithdrawalAmounts(targetEpoch)[withdrawalNftDetails.priority];
                     if (totalAcceptedAmount > 0) {

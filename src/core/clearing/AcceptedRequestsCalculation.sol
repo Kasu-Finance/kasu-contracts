@@ -50,7 +50,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
     }
 
     /**
-     * @notice Calculates the accepted pending deposits and withdrawals and borrow amount.
+     * @notice Calculates the accepted pending deposits and withdrawals and draw amount.
      * @param input The input data for the clearing.
      * @return tranchePriorityDepositsAccepted The accepted deposits amounts to tranche for each tranche and priority. The first index is the requested tranche, the second index is the priority, and the third index is the tranche it got accepted to.
      * @return acceptedPriorityWithdrawalAmounts The accepted withdrawal amounts for each priority.
@@ -100,7 +100,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
     }
 
     /**
-     * @notice Calculates the total accepted pending deposits and withdrawals and borrow amount.
+     * @notice Calculates the total accepted pending deposits and withdrawals and draw amount.
      * @param inputData Deposit amount, withdrawal amount, lending pool balances and required lending pool configuration.
      * @return outputData Output Accepted deposit amount, accepted withdrawal amount, and increased excess amount.
      */
@@ -109,31 +109,31 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         pure
         returns (Step1Out memory outputData)
     {
-        // verify borrow amount is less than the maximum available to borrow
+        // verify draw amount is less than the maximum available funds
         uint256 maximumAvailableExcess = inputData.lendingPoolBalance.excess + inputData.totalDepositAmount;
 
-        if (maximumAvailableExcess < inputData.config.borrowAmount) {
-            revert BorrowAmountExceedsAvailable(inputData.config.borrowAmount, maximumAvailableExcess);
+        if (maximumAvailableExcess < inputData.config.drawAmount) {
+            revert DrawAmountExceedsAvailable(inputData.config.drawAmount, maximumAvailableExcess);
         }
 
         // calculate the new owed amount
-        uint256 newOwedAmount = inputData.lendingPoolBalance.owed + inputData.config.borrowAmount;
+        uint256 newOwedAmount = inputData.lendingPoolBalance.owed + inputData.config.drawAmount;
 
         // calculate the new maximum and minimum excess amount
         uint256 newMaxExcessAmount = newOwedAmount * inputData.config.maxExcessPercentage / FULL_PERCENT;
 
-        // withdrawals cannnot go under minumum excess, but borrows can
+        // withdrawals cannnot go under minumum excess, but drawing funds can
         uint256 newMinExcessAmount = newOwedAmount * inputData.config.minExcessPercentage / FULL_PERCENT;
 
         // calculate accepted withdrawal amount
         uint256 maxWithdrawalAmount = Math.min(inputData.lendingPoolBalance.excess, inputData.totalWithdrawalsAmount);
-        uint256 maximumExcessAfterBorrow = maximumAvailableExcess - inputData.config.borrowAmount;
-        outputData.acceptedWithdrawalAmount = maximumExcessAfterBorrow <= newMinExcessAmount
+        uint256 maximumExcessAfterDraw = maximumAvailableExcess - inputData.config.drawAmount;
+        outputData.acceptedWithdrawalAmount = maximumExcessAfterDraw <= newMinExcessAmount
             ? 0
-            : Math.min(maxWithdrawalAmount, maximumExcessAfterBorrow - newMinExcessAmount);
+            : Math.min(maxWithdrawalAmount, maximumExcessAfterDraw - newMinExcessAmount);
 
         // calculate accepted deposit amount
-        uint256 maximumExcessAfterWithdrawal = maximumExcessAfterBorrow - outputData.acceptedWithdrawalAmount;
+        uint256 maximumExcessAfterWithdrawal = maximumExcessAfterDraw - outputData.acceptedWithdrawalAmount;
 
         if (maximumExcessAfterWithdrawal < newMaxExcessAmount) {
             outputData.acceptedDepositAmount = inputData.totalDepositAmount;
@@ -148,7 +148,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         }
 
         uint256 newExcessAmount = inputData.lendingPoolBalance.excess + outputData.acceptedDepositAmount
-            - inputData.config.borrowAmount - outputData.acceptedWithdrawalAmount;
+            - inputData.config.drawAmount - outputData.acceptedWithdrawalAmount;
 
         if (newExcessAmount > inputData.lendingPoolBalance.excess) {
             unchecked {
@@ -362,10 +362,10 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             revert InvalidWithdrawalResult();
         }
 
-        // verify the deposit, withdrawal and borrow result numbers
+        // verify the deposit, withdrawal and draw result numbers
         if (
             input.balance.excess + outputData1.acceptedDepositAmount
-                < outputData1.acceptedWithdrawalAmount + input.config.borrowAmount
+                < outputData1.acceptedWithdrawalAmount + input.config.drawAmount
         ) {
             revert InvalidResult();
         }

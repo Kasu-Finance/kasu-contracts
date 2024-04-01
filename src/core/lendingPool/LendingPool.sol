@@ -7,6 +7,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/ISystemVariables.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
@@ -21,11 +22,16 @@ import "../Constants.sol";
  */
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     ISystemVariables public immutable systemVariables;
+    IClearingCoordinator public immutable clearingCoordinator;
 
     LendingPoolInfo private _lendingPoolInfo;
     PoolConfiguration private _poolConfiguration;
+
     /// @notice The index of lending pool info and pool configuration
     mapping(address => uint256) private _trancheIndex;
+
+    uint256 private _feesOwed;
+    uint256 private _userOwedAmount;
 
     struct FutureTrancheInterestRates {
         uint256 epoch;
@@ -35,13 +41,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     mapping(address tranche => FutureTrancheInterestRates[]) private _futureTrancheInterests;
     mapping(address tranche => uint256) private _trancheInterestIndex;
 
-    uint256 public borrowedAmount;
     address public lendingPoolManager;
     uint256 public firstLossCapital;
     uint256 public nextLossId;
 
-    constructor(ISystemVariables systemVariables_, address underlyingAsset_) AssetFunctionsBase(underlyingAsset_) {
+    constructor(ISystemVariables systemVariables_, IClearingCoordinator clearingCoordinator_, address underlyingAsset_)
+        AssetFunctionsBase(underlyingAsset_)
+    {
         systemVariables = systemVariables_;
+        clearingCoordinator = clearingCoordinator_;
     }
 
     /**
@@ -63,9 +71,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // copy memory to storage
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
         _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
-        _poolConfiguration.borrowRecipient = createPoolConfig.borrowRecipient;
-        _poolConfiguration.totalDesiredLoanAmount = createPoolConfig.totalDesiredLoanAmount;
+        _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
         _poolConfiguration.trancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay;
+
+        _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
 
         for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
             // copy memory to storage
@@ -133,8 +142,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _trancheIndex[tranche] - 1;
     }
 
-    function getBorrowedAmount() external view returns (uint256) {
-        return borrowedAmount;
+    function getUserOwedAmount() external view returns (uint256) {
+        return _userOwedAmount;
+    }
+
+    function getFeesOwedAmount() external view returns (uint256) {
+        return _feesOwed;
     }
 
     /**
@@ -223,46 +236,79 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit WithdrawalAccepted(user, tranche, acceptedShares);
     }
 
-    function _applyInterest(address tranche) internal verifyTranche(tranche) {
-        //        uint256 trancheBalance = balanceOf(tranche);
-        //
-        //        uint256 yieldAmount = trancheBalance * epochInterestRate / fullPercent;
-        //
-        //        _mint(tranche, yieldAmount);
-        //
-        //        borrowedAmount += yieldAmount;
+    function applyInterests(uint256 epoch) external onlyClearingCoordinator {
+        _applyInterests(epoch);
     }
 
+    function _applyInterests(uint256 epoch) internal {
+        _updateTrancheInterestRateConfig(epoch);
+
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
+            _applyTrancheInterest(_lendingPoolInfo.trancheAddresses[i], epoch);
+        }
+    }
+
+    function _applyTrancheInterest(address tranche, uint256 epoch) internal {
+        uint256 trancheAssetBalance = balanceOf(tranche);
+        if (trancheAssetBalance == 0) return;
+
+        uint256 interestAmount =
+            trancheAssetBalance * _getTrancheConfiguration(tranche).interestRate / INTEREST_RATE_FULL_PERCENT;
+
+        // calculate fees
+        uint256 feesAmount = interestAmount * systemVariables.performanceFee() / FULL_PERCENT;
+
+        // decrease by the fee percentage
+        interestAmount -= feesAmount;
+
+        // increase owed amount
+        _feesOwed += feesAmount;
+        _userOwedAmount += interestAmount;
+
+        // mint the lending pool tokens to the lending pool tranche
+        _mint(tranche, interestAmount);
+
+        emit InterestApplied(tranche, epoch, interestAmount);
+        emit FeesOwedIncreased(epoch, feesAmount);
+    }
+
+    // TODO: remove
     /**
      * @notice Transfers USDC from lending pool to pool delegate
-     * @param borrowAmount the amount that the pool delegate requests
+     * @param drawAmount the amount that the pool delegate requests
      */
-    function borrowLoanImmediate(uint256 borrowAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
-        if (borrowAmount == 0) {
+    function drawFundsImmediate(uint256 drawAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
+        if (drawAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
-        _borrowLoan(borrowAmount);
-        emit LoanBorrowedImmediate(borrowAmount);
+        _draw(drawAmount);
+        emit FundsDrawnImmediate(drawAmount);
     }
 
-    // TODO: add access control
-    function borrowLoan(uint256 borrowAmount) external lendingPoolShouldNotBeStopped {
-        if (!systemVariables.isClearingTime()) {
-            revert CanOnlyExecuteDuringClearingTime();
-        }
-        _borrowLoan(borrowAmount);
-        emit LoanBorrowed(borrowAmount);
+    function drawFunds(uint256 drawAmount) external lendingPoolShouldNotBeStopped onlyClearingCoordinator {
+        _draw(drawAmount);
+        emit FundsDrawn(drawAmount);
     }
 
-    function _borrowLoan(uint256 borrowAmount) internal {
-        if (borrowAmount == 0) return;
-        uint256 availableAmount = underlyingAsset.balanceOf(address(this));
-        if (availableAmount < borrowAmount) {
-            revert BorrowAmountCantBeGreaterThanAvailableAmount(borrowAmount, availableAmount);
+    function _draw(uint256 drawAmount) internal {
+        if (drawAmount == 0) return;
+
+        uint256 availableAmount = _myAssetBalance();
+        if (availableAmount < drawAmount) {
+            revert DrawAmountCantBeGreaterThanAvailableAmount(drawAmount, availableAmount);
         }
 
-        borrowedAmount += borrowAmount;
-        _transferAssets(_poolConfiguration.borrowRecipient, borrowAmount);
+        _userOwedAmount += drawAmount;
+
+        if (_poolConfiguration.desiredDrawAmount > drawAmount) {
+            unchecked {
+                _updateDesiredDrawAmount(_poolConfiguration.desiredDrawAmount - drawAmount);
+            }
+        } else {
+            _updateDesiredDrawAmount(0);
+        }
+
+        _transferAssets(_poolConfiguration.drawRecipient, drawAmount);
     }
 
     function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
@@ -270,13 +316,17 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert AmountShouldBeGreaterThanZero();
         }
 
-        if (amount > borrowedAmount) {
-            revert RepayAmountCantBeGreaterThanBorrowedAmount(amount, borrowedAmount);
+        if (amount > _userOwedAmount + _feesOwed) {
+            revert RepayAmountCantBeGreaterThanOwedAmount(amount, _userOwedAmount + _feesOwed);
         }
 
         _transferAssetsFrom(repaymentAddress, address(this), amount);
 
-        borrowedAmount -= amount;
+        // TODO: pay fees first
+
+        unchecked {
+            _userOwedAmount -= amount;
+        }
 
         emit LoanRepaid(amount);
     }
@@ -308,8 +358,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         // verify the amount is not greater than total balance
-        if (lossAmount > borrowedAmount) {
-            revert LossAmountCantBeGreaterThanSupply(lossAmount, borrowedAmount);
+        if (lossAmount > _userOwedAmount) {
+            revert LossAmountCantBeGreaterThanSupply(lossAmount, _userOwedAmount);
         }
 
         // get loss id and increment next loss id
@@ -353,7 +403,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         uint256 appliedLoss = lossAmount - lossLeft;
 
-        borrowedAmount -= appliedLoss;
+        _userOwedAmount -= appliedLoss;
 
         emit LossReported(appliedLoss);
     }
@@ -431,11 +481,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
     }
 
-    // TODO: cannot be run during clearing time
     function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
         external
         onlyLendingPoolManager
         verifyTranche(tranche)
+        verifyClearingNotPending
         returns (uint256 assetAmount)
     {
         // transfer lending pool tokens from tranche to lending pool and burn tranche user shares
@@ -451,13 +501,20 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
-        if (borrowedAmount > 0) {
-            revert BorrowedAmountIsGreaterThanZero(borrowedAmount);
+        if (_userOwedAmount > 0) {
+            revert UserOwedAmountIsGreaterThanZero(_userOwedAmount);
+        }
+
+        if (_feesOwed > 0) {
+            revert FeesOwedAmountIsGreaterThanZero(_feesOwed);
         }
 
         if (firstLossCapital > 0) {
             _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
         }
+
+        // TODO: check the clearing was done including paying interests
+        // TODO: pay fees
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             _poolConfiguration.tranches[i].interestRate = 0;
@@ -470,7 +527,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _futureTrancheInterests[tranche].push(FutureTrancheInterestRates({epoch: 0, interestRate: 0}));
         }
 
-        _poolConfiguration.totalDesiredLoanAmount = 0;
+        _updateDesiredDrawAmount(0);
 
         IPendingPool(getPendingPool()).stop();
 
@@ -481,8 +538,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     // config
 
-    function updateBorrowRecipient(address borrowRecipient) external onlyLendingPoolManager {
-        _poolConfiguration.borrowRecipient = borrowRecipient;
+    function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
+        _poolConfiguration.drawRecipient = drawRecipient;
     }
 
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount)
@@ -516,7 +573,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
         uint256 applicableEpoch = currentEpoch + epochDelay;
 
-        for (uint256 i = _futureTrancheInterests[tranche].length - 1; i >= 0; --i) {
+        for (uint256 i = _futureTrancheInterests[tranche].length - 1; i > 0; --i) {
             if (_futureTrancheInterests[tranche][i].epoch >= applicableEpoch) {
                 FutureTrancheInterestRates memory futureTrancheInterest = _futureTrancheInterests[tranche][i];
                 _futureTrancheInterests[tranche].pop();
@@ -527,9 +584,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             }
         }
 
-        _futureTrancheInterests[tranche].push(
-            FutureTrancheInterestRates({epoch: applicableEpoch, interestRate: interestRate})
-        );
+        if (_futureTrancheInterests[tranche][_futureTrancheInterests[tranche].length - 1].epoch == applicableEpoch) {
+            _futureTrancheInterests[tranche][_futureTrancheInterests[tranche].length - 1].interestRate = interestRate;
+        } else {
+            _futureTrancheInterests[tranche].push(
+                FutureTrancheInterestRates({epoch: applicableEpoch, interestRate: interestRate})
+            );
+        }
 
         emit UpdatedTrancheInterestRate(tranche, applicableEpoch, interestRate);
     }
@@ -550,8 +611,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
     }
 
-    function updateTotalDesiredLoanAmount(uint256 totalDesiredLoanAmount) external onlyLendingPoolManager {
-        _poolConfiguration.totalDesiredLoanAmount = totalDesiredLoanAmount;
+    function updateDesiredDrawAmount(uint256 desiredDrawAmount) external onlyLendingPoolManager {
+        _updateDesiredDrawAmount(desiredDrawAmount);
+    }
+
+    function _updateDesiredDrawAmount(uint256 desiredDrawAmount) private {
+        _poolConfiguration.desiredDrawAmount = desiredDrawAmount;
+        emit UpdatedDesiredDrawAmount(desiredDrawAmount);
     }
 
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
@@ -612,6 +678,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             if (index > oldIndex) {
                 _trancheInterestIndex[tranche] = index;
                 _poolConfiguration.tranches[i].interestRate = _futureTrancheInterests[tranche][index].interestRate;
+            } else if (
+                _poolConfiguration.tranches[i].interestRate != _futureTrancheInterests[tranche][oldIndex].interestRate
+            ) {
+                _poolConfiguration.tranches[i].interestRate = _futureTrancheInterests[tranche][oldIndex].interestRate;
             }
         }
     }
@@ -620,15 +690,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _verifyPoolConfiguration() private view {
         // verify addresses
-        if (_poolConfiguration.borrowRecipient == address(0)) {
-            revert PoolConfigurationIsIncorrect("borrow receipient is zero address");
+        if (_poolConfiguration.drawRecipient == address(0)) {
+            revert PoolConfigurationIsIncorrect("draw receipient is zero address");
         }
         if (_poolConfiguration.poolAdmin == address(0)) {
             revert PoolConfigurationIsIncorrect("pool admin is zero address");
         }
 
-        // totalDesiredLoanAmount
-        if (_poolConfiguration.totalDesiredLoanAmount == 0) {
+        // desiredDrawAmount
+        if (_poolConfiguration.desiredDrawAmount == 0) {
             revert PoolConfigurationIsIncorrect("desired loan amount is zero");
         }
 
@@ -674,6 +744,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function _onlyClearingCoordinator() private view {
+        if (msg.sender != address(clearingCoordinator)) {
+            revert OnlyClearingCoordinator();
+        }
+    }
+
     function _verifyTranche(address tranche) private view {
         if (!isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(this), tranche);
@@ -694,6 +770,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function _verifyClearingNotPending() private view {
+        if (clearingCoordinator.isLendingPoolClearingPending(address(this))) {
+            revert ClearingIsPending();
+        }
+    }
+
     // Modifiers
 
     modifier onlyPendingPool() {
@@ -706,6 +788,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _;
     }
 
+    modifier onlyClearingCoordinator() {
+        _onlyClearingCoordinator();
+        _;
+    }
+
     modifier verifyTranche(address tranche) {
         _verifyTranche(tranche);
         _;
@@ -713,6 +800,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     modifier verifyLossId(uint256 lossId) {
         _isLossIdValid(lossId);
+        _;
+    }
+
+    modifier verifyClearingNotPending() {
+        _verifyClearingNotPending();
         _;
     }
 }

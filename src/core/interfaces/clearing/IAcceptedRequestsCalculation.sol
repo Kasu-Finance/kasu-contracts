@@ -37,7 +37,7 @@ interface IAcceptedRequestsCalculation {
             uint256[] memory acceptedPriorityWithdrawalAmounts
         );
 
-    error BorrowAmountExceedsAvailable(uint256 desiredBorrowAmount, uint256 maximumAvailableToBorrow);
+    error DrawAmountExceedsAvailable(uint256 desiredDrawAmount, uint256 maximumAvailableToDraw);
     error InvalidDepositResult();
     error InvalidWithdrawalResult();
     error InvalidResult();

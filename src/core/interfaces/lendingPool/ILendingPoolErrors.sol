@@ -7,4 +7,5 @@ interface ILendingPoolErrors {
     error OnlyOwnLendingPool(address sender, address ownLendingPool);
     error OnlyOwnPendingPool(address sender, address ownPendingPool);
     error OnlyLendingPoolManager();
+    error OnlyClearingCoordinator();
 }

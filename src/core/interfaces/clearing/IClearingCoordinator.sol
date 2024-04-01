@@ -4,7 +4,31 @@ pragma solidity 0.8.23;
 import "./IAcceptedRequestsCalculation.sol";
 import "./IPendingRequestsPriorityCalculation.sol";
 
+enum ClearingStatus {
+    UNINITIALISED,
+    STEP1_PENDING,
+    STEP2_PENDING,
+    STEP3_PENDING,
+    STEP4_PENDING,
+    STEP5_PENDING,
+    ENDED
+}
+
 interface IClearingCoordinator {
+    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
+        external
+        view
+        returns (ClearingStatus status);
+    function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending);
+
+    function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);
+
+    /**
+     * @notice Initializes the newly created lending pool in the clearing coordinator.
+     * @param lendingPool The lending pool address.
+     */
+    function initializeLendingPool(address lendingPool) external;
+
     /**
      * @notice Should be called if you need to overwrite the default clearing configuration.
      * @dev
@@ -45,5 +69,13 @@ interface IClearingCoordinator {
         view
         returns (ClearingConfiguration memory);
 
+    event ClearingExecuted(address lendingPool, uint256 epoch, ClearingStatus clearingStatus);
+
     error ClearingAlreadyExecuted(uint256 epoch);
+    error TargetEpochNotStarted(uint256 targetEpoch, uint256 currentEpoch);
+    error TargetEpochClearingNotStarted(uint256 targetEpoch);
+    error UserLoyaltyLevelsNotYetProcessed(uint256 targetEpoch);
+    error ClearingNotEndedForPreviousEpoch(uint256 previousEpoch);
+    error InvalidClearingTargetEpochForLendingPool(address lendingPool, uint256 targetEpoch, uint256 nextEpoch);
+    error CannotOverrideClearingConfig(address lendingPool, uint256 epoch);
 }

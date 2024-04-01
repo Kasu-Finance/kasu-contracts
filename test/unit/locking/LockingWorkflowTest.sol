@@ -8,6 +8,7 @@ import "../_utils/LockingTestUtils.sol";
 
 contract LockingWorkflowTest is LockingTestUtils {
     function setUp() public {
+        __baseTestUtils_setUp();
         __locking_setUp();
 
         _KSULockBonus = new KSULockBonus();
@@ -64,7 +65,7 @@ contract LockingWorkflowTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.totalSupply(), 115 ether, 0);
         // A reward of 500 USC is emitted to Lock Contract
         _emitFees(500 * 1e6);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 500 * 1e6, 0);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 500 * 1e6, 0);
         // 30d pass
         skip(lockPeriod30);
         // Carol locks 500 KSU for 720d
@@ -76,12 +77,12 @@ contract LockingWorkflowTest is LockingTestUtils {
         assertApproxEqAbs(_ksu.balanceOf(address(_KSULocking)), 1300 ether, 0);
         // Alice collects her rewards - USDC
         _claimFees(alice);
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 21739130, 0);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 21739130, 0);
         // Bob collects hid rewards - USDC
         _claimFees(bob);
         uint256 bobRewardEmit1 = 478260869;
-        assertApproxEqAbs(_usdc.balanceOf(address(bob)), bobRewardEmit1, 0);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 1); // 0 vs 1
+        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), bobRewardEmit1, 0);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 0, 1); // 0 vs 1
         // Alice unlocks 50 KSU of her locked amount - KSU
         _unlock(alice, 50 ether, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 50 ether, 0);
@@ -91,7 +92,7 @@ contract LockingWorkflowTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.totalSupply(), 872.5 ether, 0);
         // A reward of 200 USC is emitted to Lock Contract
         _emitFees(200 * 1e6);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 200 * 1e6, 1); // 200.000001
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 200 * 1e6, 1); // 200.000001
         // David locks 500 KSU for 360d
         _lock(david, 400 ether, lockPeriod360);
         assertApproxEqAbs(_ksu.balanceOf(address(david)), 0 ether, 0);
@@ -107,15 +108,15 @@ contract LockingWorkflowTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.totalSupply(), 1272.5 ether, 0);
         // A reward of 600 USC is emitted to Lock Contract
         _emitFees(600 * 1e6);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 800 * 1e6, 1); // 800.000001
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 800 * 1e6, 1); // 800.000001
         // 180d pass
         skip(lockPeriod180);
         // Bob collect his rewards // USDC
         _claimFees(bob);
         uint256 bobRewardEmit2 = 25214899;
         uint256 bobRewardEmit3 = 51866404;
-        assertApproxEqAbs(_usdc.balanceOf(address(bob)), bobRewardEmit1 + bobRewardEmit2 + bobRewardEmit3, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 800 * 1e6 - bobRewardEmit2 - bobRewardEmit3, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), bobRewardEmit1 + bobRewardEmit2 + bobRewardEmit3, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 800 * 1e6 - bobRewardEmit2 - bobRewardEmit3, 1);
         // Bob unlocks 200 of his locked amount // KSU
         _unlock(bob, 200 ether, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(bob), 240 ether, 0);
@@ -126,13 +127,13 @@ contract LockingWorkflowTest is LockingTestUtils {
         // A reward of 400 USC is emitted to Lock Contract
         _emitFees(400 * 1e6);
         uint256 expectedEmit4Balance = 800 * 1e6 + 400 * 1e6 - bobRewardEmit2 - bobRewardEmit3;
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), expectedEmit4Balance, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), expectedEmit4Balance, 1);
         // 360d pass
         skip(lockPeriod360);
         // David collect his rewards // USDC
         _claimFees(david);
-        assertApproxEqAbs(_usdc.balanceOf(address(david)), 159742226, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), expectedEmit4Balance - 159742226, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(david)), 159742226, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), expectedEmit4Balance - 159742226, 1);
         // David unlocks all of his locked amount // KSU
         _unlockAll(david, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(david), 0 ether, 0);
@@ -144,8 +145,8 @@ contract LockingWorkflowTest is LockingTestUtils {
         skip(lockPeriod360);
         // Carol collects her rewards // USDC
         _claimFees(carol);
-        assertApproxEqAbs(_usdc.balanceOf(address(carol)), 781232496, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), expectedEmit4Balance - 159742226 - 781232496, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(carol)), 781232496, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), expectedEmit4Balance - 159742226 - 781232496, 1);
         // Everyone unlocks
         _unlockAll(alice, 0);
         assertApproxEqAbs(_KSULocking.userTotalDeposits(alice), 800 ether, 0);
@@ -173,14 +174,14 @@ contract LockingWorkflowTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.totalSupply(), 0 ether, 0);
         // Everyone claims
         _claimFees(alice);
-        assertApproxEqAbs(_usdc.balanceOf(address(alice)), 184051201, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 184051201, 1);
         _claimFees(bob);
-        assertApproxEqAbs(_usdc.balanceOf(address(bob)), 574974075, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 574974075, 1);
         _claimFees(carol);
-        assertApproxEqAbs(_usdc.balanceOf(address(carol)), 781232496, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(carol)), 781232496, 1);
         _claimFees(david);
-        assertApproxEqAbs(_usdc.balanceOf(address(david)), 159742226, 1);
-        assertApproxEqAbs(_usdc.balanceOf(address(_KSULocking)), 0, 2);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(david)), 159742226, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(_KSULocking)), 0, 2);
     }
 
     function _logBalanceOf(string memory msg_, IERC20 token, address user) internal {

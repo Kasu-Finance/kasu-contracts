@@ -28,10 +28,6 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
-        if (batchSize == 0) {
-            revert BatchSizeShouldNotBeZero();
-        }
-
         _initialisePendingRequests(targetEpoch);
 
         uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
@@ -41,9 +37,13 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             return;
         }
 
+        if (batchSize == 0) {
+            return;
+        }
+
         uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
-        uint256 startingIndexInclusive = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
-        uint256 endingIndexInclusive = startingIndexInclusive + batchSize_ - 1;
+        uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+        uint256 endIndex = userRequestId + batchSize_;
 
         PendingDeposits storage pendingDeposits = _getClearingData(targetEpoch).pendingDeposits;
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
@@ -51,7 +51,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         uint256 loyaltyLevelCount = _getLoyaltyLevelCount();
 
-        for (uint256 userRequestId = startingIndexInclusive; userRequestId <= endingIndexInclusive; ++userRequestId) {
+        for (userRequestId; userRequestId < endIndex; ++userRequestId) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
             uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
@@ -61,7 +61,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 DepositNftDetails memory depositNftDetails = trancheDepositNftDetails(userRequestNftId);
 
                 // only consider deposit requests from current epoch
-                if (depositNftDetails.epochId != targetEpoch) continue;
+                if (depositNftDetails.epochId > targetEpoch) continue;
 
                 (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
@@ -96,13 +96,12 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
                 _setWithdrawalRequestPriority(userRequestNftId, withdrawLoyaltyLevel);
             }
-
-            // TODO: can be put outside of loop
-            _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId + 1;
         }
 
+        _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
+
         if (
-            _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess + 1 >= _getTotalPendingRequests()
+            userRequestId >= _getTotalPendingRequests()
                 && _pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
         ) {
             // convert pending withdrawal shares to amounts - minimize rounding errors

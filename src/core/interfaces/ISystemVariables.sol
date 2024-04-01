@@ -23,9 +23,9 @@ interface ISystemVariables {
     function getPriceUpdateEpoch() external view returns (uint256);
     function updateKsuEpochTokenPrice() external;
 
-    // PROTOCOL FEE
-    function setProtocolFee(uint256 protocolFee) external;
-    function protocolFee() external view returns (uint256);
+    // FEES
+    function setPerformanceFee(uint256 performanceFee) external;
+    function performanceFee() external view returns (uint256);
 
     // LOYALTY THRESHOLD
     function loyaltyThresholds() external view returns (uint256[] memory loyaltyThresholds);
@@ -47,8 +47,15 @@ interface ISystemVariables {
 
     function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory);
 
+    // FEES
+    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate);
+    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external;
+
+    function getProtocolFeeReceiver() external view returns (address);
+    function setProtocolFeeReceiver(address receiver) external;
+
     // EVENTS
-    event ProtocolFeeUpdated(uint256 protocolFee);
+    event PerformanceFeeUpdated(uint256 performanceFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);
 
     // ERRORS
