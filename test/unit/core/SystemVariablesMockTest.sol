@@ -163,31 +163,31 @@ contract SystemVariablesMockTest is BaseTestUtils {
         assertEq(systemVariables.clearingPeriodLength(), systemVariablesSetup.clearingPeriodLength);
     }
 
-    function test_protocolFee() public {
+    function test_performanceFee() public {
         SystemVariablesSetup memory systemVariablesSetup = _initalize();
-        assertEq(systemVariables.protocolFee(), systemVariablesSetup.protocolFee);
+        assertEq(systemVariables.performanceFee(), systemVariablesSetup.performanceFee);
     }
 
-    function test_setProtocolFee() public {
+    function test_setPerformanceFee() public {
         _initalize();
 
-        uint256 newProtocolFee = 20_00;
+        uint256 newPerformanceFee = 20_00;
         hoax(admin);
-        systemVariables.setProtocolFee(newProtocolFee);
+        systemVariables.setPerformanceFee(newPerformanceFee);
 
-        assertEq(systemVariables.protocolFee(), newProtocolFee);
+        assertEq(systemVariables.performanceFee(), newPerformanceFee);
 
         // test revert invalid configuration
         hoax(admin);
         vm.expectRevert(abi.encodeWithSelector(InvalidConfiguration.selector));
-        systemVariables.setProtocolFee(100_01);
+        systemVariables.setPerformanceFee(100_01);
 
         // test revert no role
         hoax(alice);
         vm.expectRevert(
             abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
         );
-        systemVariables.setProtocolFee(newProtocolFee);
+        systemVariables.setPerformanceFee(newPerformanceFee);
     }
 
     function test_loyaltyThresholds() public {
@@ -255,7 +255,7 @@ contract SystemVariablesMockTest is BaseTestUtils {
     function _initalize() internal returns (SystemVariablesSetup memory systemVariablesSetup) {
         systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
         systemVariablesSetup.clearingPeriodLength = 1 days;
-        systemVariablesSetup.protocolFee = 10_00;
+        systemVariablesSetup.performanceFee = 10_00;
         systemVariablesSetup.loyaltyThresholds = new uint256[](2);
         systemVariablesSetup.loyaltyThresholds[0] = 1_00;
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;

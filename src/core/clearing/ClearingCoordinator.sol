@@ -1,14 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "../interfaces/clearing/IClearingManager.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../lendingPool/LendingPoolHelpers.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
 
+enum ClearingStatus {
+    UNINITIALISED,
+    STEP1_PENDING,
+    STEP2_PENDING,
+    STEP3_PENDING,
+    STEP4_PENDING,
+    ENDED
+}
+
 contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
+    /// @notice lendingPoolAddress => epochId => ClearingStatus
+    mapping(address => mapping(uint256 => ClearingStatus)) public lendingPoolClearingStatus;
     /// @notice lendingPoolAddress => epochId => ClearingConfiguration
     mapping(address => mapping(uint256 => ClearingConfiguration)) public clearingConfigPerLendingPoolAndEpoch;
     /// @notice lendingPoolAddress => epochId => isCalculated
@@ -30,28 +41,41 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         uint256 pendingRequestsPriorityCalculationBatchSize,
         uint256 acceptedRequestsExecutionBatchSize
     ) external onlyLendingPoolManager {
-        IClearingSteps _clearingSteps =
-            IClearingSteps(ILendingPool(lendingPoolAddress).lendingPoolInfo().pendingPoolAddress);
-        if (
-            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
-                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && _clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
-        ) {
+        // TODO: verify previous clearing has ended
+        // TODO: check if clearing time
+
+        ClearingStatus clearingStatus = lendingPoolClearingStatus[lendingPoolAddress][targetEpoch];
+
+        if (clearingStatus == ClearingStatus.ENDED) {
             revert ClearingAlreadyExecuted(targetEpoch);
         }
 
+        // apply interests before clearing
+        if (clearingStatus == ClearingStatus.UNINITIALISED) {
+            ILendingPool(lendingPoolAddress).applyInterests(targetEpoch);
+
+            clearingStatus = ClearingStatus.STEP1_PENDING;
+
+            // TODO: if no pending requests, skip to step 4
+            // TODO: if clearing is run after epoch end, end clearing
+        }
+
+        IClearingSteps _clearingSteps =
+            IClearingSteps(ILendingPool(lendingPoolAddress).lendingPoolInfo().pendingPoolAddress);
+
         // step 1
-        if (_clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) != TaskStatus.ENDED) {
+        if (clearingStatus == ClearingStatus.STEP1_PENDING) {
             _clearingSteps.calculatePendingRequestsPriorityBatch(
                 pendingRequestsPriorityCalculationBatchSize, targetEpoch
             );
+
+            if (_clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED) {
+                clearingStatus = ClearingStatus.STEP2_PENDING;
+            }
         }
 
         // step 2
-        if (
-            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
-                && !acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-        ) {
+        if (clearingStatus == ClearingStatus.STEP2_PENDING) {
             _clearingSteps.calculateAndSaveAcceptedRequests(
                 _createClearingConfig(lendingPoolAddress, targetEpoch),
                 _getLendingPoolBalance(lendingPoolAddress),
@@ -63,27 +87,28 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             }
 
             acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch] = true;
+            clearingStatus = ClearingStatus.STEP3_PENDING;
         }
 
         // step 3
-        if (
-            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
-                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && _clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) != TaskStatus.ENDED
-        ) {
+        if (clearingStatus == ClearingStatus.STEP3_PENDING) {
             _clearingSteps.executeAcceptedRequestsBatch(targetEpoch, acceptedRequestsExecutionBatchSize);
+
+            if (_clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED) {
+                clearingStatus = ClearingStatus.STEP4_PENDING;
+            }
         }
 
         // step 4
-        if (
-            _clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED
-                && acceptedRequestsCalculationPerEpochStatus[lendingPoolAddress][targetEpoch]
-                && _clearingSteps.acceptedRequestsExecutionPerEpochStatus(targetEpoch) == TaskStatus.ENDED
-        ) {
+        if (clearingStatus == ClearingStatus.STEP4_PENDING) {
             ILendingPool(lendingPoolAddress).borrowLoan(
                 clearingConfigPerLendingPoolAndEpoch[lendingPoolAddress][targetEpoch].borrowAmount
             );
+
+            clearingStatus = ClearingStatus.ENDED;
         }
+
+        lendingPoolClearingStatus[lendingPoolAddress][targetEpoch] = clearingStatus;
     }
 
     function getClearingConfig(address lendingPool, uint256 epoch)
@@ -151,9 +176,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
     function _getLendingPoolBalance(address lendingPoolAddress) private view returns (LendingPoolBalance memory) {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
-        uint256 lendingPoolBorrowedAmount = lendingPool.getBorrowedAmount();
+        uint256 lendingPooluserOwedAmount = lendingPool.getUserOwedAmount();
         LendingPoolBalance memory lendingPoolBalance =
-            LendingPoolBalance(lendingPool.totalSupply() - lendingPoolBorrowedAmount, lendingPoolBorrowedAmount);
+            LendingPoolBalance(lendingPool.totalSupply() - lendingPooluserOwedAmount, lendingPooluserOwedAmount);
         return lendingPoolBalance;
     }
 }

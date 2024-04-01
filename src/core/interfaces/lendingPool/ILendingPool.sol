@@ -43,7 +43,9 @@ interface ILendingPool is IERC20 {
 
     function getTrancheIndex(address tranche) external view returns (uint256);
 
-    function getBorrowedAmount() external view returns (uint256);
+    function getUserOwedAmount() external view returns (uint256);
+
+    function getFeesOwedAmount() external view returns (uint256);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
@@ -53,6 +55,8 @@ interface ILendingPool is IERC20 {
     function acceptWithdrawal(address tranche, address user, uint256 acceptedShares)
         external
         returns (uint256 assetAmount);
+
+    function applyInterests(uint256 epoch) external;
 
     // #### POOL DELEGATE #### //
     function borrowLoanImmediate(uint256 amount) external;
@@ -125,6 +129,10 @@ interface ILendingPool is IERC20 {
     event UpdatedTrancheInterestRate(address indexed tranche, uint256 indexed applicableEpoch, uint256 newInterestRate);
 
     event RemovedTracheInterestRateUpdate(address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex);
+
+    event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
+
+    event FeesOwedIncreased(uint256 indexed epoch, uint256 feesAmount);
 
     // Errors
 

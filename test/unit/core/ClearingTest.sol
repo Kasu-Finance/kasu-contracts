@@ -14,6 +14,16 @@ contract ClearingTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
+        // set interest rates to 0%
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
+
+        vm.startPrank(lendingPoolManagerAccount);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
+        vm.stopPrank();
+
         // tranche 1
         uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 1e6);
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 250 * 1e6);
@@ -96,6 +106,16 @@ contract ClearingTest is LendingPoolTestUtils {
     function test_executeAcceptedRequestsBatch() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // set interest rates to 0%
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
+
+        vm.startPrank(lendingPoolManagerAccount);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
+        vm.stopPrank();
 
         // deposit requests: total 100K
         // J0: 20K
@@ -350,7 +370,7 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 0, 0);
     }
 
-    function test_doClearing_noUserRequests_maxUint256BatchSize() public {
+    function test_doClearing_noUserRequests_maxBatchSize() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -369,5 +389,331 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
         lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, type(uint256).max, type(uint256).max);
+    }
+
+    function test_applyInterests() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // set interest rates to 0%
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 1);
+
+        // deposit requests: total 100K
+        // J0: 20K
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 4_000 * 1e6);
+        _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 6_000 * 1e6);
+        _requestDeposit(carol, lpd.lendingPool, lpd.tranches[0], 5_000 * 1e6);
+        _requestDeposit(david, lpd.lendingPool, lpd.tranches[0], 5_000 * 1e6);
+        // J1: 0
+        // J2: 30K
+        _requestDeposit(user16, lpd.lendingPool, lpd.tranches[0], 8_000 * 1e6);
+        _requestDeposit(user17, lpd.lendingPool, lpd.tranches[0], 7_000 * 1e6);
+        _requestDeposit(user18, lpd.lendingPool, lpd.tranches[0], 12_000 * 1e6);
+        _requestDeposit(user19, lpd.lendingPool, lpd.tranches[0], 3_000 * 1e6);
+        // M0: 10K
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user5, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user6, lpd.lendingPool, lpd.tranches[1], 6_000 * 1e6);
+        // M1: 25K
+        _requestDeposit(user9, lpd.lendingPool, lpd.tranches[1], 6_000 * 1e6);
+        _requestDeposit(user10, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user11, lpd.lendingPool, lpd.tranches[1], 8_000 * 1e6);
+        _requestDeposit(user12, lpd.lendingPool, lpd.tranches[1], 9_000 * 1e6);
+        // M2: 5K
+        _requestDeposit(user16, lpd.lendingPool, lpd.tranches[1], 2_000 * 1e6);
+        _requestDeposit(user19, lpd.lendingPool, lpd.tranches[1], 3_000 * 1e6);
+        // S0: 10K
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[2], 1_000 * 1e6);
+        _requestDeposit(david, lpd.lendingPool, lpd.tranches[2], 1_000 * 1e6);
+        _requestDeposit(user7, lpd.lendingPool, lpd.tranches[2], 5_000 * 1e6);
+        _requestDeposit(user8, lpd.lendingPool, lpd.tranches[2], 3_000 * 1e6);
+        // S1: 0
+        // S2: 35K
+        _requestDeposit(user17, lpd.lendingPool, lpd.tranches[2], 6_000 * 1e6);
+        _requestDeposit(user18, lpd.lendingPool, lpd.tranches[2], 4_000 * 1e6);
+        _requestDeposit(user19, lpd.lendingPool, lpd.tranches[2], 10_000 * 1e6);
+        _requestDeposit(user20, lpd.lendingPool, lpd.tranches[2], 15_000 * 1e6);
+
+        // loyalty levels config: 0-1%: 0, 1%-3%:1, 3%+: 2
+        // P0: alice: 7k, bob: 6k, carol: 5K, david: 6K, user5: 4K, user6: 6K, user7: 5K, user8:3K
+        _lock(alice, 100 * 1e18, lockPeriod30);
+        _lock(bob, 100 * 1e18, lockPeriod30);
+        _lock(carol, 100 * 1e18, lockPeriod30);
+        _lock(david, 100 * 1e18, lockPeriod30);
+        _lock(user5, 100 * 1e18, lockPeriod30);
+        _lock(user6, 100 * 1e18, lockPeriod30);
+        // user7 no lock amount
+        // user8 no lock amount
+        // P1: user9: 6K, user10: 2K, user11: 8K, user12: 9K, user13, user14, user15
+        _lock(user9, 50 * 1e18, lockPeriod720);
+        _lock(user10, 20 * 1e18, lockPeriod720);
+        _lock(user11, 50 * 1e18, lockPeriod720);
+        _lock(user12, 50 * 1e18, lockPeriod720);
+        // P2: user16: 10K, user17: 15K, user18: 19K, user19: 16K, user20: 5K
+        _lock(user16, 5_000 * 1e18, lockPeriod720);
+        _lock(user17, 25_000 * 1e18, lockPeriod720);
+        _lock(user18, 30_000 * 1e18, lockPeriod720);
+        _lock(user19, 25_000 * 1e18, lockPeriod720);
+        _lock(user20, 8_000 * 1e18, lockPeriod720);
+
+        // update interest rates to 1% for the epoch after the next one
+        vm.startPrank(lendingPoolManagerAccount);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], INTEREST_RATE_FULL_PERCENT / 100);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], INTEREST_RATE_FULL_PERCENT / 200);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], INTEREST_RATE_FULL_PERCENT / 400);
+        vm.stopPrank();
+
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(30);
+
+        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+
+        // ### ACT ###
+        uint256[] memory trancheDesiredRatios = new uint256[](3);
+        trancheDesiredRatios[0] = 20_00;
+        trancheDesiredRatios[1] = 30_00;
+        trancheDesiredRatios[2] = 50_00;
+
+        ClearingConfiguration memory clearingConfiguration1 =
+            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
+        lendingPoolManager.registerClearingConfig(lpd.lendingPool, currentEpoch1, clearingConfiguration1);
+
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1, 30, 30);
+
+        skip(7 days);
+        userManager.batchCalculateUserLoyaltyLevels(30);
+
+        // users should get interests
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1 + 1, 30, 30);
+
+        // ### ASSERT ###
+
+        PoolConfiguration memory poolConfiguration = ILendingPool(lpd.lendingPool).poolConfiguration();
+
+        uint256[] memory trancheInterestRatesMultiplier = new uint256[](3);
+
+        {
+            uint256 performanceFee = systemVariables.performanceFee();
+            trancheInterestRatesMultiplier[0] = (
+                poolConfiguration.tranches[0].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
+            ) + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier[1] = (
+                poolConfiguration.tranches[1].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
+            ) + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier[2] = (
+                poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
+            ) + INTEREST_RATE_FULL_PERCENT;
+        }
+
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 10_000 * 1e6, 2);
+
+        // ## Assert tranche balance ##
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+        assertApproxEqAbs(
+            lendingPool.balanceOf(lpd.tranches[0]),
+            20_000 * 1e6 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            lendingPool.balanceOf(lpd.tranches[1]),
+            30_000 * 1e6 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            lendingPool.balanceOf(lpd.tranches[2]),
+            60_000 * 1e6 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+
+        // ## Assert user balance per tranche ##
+        // algo: J2J1J0 M2J2M1J1M0J0 S2M2J2S1M1J1S0M0J0
+        ILendingPoolTranche junior = ILendingPoolTranche(lpd.tranches[0]);
+        ILendingPoolTranche mezzo = ILendingPoolTranche(lpd.tranches[1]);
+        ILendingPoolTranche senior = ILendingPoolTranche(lpd.tranches[2]);
+
+        // # P2 #
+        // J2 30K -> J 20K
+        assertApproxEqAbs(
+            junior.convertToAssets(junior.balanceOf(user16)),
+            5333_333_333 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            junior.convertToAssets(junior.balanceOf(user17)),
+            4666_666_666 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            junior.convertToAssets(junior.balanceOf(user18)),
+            8000_000_000 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            junior.convertToAssets(junior.balanceOf(user19)),
+            2000_000_000 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        // M2 5K -> M 5K,  J2 30K -> M 10K
+        // 2000 + 2666
+        assertApproxEqAbs(
+            mezzo.convertToAssets(mezzo.balanceOf(user16)),
+            4666_666_666 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        // 3000 + 1000
+        assertApproxEqAbs(
+            mezzo.convertToAssets(mezzo.balanceOf(user19)),
+            4000_000_000 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        // S2 35K -> S 35K
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user17)),
+            6000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user18)),
+            4000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user19)),
+            10000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user20)),
+            15000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+
+        // # P1 #
+        // M1 25K -> M 15K
+        assertApproxEqAbs(
+            mezzo.convertToAssets(mezzo.balanceOf(user9)),
+            3600_000_000 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            mezzo.convertToAssets(mezzo.balanceOf(user10)),
+            1200_000_000 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            mezzo.convertToAssets(mezzo.balanceOf(user11)),
+            4800_000_000 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            mezzo.convertToAssets(mezzo.balanceOf(user12)),
+            5400_000_000 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        // M1 25K -> S 10K
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user9)),
+            2400_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user10)),
+            800_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user11)),
+            3200_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user12)),
+            3600_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+
+        // # P0 #
+        // S0 10K -> S 10K
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(david)),
+            1000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user7)),
+            5000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user8)),
+            3000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        // S0 10K -> S 10K + M0 10K -> S 5K
+        // 1000 + 1000
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(alice)),
+            2000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        // M0 10K -> S 5K
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user5)),
+            1000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            senior.convertToAssets(senior.balanceOf(user6)),
+            3000_000_000 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+
+        // ### ACT ###
+        skip(7 days);
+        userManager.batchCalculateUserLoyaltyLevels(30);
+
+        // users should get interests
+        lendingPoolManager.doClearing(lpd.lendingPool, currentEpoch1 + 2, 30, 30);
+
+        // ### ASSERT ###
+
+        uint256[] memory trancheInterestRatesMultiplier2 = new uint256[](3);
+        {
+            uint256 performanceFee = systemVariables.performanceFee();
+            trancheInterestRatesMultiplier2[0] = (
+                poolConfiguration.tranches[0].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
+            ) + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier2[1] = (
+                poolConfiguration.tranches[1].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
+            ) + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier2[2] = (
+                poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
+            ) + INTEREST_RATE_FULL_PERCENT;
+        }
+
+        assertEq(poolConfiguration.tranches[0].interestRate, INTEREST_RATE_FULL_PERCENT / 100);
+        assertEq(poolConfiguration.tranches[1].interestRate, INTEREST_RATE_FULL_PERCENT / 200);
+        assertEq(poolConfiguration.tranches[2].interestRate, INTEREST_RATE_FULL_PERCENT / 400);
+
+        // ## Assert tranche balance including yield ##
+        assertApproxEqAbs(
+            lendingPool.balanceOf(lpd.tranches[0]),
+            (20_000 * 1e6 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT)
+                * trancheInterestRatesMultiplier2[0] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            lendingPool.balanceOf(lpd.tranches[1]),
+            (30_000 * 1e6 * trancheInterestRatesMultiplier[1] / INTEREST_RATE_FULL_PERCENT)
+                * trancheInterestRatesMultiplier2[1] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            lendingPool.balanceOf(lpd.tranches[2]),
+            (60_000 * 1e6 * trancheInterestRatesMultiplier[2] / INTEREST_RATE_FULL_PERCENT)
+                * trancheInterestRatesMultiplier2[2] / INTEREST_RATE_FULL_PERCENT,
+            1
+        );
     }
 }

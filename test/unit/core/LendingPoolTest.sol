@@ -719,7 +719,6 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6);
         lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6);
-        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 3_50);
         uint256[] memory ratios = new uint256[](3);
         ratios[0] = 15_00;
         ratios[1] = 25_00;
@@ -737,6 +736,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         );
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongRatios);
 
+        uint256 updatedTranche1InterestRate = 1000000000000000;
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], updatedTranche1InterestRate);
+
         vm.stopPrank();
 
         // ### ASSERT ###
@@ -746,17 +748,17 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.totalDesiredLoanAmount, 400_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[0].ratio, 15_00);
-        assertEq(poolConfiguration.tranches[0].interestRate, 5_00);
+        assertEq(poolConfiguration.tranches[0].interestRate, 2500000000000000);
         assertEq(poolConfiguration.tranches[0].minDepositAmount, 1000 * 1e6);
         assertEq(poolConfiguration.tranches[0].maxDepositAmount, 200_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[1].ratio, 25_00);
-        assertEq(poolConfiguration.tranches[1].interestRate, 4_00);
+        assertEq(poolConfiguration.tranches[1].interestRate, 2000000000000000);
         assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[2].ratio, 60_00);
-        assertEq(poolConfiguration.tranches[2].interestRate, 3_00);
+        assertEq(poolConfiguration.tranches[2].interestRate, 1500000000000000);
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
 
@@ -765,12 +767,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
         skip(7 days * (interestRateEpochDelay - 1));
 
         poolConfiguration = lendingPool.poolConfiguration();
-        assertEq(poolConfiguration.tranches[1].interestRate, 4_00);
+        assertEq(poolConfiguration.tranches[1].interestRate, 2000000000000000);
 
         skip(7 days);
 
         poolConfiguration = lendingPool.poolConfiguration();
-        assertEq(poolConfiguration.tranches[1].interestRate, 3_50);
+        assertEq(poolConfiguration.tranches[1].interestRate, updatedTranche1InterestRate);
     }
 
     function test_forceCancelDepositRequest() external {
@@ -888,5 +890,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
         );
         lendingPoolManager.createPool(createPoolConfig);
         vm.stopPrank();
+    }
+
+    function test_applyInterests_onlyClearingCoordinator() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // ### ACT ###
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.OnlyClearingCoordinator.selector));
+        ILendingPool(lpd.lendingPool).applyInterests(1);
     }
 }
