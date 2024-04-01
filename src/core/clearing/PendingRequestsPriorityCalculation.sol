@@ -45,7 +45,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endIndex = userRequestId + batchSize_;
 
-        PendingDeposits storage pendingDeposits = _getClearingData(targetEpoch).pendingDeposits;
+        ClearingData storage clearingData = _getClearingData(targetEpoch);
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
@@ -66,9 +66,9 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
                 uint256 trancheIndex = _getTrancheIndex(trancheAddress);
 
-                pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
-                pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
-                pendingDeposits.tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] +=
+                clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
+                clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
+                clearingData.pendingDeposits.tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] +=
                     depositNftDetails.assetAmount;
 
                 _setDepositRequestPriority(userRequestNftId, ownerLoyaltyLevel);
@@ -101,7 +101,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
 
         if (
-            userRequestId >= _getTotalPendingRequests()
+            userRequestId >= clearingData.totalPendingRequestsToProcess
                 && _pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
         ) {
             // convert pending withdrawal shares to amounts - minimize rounding errors
