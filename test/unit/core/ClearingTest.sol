@@ -875,7 +875,9 @@ contract ClearingTest is LendingPoolTestUtils {
                 nextClearingEpoch
             )
         );
-        _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch + 1, clearingConfiguration);
+        _registerClearingConfig(
+            poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch + 1, clearingConfiguration
+        );
 
         // override clearing configuration to accept 30k draw amount
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
@@ -965,7 +967,9 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
 
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
-        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, type(uint256).max, type(uint256).max);
+        _doClearing(
+            poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, type(uint256).max, type(uint256).max
+        );
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
             uint256(ClearingStatus.ENDED)

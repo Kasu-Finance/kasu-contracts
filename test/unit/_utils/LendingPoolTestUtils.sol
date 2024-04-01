@@ -25,7 +25,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     KasuController internal kasuController;
     KsuPrice internal ksuPrice;
     SystemVariables internal systemVariables;
-    IUserManager internal userManager;
+    UserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
@@ -94,13 +94,15 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
-        userManager = IUserManager(address(userManagerProxy));
+        userManager = UserManager(address(userManagerProxy));
 
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
         TransparentUpgradeableProxy lendingPoolManagerProxy =
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
+
+        userManager.initialize(address(lendingPoolManager));
 
         // clearing
         AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();

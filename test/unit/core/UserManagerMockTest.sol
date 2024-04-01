@@ -15,6 +15,7 @@ contract UserManagerMockTest is BaseTestUtils {
     ISystemVariables internal systemVariables;
     IKSULocking internal ksuLocking;
     UserManager internal userManager;
+    address internal lendingPoolManager;
 
     address lendingPool1 = address(0x1111);
     address pendingPool1 = address(0x11ff);
@@ -30,11 +31,14 @@ contract UserManagerMockTest is BaseTestUtils {
     function setUp() public {
         ksuLocking = IKSULocking(address(0xeeee));
         systemVariables = ISystemVariables(address(0xffff));
+        lendingPoolManager = address(0x1234);
 
         UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
+
+        userManager.initialize(lendingPoolManager);
 
         vm.mockCall(address(ksuLocking), abi.encodeWithSelector(IAccessControl.hasRole.selector), abi.encode(false));
 
@@ -72,9 +76,9 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function test_userRequestedDeposit() public {
         // ACT
-        userManager.userRequestedDeposit(alice, lendingPool1);
-        userManager.userRequestedDeposit(alice, lendingPool2);
-        userManager.userRequestedDeposit(alice, lendingPool2);
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool2);
+        _userRequestedDeposit(alice, lendingPool2);
 
         // ASSERT
         address[] memory lendingPools = userManager.getUserLendingPools(alice);
@@ -101,7 +105,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _mockUserLendingPoolBalance(alice, lendingPool1, aliceAvailableBalance, alicePendingDeposit);
         _mockRKSU(alice, aliceRKSU);
 
-        userManager.userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool1);
 
         // ACT
         (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
@@ -124,7 +128,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _mockUserLendingPoolBalance(alice, lendingPool1, aliceAvailableBalance, alicePendingDeposit);
         _mockRKSU(alice, aliceRKSU);
 
-        userManager.userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool1);
 
         // ACT
         (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
@@ -140,10 +144,10 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function test_updateUserLendingPools_removeUserIfItHasNoDeposits() public {
         // ARRANGE
-        userManager.userRequestedDeposit(alice, lendingPool1);
-        userManager.userRequestedDeposit(alice, lendingPool2);
-        userManager.userRequestedDeposit(alice, lendingPool3);
-        userManager.userRequestedDeposit(alice, lendingPool4);
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool2);
+        _userRequestedDeposit(alice, lendingPool3);
+        _userRequestedDeposit(alice, lendingPool4);
         address[] memory allUsersBefore = userManager.getAllUsers();
         assertEq(allUsersBefore.length, 1);
 
@@ -163,9 +167,9 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function test_updateUserLendingPools_removeMultipleUsers() public {
         // ARRANGE
-        userManager.userRequestedDeposit(alice, lendingPool1);
-        userManager.userRequestedDeposit(bob, lendingPool1);
-        userManager.userRequestedDeposit(carol, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(bob, lendingPool1);
+        _userRequestedDeposit(carol, lendingPool1);
         address[] memory allUsersBefore = userManager.getAllUsers();
         assertEq(allUsersBefore.length, 3);
 
@@ -179,20 +183,20 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function test_updateUserLendingPools_removeSelectedUsers() public {
         // ARRANGE
-        userManager.userRequestedDeposit(alice, lendingPool1);
-        userManager.userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool1);
 
-        userManager.userRequestedDeposit(bob, lendingPool1);
-        userManager.userRequestedDeposit(bob, lendingPool2);
+        _userRequestedDeposit(bob, lendingPool1);
+        _userRequestedDeposit(bob, lendingPool2);
 
-        userManager.userRequestedDeposit(carol, lendingPool1);
-        userManager.userRequestedDeposit(carol, lendingPool4);
+        _userRequestedDeposit(carol, lendingPool1);
+        _userRequestedDeposit(carol, lendingPool4);
 
-        userManager.userRequestedDeposit(david, lendingPool1);
-        userManager.userRequestedDeposit(david, lendingPool2);
-        userManager.userRequestedDeposit(david, lendingPool3);
+        _userRequestedDeposit(david, lendingPool1);
+        _userRequestedDeposit(david, lendingPool2);
+        _userRequestedDeposit(david, lendingPool3);
 
-        userManager.userRequestedDeposit(user5, lendingPool1);
+        _userRequestedDeposit(user5, lendingPool1);
 
         _mockUserLendingPoolBalance(bob, lendingPool1, 100 * 1e6, 0);
         _mockUserLendingPoolBalance(david, lendingPool2, 0, 100 * 1e6);
@@ -240,14 +244,18 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function test_updateUserLendingPools_revertIfFromIndexIsMoreThanToIndex() public {
         // ARRANGE
-        userManager.userRequestedDeposit(alice, lendingPool1);
-        userManager.userRequestedDeposit(bob, lendingPool1);
-        userManager.userRequestedDeposit(carol, lendingPool1);
-        userManager.userRequestedDeposit(david, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(bob, lendingPool1);
+        _userRequestedDeposit(carol, lendingPool1);
+        _userRequestedDeposit(david, lendingPool1);
 
         // ACT & ASSERT
         vm.expectRevert(IUserManager.BadUserIndex.selector);
         userManager.updateUserLendingPools(3, 2);
+    }
+
+    function _userRequestedDeposit(address user, address lendingPool) internal prank(lendingPoolManager) {
+        userManager.userRequestedDeposit(user, lendingPool);
     }
 
     function _mockDefaultLendingPool(address lendingPool, address pendingPool) internal {
