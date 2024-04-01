@@ -13,6 +13,9 @@ contract FeeManagerTest is LendingPoolTestUtils {
     function test_FeeManager() public {
         // ARRANGE
         vm.prank(admin);
+        kasuController.grantRole(PROTOCOL_FEE_CLAIM_CALLER, alice);
+
+        vm.prank(admin);
         systemVariables.setProtocolFeeReceiver(bob);
         uint256 ksuLockingBalanceBeforeFees = mockUsdc.balanceOf(address(_KSULocking));
 
@@ -30,6 +33,7 @@ contract FeeManagerTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(address(feeManager)), 500 * 1e6);
 
         // ACT2
+        vm.prank(alice);
         feeManager.claimProtocolFees();
 
         // ASSERT2
