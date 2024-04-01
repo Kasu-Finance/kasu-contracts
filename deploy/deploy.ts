@@ -54,7 +54,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     blockNumber = await hre.ethers.provider.getBlockNumber();
 
     const isLocalDeployment = () => {
-        return hre.network.name === 'localhost' || hre.network.name === 'hardhat';
+        return (
+            hre.network.name === 'localhost' || hre.network.name === 'hardhat'
+        );
     };
 
     const addressFile = addressFileFactory(
@@ -167,12 +169,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         'KasuAllowList',
         deployOptions(deployer, [kasuControllerDeployment.address]),
     );
-    const kasuAllowlist = KasuAllowList__factory.connect(
+    const kasuAllowList = KasuAllowList__factory.connect(
         kasuAllowListDeployment.address,
         adminSigner,
     );
-    tx = await kasuAllowlist.initialize(lendingPoolManagerDeployment.address, NEXERA_ID_SIGNER);
+    tx = await kasuAllowList.initialize(
+        lendingPoolManagerDeployment.address,
+        NEXERA_ID_SIGNER,
+    );
     await tx.wait(1);
+
+    // clearing
+    const clearingCoordinatorDeployment = await deployTransparentProxy(
+        'ClearingCoordinator',
+        deployOptions(admin, [
+            systemVariablesDeployment.address,
+            userManagerDeployment.address,
+            lendingPoolManagerDeployment.address,
+        ]),
+    );
+
+    const acceptedRequestsCalculationDeployment = await deployTransparentProxy(
+        'AcceptedRequestsCalculation',
+        deployOptions(admin, []),
+    );
+
+    // beacons
 
     const pendingPoolBeacon = await deployBeacon(
         'PendingPool',
@@ -181,6 +203,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             mockUsdcDeployment.address,
             lendingPoolManagerDeployment.address,
             userManagerDeployment.address,
+            clearingCoordinatorDeployment.address,
+            acceptedRequestsCalculationDeployment.address,
         ]),
     );
 
@@ -188,6 +212,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         'LendingPool',
         deployOptions(deployer, [
             systemVariablesDeployment.address,
+            clearingCoordinatorDeployment.address,
             mockUsdcDeployment.address,
         ]),
     );
@@ -217,21 +242,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions(deployer, []),
     );
 
-    // clearing
-
-    const acceptedRequestsCalculationDeployment = await deployTransparentProxy(
-        'AcceptedRequestsCalculation',
-        deployOptions(admin, []),
-    );
-
-    const clearingManagerDeployment = await deployTransparentProxy(
-        'ClearingManager',
-        deployOptions(admin, [
-            acceptedRequestsCalculationDeployment.address,
-            lendingPoolManagerDeployment.address,
-        ]),
-    );
-
     // initialise
     const kasuController = KasuController__factory.connect(
         kasuControllerDeployment.address,
@@ -248,7 +258,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         lendingPoolFactory.address,
         kasuAllowListDeployment.address,
         userManagerDeployment.address,
-        clearingManagerDeployment.address,
+        clearingCoordinatorDeployment.address,
     );
     await tx.wait(1);
 
@@ -259,9 +269,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const systemVariablesSetup: SystemVariablesSetupStruct = {
         firstEpochStartTimestamp: Math.round(Date.now() / 1000) + 3600 * 24 * 3,
         clearingPeriodLength: 1,
-        protocolFee: 10_00,
+        performanceFee: 10_00,
         loyaltyThresholds: [10_00, 30_00],
         defaultTrancheInterestChangeEpochDelay: 1,
+        ecosystemFeeRate: 50_00,
+        protocolFeeRate: 50_00,
     };
     console.info('Initializing System Variables');
     tx = await systemVariables.initialize(systemVariablesSetup);
