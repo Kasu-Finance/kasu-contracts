@@ -36,7 +36,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal poolFundsManagerAccount = address(0xad2);
     address internal lendingPoolCreatorAccount = address(0xad3);
     address internal lendingPoolAdminAccount = address(0xad4);
-    address internal lendingPoolManagerAccount = address(0xad5);
+    address internal poolManagerAccount = address(0xad5);
 
     function test_mock() external pure {}
 
@@ -249,9 +249,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
-        kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_LENDING_POOL_MANAGER, lendingPoolManagerAccount
-        );
+        kasuController.grantLendingPoolRole(lendingPoolDeployment.lendingPool, ROLE_POOL_MANAGER, poolManagerAccount);
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );

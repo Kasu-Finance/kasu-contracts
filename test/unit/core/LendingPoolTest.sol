@@ -294,7 +294,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
         input1[0] = ForceWithdrawalInput(lpd.tranches[2], carol, 50 * 10 ** 18);
-        uint256 wNftId_carol = _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input1)[0];
+        uint256 wNftId_carol = _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input1)[0];
 
         // ### ACT ###
         // incorrect owner
@@ -583,9 +583,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxRedeem.selector, alice, 50 * 10 ** 18, 40 * 10 ** 18)
         );
-        _forceImmediateWithdrawal(lendingPoolManagerAccount, lpd.lendingPool, lpd.tranches[0], alice, 50 * 10 ** 18);
-        _forceImmediateWithdrawal(lendingPoolManagerAccount, lpd.lendingPool, lpd.tranches[0], alice, 40 * 10 ** 18);
-        _forceImmediateWithdrawal(lendingPoolManagerAccount, lpd.lendingPool, lpd.tranches[1], bob, 200 * 10 ** 18);
+        _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, lpd.tranches[0], alice, 50 * 10 ** 18);
+        _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, lpd.tranches[0], alice, 40 * 10 ** 18);
+        _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, lpd.tranches[1], bob, 200 * 10 ** 18);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 50 * 10 ** 6);
@@ -614,7 +614,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 requestWithdrawalSharesAmount_bob = 200 * 10 ** 18;
         input1[1] = ForceWithdrawalInput(lpd.tranches[1], bob, requestWithdrawalSharesAmount_bob);
 
-        uint256[] memory result = _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input1);
+        uint256[] memory result = _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input1);
         uint256 wNftId_alice = result[0];
         uint256 wNftId_bob = result[1];
 
@@ -631,7 +631,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         );
         ForceWithdrawalInput[] memory input2 = new ForceWithdrawalInput[](1);
         input2[0] = ForceWithdrawalInput(lpd.tranches[1], bob, 51 * 10 ** 18);
-        _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input2);
+        _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input2);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
@@ -676,11 +676,11 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // stop without repaying full owed amount
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.UserOwedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
-        _stop(lendingPoolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
+        _stop(poolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
 
         _repayLoan(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
-        _stop(lendingPoolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
+        _stop(poolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
         assertEq(mockUsdc.balanceOf(lendingPoolAdminAccount), 50 * 10 ** 6);
 
         // request deposit after stop - not allowed
@@ -784,7 +784,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         // ### ACT ###
-        vm.startPrank(lendingPoolManagerAccount);
+        vm.startPrank(poolManagerAccount);
 
         lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6);
         lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6);
@@ -852,10 +852,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
 
         // ### ACT ###
-        vm.prank(lendingPoolManagerAccount);
+        vm.prank(poolManagerAccount);
         lendingPoolManager.forceCancelDepositRequest(lpd.lendingPool, dNftId_alice);
 
-        vm.prank(lendingPoolManagerAccount);
+        vm.prank(poolManagerAccount);
         lendingPoolManager.forceCancelDepositRequest(lpd.lendingPool, dNftId_bob);
 
         // ### ASSERT ###
@@ -884,10 +884,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 wNftId1_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 200 * 10 ** 18);
 
         // ### ACT ###
-        vm.prank(lendingPoolManagerAccount);
+        vm.prank(poolManagerAccount);
         lendingPoolManager.forceCancelWithdrawalRequest(lpd.lendingPool, wNftId_alice);
 
-        vm.prank(lendingPoolManagerAccount);
+        vm.prank(poolManagerAccount);
         lendingPoolManager.forceCancelWithdrawalRequest(lpd.lendingPool, wNftId1_bob);
 
         // ### ASSERT ###

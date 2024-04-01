@@ -18,7 +18,7 @@ contract ClearingTest is LendingPoolTestUtils {
         vm.prank(admin);
         lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
 
-        vm.startPrank(lendingPoolManagerAccount);
+        vm.startPrank(poolManagerAccount);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
@@ -54,7 +54,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         ForceWithdrawalInput[] memory input1 = new ForceWithdrawalInput[](1);
         input1[0] = ForceWithdrawalInput(lpd.tranches[2], user8, 10 * 10 ** 18);
-        _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input1)[0];
+        _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input1)[0];
 
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
@@ -112,7 +112,7 @@ contract ClearingTest is LendingPoolTestUtils {
         vm.prank(admin);
         lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
 
-        vm.startPrank(lendingPoolManagerAccount);
+        vm.startPrank(poolManagerAccount);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
@@ -278,7 +278,7 @@ contract ClearingTest is LendingPoolTestUtils {
         input[1] = ForceWithdrawalInput(lpd.tranches[0], user17, 600 * 1e18);
         input[2] = ForceWithdrawalInput(lpd.tranches[1], user9, 500 * 1e18);
         input[3] = ForceWithdrawalInput(lpd.tranches[1], user10, 800 * 1e18);
-        _batchForceWithdrawals(lendingPoolManagerAccount, lpd.lendingPool, input);
+        _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input);
         // total: 2200
 
         // # P2 #
@@ -456,7 +456,7 @@ contract ClearingTest is LendingPoolTestUtils {
         _lock(user20, 8_000 * 1e18, lockPeriod720);
 
         // update interest rates to 1% for the epoch after the next one
-        vm.startPrank(lendingPoolManagerAccount);
+        vm.startPrank(poolManagerAccount);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], INTEREST_RATE_FULL_PERCENT / 100);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], INTEREST_RATE_FULL_PERCENT / 200);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], INTEREST_RATE_FULL_PERCENT / 400);
@@ -731,7 +731,7 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
         vm.stopPrank();
 
-        vm.startPrank(lendingPoolManagerAccount);
+        vm.startPrank(poolManagerAccount);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
         lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
@@ -947,7 +947,7 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.cancelWithdrawalRequest(lpd.lendingPool, aliceWithdrawalId);
 
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.ClearingIsPending.selector));
-        vm.prank(lendingPoolManagerAccount);
+        vm.prank(poolManagerAccount);
         lendingPoolManager.forceImmediateWithdrawal(lpd.lendingPool, lpd.tranches[2], alice, 1);
 
         lendingPoolManager.doClearing(lpd.lendingPool, nextClearingEpoch, 0, type(uint256).max);
