@@ -84,6 +84,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // system variables
         _deploySystemVariables();
 
+        // fee manager
+        FeeManager feeManagerImpl = new FeeManager(address(mockUsdc), systemVariables, kasuController, _KSULocking);
+        TransparentUpgradeableProxy feeManagerProxy =
+            new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
+        feeManager = IFeeManager(address(feeManagerProxy));
+
         // user manager
         UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking);
         TransparentUpgradeableProxy userManagerProxy =
@@ -122,7 +128,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp = new LendingPool(systemVariables, clearingCoordinator, address(mockUsdc));
+        LendingPool lendingPoolImp =
+            new LendingPool(systemVariables, clearingCoordinator, feeManager, address(mockUsdc));
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
@@ -139,12 +146,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         TransparentUpgradeableProxy lendingPoolFactoryProxy =
             new TransparentUpgradeableProxy(address(lendingPoolFactoryImpl), address(proxyAdmin), "");
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
-
-        // fee manager
-        FeeManager feeManagerImpl = new FeeManager(address(mockUsdc), systemVariables, kasuController, _KSULocking);
-        TransparentUpgradeableProxy feeManagerProxy =
-            new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
-        feeManager = IFeeManager(address(feeManagerProxy));
 
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));

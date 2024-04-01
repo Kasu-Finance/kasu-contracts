@@ -468,6 +468,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 140 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
+        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 200 * 10 ** 6);
     }
 
     function test_repayLoan() public {
@@ -485,17 +486,90 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         uint256 acceptedDepositAmount_bob = 250 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
-        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
-        // ### ACT ###
+        uint256 owedAmount = 200 * 10 ** 6;
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, owedAmount);
+
         uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
 
-        _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 100 * 10 ** 6);
+        deal(address(mockUsdc), lendingPoolLoanManagerAccount, 300 * 10 ** 6, true);
+        vm.startPrank(lendingPoolLoanManagerAccount);
+        mockUsdc.approve(lpd.lendingPool, 300 * 10 ** 6);
+
+        // ### ACT ###
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.RepayAmountCantBeGreaterThanOwedAmount.selector, owedAmount + 1, owedAmount
+            )
+        );
+        // _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, owedAmount + 1);
+        lendingPoolManager.repayLoan(lpd.lendingPool, owedAmount + 1, lendingPoolLoanManagerAccount);
+
+        // _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, 100 * 10 ** 6);
+        lendingPoolManager.repayLoan(lpd.lendingPool, 100 * 10 ** 6, lendingPoolLoanManagerAccount);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
-        assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 0);
+        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 100 * 10 ** 6);
+        assertEq(mockUsdc.balanceOf(lendingPoolLoanManagerAccount), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
+    }
+
+    function test_repayLoan_repayIncludingFees() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 requestDepositAmount_alice = 200 * 10 ** 6;
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], requestDepositAmount_alice);
+
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, requestDepositAmount_alice);
+
+        _drawFundsImmediate(lendingPoolLoanManagerAccount, lpd.lendingPool, 100 * 10 ** 6);
+
+        vm.prank(address(clearingCoordinator));
+        ILendingPool(lpd.lendingPool).applyInterests(0);
+
+        // should be 100450000
+        uint256 userOwedAmount = ILendingPool(lpd.lendingPool).getUserOwedAmount();
+        // should be 50000
+        uint256 feesOwedAmount = ILendingPool(lpd.lendingPool).getFeesOwedAmount();
+
+        uint256 usdcBefore = mockUsdc.balanceOf(lpd.lendingPool);
+
+        // ### ACT ###
+        _repayLoan(lendingPoolLoanManagerAccount, lendingPoolLoanManagerAccount, lpd.lendingPool, feesOwedAmount / 2);
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore);
+        assertApproxEqAbs(ILendingPool(lpd.lendingPool).getFeesOwedAmount(), feesOwedAmount / 2, 1);
+        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), userOwedAmount);
+
+        // ### ACT ###
+        _repayLoan(
+            lendingPoolLoanManagerAccount,
+            lendingPoolLoanManagerAccount,
+            lpd.lendingPool,
+            feesOwedAmount / 2 + userOwedAmount / 2
+        );
+
+        // ### ASSERT ###
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore + userOwedAmount / 2, 1);
+        assertEq(ILendingPool(lpd.lendingPool).getFeesOwedAmount(), 0);
+        assertApproxEqAbs(ILendingPool(lpd.lendingPool).getUserOwedAmount(), userOwedAmount / 2, 1);
+
+        // ### ACT ###
+        _repayLoan(
+            lendingPoolLoanManagerAccount,
+            lendingPoolLoanManagerAccount,
+            lpd.lendingPool,
+            ILendingPool(lpd.lendingPool).getUserOwedAmount()
+        );
+
+        // ### ASSERT ###
+        assertEq(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore + userOwedAmount);
+        assertEq(ILendingPool(lpd.lendingPool).getFeesOwedAmount(), 0);
+        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 0);
     }
 
     function test_forceImmediateWithdrawal() public {

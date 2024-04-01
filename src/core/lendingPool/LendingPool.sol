@@ -8,6 +8,7 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
+import "../interfaces/IFeeManager.sol";
 import "../AssetFunctionsBase.sol";
 import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
@@ -23,6 +24,7 @@ import "../Constants.sol";
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     ISystemVariables public immutable systemVariables;
     IClearingCoordinator public immutable clearingCoordinator;
+    IFeeManager public immutable feeManager;
 
     LendingPoolInfo private _lendingPoolInfo;
     PoolConfiguration private _poolConfiguration;
@@ -45,11 +47,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     uint256 public firstLossCapital;
     uint256 public nextLossId;
 
-    constructor(ISystemVariables systemVariables_, IClearingCoordinator clearingCoordinator_, address underlyingAsset_)
-        AssetFunctionsBase(underlyingAsset_)
-    {
+    constructor(
+        ISystemVariables systemVariables_,
+        IClearingCoordinator clearingCoordinator_,
+        IFeeManager feeManager_,
+        address underlyingAsset_
+    ) AssetFunctionsBase(underlyingAsset_) {
         systemVariables = systemVariables_;
         clearingCoordinator = clearingCoordinator_;
+        feeManager = feeManager_;
     }
 
     /**
@@ -311,6 +317,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _transferAssets(_poolConfiguration.drawRecipient, drawAmount);
     }
 
+    /**
+     * @notice Repays the owed funds to the lending pool of the desired amount.
+     * @dev First we repay the owed fees, then we repay the user owed amount.
+     * @param amount The amount of the repayment.
+     * @param repaymentAddress The address of the repayment.
+     */
     function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
@@ -322,13 +334,32 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         _transferAssetsFrom(repaymentAddress, address(this), amount);
 
-        // TODO: pay fees first
+        uint256 feesPaid = _payFees(amount);
 
-        unchecked {
-            _userOwedAmount -= amount;
+        uint256 amountLeft = amount - feesPaid;
+
+        _userOwedAmount -= amountLeft;
+
+        emit LoanRepaid(amountLeft, feesPaid);
+    }
+
+    function _payFees(uint256 amount) private returns (uint256 feesPaid) {
+        if (amount == 0) return feesPaid;
+
+        if (amount > _feesOwed) {
+            feesPaid = _feesOwed;
+            _feesOwed = 0;
+        } else {
+            feesPaid = amount;
+            unchecked {
+                _feesOwed -= amount;
+            }
         }
 
-        emit LoanRepaid(amount);
+        _approveAsset(address(feeManager), feesPaid);
+        feeManager.emitFees(feesPaid);
+
+        emit PaidFees(feesPaid);
     }
 
     /**
