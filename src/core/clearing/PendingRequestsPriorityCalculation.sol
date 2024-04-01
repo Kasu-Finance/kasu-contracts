@@ -105,8 +105,6 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 && _pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
         ) {
             // convert pending withdrawal shares to amounts - minimize rounding errors
-            PendingWithdrawals storage pendingWithdrawals = _getClearingData(targetEpoch).pendingWithdrawals;
-
             for (
                 uint256 withdrawalPriority;
                 withdrawalPriority < tempPriorityTrancheWithdrawalShares.length;
@@ -122,8 +120,9 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                         tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
                     );
                 }
-                pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
-                pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] += withdrawalPriorityAmountSum;
+                clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
+                clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] +=
+                    withdrawalPriorityAmountSum;
             }
             // processing completed
             _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
