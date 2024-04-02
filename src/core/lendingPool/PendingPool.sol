@@ -146,8 +146,7 @@ contract PendingPool is
 
             _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche] = dNftID;
 
-            _trancheDepositNftDetails[dNftID] =
-                DepositNftDetails(amount, tranche, requestEpochId, 0, RequestedFrom.USER);
+            _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, uint64(requestEpochId), 0);
 
             _mint(user, dNftID);
         } else {
@@ -293,7 +292,7 @@ contract PendingPool is
             _mint(user, wNftID);
 
             _trancheWithdrawalNftDetails[wNftID] =
-                WithdrawalNftDetails(sharesToWithdraw, tranche, requestEpochId, 0, requestedFrom);
+                WithdrawalNftDetails(sharesToWithdraw, tranche, uint64(requestEpochId), 0, requestedFrom);
         } else {
             // update existing wNft
             _trancheWithdrawalNftDetails[wNftID].sharesAmount += sharesToWithdraw;
@@ -493,11 +492,11 @@ contract PendingPool is
     }
 
     function _setDepositRequestPriority(uint256 dNftId, uint256 priority) internal override {
-        _trancheDepositNftDetails[dNftId].priority = priority;
+        _trancheDepositNftDetails[dNftId].priority = uint8(priority);
     }
 
     function _setWithdrawalRequestPriority(uint256 wNftId, uint256 priority) internal override {
-        _trancheWithdrawalNftDetails[wNftId].priority = priority;
+        _trancheWithdrawalNftDetails[wNftId].priority = uint8(priority);
     }
 
     // MODIFIERS

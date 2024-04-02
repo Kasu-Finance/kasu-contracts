@@ -14,16 +14,15 @@ enum RequestedFrom {
 struct DepositNftDetails {
     uint256 assetAmount;
     address tranche;
-    uint256 epochId;
-    uint256 priority;
-    RequestedFrom requestedFrom;
+    uint64 epochId;
+    uint8 priority;
 }
 
 struct WithdrawalNftDetails {
     uint256 sharesAmount;
     address tranche;
-    uint256 epochId;
-    uint256 priority;
+    uint64 epochId;
+    uint8 priority;
     RequestedFrom requestedFrom;
 }
 
