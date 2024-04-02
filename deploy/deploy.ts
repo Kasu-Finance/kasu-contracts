@@ -39,6 +39,8 @@ export const lockPeriod720 = 720n * SECONDS_IN_DAY;
 export const lockMultiplier720 = 100_00;
 export const ksuBonusMultiplier720 = 70_00;
 
+export const wEthAddress = '0x4200000000000000000000000000000000000006';
+
 let deploymentPath = path.join('./deployment-addresses-none.json');
 let blockNumber = 0;
 const NEXERA_ID_SIGNER = '0x0BAd9DaD98143b2E946e8A40E4f27537be2f55E2';
@@ -169,11 +171,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     const userManager = UserManager__factory.connect(userManagerDeployment.address, adminSigner);
 
+    const swapper = await deployTransparentProxy(
+        'Swapper',
+        deployOptions(deployer, [
+            kasuControllerDeployment.address,
+        ]),
+    );
+
     const lendingPoolManagerDeployment = await deployTransparentProxy(
         'LendingPoolManager',
         deployOptions(deployer, [
             mockUsdcDeployment.address,
             kasuControllerDeployment.address,
+            wEthAddress,
+            swapper.address,
         ]),
     );
 

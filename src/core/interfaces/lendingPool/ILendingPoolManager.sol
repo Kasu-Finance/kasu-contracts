@@ -20,14 +20,19 @@ interface ILendingPoolManager {
     function ownLendingPool(address contractAddress) external view returns (address lendingPool);
 
     // #### USER #### //
-    function requestDeposit(address lendingPool, address tranche, uint256 amount) external returns (uint256 dNftID);
+    function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
+        external
+        payable
+        returns (uint256 dNftID);
+
     function requestDepositWithKyc(
         address lendingPool,
         address tranche,
-        uint256 amount,
+        uint256 maxAmount,
+        bytes calldata swapData,
         uint256 blockExpiration,
         bytes calldata signature
-    ) external returns (uint256 dNftID);
+    ) external payable returns (uint256 dNftID);
 
     function cancelDepositRequest(address lendingPool, uint256 dNftID) external;
 

@@ -15,9 +15,12 @@ import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../DepositSwap.sol";
 
 contract LendingPoolManager is
     ILendingPoolManager,
+    DepositSwap,
     AssetFunctionsBase,
     ILendingPoolErrors,
     KasuAccessControllable,
@@ -32,7 +35,8 @@ contract LendingPoolManager is
     IUserManager private userManager;
     IClearingCoordinator private clearingCoordinator;
 
-    constructor(address underlyingAsset_, IKasuController controller_)
+    constructor(address underlyingAsset_, IKasuController controller_, IWETH9 weth_, ISwapper swapper_)
+        DepositSwap(weth_, swapper_)
         AssetFunctionsBase(underlyingAsset_)
         KasuAccessControllable(controller_)
     {}
@@ -67,40 +71,61 @@ contract LendingPoolManager is
     }
 
     // #### USER DEPOSITS #### //
-    function requestDeposit(address lendingPool, address tranche, uint256 amount)
+    function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
         external
+        payable
         whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
         isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
-        return _requestDeposit(lendingPool, tranche, amount);
+        return _requestDeposit(lendingPool, tranche, maxAmount, swapData);
     }
 
     function requestDepositWithKyc(
         address lendingPool,
         address tranche,
-        uint256 amount,
+        uint256 maxAmount,
+        bytes calldata swapData,
         uint256 blockExpiration,
         bytes calldata signature
     )
         external
+        payable
         whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
         isUserKycd(msg.sender, blockExpiration, signature)
         returns (uint256 dNftID)
     {
-        return _requestDeposit(lendingPool, tranche, amount);
+        return _requestDeposit(lendingPool, tranche, maxAmount, swapData);
     }
 
-    function _requestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
-        _transferAssetsFrom(msg.sender, address(this), amount);
+    function _requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
+        internal
+        returns (uint256 dNftID)
+    {
+        uint256 amount;
+        address[] memory swapTokens;
+        if (swapData.length > 0) {
+            SwapDepositBag memory swapBag = abi.decode(swapData, (SwapDepositBag));
+            swapTokens = swapBag.inTokens;
+            uint256 swappedAmount = _transferAndSwap(swapBag, address(underlyingAsset));
+            amount = Math.min(swappedAmount, maxAmount);
+        } else {
+            amount = maxAmount;
+            _transferAssetsFrom(msg.sender, address(this), amount);
+        }
+
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
         userManager.userRequestedDeposit(msg.sender, lendingPool);
         dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
+
+        if (swapTokens.length > 0 || msg.value > 0) {
+            _postSwap(swapTokens, address(underlyingAsset));
+        }
     }
 
     function cancelDepositRequest(address lendingPool, uint256 dNftID)
