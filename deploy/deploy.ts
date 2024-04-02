@@ -14,6 +14,7 @@ import {
     MockKsuPrice__factory,
     MockUSDC__factory,
     SystemVariables__factory,
+    UserManager__factory,
 } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
@@ -149,6 +150,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               ]),
           );
 
+    const feeManagerDeployment = await deployTransparentProxy(
+        'FeeManager',
+        deployOptions(deployer, [
+            mockUsdcDeployment.address,
+            systemVariablesDeployment.address,
+            kasuControllerDeployment.address,
+            ksuLockingDeployment.address,
+        ]),
+    )
+
     const userManagerDeployment = await deployTransparentProxy(
         'UserManager',
         deployOptions(deployer, [
@@ -156,6 +167,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             ksuLockingDeployment.address,
         ]),
     );
+    const userManager = UserManager__factory.connect(userManagerDeployment.address, adminSigner);
 
     const lendingPoolManagerDeployment = await deployTransparentProxy(
         'LendingPoolManager',
@@ -164,6 +176,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             kasuControllerDeployment.address,
         ]),
     );
+
+    tx = await userManager.initialize(lendingPoolManagerDeployment.address);
+    await tx.wait(1);
 
     const kasuAllowListDeployment = await deployTransparentProxy(
         'KasuAllowList',
@@ -213,6 +228,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions(deployer, [
             systemVariablesDeployment.address,
             clearingCoordinatorDeployment.address,
+            feeManagerDeployment.address,
             mockUsdcDeployment.address,
         ]),
     );

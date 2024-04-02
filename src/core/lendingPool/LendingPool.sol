@@ -728,11 +728,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert PoolConfigurationIsIncorrect("pool admin is zero address");
         }
 
-        // desiredDrawAmount
-        if (_poolConfiguration.desiredDrawAmount == 0) {
-            revert PoolConfigurationIsIncorrect("desired loan amount is zero");
-        }
-
         uint256 maxTrancheInterestRate = systemVariables.maxTrancheInterestRate();
 
         // verify tranche: number of tranches, interest rates,  ratios, maxDepositAmount

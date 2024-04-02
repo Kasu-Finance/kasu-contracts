@@ -1,4 +1,5 @@
-import * as addresses from '../deployments/localhost/addresses-localhost.json';
+import path from 'path';
+import fs from 'fs';
 import {
     KasuAllowList__factory,
     KasuController__factory,
@@ -13,8 +14,16 @@ import {
 } from '../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse, Signer } from 'ethers';
 
+const POOL_CLEARING_MANAGER_PK = "";
+// address: 0x97cbcD33f1075070e59F354E4eCf71Ed6267E1ED
+
 async function main() {
     let tx: ContractTransactionResponse;
+
+    const deploymentAddressesPath = path.join(`./deployments/${hre.network.name}/addresses-${hre.network.name}.json`);
+    const deploymentAddresses = JSON.parse((fs.readFileSync(deploymentAddressesPath)).toString());
+
+    const clearingManager = new hre.ethers.Wallet(POOL_CLEARING_MANAGER_PK, hre.ethers.provider);
 
     // signers
     const namedSigners = await hre.ethers.getNamedSigners();
@@ -31,20 +40,20 @@ async function main() {
     console.info('Finding accounts with USDC');
 
     const usdcAdmin = MockUSDC__factory.connect(
-        addresses['USDC'].address,
+        deploymentAddresses['USDC'].address,
         adminAccount,
     );
 
-    tx = await usdcAdmin.transfer(aliceAccount, 1000_000_000); // alice: 1000 USDC
+    tx = await usdcAdmin.transfer(aliceAccount, 2000_000_000); // alice: 1000 USDC
     await tx.wait(1);
 
-    tx = await usdcAdmin.transfer(bobAccount, 1000_000_000); // bob: 1000 USDC
+    tx = await usdcAdmin.transfer(bobAccount, 2000_000_000); // bob: 1000 USDC
     await tx.wait(1);
 
     // access control
     console.info('Granting ROLE_LENDING_POOL_CREATOR role');
     const kasuControllerAdmin = KasuController__factory.connect(
-        addresses['KasuController'].address,
+        deploymentAddresses['KasuController'].address,
         adminAccount,
     );
 
@@ -61,31 +70,25 @@ async function main() {
     console.info('Creating Lending Pool');
 
     const lendingPoolManagerAdmin = LendingPoolManager__factory.connect(
-        addresses['LendingPoolManager'].address,
+        deploymentAddresses['LendingPoolManager'].address,
         poolCreatorAccount,
     );
 
     const juniorTrancheConfig: CreateTrancheConfigStruct = {
-        trancheName: 'test junior tranche',
-        trancheSymbol: 'JT',
         ratio: 20_00, // 20%
-        interestRate: 3_00, // 10%
+        interestRate: 2500000000000000, // 10%
         minDepositAmount: 500_000_000, // 500 USDC
         maxDepositAmount: 3000_000_000, // 3000 USDC
     };
     const mezzoTrancheConfig: CreateTrancheConfigStruct = {
-        trancheName: 'test mezzo tranche',
-        trancheSymbol: 'MT',
         ratio: 30_00,
-        interestRate: 2_00,
+        interestRate: 2000000000000000,
         minDepositAmount: 100_000_000,
         maxDepositAmount: 10_000_000_000,
     };
     const seniorTrancheConfig: CreateTrancheConfigStruct = {
-        trancheName: 'test senior tranche',
-        trancheSymbol: 'ST',
         ratio: 50_00,
-        interestRate: 1_00,
+        interestRate: 1500000000000000,
         minDepositAmount: 10_000_000,
         maxDepositAmount: 100_000_000_000,
     };
@@ -100,23 +103,24 @@ async function main() {
         ],
         poolAdmin: poolAdminAccount.address,
         drawRecipient: drawRecipientAccount.address,
-        desiredDrawAmount: BigInt(100_000_000_000),
+        desiredDrawAmount: BigInt(0),
     };
 
     tx = await lendingPoolManagerAdmin.createPool(createPoolConfig);
-    await tx.wait(1);
+    const txReceipt = await tx.wait(1);
 
     // get new lending pool address
     console.info('Get new lending pool address');
 
     const lendingPoolFactory = LendingPoolFactory__factory.connect(
-        addresses['LendingPoolFactory'].address,
+        deploymentAddresses['LendingPoolFactory'].address,
         adminAccount,
     );
 
     const allPoolCreatedFilter = lendingPoolFactory.filters.PoolCreated();
     const allPoolCreatedEvents = await lendingPoolFactory.queryFilter(
         allPoolCreatedFilter,
+        txReceipt ? txReceipt.blockNumber : undefined
     );
 
     const lastEvent = allPoolCreatedEvents[allPoolCreatedEvents.length - 1];
@@ -128,10 +132,20 @@ async function main() {
     console.info('PendingPool Address:', createdPendingPoolAddress);
     console.info('Tranche Addresses"', createdTrancheAddresses);
 
+    const ROLE_POOL_CLEARING_MANAGER = hre.ethers.id(
+        'ROLE_POOL_CLEARING_MANAGER',
+    );
+    tx = await kasuControllerAdmin.connect(poolAdminAccount).grantLendingPoolRole(
+        createdLendingPoolAddress,
+        ROLE_POOL_CLEARING_MANAGER,
+        clearingManager.address,
+    );
+    await tx.wait(1);
+
     // add users to allow list
     console.info('Add users to allow list');
     const kasuAllowListAdmin = KasuAllowList__factory.connect(
-        addresses['KasuAllowList'].address,
+        deploymentAddresses['KasuAllowList'].address,
         adminAccount,
     );
 
@@ -143,21 +157,24 @@ async function main() {
 
     // deposit request
     await requestDeposit(
+        deploymentAddresses,
         aliceAccount,
         createdLendingPoolAddress,
-        createdTrancheAddresses[0],
-        BigInt(350_000_000),
+        createdTrancheAddresses[2],
+        BigInt(2000_000_001),
     );
 
     await requestDeposit(
+        deploymentAddresses,
         bobAccount,
         createdLendingPoolAddress,
-        createdTrancheAddresses[1],
-        BigInt(100_000_000),
+        createdTrancheAddresses[2],
+        BigInt(1000_000_001),
     );
 }
 
 async function requestDeposit(
+    addresses: any,
     requester: Signer,
     lendingPoolAddress: string,
     trancheAddress: string,
