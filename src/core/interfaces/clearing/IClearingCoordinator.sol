@@ -85,6 +85,7 @@ interface IClearingCoordinator {
      */
     function getClearingConfig(address lendingPoolAddress, uint256 targetEpoch)
         external
+        view
         returns (ClearingConfiguration memory);
 
     event ClearingExecuted(address lendingPool, uint256 epoch, ClearingStatus clearingStatus);

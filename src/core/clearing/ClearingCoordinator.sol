@@ -184,6 +184,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // Step 3 - Calculate accepted deposit and withdrawal amount for each tranche and priority
         if (clearingStatus == ClearingStatus.STEP3_PENDING) {
+            _initialiseClearingConfig(lendingPoolAddress, targetEpoch);
             _clearingSteps.calculateAndSaveAcceptedRequests(
                 getClearingConfig(lendingPoolAddress, targetEpoch),
                 _getLendingPoolBalance(lendingPoolAddress),
@@ -225,8 +226,15 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
     function getClearingConfig(address lendingPool, uint256 targetEpoch)
         public
+        view
         returns (ClearingConfiguration memory)
     {
+        return clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config;
+    }
+
+    //*** Helper Methods ***/
+
+    function _initialiseClearingConfig(address lendingPool, uint256 targetEpoch) private {
         if (
             !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isSet
                 && !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isOverwritten
@@ -234,10 +242,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
             setDefaultClearingConfig(lendingPool, targetEpoch);
         }
-        return clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config;
     }
-
-    //*** Helper Methods ***/
 
     function _setClearingConfig(
         address lendingPool,
