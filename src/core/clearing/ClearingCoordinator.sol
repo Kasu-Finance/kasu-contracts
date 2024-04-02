@@ -103,7 +103,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function setDefaultClearingConfig(address lendingPool, uint256 epoch) public onlyLendingPoolManager {
-        if (clearingStatus >= ClearingStatus.STEP3_PENDING) {
+        if (lendingPoolClearingStatus[lendingPool][epoch] >= ClearingStatus.STEP3_PENDING) {
             revert CannotOverrideClearingConfig(lendingPool, epoch);
         }
         ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
