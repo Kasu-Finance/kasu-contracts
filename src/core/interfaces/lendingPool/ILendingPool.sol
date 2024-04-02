@@ -57,6 +57,8 @@ interface ILendingPool is IERC20 {
 
     function applyInterests(uint256 epoch) external;
 
+    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external;
+
     // #### POOL DELEGATE #### //
     function drawFundsImmediate(uint256 amount) external;
 

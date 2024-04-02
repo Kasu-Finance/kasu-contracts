@@ -98,7 +98,6 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             revert CannotOverrideClearingConfig(lendingPool, targetEpoch);
         }
 
-        // TODO: check values before setting
         _setClearingConfig(lendingPool, targetEpoch, clearingConfig, true);
     }
 
@@ -250,6 +249,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         ClearingConfiguration memory clearingConfig,
         bool isOverridden
     ) private {
+        ILendingPool(lendingPool).verifyClearingConfig(clearingConfig);
+
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].config.drawAmount = clearingConfig.drawAmount;
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].config.maxExcessPercentage =
             clearingConfig.maxExcessPercentage;
