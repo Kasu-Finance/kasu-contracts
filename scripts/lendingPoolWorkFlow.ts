@@ -161,7 +161,7 @@ async function main() {
         aliceAccount,
         createdLendingPoolAddress,
         createdTrancheAddresses[2],
-        BigInt(2000_000_001),
+        BigInt(2000_000_000),
     );
 
     await requestDeposit(
@@ -169,7 +169,7 @@ async function main() {
         bobAccount,
         createdLendingPoolAddress,
         createdTrancheAddresses[2],
-        BigInt(1000_000_001),
+        BigInt(1000_000_000),
     );
 }
 
