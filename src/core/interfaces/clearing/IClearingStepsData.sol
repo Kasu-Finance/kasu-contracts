@@ -49,5 +49,4 @@ struct ClearingConfiguration {
     uint256[] trancheDesiredRatios;
     uint256 maxExcessPercentage;
     uint256 minExcessPercentage;
-    bool isOverridden;
 }

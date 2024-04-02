@@ -191,7 +191,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[2] = 50_00;
 
         ClearingConfiguration memory clearingConfiguration1 =
-            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
+            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
@@ -301,8 +301,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();
-        ClearingConfiguration memory clearingConfiguration2 =
-            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        ClearingConfiguration memory clearingConfiguration2 = ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch2, clearingConfiguration2);
 
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch2, type(uint256).max, type(uint256).max);
@@ -342,8 +341,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[0] = 20_00;
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
-        ClearingConfiguration memory clearingConfiguration1 =
-            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        ClearingConfiguration memory clearingConfiguration1 = ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 10, 10);
@@ -363,8 +361,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[0] = 20_00;
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
-        ClearingConfiguration memory clearingConfiguration1 =
-            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        ClearingConfiguration memory clearingConfiguration1 = ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
     }
 
@@ -382,8 +379,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[0] = 20_00;
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
-        ClearingConfiguration memory clearingConfiguration1 =
-            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        ClearingConfiguration memory clearingConfiguration1 = ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, type(uint256).max, type(uint256).max);
@@ -475,7 +471,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[2] = 50_00;
 
         ClearingConfiguration memory clearingConfiguration1 =
-            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0, true);
+            ClearingConfiguration(100_000 * 1e6, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, clearingConfiguration1);
 
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1, 30, 30);
@@ -484,8 +480,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(30);
 
         // users should get interests
-        ClearingConfiguration memory clearingConfiguration2 =
-            ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0, true);
+        ClearingConfiguration memory clearingConfiguration2 = ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0);
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1 + 1, clearingConfiguration2);
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, currentEpoch1 + 1, 30, 30);
 
@@ -853,7 +848,7 @@ contract ClearingTest is LendingPoolTestUtils {
         trancheDesiredRatios[1] = 30_00;
         trancheDesiredRatios[2] = 50_00;
         ClearingConfiguration memory clearingConfiguration =
-            ClearingConfiguration(50_000 * 1e6, trancheDesiredRatios, 0, 0, true);
+            ClearingConfiguration(50_000 * 1e6, trancheDesiredRatios, 0, 0);
 
         _registerClearingConfig(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, clearingConfiguration);
 

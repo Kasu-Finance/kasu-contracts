@@ -14,6 +14,18 @@ enum ClearingStatus {
     ENDED
 }
 
+/**
+ * @notice The actual configuration that will be applied per lending pool and epoch when clearing.
+ * @custom:member clearingConfiguration The actual clearingConfiguration applied.
+ * @custom:member isOverwritten true when clearingConfiguration is overwritten, false if not.
+ * @custom:member isSet true when clearingConfiguration is set, false if not.
+ */
+struct AppliedClearingConfiguration {
+    ClearingConfiguration config;
+    bool isOverwritten;
+    bool isSet;
+}
+
 interface IClearingCoordinator {
     function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
         external
@@ -37,8 +49,15 @@ interface IClearingCoordinator {
      * @param epoch The epoch to run clearing against.
      * @param clearingConfig The clearing config that will overwrite the default one.
      */
-    function registerClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+    function overwriteClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
         external;
+
+    /**
+     * @notice Removes the clearing config overwrite.
+     * @param lendingPool The lending pool that clearing config will be registered.
+     * @param epoch The epoch to run clearing against.
+     */
+    function setDefaultClearingConfig(address lendingPool, uint256 epoch) external;
 
     /**
      * @notice Runs all the tasks required for clearing to succeed. Tasks run in sequence.
@@ -61,12 +80,11 @@ interface IClearingCoordinator {
     /**
      * @notice Returns the active config for the clearing task.
      * @param lendingPoolAddress The lending pool of the clearing config.
-     * @param epoch The epoch of the clearing config.
+     * @param targetEpoch The epoch of the clearing config.
      * @return clearingConfig The clearing config that will overwrite the default one.
      */
-    function getClearingConfig(address lendingPoolAddress, uint256 epoch)
+    function getClearingConfig(address lendingPoolAddress, uint256 targetEpoch)
         external
-        view
         returns (ClearingConfiguration memory);
 
     event ClearingExecuted(address lendingPool, uint256 epoch, ClearingStatus clearingStatus);

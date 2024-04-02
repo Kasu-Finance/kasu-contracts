@@ -381,7 +381,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         uint256 targetEpoch,
         ClearingConfiguration memory clearingConfig
     ) internal prank(caller) {
-        lendingPoolManager.registerClearingConfig(lendingPool, targetEpoch, clearingConfig);
+        lendingPoolManager.overwriteClearingConfig(lendingPool, targetEpoch, clearingConfig);
     }
 
     function _doClearing(
