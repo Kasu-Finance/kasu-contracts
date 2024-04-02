@@ -2,14 +2,9 @@
 pragma solidity 0.8.23;
 
 import "../../src/core/interfaces/IKsuPrice.sol";
-import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-contract MockKsuPrice is IKsuPrice, Initializable {
+contract MockKsuPrice is IKsuPrice {
     uint256 private _ksuTokenPrice;
-
-    function initialize() external initializer {
-        _ksuTokenPrice = 2e18;
-    }
 
     function test_mock() external pure {}
 

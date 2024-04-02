@@ -8,7 +8,6 @@ import "./BaseTestUtils.sol";
 import "../../shared/MockKsuPrice.sol";
 import "../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../src/core/lendingPool/LendingPoolFactory.sol";
-import "../../../src/core/KsuPrice.sol";
 import "../../../src/core/SystemVariables.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
@@ -23,7 +22,7 @@ import "../../../src/core/FeeManager.sol";
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
-    KsuPrice internal ksuPrice;
+    MockKsuPrice internal ksuPrice;
     SystemVariables internal systemVariables;
     UserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
@@ -186,9 +185,10 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         MockKsuPrice ksuPriceImpl = new MockKsuPrice();
         TransparentUpgradeableProxy ksuPriceProxy =
             new TransparentUpgradeableProxy(address(ksuPriceImpl), address(proxyAdmin), "");
-        ksuPrice = KsuPrice(address(ksuPriceProxy));
+        ksuPrice = MockKsuPrice(address(ksuPriceProxy));
 
-        ksuPrice.initialize();
+        // set price
+        ksuPrice.setKsuTokenPrice(2e18);
     }
 
     function _deploySystemVariables() internal {

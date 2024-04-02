@@ -18,7 +18,7 @@ import {
 } from '../typechain-types';
 import fs from 'fs';
 import path from 'path';
-import { ContractTransactionResponse } from 'ethers';
+import { ContractTransactionResponse, parseEther } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
 
 export const SECONDS_IN_DAY = 86400n;
@@ -130,7 +130,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         mockKsuPriceDeployment.address,
         adminSigner,
     );
-    tx = await mockKsuPrice.initialize();
+    tx = await mockKsuPrice.setKsuTokenPrice(parseEther('2'));
     await tx.wait(1);
 
     const systemVariablesDeployment = isLocalDeployment()
