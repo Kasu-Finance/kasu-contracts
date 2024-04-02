@@ -83,7 +83,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         nextLendingPoolClearingEpoch[lendingPool] = systemVariables.getCurrentRequestEpoch();
     }
 
-    function overwriteClearingConfig(
+    function overrideClearingConfig(
         address lendingPool,
         uint256 targetEpoch,
         ClearingConfiguration calldata clearingConfig
@@ -236,7 +236,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     function _initialiseClearingConfig(address lendingPool, uint256 targetEpoch) private {
         if (
             !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isSet
-                && !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isOverwritten
+                && !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isOverridden
         ) {
             ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
             setDefaultClearingConfig(lendingPool, targetEpoch);
@@ -262,7 +262,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].config.trancheDesiredRatios[i] =
                 clearingConfig.trancheDesiredRatios[i];
         }
-        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].isOverwritten = isOverridden;
+        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].isOverridden = isOverridden;
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].isSet = true;
     }
 

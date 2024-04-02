@@ -233,12 +233,12 @@ contract LendingPoolManager is
 
     // #### POOL CLEARING MANAGER #### //
 
-    function overwriteClearingConfig(
+    function overrideClearingConfig(
         address lendingPool,
         uint256 targetEpoch,
         ClearingConfiguration calldata clearingConfig
     ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
-        clearingCoordinator.overwriteClearingConfig(lendingPool, targetEpoch, clearingConfig);
+        clearingCoordinator.overrideClearingConfig(lendingPool, targetEpoch, clearingConfig);
     }
 
     function setDefaultClearingConfig(address lendingPool, uint256 targetEpoch)

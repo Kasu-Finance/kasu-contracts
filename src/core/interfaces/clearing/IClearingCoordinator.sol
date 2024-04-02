@@ -22,7 +22,7 @@ enum ClearingStatus {
  */
 struct AppliedClearingConfiguration {
     ClearingConfiguration config;
-    bool isOverwritten;
+    bool isOverridden;
     bool isSet;
 }
 
@@ -49,7 +49,7 @@ interface IClearingCoordinator {
      * @param epoch The epoch to run clearing against.
      * @param clearingConfig The clearing config that will overwrite the default one.
      */
-    function overwriteClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
+    function overrideClearingConfig(address lendingPool, uint256 epoch, ClearingConfiguration calldata clearingConfig)
         external;
 
     /**
