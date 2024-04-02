@@ -83,11 +83,11 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         nextLendingPoolClearingEpoch[lendingPool] = systemVariables.getCurrentRequestEpoch();
     }
 
-    function overrideClearingConfig(
+    function _overrideClearingConfig(
         address lendingPool,
         uint256 targetEpoch,
         ClearingConfiguration calldata clearingConfig
-    ) external onlyLendingPoolManager {
+    ) internal onlyLendingPoolManager {
         if (nextLendingPoolClearingEpoch[lendingPool] != targetEpoch) {
             revert InvalidClearingTargetEpochForLendingPool(
                 lendingPool, targetEpoch, nextLendingPoolClearingEpoch[lendingPool]
@@ -113,7 +113,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         address lendingPoolAddress,
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize
+        uint256 acceptedRequestsExecutionBatchSize,
+        ClearingConfiguration calldata clearingConfig,
+        bool isConfigOverridden
     ) external onlyLendingPoolManager {
         ClearingStatus clearingStatus = lendingPoolClearingStatus[lendingPoolAddress][targetEpoch];
 
@@ -183,6 +185,10 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // Step 3 - Calculate accepted deposit and withdrawal amount for each tranche and priority
         if (clearingStatus == ClearingStatus.STEP3_PENDING) {
+            if (isConfigOverridden) {
+                _overrideClearingConfig(lendingPoolAddress, targetEpoch, clearingConfig);
+            }
+
             _initialiseClearingConfig(lendingPoolAddress, targetEpoch);
             _clearingSteps.calculateAndSaveAcceptedRequests(
                 getClearingConfig(lendingPoolAddress, targetEpoch),
@@ -238,7 +244,6 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isSet
                 && !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isOverridden
         ) {
-            ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
             setDefaultClearingConfig(lendingPool, targetEpoch);
         }
     }

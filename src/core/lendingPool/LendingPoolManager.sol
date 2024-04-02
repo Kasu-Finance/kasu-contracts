@@ -233,14 +233,6 @@ contract LendingPoolManager is
 
     // #### POOL CLEARING MANAGER #### //
 
-    function overrideClearingConfig(
-        address lendingPool,
-        uint256 targetEpoch,
-        ClearingConfiguration calldata clearingConfig
-    ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
-        clearingCoordinator.overrideClearingConfig(lendingPool, targetEpoch, clearingConfig);
-    }
-
     function setDefaultClearingConfig(address lendingPool, uint256 targetEpoch)
         external
         whenNotPaused
@@ -253,10 +245,17 @@ contract LendingPoolManager is
         address lendingPool,
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize
+        uint256 acceptedRequestsExecutionBatchSize,
+        ClearingConfiguration calldata clearingConfigOverride,
+        bool isConfigOverridden
     ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
         clearingCoordinator.doClearing(
-            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
+            lendingPool,
+            targetEpoch,
+            pendingRequestsPriorityCalculationBatchSize,
+            acceptedRequestsExecutionBatchSize,
+            clearingConfigOverride,
+            isConfigOverridden
         );
     }
 

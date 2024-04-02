@@ -254,7 +254,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external {
+    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
         if (clearingConfig.minExcessPercentage > clearingConfig.maxExcessPercentage) {
             revert PoolConfigurationIsIncorrect("minExcessPercentage more than maxExcessPercentage");
         }
