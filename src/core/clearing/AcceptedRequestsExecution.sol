@@ -77,6 +77,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
                     // loop through the target tranches that the deposit request will accepted
                     // accepted tranche index is always same or greater than the request tranche index
+
+                    uint256 requestAmountLeft = depositNftDetails.assetAmount;
                     for (
                         uint256 targetTrancheIndex = requestTrancheIndex;
                         targetTrancheIndex < trancheDepositAcceptedAmounts.length;
@@ -89,17 +91,38 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             .tranchePriorityDepositsAmounts[requestTrancheIndex][depositNftDetails.priority];
 
                         // calculate the amount that will be accepted in this tranche
-                        if (totalTranchePriorityDepositedAmount > 0) {
-                            uint256 userAcceptedDepositAmount = totalAcceptedAmount * depositNftDetails.assetAmount
-                                / totalTranchePriorityDepositedAmount;
+                        if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
+                            // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
+                            _acceptDepositRequest(
+                                userRequestNftId, _getTranche(targetTrancheIndex), depositNftDetails.assetAmount
+                            );
+                            requestAmountLeft = 0;
+                            break;
+                        } else if (totalTranchePriorityDepositedAmount > 0) {
+                            uint256 userAcceptedDepositAmountMultiplied =
+                                totalAcceptedAmount * depositNftDetails.assetAmount;
+                            uint256 userAcceptedDepositAmount =
+                                userAcceptedDepositAmountMultiplied / totalTranchePriorityDepositedAmount;
+
+                            // round up the amount if there is a remainder, so that we're sure we're accepting at least the total accepted amount
+                            if (userAcceptedDepositAmountMultiplied % totalTranchePriorityDepositedAmount > 0) {
+                                if (userAcceptedDepositAmount < requestAmountLeft) {
+                                    userAcceptedDepositAmount++;
+                                } else if (userAcceptedDepositAmount > requestAmountLeft) {
+                                    userAcceptedDepositAmount = requestAmountLeft;
+                                }
+                            }
+
                             _acceptDepositRequest(
                                 userRequestNftId, _getTranche(targetTrancheIndex), userAcceptedDepositAmount
                             );
+
+                            requestAmountLeft -= userAcceptedDepositAmount;
                         }
                     }
 
                     // whatever is not accepted will be rejected, deposit requests are not carried in next epochs
-                    if (trancheDepositNftDetails(userRequestNftId).assetAmount > 0) {
+                    if (requestAmountLeft > 0) {
                         _rejectDepositRequest(userRequestNftId);
                     }
                 }

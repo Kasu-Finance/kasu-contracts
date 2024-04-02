@@ -539,7 +539,7 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(
             junior.convertToAssets(junior.balanceOf(user16)),
             5333_333_333 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
-            1
+            2
         );
         assertApproxEqAbs(
             junior.convertToAssets(junior.balanceOf(user17)),
@@ -977,5 +977,76 @@ contract ClearingTest is LendingPoolTestUtils {
 
         assertEq(pendingPool.totalSupply(), 0);
         assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 0, 1);
+    }
+
+    function test_doClearing_testForRoundingErrorsWhenAcceptingDepositsAndDrawing() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        uint256 drawAmount = 2000_000000;
+        vm.startPrank(poolManagerAccount);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, drawAmount);
+        lendingPoolManager.updateTargetExcessLiquidityPercentage(lpd.lendingPool, 0);
+        vm.stopPrank();
+
+        uint256 aliceDeposit = 2000_000001;
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], aliceDeposit);
+        uint256 bobDeposit = 1000_000001;
+        _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], bobDeposit);
+
+        uint256 nextClearingEpoch = systemVariables.getCurrentEpochNumber();
+
+        skip(6 days);
+
+        userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
+
+        // ### ACT ###
+
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 2, 2);
+
+        // ### ASSERT ###
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+        PoolConfiguration memory poolConfig = lendingPool.poolConfiguration();
+
+        assertApproxEqAbs(lendingPool.totalSupply(), drawAmount, 6);
+
+        // assert alice
+        uint256 aliceAccepted = aliceDeposit * drawAmount / (aliceDeposit + bobDeposit);
+        assertApproxEqAbs(lendingPool.getUserBalance(alice), aliceAccepted, 3);
+
+        assertApproxEqAbs(
+            ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(alice),
+            aliceAccepted * poolConfig.tranches[0].ratio / FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            ILendingPoolTranche(lpd.tranches[1]).getUserActiveAssets(alice),
+            aliceAccepted * poolConfig.tranches[1].ratio / FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            ILendingPoolTranche(lpd.tranches[2]).getUserActiveAssets(alice),
+            aliceAccepted * poolConfig.tranches[2].ratio / FULL_PERCENT,
+            1
+        );
+
+        // assert bob
+        uint256 bobAccepted = bobDeposit * drawAmount / (aliceDeposit + bobDeposit);
+        assertApproxEqAbs(lendingPool.getUserBalance(bob), bobAccepted, 3);
+
+        assertApproxEqAbs(
+            ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(bob),
+            bobAccepted * poolConfig.tranches[0].ratio / FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            ILendingPoolTranche(lpd.tranches[1]).getUserActiveAssets(bob),
+            bobAccepted * poolConfig.tranches[1].ratio / FULL_PERCENT,
+            1
+        );
+        assertApproxEqAbs(
+            ILendingPoolTranche(lpd.tranches[2]).getUserActiveAssets(bob),
+            bobAccepted * poolConfig.tranches[2].ratio / FULL_PERCENT,
+            1
+        );
     }
 }
