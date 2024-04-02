@@ -69,6 +69,8 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         _disableInitializers();
     }
 
+    function test_mock() external pure {}
+
     function initialize(SystemVariablesSetup memory systemVariablesSetup) external initializer {
         if (
             systemVariablesSetup.firstEpochStartTimestamp < block.timestamp
