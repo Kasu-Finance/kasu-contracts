@@ -76,8 +76,6 @@ interface ILendingPoolManager {
 
     // clearing
 
-    function setDefaultClearingConfig(address lendingPool, uint256 targetEpoch) external;
-
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,

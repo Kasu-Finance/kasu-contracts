@@ -101,14 +101,6 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         _setClearingConfig(lendingPool, targetEpoch, clearingConfig, true);
     }
 
-    function setDefaultClearingConfig(address lendingPool, uint256 epoch) public onlyLendingPoolManager {
-        if (lendingPoolClearingStatus[lendingPool][epoch] >= ClearingStatus.STEP3_PENDING) {
-            revert CannotOverrideClearingConfig(lendingPool, epoch);
-        }
-        ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
-        _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
-    }
-
     function doClearing(
         address lendingPoolAddress,
         uint256 targetEpoch,
@@ -187,9 +179,10 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         if (clearingStatus == ClearingStatus.STEP3_PENDING) {
             if (isConfigOverridden) {
                 _overrideClearingConfig(lendingPoolAddress, targetEpoch, clearingConfig);
+            } else {
+                _setDefaultClearingConfig(lendingPoolAddress, targetEpoch);
             }
 
-            _initialiseClearingConfig(lendingPoolAddress, targetEpoch);
             _clearingSteps.calculateAndSaveAcceptedRequests(
                 getClearingConfig(lendingPoolAddress, targetEpoch),
                 _getLendingPoolBalance(lendingPoolAddress),
@@ -239,13 +232,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
     //*** Helper Methods ***/
 
-    function _initialiseClearingConfig(address lendingPool, uint256 targetEpoch) private {
-        if (
-            !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isSet
-                && !clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].isOverridden
-        ) {
-            setDefaultClearingConfig(lendingPool, targetEpoch);
-        }
+    function _setDefaultClearingConfig(address lendingPool, uint256 epoch) public onlyLendingPoolManager {
+        ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
+        _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
     }
 
     function _setClearingConfig(
@@ -268,7 +257,6 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
                 clearingConfig.trancheDesiredRatios[i];
         }
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].isOverridden = isOverridden;
-        clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].isSet = true;
     }
 
     function _getLendingPoolClearingConfig(address lendingPoolAddress) private returns (ClearingConfiguration memory) {

@@ -233,14 +233,6 @@ contract LendingPoolManager is
 
     // #### POOL CLEARING MANAGER #### //
 
-    function setDefaultClearingConfig(address lendingPool, uint256 targetEpoch)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender)
-    {
-        clearingCoordinator.setDefaultClearingConfig(lendingPool, targetEpoch);
-    }
-
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,

@@ -23,7 +23,6 @@ enum ClearingStatus {
 struct AppliedClearingConfiguration {
     ClearingConfiguration config;
     bool isOverridden;
-    bool isSet;
 }
 
 interface IClearingCoordinator {
@@ -40,13 +39,6 @@ interface IClearingCoordinator {
      * @param lendingPool The lending pool address.
      */
     function initializeLendingPool(address lendingPool) external;
-
-    /**
-     * @notice Removes the clearing config overwrite.
-     * @param lendingPool The lending pool that clearing config will be registered.
-     * @param epoch The epoch to run clearing against.
-     */
-    function setDefaultClearingConfig(address lendingPool, uint256 epoch) external;
 
     /**
      * @notice Runs all the tasks required for clearing to succeed. Tasks run in sequence.
