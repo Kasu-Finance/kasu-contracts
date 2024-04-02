@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "../../../src/core/lendingPool/LendingPoolStoppable.sol";
 import "../../../src/shared/CommonErrors.sol";
+import "../../shared/MockExchange.sol";
+import "../../../src/core/DepositSwap.sol";
 
 contract LendingPoolTest is LendingPoolTestUtils {
     function setUp() public {
@@ -34,7 +36,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu.selector, bob)
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "");
         vm.stopPrank();
 
         vm.prank(admin);
@@ -45,7 +47,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         deal(address(mockUsdc), userNotAllowed, 125 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(IKasuAllowList.UserNotInAllowList.selector, userNotAllowed));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "");
         vm.stopPrank();
 
         // request deposit on user that was allowed and now is disallowed
@@ -55,7 +57,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(IKasuAllowList.UserNotInAllowList.selector, bob));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "");
         vm.stopPrank();
         vm.prank(admin);
         kasuAllowList.allowUser(bob);
@@ -684,7 +686,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         deal(address(mockUsdc), bob, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6, "");
         vm.stopPrank();
 
         // deposit first lost capital after stop - not allowed
@@ -964,5 +966,165 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ACT ###
         vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.OnlyClearingCoordinator.selector));
         ILendingPool(lpd.lendingPool).applyInterests(1);
+    }
+
+    function test_mockExchange_swap() public {
+        // ARRANGE
+        uint256 rate = 30; // 0.003 * 100_00
+        (address exchange, address inToken) = _createMockExchange(rate);
+        deal(address(inToken), alice, 12_000 ether);
+
+        // ACT
+        vm.startPrank(alice);
+        IERC20(inToken).approve(exchange, 12_000 ether);
+        uint256 out = MockExchange(exchange).swap(12_000 ether, alice);
+        vm.stopPrank();
+
+        // ASSERT
+        assertEq(out, 12_000 * 1e6 * 0.003);
+        assertEq(out, 36000000);
+        assertEq(IERC20(mockUsdc).balanceOf(alice), out);
+    }
+
+    function test_swapper_invalidController() public {
+        vm.expectRevert(abi.encodeWithSelector(ConfigurationAddressZero.selector));
+        new Swapper(IKasuController(address(0)));
+    }
+
+    function test_swapper_setAllowList_unauthorized() public {
+        // ARRANGE
+        address[] memory addresses = ArraysUtil.toArray(address(0x1));
+        bool[] memory values = ArraysUtil.toArray(true);
+
+        // ACT & ASSERT
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
+        swapper.updateExchangeAllowlist(addresses, values);
+        vm.stopPrank();
+    }
+
+    function test_swapper_setAllowList() public {
+        // ASSERT
+        assertFalse(swapper.isExchangeAllowed(address(lendingPoolManager)));
+
+        // ACT
+        vm.startPrank(admin);
+        swapper.updateExchangeAllowlist(ArraysUtil.toArray(address(lendingPoolManager)), ArraysUtil.toArray(true));
+        vm.stopPrank();
+
+        // ASSERT
+        assertTrue(swapper.isExchangeAllowed(address(lendingPoolManager)));
+    }
+
+    function test_swapper_exchangeNotContract() public {
+        // ARRANGE
+        address[] memory addresses = ArraysUtil.toArray(address(0x1));
+        bool[] memory values = ArraysUtil.toArray(true);
+
+        // ACT & ASSERT
+        vm.startPrank(admin);
+        vm.expectRevert(abi.encodeWithSelector(AddressNotContract.selector, addresses[0]));
+        swapper.updateExchangeAllowlist(addresses, values);
+        vm.stopPrank();
+    }
+
+    function test_swapper_exchangeNotAllowed() public {
+        // ARRANGE
+        (address exchange, address inToken) = _createMockExchange(30);
+        SwapInfo[] memory swapInfo = new SwapInfo[](1);
+        swapInfo[0] = SwapInfo(
+            exchange,
+            inToken,
+            abi.encodeWithSelector(MockExchange(exchange).swap.selector, 12_000 ether, address(lendingPoolManager))
+        );
+
+        address[] memory inTokens = ArraysUtil.toArray(inToken);
+
+        // ACT & ASSERT
+        vm.startPrank(address(lendingPoolManager));
+        vm.expectRevert(abi.encodeWithSelector(ExchangeNotAllowed.selector, exchange));
+        swapper.swap(inTokens, swapInfo, address(0x1), address(0x1));
+        vm.stopPrank();
+    }
+
+    function test_swapper_swap_unauthorized() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_SWAPPER)
+        );
+        vm.startPrank(alice);
+        swapper.swap(new address[](0), new SwapInfo[](0), address(0), address(0));
+        vm.stopPrank();
+    }
+
+    function test_swapper_swap_noSwapInfo() public {
+        SwapInfo[] memory swapInfo = new SwapInfo[](1);
+        address[] memory tokens = ArraysUtil.toArray(address(0x1));
+
+        vm.startPrank(address(lendingPoolManager));
+
+        vm.expectRevert(abi.encodeWithSelector(InvalidSwapData.selector));
+        swapper.swap(tokens, new SwapInfo[](0), address(0x1), address(0x1));
+
+        vm.expectRevert(abi.encodeWithSelector(InvalidSwapData.selector));
+        swapper.swap(new address[](0), swapInfo, address(0x1), address(0x1));
+
+        vm.expectRevert(abi.encodeWithSelector(InvalidSwapData.selector));
+        swapper.swap(tokens, swapInfo, address(0), address(0x1));
+
+        vm.expectRevert(abi.encodeWithSelector(InvalidSwapData.selector));
+        swapper.swap(tokens, swapInfo, address(0x1), address(0));
+
+        vm.stopPrank();
+    }
+
+    function test_requestDeposit_swap() public {
+        // ARRANGE
+        uint256 usdcDepositAmount = 36000000;
+        uint256 rate = 30; // 0.003 * 100_00
+        (address exchange, address inToken) = _createMockExchange(rate);
+        deal(address(inToken), alice, 13_500 ether);
+        deal(alice, 12 ether);
+
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // Alice has 13_500, sends 13_000, 12_500 gets swapped, 12_000 deposited
+        // 500 should be returned in inToken
+        // 500 (* 0.003 * 1e6) should be returned in USDC
+        SwapInfo[] memory swapInfo = new SwapInfo[](1);
+        swapInfo[0] = SwapInfo(
+            exchange,
+            inToken,
+            abi.encodeWithSelector(MockExchange(exchange).swap.selector, 12_500 ether, address(lendingPoolManager))
+        );
+
+        SwapDepositBag memory bag = SwapDepositBag({
+            inTokens: ArraysUtil.toArray(inToken),
+            inAmounts: ArraysUtil.toArray(13_000 ether),
+            swapInfo: swapInfo
+        });
+
+        vm.startPrank(admin);
+        swapper.updateExchangeAllowlist(ArraysUtil.toArray(exchange), ArraysUtil.toArray(true));
+        vm.stopPrank();
+
+        // ACT
+        vm.startPrank(alice);
+        IERC20(inToken).approve(address(lendingPoolManager), 13_000 ether);
+
+        // 12 WETH should be returned
+        uint256 depositId = lendingPoolManager.requestDeposit{value: 12 ether}(
+            lpd.lendingPool, lpd.tranches[0], usdcDepositAmount, abi.encode(bag)
+        );
+        vm.stopPrank();
+
+        DepositNftDetails memory depositNFT = IPendingPool(lpd.pendingPool).trancheDepositNftDetails(depositId);
+
+        // ASSERT
+        assertEq(weth.balanceOf(alice), 12 ether); // 12 ETH was deposited into WETH
+        assertEq(IERC20(inToken).balanceOf(alice), 1000 ether); // 500 remained on the wallet and 500 was returned
+        assertEq(depositNFT.assetAmount, usdcDepositAmount); // deposited
+        assertEq(IERC20(mockUsdc).balanceOf(alice), 500 * 0.003 * 1e6); // swapped, but not deposited
     }
 }
