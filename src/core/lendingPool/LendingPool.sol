@@ -254,6 +254,28 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
+        if (clearingConfig.minExcessPercentage > clearingConfig.maxExcessPercentage) {
+            revert PoolConfigurationIsIncorrect("minExcessPercentage more than maxExcessPercentage");
+        }
+
+        if (clearingConfig.maxExcessPercentage > INTEREST_RATE_FULL_PERCENT) {
+            revert PoolConfigurationIsIncorrect("maxExcessPercentage more than 100");
+        }
+
+        if (_poolConfiguration.tranches.length != clearingConfig.trancheDesiredRatios.length) {
+            revert PoolConfigurationIsIncorrect("incorrect tranche length");
+        }
+
+        uint256 ratiosSum;
+        for (uint256 i; i < clearingConfig.trancheDesiredRatios.length; ++i) {
+            ratiosSum += clearingConfig.trancheDesiredRatios[i];
+        }
+        if (ratiosSum != FULL_PERCENT) {
+            revert PoolConfigurationIsIncorrect("invalid tranche ratio sum");
+        }
+    }
+
     function _applyTrancheInterest(address tranche, uint256 epoch) internal {
         uint256 trancheAssetBalance = balanceOf(tranche);
         if (trancheAssetBalance == 0) return;
@@ -742,9 +764,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         uint256 ratiosSum;
         for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
-            if (_poolConfiguration.tranches[i].ratio == 0) {
-                revert PoolConfigurationIsIncorrect("ratio is zero");
-            }
             if (_poolConfiguration.tranches[i].interestRate > maxTrancheInterestRate) {
                 revert PoolConfigurationIsIncorrect("interest rate is more than max allowed");
             }

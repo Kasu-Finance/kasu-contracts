@@ -375,24 +375,22 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         return lendingPoolManager.claimRepaidLoss(lendingPool, tranche, lossId);
     }
 
-    function _registerClearingConfig(
-        address caller,
-        address lendingPool,
-        uint256 targetEpoch,
-        ClearingConfiguration memory clearingConfig
-    ) internal prank(caller) {
-        lendingPoolManager.registerClearingConfig(lendingPool, targetEpoch, clearingConfig);
-    }
-
     function _doClearing(
         address caller,
         address lendingPool,
         uint256 targetEpoch,
         uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize
+        uint256 acceptedRequestsExecutionBatchSize,
+        ClearingConfiguration memory clearingConfig,
+        bool isConfigOverridden
     ) internal prank(caller) {
         lendingPoolManager.doClearing(
-            lendingPool, targetEpoch, pendingRequestsPriorityCalculationBatchSize, acceptedRequestsExecutionBatchSize
+            lendingPool,
+            targetEpoch,
+            pendingRequestsPriorityCalculationBatchSize,
+            acceptedRequestsExecutionBatchSize,
+            clearingConfig,
+            isConfigOverridden
         );
     }
 }
