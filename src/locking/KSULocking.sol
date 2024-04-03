@@ -104,7 +104,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             revert DepositLocked(userLockId);
         }
 
-        uint256 rKSUBurned = _withdrawUserLockId(unlockAmount, msg.sender, userLockId, msg.sender);
+        uint256 rKSUBurned = _withdrawUserLockId(msg.sender, userLockId, unlockAmount, msg.sender);
 
         // emit event
         emit UserUnlocked(msg.sender, userLockId, unlockAmount, rKSUBurned);
@@ -156,22 +156,22 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     {
         for (uint256 i = 0; i < emergencyWithdrawInput.length; ++i) {
             _emergencyWithdraw(
-                emergencyWithdrawInput[i].withdrawAmount,
                 emergencyWithdrawInput[i].user,
                 emergencyWithdrawInput[i].lockId,
+                emergencyWithdrawInput[i].withdrawAmount,
                 receiver
             );
         }
     }
 
     // ### Private Functions ###
-    function _emergencyWithdraw(uint256 withdrawAmount, address user, uint256 userLockId, address receiver) internal {
-        uint256 rKSUBurned = _withdrawUserLockId(withdrawAmount, user, userLockId, receiver);
+    function _emergencyWithdraw(address user, uint256 userLockId, uint256 withdrawAmount, address receiver) internal {
+        uint256 rKSUBurned = _withdrawUserLockId(user, userLockId, withdrawAmount, receiver);
 
         emit EmergencyWithdraw(user, userLockId, withdrawAmount, rKSUBurned, receiver);
     }
 
-    function _withdrawUserLockId(uint256 withdrawAmount, address user, uint256 userLockId, address transferTo)
+    function _withdrawUserLockId(address user, uint256 userLockId, uint256 withdrawAmount, address transferTo)
         internal
         returns (uint256)
     {
