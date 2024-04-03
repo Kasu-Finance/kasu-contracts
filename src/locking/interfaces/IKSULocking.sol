@@ -119,7 +119,9 @@ interface IKSULocking is IERC20 {
 
     event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
 
-    event EmergencyWithdraw(address indexed user, uint256 indexed lockId, address receiver, uint256 amount);
+    event EmergencyWithdraw(
+        address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned, address receiver
+    );
 
     // Errors
     error LockPeriodAlreadyExists(uint256 lockPeriod);
