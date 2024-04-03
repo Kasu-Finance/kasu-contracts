@@ -2,13 +2,18 @@
 pragma solidity 0.8.23;
 
 import "./interfaces/IKsuPrice.sol";
-import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "../../vendor/chainsight/IOracle.sol";
 
-contract KsuPrice is IKsuPrice, Initializable {
-    function initialize() external initializer {}
+contract KsuPrice is IKsuPrice {
+    IOracle public immutable oracle;
+    address public immutable oracleSender;
 
-    function getKsuTokenPrice() external pure returns (uint256) {
-        // TODO: implement
-        return 2e18;
+    constructor(IOracle oracle_, address oracleSender_) {
+        oracle = oracle_;
+        oracleSender = oracleSender_;
+    }
+
+    function getKsuTokenPrice() external view returns (uint256) {
+        return oracle.readAsUint256(oracleSender);
     }
 }
