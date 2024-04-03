@@ -107,7 +107,9 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             // round up the amount if there is a remainder, so that we're sure we're accepting at least the total accepted amount
                             if (userAcceptedDepositAmountMultiplied % totalTranchePriorityDepositedAmount > 0) {
                                 if (userAcceptedDepositAmount < requestAmountLeft) {
-                                    userAcceptedDepositAmount++;
+                                    unchecked {
+                                        userAcceptedDepositAmount++;
+                                    }
                                 } else if (userAcceptedDepositAmount > requestAmountLeft) {
                                     userAcceptedDepositAmount = requestAmountLeft;
                                 }
