@@ -300,19 +300,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FeesOwedIncreased(epoch, feesAmount);
     }
 
-    // TODO: remove
-    /**
-     * @notice Transfers USDC from lending pool to pool delegate
-     * @param drawAmount the amount that the pool delegate requests
-     */
-    function drawFundsImmediate(uint256 drawAmount) external lendingPoolShouldNotBeStopped onlyLendingPoolManager {
-        if (drawAmount == 0) {
-            revert AmountShouldBeGreaterThanZero();
-        }
-        _draw(drawAmount);
-        emit FundsDrawnImmediate(drawAmount);
-    }
-
     function drawFunds(uint256 drawAmount) external lendingPoolShouldNotBeStopped onlyClearingCoordinator {
         _draw(drawAmount);
         emit FundsDrawn(drawAmount);

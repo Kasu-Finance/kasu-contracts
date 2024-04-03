@@ -158,15 +158,6 @@ contract LendingPoolManager is
 
     // #### POOL FUNDS MANAGER #### //
 
-    function drawFundsImmediate(address lendingPool, uint256 amount)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).drawFundsImmediate(amount);
-    }
-
     /**
      * @notice Report loss to the lending pool.
      * @param lendingPool Address of the lending pool.

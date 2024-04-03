@@ -457,8 +457,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 ILendingPool.DrawAmountCantBeGreaterThanAvailableAmount.selector, 341 * 10 ** 6, 340 * 10 ** 6
             )
         );
-        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 341 * 10 ** 6);
-        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFunds(lpd.lendingPool, 341 * 10 ** 6);
+        _drawFunds(lpd.lendingPool, 200 * 10 ** 6);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 140 * 10 ** 6);
@@ -484,7 +484,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, acceptedDepositAmount_bob);
 
         uint256 owedAmount = 200 * 10 ** 6;
-        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, owedAmount);
+        _drawFunds(lpd.lendingPool, owedAmount);
 
         uint256 lendingPoolTokenTotalSupplyBefore = ILendingPool(lpd.lendingPool).totalSupply();
 
@@ -519,7 +519,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, requestDepositAmount_alice);
 
-        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 100 * 10 ** 6);
+        _drawFunds(lpd.lendingPool, 100 * 10 ** 6);
 
         vm.prank(address(clearingCoordinator));
         ILendingPool(lpd.lendingPool).applyInterests(0);
@@ -664,7 +664,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, 250 * 10 ** 6);
 
-        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _drawFunds(lpd.lendingPool, 200 * 10 ** 6);
 
         _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
 
@@ -697,7 +697,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // draw loan after stop - even though balance is zero not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
-        _drawFundsImmediate(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
+        _drawFunds(lpd.lendingPool, 10 * 10 ** 6);
 
         // accept deposit after stop - not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
