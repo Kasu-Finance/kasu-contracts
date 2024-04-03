@@ -583,9 +583,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         IPendingPool(getPendingPool()).stop();
 
-        // TODO: emit event
-
         _stopLendingPool();
+
+        emit LendingPoolStopped();
     }
 
     // config
