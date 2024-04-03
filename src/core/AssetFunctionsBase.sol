@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../shared/AddressLib.sol";
 
 abstract contract AssetFunctionsBase {
     using SafeERC20 for IERC20;
@@ -10,6 +11,7 @@ abstract contract AssetFunctionsBase {
     IERC20 public immutable underlyingAsset;
 
     constructor(address underlyingAsset_) {
+        AddressLib.checkIfZero(underlyingAsset_);
         underlyingAsset = IERC20(underlyingAsset_);
     }
 

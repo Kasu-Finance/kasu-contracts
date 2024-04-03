@@ -7,6 +7,7 @@ import "./interfaces/IKsuPrice.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
 import "./Constants.sol";
+import "../shared/AddressLib.sol";
 
 /**
  * @notice Kasu system variables contract setup structure.
@@ -60,6 +61,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     TrancheInfo[] public _trancheInfo;
 
     constructor(IKsuPrice ksuPrice_, IKasuController controller_) KasuAccessControllable(controller_) {
+        AddressLib.checkIfZero(address(ksuPrice_));
+        AddressLib.checkIfZero(address(controller_));
+
         ksuPrice = ksuPrice_;
         _disableInitializers();
     }
@@ -392,9 +396,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param receiver The protocol fee receiver
      */
     function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
-        if (receiver == address(0)) {
-            revert ConfigurationAddressZero();
-        }
+        AddressLib.checkIfZero(receiver);
         _protocolFeeReceiver = receiver;
     }
 }

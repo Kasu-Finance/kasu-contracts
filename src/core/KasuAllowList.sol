@@ -5,6 +5,7 @@ import "../shared/access/KasuAccessControllable.sol";
 import "./interfaces/IKasuAllowList.sol";
 import "../../vendor/nexeraID/TxAuthDataVerifierUpgradeable.sol";
 import "./interfaces/lendingPool/ILendingPoolErrors.sol";
+import "../shared/AddressLib.sol";
 
 contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVerifierUpgradeable {
     address public lendingPoolManager;
@@ -19,15 +20,21 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     mapping(address => bool) public blockList;
 
     function initialize(address lendingPoolManager_, address signer) public initializer {
+        AddressLib.checkIfZero(lendingPoolManager_);
+        AddressLib.checkIfZero(signer);
+
         lendingPoolManager = lendingPoolManager_;
         __TxAuthDataVerifierUpgradeable_init(signer);
     }
 
     function setNexeraIDSigner(address signer) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(signer);
         _setSigner(signer);
     }
 
     function allowUser(address user) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(user);
+
         if (!allowList[user]) {
             allowList[user] = true;
             emit IKasuAllowList.UserAddedInAllowList(user);
@@ -35,6 +42,8 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     }
 
     function disallowUser(address user) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(user);
+
         if (allowList[user]) {
             allowList[user] = false;
             emit IKasuAllowList.UserRemovedFromAllowList(user);
@@ -42,6 +51,8 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     }
 
     function blockUser(address user) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(user);
+
         if (!blockList[user]) {
             blockList[user] = true;
             emit IKasuAllowList.UserBlockedFromAllowList(user);
@@ -49,6 +60,8 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     }
 
     function unblockUser(address user) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(user);
+
         if (blockList[user]) {
             blockList[user] = false;
             emit IKasuAllowList.UserUnblockedFromAllowList(user);

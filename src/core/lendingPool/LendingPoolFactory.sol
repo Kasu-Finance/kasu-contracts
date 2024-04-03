@@ -14,6 +14,7 @@ import "./LendingPoolManager.sol";
 import "./PendingPool.sol";
 import "./LendingPoolTranche.sol";
 import "../SystemVariables.sol";
+import "../../shared/AddressLib.sol";
 
 contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
     address private immutable pendingPoolBeacon;
@@ -30,6 +31,12 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         ILendingPoolManager lendingPoolManager_,
         ISystemVariables systemVariables_
     ) LendingPoolHelpers(lendingPoolManager_) {
+        AddressLib.checkIfZero(pendingPoolBeacon_);
+        AddressLib.checkIfZero(lendingPoolBeacon_);
+        AddressLib.checkIfZero(lendingPoolTrancheBeacon_);
+        AddressLib.checkIfZero(address(kasuController_));
+        AddressLib.checkIfZero(address(systemVariables_));
+
         pendingPoolBeacon = pendingPoolBeacon_;
         lendingPoolBeacon = lendingPoolBeacon_;
         lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;

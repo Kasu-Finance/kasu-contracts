@@ -14,6 +14,7 @@ import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "./LendingPoolStoppable.sol";
 import "../Constants.sol";
+import "../../shared/AddressLib.sol";
 
 /**
  * @dev
@@ -53,6 +54,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         IFeeManager feeManager_,
         address underlyingAsset_
     ) AssetFunctionsBase(underlyingAsset_) {
+        AddressLib.checkIfZero(address(systemVariables_));
+        AddressLib.checkIfZero(address(clearingCoordinator_));
+        AddressLib.checkIfZero(address(feeManager_));
+        AddressLib.checkIfZero(underlyingAsset_);
+
         systemVariables = systemVariables_;
         clearingCoordinator = clearingCoordinator_;
         feeManager = feeManager_;
@@ -68,6 +74,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         LendingPoolInfo memory lendingPoolInfo_,
         address lendingPoolManager_
     ) public initializer returns (PoolConfiguration memory) {
+        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
+        AddressLib.checkIfZero(createPoolConfig.drawRecipient);
+        AddressLib.checkIfZero(lendingPoolInfo_.pendingPoolAddress);
+        AddressLib.checkIfZero(lendingPoolManager_);
+
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
 
         _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
