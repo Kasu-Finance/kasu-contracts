@@ -334,7 +334,6 @@ contract KSULockingTest is LockingTestUtils {
 
         emergencyWithdrawInput[0] = EmergencyWithdrawInput(alice, alice_lockId_1, 40 ether);
         emergencyWithdrawInput[1] = EmergencyWithdrawInput(alice, alice_lockId_2, 100 ether);
-        emergencyWithdrawInput[1] = EmergencyWithdrawInput(alice, alice_lockId_2, 100 ether);
         emergencyWithdrawInput[3] = EmergencyWithdrawInput(bob, bob_lockId_2, 100 ether);
         emergencyWithdrawInput[2] = EmergencyWithdrawInput(david, david_lockId_1, 500 ether);
 
