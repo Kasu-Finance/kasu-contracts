@@ -177,7 +177,64 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         return rewards[user] + _getUserRewards(user);
     }
 
+    /**
+     * @dev See {IKSULocking-emergencyWithdraw}.
+     */
+    function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver)
+        external
+        whenNotPaused
+        onlyAdmin
+    {
+        for (uint256 i = 0; i < emergencyWithdrawInput.length; ++i) {
+            _emergencyWithdraw(
+                emergencyWithdrawInput[i].withdrawAmount,
+                emergencyWithdrawInput[i].user,
+                emergencyWithdrawInput[i].lockId,
+                receiver
+            );
+        }
+    }
+
     // ### Private Functions ###
+    function _emergencyWithdraw(uint256 withdrawAmount, address user, uint256 userLockId, address receiver) internal {
+        // check if lock exists
+        UserLock storage userLock_ = _userLocks[user][userLockId];
+
+        if (userLock_.amount == 0) {
+            revert InvalidUserDeposit(userLockId);
+        }
+
+        if (withdrawAmount == 0) {
+            revert UnlockAmountShouldBeMoreThanZero();
+        }
+
+        if (userLock_.amount < withdrawAmount) {
+            revert UserUnlockAmountTooHigh(userLockId, userLock_.amount, withdrawAmount);
+        }
+
+        // calculate current user rewards
+        _updateUserRewards(user);
+
+        // burn rKSU
+        uint256 amountRemaining = userLock_.amount - withdrawAmount;
+        uint256 rKSURemaining = amountRemaining * userLock_.rKSUMultiplier / FULL_PERCENT;
+        uint256 rKSUBurned = userLock_.rKSUAmount - rKSURemaining;
+        _burn(user, rKSUBurned);
+
+        // update reward details
+        userLock_.amount = amountRemaining;
+        userLock_.rKSUAmount = rKSURemaining;
+        userTotalDeposits[user] -= withdrawAmount;
+
+        // transfer KSU token to receiver
+        ksuToken.transfer(receiver, withdrawAmount);
+
+        // update user reward debt
+        _updateUserRewardDebt(user);
+
+        // emit event
+        emit EmergencyWithdraw(user, userLockId, receiver, withdrawAmount);
+    }
 
     function _lock(uint256 amount, uint256 lockPeriod) private returns (uint256 userLockId) {
         if (!_lockDetails[lockPeriod].isActive) {

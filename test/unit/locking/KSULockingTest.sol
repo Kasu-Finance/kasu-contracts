@@ -319,4 +319,38 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.getRewards(bob), 75 * 1e6 + 3125 * 1e4, 1);
         vm.stopPrank();
     }
+
+    function testEmergencyWithdraw() public {
+        // ARRANGE
+        uint256 alice_lockId_1 = _lock(alice, 100 ether, lockPeriod30);
+        uint256 alice_lockId_2 = _lock(alice, 200 ether, lockPeriod30);
+        uint256 bob_lockId_1 = _lock(bob, 300 ether, lockPeriod30);
+        uint256 bob_lockId_2 = _lock(bob, 200 ether, lockPeriod30);
+        uint256 carol_lockId_1 = _lock(carol, 50 ether, lockPeriod30);
+        uint256 david_lockId_1 = _lock(david, 500 ether, lockPeriod30);
+
+        // ACT
+        EmergencyWithdrawInput[] memory emergencyWithdrawInput = new EmergencyWithdrawInput[](4);
+
+        emergencyWithdrawInput[0] = EmergencyWithdrawInput(alice, alice_lockId_1, 40 ether);
+        emergencyWithdrawInput[1] = EmergencyWithdrawInput(alice, alice_lockId_2, 100 ether);
+        emergencyWithdrawInput[1] = EmergencyWithdrawInput(alice, alice_lockId_2, 100 ether);
+        emergencyWithdrawInput[3] = EmergencyWithdrawInput(bob, bob_lockId_2, 100 ether);
+        emergencyWithdrawInput[2] = EmergencyWithdrawInput(david, david_lockId_1, 500 ether);
+
+        vm.prank(admin);
+        _KSULocking.emergencyWithdraw(emergencyWithdrawInput, user10);
+
+        // ASSERT
+        assertEq(_ksu.balanceOf(user10), 740 ether);
+
+        assertEq(_ksu.balanceOf(address(_KSULocking)), 610 ether);
+
+        assertEq(_KSULocking.userLock(alice, alice_lockId_1).amount, 60 ether);
+        assertEq(_KSULocking.userLock(alice, alice_lockId_2).amount, 100 ether);
+        assertEq(_KSULocking.userLock(bob, bob_lockId_1).amount, 300 ether);
+        assertEq(_KSULocking.userLock(bob, bob_lockId_2).amount, 100 ether);
+        assertEq(_KSULocking.userLock(carol, carol_lockId_1).amount, 50 ether);
+        assertEq(_KSULocking.userLock(david, david_lockId_1).amount, 0);
+    }
 }

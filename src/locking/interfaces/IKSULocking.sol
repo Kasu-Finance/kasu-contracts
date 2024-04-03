@@ -3,6 +3,12 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+struct EmergencyWithdrawInput {
+    address user;
+    uint256 lockId;
+    uint256 withdrawAmount;
+}
+
 interface IKSULocking is IERC20 {
     struct UserLock {
         uint256 amount;
@@ -79,6 +85,11 @@ interface IKSULocking is IERC20 {
     function claimFees() external returns (uint256 earned);
 
     /**
+     * @notice Called by admin in case of emergency to get locks KSU from users
+     */
+    function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver) external;
+
+    /**
      * @notice Returns USDC user reward amount
      */
     function getRewards(address user) external view returns (uint256);
@@ -98,6 +109,8 @@ interface IKSULocking is IERC20 {
         uint256 rKSUMinted
     );
 
+    // Events
+
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned);
 
     event FeesClaimed(address indexed user, uint256 amount);
@@ -105,6 +118,8 @@ interface IKSULocking is IERC20 {
     event FeesEmitted(address indexed user, uint256 amount);
 
     event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
+
+    event EmergencyWithdraw(address indexed user, uint256 indexed lockId, address receiver, uint256 amount);
 
     // Errors
     error LockPeriodAlreadyExists(uint256 lockPeriod);
