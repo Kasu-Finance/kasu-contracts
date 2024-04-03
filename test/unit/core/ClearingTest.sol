@@ -1033,7 +1033,8 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ACT ###
 
-        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 2, 2);
+        ClearingConfiguration memory clearingConfiguration;
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 2, 2, clearingConfiguration, false);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
