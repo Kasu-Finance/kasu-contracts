@@ -276,6 +276,21 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function getClearingConfig() external returns (ClearingConfiguration memory clearingConfig) {
+        uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
+        for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
+            trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
+        }
+
+        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+            _poolConfiguration.desiredDrawAmount,
+            trancheRatios,
+            _poolConfiguration.targetExcessLiquidityPercentage,
+            _poolConfiguration.minimumExcessLiquidityPercentage
+        );
+        return clearingConfiguration;
+    }
+
     function _applyTrancheInterest(address tranche, uint256 epoch) internal {
         uint256 trancheAssetBalance = balanceOf(tranche);
         if (trancheAssetBalance == 0) return;
