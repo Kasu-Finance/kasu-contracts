@@ -18,7 +18,7 @@ contract KSULockingTest is LockingTestUtils {
         __locking_setUp();
     }
 
-    function testAddLockPeriod_WhenNotAdmin_ShouldRevert() public {
+    function test_addLockPeriod_WhenNotAdmin_ShouldRevert() public {
         hoax(alice);
         vm.expectRevert(
             abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
@@ -32,7 +32,7 @@ contract KSULockingTest is LockingTestUtils {
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
     }
 
-    function testEmitFees() public {
+    function test_emitFees() public {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
 
@@ -49,7 +49,7 @@ contract KSULockingTest is LockingTestUtils {
         assertEq(mockUsdc.balanceOf(address(_KSULocking)), rewardAmount);
     }
 
-    function testLock() public {
+    function test_lock() public {
         // ARRANGE
         uint256 aliceLockAmount = 100 ether;
 
@@ -67,7 +67,7 @@ contract KSULockingTest is LockingTestUtils {
         assertEq(_KSULocking.balanceOf(alice), aliceExpectedRksuAmount);
     }
 
-    function testLockWithPermit() public {
+    function test_lockWithPermit() public {
         // ARRANGE
         SigUtilsERC20 sigUtilsERC20 = new SigUtilsERC20(_ksu.DOMAIN_SEPARATOR());
 
@@ -101,7 +101,7 @@ contract KSULockingTest is LockingTestUtils {
         assertEq(_KSULocking.balanceOf(user), lockAmount * lockMultiplier30 / FULL_PERCENT);
     }
 
-    function testLockWithBonusKSU() public {
+    function test_lockWithBonusKSU() public {
         // ARRANGE
         _KSULockBonus = new KSULockBonus();
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
@@ -165,7 +165,7 @@ contract KSULockingTest is LockingTestUtils {
         assertEq(_KSULocking.balanceOf(bob), bobExpectedLockedRKSUAmount);
     }
 
-    function testLockRewards() public {
+    function test_lockRewards() public {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
         uint256 aliceLockAmount = 200 ether;
@@ -189,7 +189,7 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), rewardAmount, 1);
     }
 
-    function testLockRewardsForTwoUsersOneDeposit() public {
+    function test_lockRewardsForTwoUsersOneDeposit() public {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
         uint256 aliceLockAmount = 100 ether;
@@ -208,7 +208,7 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6, 1);
     }
 
-    function testLockRewardsForTwoUsersMultipleDepositsAndRewards() public {
+    function test_lockRewardsForTwoUsersMultipleDepositsAndRewards() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
@@ -237,7 +237,7 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
     }
 
-    function testUnlock() public {
+    function test_unlock() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
@@ -258,7 +258,7 @@ contract KSULockingTest is LockingTestUtils {
         vm.stopPrank();
     }
 
-    function testUnlockWhenNotExpired_ShouldRevert() public {
+    function test_unlockWhenNotExpired_ShouldRevert() public {
         // ARRANGE
         uint256 aliceLockAmountDeposit = 100 ether;
 
@@ -271,7 +271,7 @@ contract KSULockingTest is LockingTestUtils {
         _KSULocking.unlock(aliceUnLockAmount, 0);
     }
 
-    function testUnlockForTwoUsers() public {
+    function test_unlockForTwoUsers() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit = 100 ether;
@@ -292,7 +292,7 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.balanceOf(bob), 80 ether * lockMultiplier30 / FULL_PERCENT, 1);
     }
 
-    function testGetRewards() public {
+    function test_getRewards() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
@@ -320,7 +320,7 @@ contract KSULockingTest is LockingTestUtils {
         vm.stopPrank();
     }
 
-    function testEmergencyWithdraw() public {
+    function test_emergencyWithdraw() public {
         // ARRANGE
         uint256 alice_lockId_1 = _lock(alice, 100 ether, lockPeriod30);
         uint256 alice_lockId_2 = _lock(alice, 200 ether, lockPeriod30);
