@@ -6,16 +6,21 @@ struct LoyaltyEpochRewardRateInput {
     uint256 epochRewardRate;
 }
 
+struct UserRewardInput {
+    address user;
+    uint256 epoch;
+    uint256 userLoyaltyLevel;
+    uint256 amountDeposited;
+}
+
 interface IUserLoyaltyRewards {
+    function doEmitRewards() external view returns (bool);
+    function totalUnclaimedRewards() external view returns (uint256);
+    function loyaltyEpochRewardRates(uint256 loyaltyLevel) external view returns (uint256);
+    function userRewards(address user) external view returns (uint256);
     function emitUserLoyaltyReward(address user, uint256 epoch, uint256 userLoyaltyLevel, uint256 amountDeposited)
         external;
-    function emitUserLoyaltyRewardManually(
-        address user,
-        uint256 epoch,
-        uint256 userLoyaltyLevel,
-        uint256 amountDeposited,
-        uint256 ksuTokenPrice
-    ) external;
+    function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice) external;
 
     function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRateInput)
         external;

@@ -6,6 +6,10 @@ import "@openzeppelin-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUp
 contract KSU is ERC20PermitUpgradeable {
     uint256 private constant TOTAL_SUPPLY = 1_000_000_000 ether;
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address recipient) external initializer {
         __ERC20_init("Kasu Token", "KSU");
         __ERC20Permit_init("Kasu Token");
