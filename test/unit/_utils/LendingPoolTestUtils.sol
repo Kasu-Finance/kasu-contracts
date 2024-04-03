@@ -270,7 +270,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         returns (uint256 dNftId)
     {
         deal(address(mockUsdc), sender, amount, true);
-        // TODO: approve pendingPool, even though we cannot query it ?? gas
         mockUsdc.approve(address(lendingPoolManager), amount);
         return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
     }
