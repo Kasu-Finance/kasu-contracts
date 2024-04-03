@@ -95,20 +95,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @dev See {IKSULocking-unlock}.
      */
     function unlock(uint256 unlockAmount, uint256 userLockId) external whenNotPaused {
-        // check if lock is ok and unlocked
+        // check if lock is unlocked
         UserLock storage userLock_ = _userLocks[msg.sender][userLockId];
-
-        if (userLock_.amount == 0) {
-            revert InvalidUserDeposit(userLockId);
-        }
-
-        if (unlockAmount == 0) {
-            revert UnlockAmountShouldBeMoreThanZero();
-        }
-
-        if (userLock_.amount < unlockAmount) {
-            revert UserUnlockAmountTooHigh(userLockId, userLock_.amount, unlockAmount);
-        }
 
         uint256 unlockTime = userLock_.startTime + userLock_.lockPeriod;
 
@@ -116,25 +104,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             revert DepositLocked(userLockId);
         }
 
-        // calculate current user rewards
-        _updateUserRewards(msg.sender);
-
-        // burn rKSU
-        uint256 amountRemaining = userLock_.amount - unlockAmount;
-        uint256 rKSURemaining = amountRemaining * userLock_.rKSUMultiplier / FULL_PERCENT;
-        uint256 rKSUBurned = userLock_.rKSUAmount - rKSURemaining;
-        _burn(msg.sender, rKSUBurned);
-
-        // update reward details
-        userLock_.amount = amountRemaining;
-        userLock_.rKSUAmount = rKSURemaining;
-        userTotalDeposits[msg.sender] -= unlockAmount;
-
-        // transfer KSU token to user
-        ksuToken.transfer(msg.sender, unlockAmount);
-
-        // update user reward debt
-        _updateUserRewardDebt(msg.sender);
+        uint256 rKSUBurned = _withdrawUserLockId(msg.sender, userLockId, unlockAmount, msg.sender);
 
         // emit event
         emit UserUnlocked(msg.sender, userLockId, unlockAmount, rKSUBurned);
@@ -177,7 +147,71 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         return rewards[user] + _getUserRewards(user);
     }
 
+    /**
+     * @dev See {IKSULocking-emergencyWithdraw}.
+     */
+    function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver)
+        external
+        onlyAdmin
+    {
+        for (uint256 i = 0; i < emergencyWithdrawInput.length; ++i) {
+            _emergencyWithdraw(
+                emergencyWithdrawInput[i].user,
+                emergencyWithdrawInput[i].lockId,
+                emergencyWithdrawInput[i].withdrawAmount,
+                receiver
+            );
+        }
+    }
+
     // ### Private Functions ###
+    function _emergencyWithdraw(address user, uint256 userLockId, uint256 withdrawAmount, address receiver) internal {
+        uint256 rKSUBurned = _withdrawUserLockId(user, userLockId, withdrawAmount, receiver);
+
+        emit EmergencyWithdraw(user, userLockId, withdrawAmount, rKSUBurned, receiver);
+    }
+
+    function _withdrawUserLockId(address user, uint256 userLockId, uint256 withdrawAmount, address transferTo)
+        internal
+        returns (uint256)
+    {
+        // check if lock exists
+        UserLock storage userLock_ = _userLocks[user][userLockId];
+
+        if (userLock_.amount == 0) {
+            revert InvalidUserDeposit(userLockId);
+        }
+
+        if (withdrawAmount == 0) {
+            revert UnlockAmountShouldBeMoreThanZero();
+        }
+
+        if (userLock_.amount < withdrawAmount) {
+            revert UserUnlockAmountTooHigh(userLockId, userLock_.amount, withdrawAmount);
+        }
+
+        // calculate current user rewards
+        _updateUserRewards(user);
+
+        // burn rKSU
+        uint256 amountRemaining = userLock_.amount - withdrawAmount;
+        uint256 rKSURemaining = amountRemaining * userLock_.rKSUMultiplier / FULL_PERCENT;
+        uint256 rKSUBurned = userLock_.rKSUAmount - rKSURemaining;
+        _burn(user, rKSUBurned);
+
+        // update reward details
+        userLock_.amount = amountRemaining;
+        userLock_.rKSUAmount = rKSURemaining;
+        userTotalDeposits[user] -= withdrawAmount;
+
+        // transfer KSU token to receiver
+        ksuToken.transfer(transferTo, withdrawAmount);
+
+        // update user reward debt
+        _updateUserRewardDebt(user);
+
+        return rKSUBurned;
+    }
 
     function _lock(uint256 amount, uint256 lockPeriod) private returns (uint256 userLockId) {
         if (!_lockDetails[lockPeriod].isActive) {
