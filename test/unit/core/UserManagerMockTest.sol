@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "../../../src/core/interfaces/IUserLoyaltyRewards.sol";
 import "forge-std/Test.sol";
 import {BaseTestUtils} from "../_utils/BaseTestUtils.sol";
 import "../../../src/core/UserManager.sol";
@@ -32,8 +33,9 @@ contract UserManagerMockTest is BaseTestUtils {
         ksuLocking = IKSULocking(address(0xeeee));
         systemVariables = ISystemVariables(address(0xffff));
         lendingPoolManager = address(0x1234);
+        IUserLoyaltyRewards userLoyaltyRewards = IUserLoyaltyRewards(address(0x9999));
 
-        UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking);
+        UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
@@ -57,6 +59,12 @@ contract UserManagerMockTest is BaseTestUtils {
             address(systemVariables),
             abi.encodeWithSelector(ISystemVariables.isClearingTime.selector),
             abi.encode(false)
+        );
+
+        vm.mockCall(
+            address(userLoyaltyRewards),
+            abi.encodeWithSelector(IUserLoyaltyRewards.emitUserLoyaltyReward.selector),
+            abi.encode()
         );
 
         _mockKSUPrice(2e18);

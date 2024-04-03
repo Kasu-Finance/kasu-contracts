@@ -553,7 +553,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit ImmediateWithdrawal(user, tranche, sharesToWithdraw, assetAmount);
     }
 
-    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
+    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager verifyClearingNotPending {
         if (_userOwedAmount > 0) {
             revert UserOwedAmountIsGreaterThanZero(_userOwedAmount);
         }

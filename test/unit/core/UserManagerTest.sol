@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "../_utils/LockingTestUtils.sol";
 import {UserManager} from "../../../src/core/UserManager.sol";
 import "../../../src/core/interfaces/IUserManager.sol";
+import "../../../src/core/interfaces/IUserLoyaltyRewards.sol";
 import "../../../src/core/SystemVariables.sol";
 import "../../shared/MockKsuPrice.sol";
 
@@ -21,7 +22,9 @@ contract UserManagerTest is LockingTestUtils {
             new TransparentUpgradeableProxy(address(systemVariablesImpl), address(proxyAdmin), "");
         systemVariables = ISystemVariables(address(systemVariablesProxy));
 
-        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking);
+        IUserLoyaltyRewards userLoyaltyRewards = IUserLoyaltyRewards(address(0x9999));
+
+        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = IUserManager(address(userManagerProxy));

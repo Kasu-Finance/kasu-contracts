@@ -14,6 +14,7 @@ import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "../../../src/shared/access/KasuController.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPoolManager.sol";
 import "../../../src/core/UserManager.sol";
+import "../../../src/core/UserLoyaltyRewards.sol";
 import "./LockingTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
 import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
@@ -23,6 +24,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
     KasuController internal kasuController;
     MockKsuPrice internal ksuPrice;
+    UserLoyaltyRewards internal userLoyaltyRewards;
     SystemVariables internal systemVariables;
     UserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
@@ -89,11 +91,19 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
         feeManager = IFeeManager(address(feeManagerProxy));
 
+        // user loyalty rewards
+        UserLoyaltyRewards userLoyaltyRewardsImpl = new UserLoyaltyRewards(ksuPrice, _ksu, kasuController);
+        TransparentUpgradeableProxy userLoyaltyRewardsProxy =
+            new TransparentUpgradeableProxy(address(userLoyaltyRewardsImpl), address(proxyAdmin), "");
+        userLoyaltyRewards = UserLoyaltyRewards(address(userLoyaltyRewardsProxy));
+
         // user manager
-        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking);
+        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
+
+        userLoyaltyRewards.initialize(address(userManager), true);
 
         // lending pool manager
         LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
@@ -174,6 +184,11 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         kasuAllowList.allowUser(user18);
         kasuAllowList.allowUser(user19);
         kasuAllowList.allowUser(user20);
+
+        LoyaltyEpochRewardRateInput[] memory loyaltyEpochRewardRatesInput = new LoyaltyEpochRewardRateInput[](2);
+        loyaltyEpochRewardRatesInput[0] = LoyaltyEpochRewardRateInput(1, 38329912069265);
+        loyaltyEpochRewardRatesInput[1] = LoyaltyEpochRewardRateInput(2, 19164956034632);
+        userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(loyaltyEpochRewardRatesInput);
         vm.stopPrank();
     }
 
