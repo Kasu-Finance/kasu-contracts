@@ -152,7 +152,6 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      */
     function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver)
         external
-        whenNotPaused
         onlyAdmin
     {
         for (uint256 i = 0; i < emergencyWithdrawInput.length; ++i) {
@@ -167,9 +166,9 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     // ### Private Functions ###
     function _emergencyWithdraw(uint256 withdrawAmount, address user, uint256 userLockId, address receiver) internal {
-        _withdrawUserLockId(withdrawAmount, user, userLockId, receiver);
+        uint256 rKSUBurned = _withdrawUserLockId(withdrawAmount, user, userLockId, receiver);
 
-        emit EmergencyWithdraw(user, userLockId, receiver, withdrawAmount);
+        emit EmergencyWithdraw(user, userLockId, withdrawAmount, rKSUBurned, receiver);
     }
 
     function _withdrawUserLockId(uint256 withdrawAmount, address user, uint256 userLockId, address transferTo)
