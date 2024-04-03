@@ -130,7 +130,23 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
-        // TODO: verify the request is between min and max deposit amount
+        // verify the request is between min and max deposit amount
+        uint256 trancheIndex = _getTrancheIndex(tranche);
+        ILendingPool lendingPool = _getOwnLendingPool();
+        TrancheConfig memory trancheConfig = lendingPool.poolConfiguration().tranches[trancheIndex];
+
+        if (amount < trancheConfig.minDepositAmount) {
+            revert RequestDepositAmountLessThanMinimumAllowed(
+                address(lendingPool), tranche, trancheConfig.minDepositAmount, amount
+            );
+        }
+
+        if (amount > trancheConfig.maxDepositAmount) {
+            revert RequestDepositAmountMoreThanMinimumAllowed(
+                address(lendingPool), tranche, trancheConfig.maxDepositAmount, amount
+            );
+        }
+
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 

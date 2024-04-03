@@ -819,13 +819,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         assertEq(poolConfiguration.tranches[1].ratio, 25_00);
         assertEq(poolConfiguration.tranches[1].interestRate, 2000000000000000);
-        assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
-        assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
+        assertEq(poolConfiguration.tranches[1].minDepositAmount, 10 * 1e6);
+        assertEq(poolConfiguration.tranches[1].maxDepositAmount, 1_000_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[2].ratio, 60_00);
         assertEq(poolConfiguration.tranches[2].interestRate, 1500000000000000);
-        assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
-        assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
+        assertEq(poolConfiguration.tranches[2].minDepositAmount, 10 * 1e6);
+        assertEq(poolConfiguration.tranches[2].maxDepositAmount, 1_000_000 * 1e6);
 
         // update interest rate epoch delay
         uint256 interestRateEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
