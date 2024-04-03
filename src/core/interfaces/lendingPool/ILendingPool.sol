@@ -60,8 +60,6 @@ interface ILendingPool is IERC20 {
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
 
     // #### POOL DELEGATE #### //
-    function drawFundsImmediate(uint256 amount) external;
-
     function drawFunds(uint256 amount) external;
 
     function repayLoan(uint256 amount, address repaymentAddress) external;
@@ -110,8 +108,6 @@ interface ILendingPool is IERC20 {
     event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
 
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
-
-    event FundsDrawnImmediate(uint256 amount);
 
     event FundsDrawn(uint256 amount);
 
