@@ -965,4 +965,55 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.OnlyClearingCoordinator.selector));
         ILendingPool(lpd.lendingPool).applyInterests(1);
     }
+
+    function test_requestDepositAmounrOutsideAllowedRange() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        vm.startPrank(poolManagerAccount);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 100 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200 * 1e6);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[1], 1_000 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[1], 10_000 * 1e6);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[2], 50 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[2], 500 * 1e6);
+
+        vm.stopPrank();
+
+        vm.startPrank(admin);
+
+        // ### ACT / ASSERT ###
+        deal(address(mockUsdc), alice, 500 * 1e6, true);
+        vm.startPrank(alice);
+        mockUsdc.approve(address(lendingPoolManager), 500 * 1e6);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.RequestDepositAmountMoreThanMaximumAllowed.selector,
+                lpd.lendingPool,
+                lpd.tranches[0],
+                200 * 1e6,
+                500 * 1e6
+            )
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 500 * 1e6);
+        vm.stopPrank();
+
+        deal(address(mockUsdc), bob, 500 * 1e6, true);
+        vm.startPrank(bob);
+        mockUsdc.approve(address(lendingPoolManager), 500 * 1e6);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.RequestDepositAmountLessThanMinimumAllowed.selector,
+                lpd.lendingPool,
+                lpd.tranches[1],
+                1_000 * 1e6,
+                500 * 1e6
+            )
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6);
+        vm.stopPrank();
+    }
 }

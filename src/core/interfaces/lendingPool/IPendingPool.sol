@@ -119,9 +119,9 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
     error UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(address user);
 
     error RequestDepositAmountLessThanMinimumAllowed(
-        address lendingPool, address tranche, uint256 minDepositAmount, uint256 requestedAmount
+        address lendingPool, address tranche, uint256 minDepositAmountAllowed, uint256 requestedAmount
     );
-    error RequestDepositAmountMoreThanMinimumAllowed(
-        address lendingPool, address tranche, uint256 maxDepositAmount, uint256 requestedAmount
+    error RequestDepositAmountMoreThanMaximumAllowed(
+        address lendingPool, address tranche, uint256 maxDepositAmountAllowed, uint256 requestedAmount
     );
 }

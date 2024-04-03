@@ -142,7 +142,7 @@ contract PendingPool is
         }
 
         if (amount > trancheConfig.maxDepositAmount) {
-            revert RequestDepositAmountMoreThanMinimumAllowed(
+            revert RequestDepositAmountMoreThanMaximumAllowed(
                 address(lendingPool), tranche, trancheConfig.maxDepositAmount, amount
             );
         }
