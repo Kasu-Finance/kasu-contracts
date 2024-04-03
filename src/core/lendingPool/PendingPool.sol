@@ -286,6 +286,8 @@ contract PendingPool is
         uint256 requestEpochId,
         RequestedFrom requestedFrom
     ) internal returns (uint256 wNftID) {
+        if (sharesToWithdraw == 0) revert RequestWithdrawSharesAreZero();
+
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
             revert InsufficientSharesBalance(

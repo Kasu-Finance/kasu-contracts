@@ -966,7 +966,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         ILendingPool(lpd.lendingPool).applyInterests(1);
     }
 
-    function test_requestDepositAmounrOutsideAllowedRange() public {
+    function test_requestDepositAmountOutsideAllowedRange() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
