@@ -555,7 +555,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit ImmediateWithdrawal(user, tranche, sharesToWithdraw, assetAmount);
     }
 
-    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
+    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager verifyClearingNotPending {
         if (_userOwedAmount > 0) {
             revert UserOwedAmountIsGreaterThanZero(_userOwedAmount);
         }
@@ -567,9 +567,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         if (firstLossCapital > 0) {
             _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
         }
-
-        // TODO: check the clearing was done including paying interests
-        // TODO: pay fees
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             _poolConfiguration.tranches[i].interestRate = 0;
