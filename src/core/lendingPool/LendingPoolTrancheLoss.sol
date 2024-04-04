@@ -2,13 +2,10 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/lendingPool/ILendingPoolTrancheLoss.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "../../shared/CommonErrors.sol";
-
-// TODO: add maximum minted total shares
 
 /**
  * @title Lending Pool Tranche Loss Contract
@@ -21,14 +18,12 @@ abstract contract LendingPoolTrancheLoss is
     AssetFunctionsBase,
     LendingPoolHelpers
 {
-    using SafeERC20 for IERC20;
+    /// @notice Minimum amount of assets left in the tranche after a loss.
+    uint256 public constant minimumAssetAmountLeftAfterLoss = 10 * 1e6; // 10 USDC
 
     /// @notice Loss id that is pending for user tokens to be minted.
     /// @dev If 0 then no loss is pending.
     uint256 public pendingMintLossId;
-
-    /// @notice Minimum amount of assets left in the tranche after a loss.
-    uint256 public minimumLeftAmountAfterLoss;
 
     /// @dev Loss details for each loss.
     mapping(uint256 lossId => LossDetails lossDetails) private _lossDetails;
@@ -74,13 +69,9 @@ abstract contract LendingPoolTrancheLoss is
 
         if (lossAmount > 0 && maxLossAmount > 0) {
             // check if total assets can cover the loss
-            if (maxLossAmount >= lossAmount) {
-                lossApplied = lossAmount;
-            } else {
-                lossApplied = maxLossAmount;
-            }
-
+            lossApplied = maxLossAmount >= lossAmount ? lossAmount : maxLossAmount;
             uint256 batchSize = doMintLossTokens ? type(uint256).max : 0;
+
             _registerLoss(lossId, lossApplied, batchSize);
         }
     }

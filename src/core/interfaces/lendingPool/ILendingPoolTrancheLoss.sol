@@ -10,6 +10,7 @@ struct LossDetails {
 }
 
 interface ILendingPoolTrancheLoss {
+    function minimumAssetAmountLeftAfterLoss() external view returns (uint256);
     function getLossDetails(uint256 lossId) external view returns (LossDetails memory);
     function registerTrancheLoss(uint256 lossId, uint256 lossAmoun, bool doMintLossTokenst)
         external
