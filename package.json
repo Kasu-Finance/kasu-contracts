@@ -13,8 +13,7 @@
         "build:solidity": "forge build",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
         "scripts:lendingPoolWorkFlow": "hardhat run --network localhost ./scripts/lendingPoolWorkFlow.ts",
-        "scripts:runClearing": "hardhat run --network localhost ./scripts/runClearing.ts",
-        "scripts:proxyAdmin": "hardhat run --network localhost scripts/proxyAdmin.ts"
+        "scripts:runClearing": "hardhat run --network localhost ./scripts/runClearing.ts"
     },
     "repository": {
         "type": "git",

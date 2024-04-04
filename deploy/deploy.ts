@@ -359,7 +359,6 @@ function deployOptions(
         from: deployer,
         args: constructorArgs,
         log: true,
-        proxy: false,
     };
 }
 
@@ -372,11 +371,6 @@ async function deployFactory(
     const proxyAdmin = await hre.deployments.deploy(
         'ProxyAdmin',
         deployOptions(deployer, [proxyAdminAdmin]),
-    );
-    addressFile.writeAddressProxy(
-        'ProxyAdmin',
-        proxyAdmin.address,
-        proxyAdmin.address,
     );
 
     return {
