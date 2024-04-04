@@ -18,6 +18,7 @@ import "../clearing/ClearingCoordinator.sol";
 import "../clearing/AcceptedRequestsExecution.sol";
 import "../clearing/ClearingSteps.sol";
 import "./UserRequestIds.sol";
+import "../../shared/AddressLib.sol";
 
 /**
  * @dev
@@ -66,6 +67,9 @@ contract PendingPool is
         LendingPoolHelpers(lendingPoolManager_)
         ClearingSteps(clearingCoordinator_, acceptedRequestsCalculation_)
     {
+        AddressLib.checkIfZero(address(systemVariables_));
+        AddressLib.checkIfZero(address(userManger_));
+
         systemVariables = systemVariables_;
         userManager = userManger_;
         _disableInitializers();

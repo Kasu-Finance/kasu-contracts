@@ -7,6 +7,7 @@ import "../core/Constants.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import "../shared/AddressLib.sol";
 
 contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     using SafeERC20 for IERC20;
@@ -31,6 +32,9 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
     function initialize(ERC20Permit ksuToken_, IERC20 feeToken_) external initializer {
+        AddressLib.checkIfZero(address(ksuToken_));
+        AddressLib.checkIfZero(address(feeToken_));
+
         _initializeRKSU();
         ksuToken = ksuToken_;
         feeToken = feeToken_;
@@ -40,6 +44,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @dev See {IKSULocking-setKSULockBonus}.
      */
     function setKSULockBonus(address ksuBonusTokens_) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(ksuBonusTokens_);
         ksuBonusTokens = ksuBonusTokens_;
     }
 

@@ -7,6 +7,7 @@ import "../shared/access/KasuAccessControllable.sol";
 import "./interfaces/IUserLoyaltyRewards.sol";
 import "./interfaces/IKsuPrice.sol";
 import "../shared/CommonErrors.sol";
+import "../shared/AddressLib.sol";
 import "./Constants.sol";
 
 contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Initializable {
@@ -26,6 +27,9 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     constructor(IKsuPrice ksuPrice_, IERC20 ksuToken_, IKasuController controller_)
         KasuAccessControllable(controller_)
     {
+        AddressLib.checkIfZero(address(ksuPrice_));
+        AddressLib.checkIfZero(address(ksuToken_));
+
         ksuPrice = ksuPrice_;
         ksuToken = ksuToken_;
 
@@ -33,6 +37,8 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     }
 
     function initialize(address userManager_, bool doEmitRewards_) external initializer {
+        AddressLib.checkIfZero(address(userManager_));
+
         userManager = userManager_;
         _setDoEmitRewards(doEmitRewards_);
     }

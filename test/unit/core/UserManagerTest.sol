@@ -13,6 +13,7 @@ contract UserManagerTest is LockingTestUtils {
     ISystemVariables private systemVariables;
 
     function setUp() public {
+        __baseTestUtils_setUp();
         __locking_setUp();
 
         MockKsuPrice ksuPrice = new MockKsuPrice();

@@ -45,7 +45,7 @@ abstract contract LockingTestUtils is BaseTestUtils {
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
-        _kasuController.initialize(admin, address(0));
+        _kasuController.initialize(admin, address(0x1));
 
         _KSULocking = new KSULocking(_kasuController);
         _KSULocking.initialize(_ksu, mockUsdc);

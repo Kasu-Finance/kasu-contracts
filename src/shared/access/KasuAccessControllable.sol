@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "../interfaces/IKasuController.sol";
 import "../CommonErrors.sol";
 import "./Roles.sol";
+import "../AddressLib.sol";
 
 /**
  * @notice Account access role verification middleware
@@ -22,7 +23,7 @@ abstract contract KasuAccessControllable {
      * @param controller_ Kasu access control manager.
      */
     constructor(IKasuController controller_) {
-        if (address(controller_) == address(0)) revert ConfigurationAddressZero();
+        AddressLib.checkIfZero(address(controller_));
 
         controller = controller_;
     }

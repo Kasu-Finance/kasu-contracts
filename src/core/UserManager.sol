@@ -11,6 +11,7 @@ import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../locking/interfaces/IKSULocking.sol";
 import "../shared/CommonErrors.sol";
 import "./Constants.sol";
+import "../shared/AddressLib.sol";
 
 struct LoyaltyGlobalParameters {
     uint256 currentEpoch;
@@ -35,6 +36,10 @@ contract UserManager is IUserManager, Initializable {
     mapping(uint256 epochId => EpochUserLoyaltyProcessing) private _epochUserLoyaltyProcessing;
 
     constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_, IUserLoyaltyRewards userLoyaltyRewards_) {
+        AddressLib.checkIfZero(address(systemVariables_));
+        AddressLib.checkIfZero(address(ksuLocking_));
+        AddressLib.checkIfZero(address(userLoyaltyRewards_));
+
         systemVariables = systemVariables_;
         ksuLocking = ksuLocking_;
         userLoyaltyRewards = userLoyaltyRewards_;
@@ -43,6 +48,7 @@ contract UserManager is IUserManager, Initializable {
     }
 
     function initialize(address lendingPoolManager_) external initializer {
+        AddressLib.checkIfZero(lendingPoolManager_);
         lendingPoolManager = lendingPoolManager_;
     }
 

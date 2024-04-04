@@ -9,6 +9,7 @@ import "../interfaces/ISystemVariables.sol";
 import "../interfaces/IUserManager.sol";
 import "../lendingPool/LendingPoolHelpers.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
+import "../../shared/AddressLib.sol";
 
 /**
  * @title ClearingCoordinator contract
@@ -58,6 +59,10 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     constructor(ISystemVariables systemVariables_, IUserManager userManager_, ILendingPoolManager lendingPoolManager_)
         LendingPoolHelpers(lendingPoolManager_)
     {
+        AddressLib.checkIfZero(address(systemVariables_));
+        AddressLib.checkIfZero(address(userManager_));
+        AddressLib.checkIfZero(address(lendingPoolManager_));
+
         systemVariables = systemVariables_;
         userManager = userManager_;
     }
@@ -80,6 +85,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function initializeLendingPool(address lendingPool) external onlyLendingPoolManager {
+        AddressLib.checkIfZero(lendingPool);
         nextLendingPoolClearingEpoch[lendingPool] = systemVariables.getCurrentRequestEpoch();
     }
 
@@ -243,6 +249,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         ClearingConfiguration memory clearingConfig,
         bool isOverridden
     ) private {
+        AddressLib.checkIfZero(lendingPool);
+
         ILendingPool(lendingPool).verifyClearingConfig(clearingConfig);
 
         clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].config.drawAmount = clearingConfig.drawAmount;

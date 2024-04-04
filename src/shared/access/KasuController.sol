@@ -5,6 +5,7 @@ import "@openzeppelin-upgradeable/contracts/access/AccessControlUpgradeable.sol"
 import "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
 import "../interfaces/IKasuController.sol";
 import "./Roles.sol";
+import "../AddressLib.sol";
 
 /**
  * @notice Kasu access control management
@@ -17,6 +18,9 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
     }
 
     function initialize(address admin, address factory) public initializer {
+        AddressLib.checkIfZero(admin);
+        AddressLib.checkIfZero(factory);
+
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ROLE_LENDING_POOL_FACTORY, factory);
     }

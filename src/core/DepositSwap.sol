@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/ISwapper.sol";
 import "./interfaces/IWETH9.sol";
 import "../shared/CommonErrors.sol";
+import "../shared/AddressLib.sol";
 
 /**
  * @notice Input for swapping and depositing assets.
@@ -31,8 +32,8 @@ abstract contract DepositSwap {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(IWETH9 weth_, ISwapper swapper_) {
-        if (address(weth_) == address(0)) revert ConfigurationAddressZero();
-        if (address(swapper_) == address(0)) revert ConfigurationAddressZero();
+        AddressLib.checkIfZero(address(weth_));
+        AddressLib.checkIfZero(address(swapper_));
 
         _weth = weth_;
         _swapper = swapper_;

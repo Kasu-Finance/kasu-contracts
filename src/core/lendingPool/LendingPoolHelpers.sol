@@ -5,16 +5,19 @@ import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import "../../shared/AddressLib.sol";
 
 abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
     ILendingPoolManager public immutable lendingPoolManager;
     ILendingPool private _lendingPool;
 
     constructor(ILendingPoolManager lendingPoolManager_) {
+        AddressLib.checkIfZero(address(lendingPoolManager_));
         lendingPoolManager = lendingPoolManager_;
     }
 
     function __LendingPoolHelpers_init(ILendingPool lendingPool_) internal onlyInitializing {
+        AddressLib.checkIfZero(address(lendingPool_));
         _lendingPool = lendingPool_;
     }
 

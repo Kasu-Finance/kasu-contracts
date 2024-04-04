@@ -7,6 +7,7 @@ import "./AssetFunctionsBase.sol";
 import "./interfaces/ISystemVariables.sol";
 import "./Constants.sol";
 import "../shared/access/KasuAccessControllable.sol";
+import "../shared/AddressLib.sol";
 
 contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     IKSULocking private immutable _ksuLocking;
@@ -20,6 +21,9 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         IKasuController controller_,
         IKSULocking ksuLocking_
     ) AssetFunctionsBase(underlyingAsset_) KasuAccessControllable(controller_) {
+        AddressLib.checkIfZero(address(ksuLocking_));
+        AddressLib.checkIfZero(address(systemVariables_));
+
         _ksuLocking = ksuLocking_;
         _systemVariables = systemVariables_;
     }

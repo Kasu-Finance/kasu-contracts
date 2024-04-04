@@ -6,6 +6,7 @@ import "./AcceptedRequestsCalculation.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
 import {AcceptedRequestsExecution} from "./AcceptedRequestsExecution.sol";
+import "../../shared/AddressLib.sol";
 
 abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalculation, AcceptedRequestsExecution {
     IClearingCoordinator internal immutable _clearingCoordinator;
@@ -14,6 +15,9 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     mapping(uint256 => ClearingData) internal _clearingDataPerEpoch;
 
     constructor(IClearingCoordinator clearingCoordinator_, IAcceptedRequestsCalculation acceptedRequestsCalculation_) {
+        AddressLib.checkIfZero(address(clearingCoordinator_));
+        AddressLib.checkIfZero(address(acceptedRequestsCalculation_));
+
         _clearingCoordinator = clearingCoordinator_;
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }

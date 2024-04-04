@@ -17,6 +17,7 @@ import "../../shared/access/Roles.sol";
 import "../../shared/interfaces/IKasuController.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../DepositSwap.sol";
+import "../../shared/AddressLib.sol";
 
 contract LendingPoolManager is
     ILendingPoolManager,
@@ -47,6 +48,11 @@ contract LendingPoolManager is
         IUserManager userManager_,
         IClearingCoordinator clearingCoordinator_
     ) public initializer {
+        AddressLib.checkIfZero(address(lendingPoolFactory_));
+        AddressLib.checkIfZero(address(kasuAllowList_));
+        AddressLib.checkIfZero(address(userManager_));
+        AddressLib.checkIfZero(address(clearingCoordinator_));
+
         lendingPoolFactory = lendingPoolFactory_;
         kasuAllowList = kasuAllowList_;
         userManager = userManager_;
