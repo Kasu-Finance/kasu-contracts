@@ -57,7 +57,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(clearingCoordinator_));
         AddressLib.checkIfZero(address(feeManager_));
-        AddressLib.checkIfZero(underlyingAsset_);
 
         systemVariables = systemVariables_;
         clearingCoordinator = clearingCoordinator_;
