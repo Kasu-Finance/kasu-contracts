@@ -56,6 +56,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         systemVariables = systemVariables_;
         clearingCoordinator = clearingCoordinator_;
         feeManager = feeManager_;
+
+        _disableInitializers();
     }
 
     /**

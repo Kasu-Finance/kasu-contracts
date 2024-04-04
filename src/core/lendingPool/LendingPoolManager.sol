@@ -35,7 +35,9 @@ contract LendingPoolManager is
     constructor(address underlyingAsset_, IKasuController controller_)
         AssetFunctionsBase(underlyingAsset_)
         KasuAccessControllable(controller_)
-    {}
+    {
+        _disableInitializers();
+    }
 
     function initialize(
         ILendingPoolFactory lendingPoolFactory_,

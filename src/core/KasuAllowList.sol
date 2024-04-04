@@ -9,7 +9,9 @@ import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVerifierUpgradeable {
     address public lendingPoolManager;
 
-    constructor(IKasuController kasuController_) KasuAccessControllable(kasuController_) {}
+    constructor(IKasuController kasuController_) KasuAccessControllable(kasuController_) {
+        _disableInitializers();
+    }
 
     /// @notice Manual allow list of users.
     mapping(address => bool) public allowList;
