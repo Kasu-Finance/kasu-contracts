@@ -135,6 +135,10 @@ contract PendingPool is
         ILendingPool lendingPool = _getOwnLendingPool();
         (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
 
+        if (amount == 0) {
+            revert AmountShouldBeGreaterThanZero();
+        }
+
         if (amount < minDepositAmount) {
             revert RequestDepositAmountLessThanMinimumAllowed(address(lendingPool), tranche, minDepositAmount, amount);
         }

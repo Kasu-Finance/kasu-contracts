@@ -1015,5 +1015,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         );
         lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6);
         vm.stopPrank();
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(AmountShouldBeGreaterThanZero.selector));
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 0);
+        vm.stopPrank();
     }
 }
