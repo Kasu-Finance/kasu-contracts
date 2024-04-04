@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/IUserManager.sol";
 import "./interfaces/ISystemVariables.sol";
+import "./interfaces/IUserLoyaltyRewards.sol";
 import "./interfaces/lendingPool/ILendingPool.sol";
 import "./interfaces/lendingPool/IPendingPool.sol";
 import "./interfaces/lendingPool/ILendingPoolErrors.sol";
@@ -20,6 +21,7 @@ struct LoyaltyGlobalParameters {
 contract UserManager is IUserManager, Initializable {
     ISystemVariables public immutable systemVariables;
     IKSULocking public immutable ksuLocking;
+    IUserLoyaltyRewards public immutable userLoyaltyRewards;
     address public lendingPoolManager;
 
     address[] public allUsers;
@@ -32,9 +34,10 @@ contract UserManager is IUserManager, Initializable {
 
     mapping(uint256 epochId => EpochUserLoyaltyProcessing) private _epochUserLoyaltyProcessing;
 
-    constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_) {
+    constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_, IUserLoyaltyRewards userLoyaltyRewards_) {
         systemVariables = systemVariables_;
         ksuLocking = ksuLocking_;
+        userLoyaltyRewards = userLoyaltyRewards_;
 
         _disableInitializers();
     }
@@ -68,7 +71,10 @@ contract UserManager is IUserManager, Initializable {
     function getUserTotalPendingAndActiveDepositedAmount(address user) external view returns (uint256) {
         uint256 nextEpoch = systemVariables.getCurrentEpochNumber() + 1;
 
-        return _getUserTotalPendingAndActiveDepositedAmount(user, nextEpoch);
+        (uint256 activeDepositAmount, uint256 pendingDepositAmount) =
+            _getUserTotalPendingAndActiveDepositedAmount(user, nextEpoch);
+
+        return activeDepositAmount + pendingDepositAmount;
     }
 
     /**
@@ -80,7 +86,10 @@ contract UserManager is IUserManager, Initializable {
     function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user) external view returns (uint256) {
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
-        return _getUserTotalPendingAndActiveDepositedAmount(user, currentEpoch);
+        (uint256 activeDepositAmount, uint256 pendingDepositAmount) =
+            _getUserTotalPendingAndActiveDepositedAmount(user, currentEpoch);
+
+        return activeDepositAmount + pendingDepositAmount;
     }
 
     function hasUserRKSU(address user) public view returns (bool) {
@@ -125,10 +134,12 @@ contract UserManager is IUserManager, Initializable {
         for (uint256 i = startUser; i < endUser; ++i) {
             address user = allUsers[i];
 
-            uint256 loyaltyLevel = _getUserLoyaltyLevel(user, params);
+            (uint256 loyaltyLevel, uint256 activeDepositAmount,) = _getUserLoyaltyLevel(user, params);
 
             // update user loyalty level
             _userEpochLoyaltyLevel[user][params.currentEpoch] = loyaltyLevel;
+
+            userLoyaltyRewards.emitUserLoyaltyReward(user, params.currentEpoch, loyaltyLevel, activeDepositAmount);
 
             emit UserLoyaltyLevelUpdated(user, params.currentEpoch, loyaltyLevel);
         }
@@ -154,16 +165,18 @@ contract UserManager is IUserManager, Initializable {
     function getUserLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint256 loyaltyLevel) {
         LoyaltyGlobalParameters memory params = _getLoyaltyParameters();
         currentEpoch = params.currentEpoch;
-        loyaltyLevel = _getUserLoyaltyLevel(user, params);
+        (loyaltyLevel,,) = _getUserLoyaltyLevel(user, params);
     }
 
     function _getUserLoyaltyLevel(address user, LoyaltyGlobalParameters memory params)
         private
         view
-        returns (uint256 loyaltyLevel)
+        returns (uint256 loyaltyLevel, uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
         // get user deposit amount for the current epoch
-        uint256 userDepositAmount = _getUserTotalPendingAndActiveDepositedAmount(user, params.currentEpoch);
+        (activeDepositAmount, pendingDepositAmount) =
+            _getUserTotalPendingAndActiveDepositedAmount(user, params.currentEpoch);
+        uint256 userDepositAmount = activeDepositAmount + pendingDepositAmount;
 
         // get user rKSU balance
         uint256 userRKSU = ksuLocking.balanceOf(user);
@@ -193,26 +206,28 @@ contract UserManager is IUserManager, Initializable {
     function _getUserTotalPendingAndActiveDepositedAmount(address user, uint256 epochId)
         private
         view
-        returns (uint256 userDepositAmount)
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
         // loop through all user lending pools
         for (uint256 i; i < _userLendingPools[user].length; ++i) {
-            userDepositAmount += _getUserLendingPoolActiveAndPendingBalance(user, _userLendingPools[user][i], epochId);
+            (uint256 poolActiveDepositAmount, uint256 poolPendingDepositAmount) =
+                _getUserLendingPoolActiveAndPendingBalance(user, _userLendingPools[user][i], epochId);
+
+            activeDepositAmount += poolActiveDepositAmount;
+            pendingDepositAmount += poolPendingDepositAmount;
         }
     }
 
     function _getUserLendingPoolActiveAndPendingBalance(address user, address lendingPool, uint256 epochId)
         private
         view
-        returns (uint256)
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
-        uint256 userLendingPoolBalance = ILendingPool(lendingPool).getUserBalance(user);
+        activeDepositAmount = ILendingPool(lendingPool).getUserBalance(user);
 
         // get user pending deposit amount
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).getPendingPool());
-        uint256 pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, epochId);
-
-        return userLendingPoolBalance + pendingDepositAmount;
+        pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, epochId);
     }
 
     function _getRKSUInUSDC(uint256 rKSUAmount, uint256 ksuPrice) internal pure returns (uint256 rKSUInUSDC) {
@@ -280,11 +295,11 @@ contract UserManager is IUserManager, Initializable {
                     --userLendingPoolsIndex;
                 }
 
-                uint256 userLendingPoolBalance = _getUserLendingPoolActiveAndPendingBalance(
+                (uint256 activeDepositAmount, uint256 pendingDepositAmount) = _getUserLendingPoolActiveAndPendingBalance(
                     user, _userLendingPools[user][userLendingPoolsIndex], nextEpoch
                 );
 
-                if (userLendingPoolBalance == 0) {
+                if (activeDepositAmount == 0 && pendingDepositAmount == 0) {
                     _removeLendingPoolFromUser(user, userLendingPoolsIndex);
                 }
             }

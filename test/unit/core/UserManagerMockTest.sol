@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "../../../src/core/interfaces/IUserLoyaltyRewards.sol";
 import "forge-std/Test.sol";
 import {BaseTestUtils} from "../_utils/BaseTestUtils.sol";
 import "../../../src/core/UserManager.sol";
@@ -15,6 +16,7 @@ contract UserManagerMockTest is BaseTestUtils {
     ISystemVariables internal systemVariables;
     IKSULocking internal ksuLocking;
     UserManager internal userManager;
+    IUserLoyaltyRewards internal userLoyaltyRewards;
     address internal lendingPoolManager;
 
     address lendingPool1 = address(0x1111);
@@ -32,8 +34,9 @@ contract UserManagerMockTest is BaseTestUtils {
         ksuLocking = IKSULocking(address(0xeeee));
         systemVariables = ISystemVariables(address(0xffff));
         lendingPoolManager = address(0x1234);
+        userLoyaltyRewards = IUserLoyaltyRewards(address(0x9999));
 
-        UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking);
+        UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
@@ -57,6 +60,12 @@ contract UserManagerMockTest is BaseTestUtils {
             address(systemVariables),
             abi.encodeWithSelector(ISystemVariables.isClearingTime.selector),
             abi.encode(false)
+        );
+
+        vm.mockCall(
+            address(userLoyaltyRewards),
+            abi.encodeWithSelector(IUserLoyaltyRewards.emitUserLoyaltyReward.selector),
+            abi.encode()
         );
 
         _mockKSUPrice(2e18);
@@ -140,6 +149,38 @@ contract UserManagerMockTest is BaseTestUtils {
 
         assertEq(currentEpoch, 0);
         assertEq(loyaltyLevel, 2);
+    }
+
+    function test_batchCalculateUserLoyaltyLevels_emitUserLoyaltyReward() public {
+        // ARRANGE
+        uint256 aliceAvailableBalance1 = 850 * 1e6;
+        uint256 aliceAvailableBalance2 = 150 * 1e6;
+        uint256 alicePendingDeposit1 = 120 * 1e6;
+        uint256 aliceRKSU = 15 * 1e18;
+
+        _mockUserLendingPoolBalance(alice, lendingPool1, aliceAvailableBalance1, alicePendingDeposit1);
+        _mockUserLendingPoolBalance(alice, lendingPool2, aliceAvailableBalance2, 0);
+        _mockRKSU(alice, aliceRKSU);
+
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool2);
+
+        uint256 expectedLoyaltyLevel = 2;
+        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+
+        vm.mockCall(
+            address(systemVariables), abi.encodeWithSelector(ISystemVariables.isClearingTime.selector), abi.encode(true)
+        );
+
+        // ACT & ASSERT
+        vm.expectCall(
+            address(userLoyaltyRewards),
+            abi.encodeCall(
+                IUserLoyaltyRewards.emitUserLoyaltyReward,
+                (alice, currentEpoch, expectedLoyaltyLevel, aliceAvailableBalance1 + aliceAvailableBalance2)
+            )
+        );
+        userManager.batchCalculateUserLoyaltyLevels(1);
     }
 
     function test_updateUserLendingPools_removeUserIfItHasNoDeposits() public {
