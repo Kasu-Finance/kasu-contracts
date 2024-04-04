@@ -71,6 +71,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { admin } = await hre.getNamedAccounts();
     const deployer = admin;
 
+    console.log();
+    console.log('deployer account: ', deployer);
+    console.log('admin account: ', admin);
+    console.log();
+
     const { deployTransparentProxy, deployBeacon } = await deployFactory(
         hre,
         addressFile,
@@ -160,16 +165,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             kasuControllerDeployment.address,
             ksuLockingDeployment.address,
         ]),
-    )
+    );
+
+    const userLoyaltyRewardsDeployment = await deployTransparentProxy(
+        'UserLoyaltyRewards',
+        deployOptions(deployer, [
+            mockKsuPriceDeployment.address,
+            ksuDeployment.address,
+            kasuControllerDeployment.address,
+        ]),
+    );
 
     const userManagerDeployment = await deployTransparentProxy(
         'UserManager',
         deployOptions(deployer, [
             systemVariablesDeployment.address,
             ksuLockingDeployment.address,
+            userLoyaltyRewardsDeployment.address,
         ]),
     );
-    const userManager = UserManager__factory.connect(userManagerDeployment.address, adminSigner);
+    const userManager = UserManager__factory.connect(
+        userManagerDeployment.address,
+        adminSigner,
+    );
 
     const swapper = await deployTransparentProxy(
         'Swapper',
