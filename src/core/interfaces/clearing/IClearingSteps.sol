@@ -20,4 +20,6 @@ interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedReques
     function getPendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory);
 
     function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory);
+
+    error CannotFindTranche(address tranche);
 }

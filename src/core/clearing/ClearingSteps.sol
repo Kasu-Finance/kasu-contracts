@@ -81,6 +81,30 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return _clearingDataPerEpoch[epoch].acceptedPriorityWithdrawalAmounts;
     }
 
+    function _getTrancheIndex(address[] memory tranches, address tranche)
+        internal
+        pure
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (uint256)
+    {
+        for (uint256 i; i < tranches.length; ++i) {
+            if (tranches[i] == tranche) {
+                return i;
+            }
+        }
+
+        revert CannotFindTranche(tranche);
+    }
+
+    function _getTranche(address[] memory tranches, uint256 index)
+        internal
+        pure
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+        returns (address)
+    {
+        return tranches[index];
+    }
+
     //*** Common Virtual Methods ***/
 
     // ERC721
@@ -121,17 +145,10 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function _getTrancheIndex(address tranche)
+    function _getLendingPoolTranches()
         internal
         view
         virtual
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-        returns (uint256);
-
-    function _getTranche(uint256 index)
-        internal
-        view
-        virtual
-        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-        returns (address);
+        returns (address[] memory);
 }

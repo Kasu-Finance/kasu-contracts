@@ -87,7 +87,7 @@ contract PendingPool is
     }
 
     function setUpTranches() public {
-        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolInfo().trancheAddresses;
+        address[] memory trancheAddresses = _getOwnLendingPool().getLendingPoolTranches();
         for (uint256 i; i < trancheAddresses.length; ++i) {
             _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);
             _nextTrancheWithdrawalNFTId[trancheAddresses[i]] =
@@ -474,7 +474,7 @@ contract PendingPool is
         }
     }
 
-    // OVERRIDES: PendingRequestsPriorityCalculation
+    // OVERRIDES: ClearingSteps
 
     function _getTotalPendingRequests() internal view override returns (uint256) {
         return totalSupply();
@@ -488,20 +488,12 @@ contract PendingPool is
         return ownerOf(tokenId);
     }
 
-    function _getTrancheIndex(address tranche) internal view override returns (uint256) {
-        return _getOwnLendingPool().getTrancheIndex(tranche);
+    function _getLendingPoolTranches() internal view override returns (address[] memory) {
+        return _getOwnLendingPool().getLendingPoolTranches();
     }
 
     function _getTrancheCount() internal view override returns (uint256) {
-        return _getOwnLendingPool().lendingPoolInfo().trancheAddresses.length;
-    }
-
-    function _getTranche(uint256 index) internal view override returns (address) {
-        return _getOwnLendingPool().lendingPoolInfo().trancheAddresses[index];
-    }
-
-    function _isClearingTime() internal view override returns (bool) {
-        return systemVariables.isClearingTime();
+        return _getOwnLendingPool().getLendingPoolTrancheCount();
     }
 
     function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch)
@@ -545,7 +537,7 @@ contract PendingPool is
     }
 
     modifier canUserRequestDeposit(address user, address tranche) {
-        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolInfo().trancheAddresses;
+        address[] memory trancheAddresses = _getOwnLendingPool().getLendingPoolTranches();
         if (trancheAddresses.length <= 1) return;
         if (trancheAddresses[0] == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
