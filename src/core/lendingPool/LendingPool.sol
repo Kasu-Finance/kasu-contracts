@@ -132,6 +132,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function trancheConfigurationDepositLimits(address tranche)
+        external
+        returns (uint256 minDepositAmount, uint256 maxDepositAmount)
+    {
+        return (
+            _poolConfiguration.tranches[getTrancheIndex(tranche)].minDepositAmount,
+            _poolConfiguration.tranches[getTrancheIndex(tranche)].maxDepositAmount
+        );
+    }
+
     /**
      * @notice Returns the pending pool address.
      * @return The pending pool address.

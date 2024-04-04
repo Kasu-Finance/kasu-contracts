@@ -133,18 +133,14 @@ contract PendingPool is
         // verify the request is between min and max deposit amount
         uint256 trancheIndex = _getTrancheIndex(tranche);
         ILendingPool lendingPool = _getOwnLendingPool();
-        TrancheConfig memory trancheConfig = lendingPool.poolConfiguration().tranches[trancheIndex];
+        (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
 
-        if (amount < trancheConfig.minDepositAmount) {
-            revert RequestDepositAmountLessThanMinimumAllowed(
-                address(lendingPool), tranche, trancheConfig.minDepositAmount, amount
-            );
+        if (amount < minDepositAmount) {
+            revert RequestDepositAmountLessThanMinimumAllowed(address(lendingPool), tranche, minDepositAmount, amount);
         }
 
-        if (amount > trancheConfig.maxDepositAmount) {
-            revert RequestDepositAmountMoreThanMaximumAllowed(
-                address(lendingPool), tranche, trancheConfig.maxDepositAmount, amount
-            );
+        if (amount > maxDepositAmount) {
+            revert RequestDepositAmountMoreThanMaximumAllowed(address(lendingPool), tranche, maxDepositAmount, amount);
         }
 
         // receive the asset from the lending pool manager
