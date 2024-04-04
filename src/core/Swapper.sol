@@ -44,18 +44,13 @@ contract Swapper is ISwapper, KasuAccessControllable {
 
         // Perform the swaps.
         for (uint256 i; i < swapInfo.length; ++i) {
-            if (!_isContract(swapInfo[i].swapTarget)) {
-                revert AddressNotContract(swapInfo[i].swapTarget);
-            }
-
             if (!exchangeAllowlist[swapInfo[i].swapTarget]) {
                 revert ExchangeNotAllowed(swapInfo[i].swapTarget);
             }
 
             _approveMax(IERC20(swapInfo[i].token), swapInfo[i].swapTarget);
 
-            (bool success, bytes memory data) = swapInfo[i].swapTarget.call(swapInfo[i].swapCallData);
-            if (!success) revert(_getRevertMsg(data));
+            swapInfo[i].swapTarget.functionCall(swapInfo[i].swapCallData);
         }
 
         tokenAmount = IERC20(tokenOut).balanceOf(address(this));
@@ -83,6 +78,10 @@ contract Swapper is ISwapper, KasuAccessControllable {
         }
 
         for (uint256 i; i < exchanges.length; ++i) {
+            if (!_isContract(exchanges[i])) {
+                revert AddressNotContract(exchanges[i]);
+            }
+
             exchangeAllowlist[exchanges[i]] = allowed[i];
 
             emit ExchangeAllowlistUpdated(exchanges[i], allowed[i]);
@@ -91,26 +90,6 @@ contract Swapper is ISwapper, KasuAccessControllable {
 
     function _approveMax(IERC20 token, address spender) private {
         token.safeIncreaseAllowance(spender, type(uint256).max);
-    }
-
-    /**
-     * @dev Gets revert message when a low-level call reverts, so that it can
-     * be bubbled-up to caller.
-     * @param returnData_ Data returned from reverted low-level call.
-     * @return revertMsg Original revert message if available, or default message otherwise.
-     */
-    function _getRevertMsg(bytes memory returnData_) public pure returns (string memory) {
-        // if the _res length is less than 68, then the transaction failed silently (without a revert message)
-        if (returnData_.length < 68) {
-            return "Swapper::_getRevertMsg: Transaction reverted silently.";
-        }
-
-        assembly {
-            // slice the sig hash
-            returnData_ := add(returnData_, 0x04)
-        }
-
-        return abi.decode(returnData_, (string)); // all that remains is the revert string
     }
 
     function _isContract(address account) private view returns (bool) {

@@ -3,6 +3,7 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/ISwapper.sol";
 import "./interfaces/IWETH9.sol";
 import "../shared/CommonErrors.sol";
@@ -88,7 +89,7 @@ abstract contract DepositSwap {
 
         // send back eth if swapper returns eth
         if (address(this).balance > 0) {
-            payable(msg.sender).transfer(address(this).balance);
+            Address.sendValue(payable(msg.sender), address(this).balance);
         }
     }
 }

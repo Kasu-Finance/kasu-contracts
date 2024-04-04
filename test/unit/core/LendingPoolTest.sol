@@ -1001,7 +1001,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 51 * 1e6
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 51 * 1e6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 51 * 1e6, "");
         vm.stopPrank();
 
         deal(address(mockUsdc), bob, 500 * 1e6, true);
@@ -1017,12 +1017,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 500 * 1e6
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6, "");
         vm.stopPrank();
 
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(AmountShouldBeGreaterThanZero.selector));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 0);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 0, "");
         vm.stopPrank();
     }
 
@@ -1066,30 +1066,22 @@ contract LendingPoolTest is LendingPoolTestUtils {
     function test_swapper_setAllowList() public {
         // ACT
         vm.startPrank(admin);
-        swapper.updateExchangeAllowlist(ArraysUtil.toArray(address(0x1)), ArraysUtil.toArray(true));
+        swapper.updateExchangeAllowlist(ArraysUtil.toArray(address(lendingPoolManager)), ArraysUtil.toArray(true));
         vm.stopPrank();
 
         // ASSERT
-        assertTrue(swapper.isExchangeAllowed(address(0x1)));
-        assertFalse(swapper.isExchangeAllowed(address(0x2)));
+        assertTrue(swapper.isExchangeAllowed(address(lendingPoolManager)));
     }
 
     function test_swapper_exchangeNotContract() public {
         // ARRANGE
-        address exchange = address(0x1);
-        SwapInfo[] memory swapInfo = new SwapInfo[](1);
-        swapInfo[0] = SwapInfo(
-            exchange,
-            address(weth),
-            abi.encodeWithSelector(MockExchange(exchange).swap.selector, 12_000 ether, address(lendingPoolManager))
-        );
-
-        address[] memory inTokens = ArraysUtil.toArray(address(weth));
+        address[] memory addresses = ArraysUtil.toArray(address(0x1));
+        bool[] memory values = ArraysUtil.toArray(true);
 
         // ACT & ASSERT
-        vm.startPrank(address(lendingPoolManager));
-        vm.expectRevert(abi.encodeWithSelector(AddressNotContract.selector, exchange));
-        swapper.swap(inTokens, swapInfo, address(0x1), address(0x1));
+        vm.startPrank(admin);
+        vm.expectRevert(abi.encodeWithSelector(AddressNotContract.selector, addresses[0]));
+        swapper.updateExchangeAllowlist(addresses, values);
         vm.stopPrank();
     }
 
