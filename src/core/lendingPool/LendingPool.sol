@@ -88,7 +88,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // copy memory to storage
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
-        _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin;
+        _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin; // TODO: can remove pool admin from here, as pool admin can change
         _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
         _poolConfiguration.trancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay;
 
@@ -613,6 +613,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     // config
 
     function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
+        AddressLib.checkIfZero(drawRecipient);
         _poolConfiguration.drawRecipient = drawRecipient;
     }
 
@@ -764,9 +765,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _verifyPoolConfiguration() private view {
         // verify addresses
-        if (_poolConfiguration.drawRecipient == address(0)) {
-            revert PoolConfigurationIsIncorrect("draw receipient is zero address");
-        }
+        AddressLib.checkIfZero(_poolConfiguration.drawRecipient);
         if (_poolConfiguration.poolAdmin == address(0)) {
             revert PoolConfigurationIsIncorrect("pool admin is zero address");
         }
@@ -787,9 +786,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
             if (_poolConfiguration.tranches[i].interestRate > maxTrancheInterestRate) {
                 revert PoolConfigurationIsIncorrect("interest rate is more than max allowed");
-            }
-            if (_poolConfiguration.tranches[i].maxDepositAmount == 0) {
-                revert PoolConfigurationIsIncorrect("max deposit amount is zero");
             }
             ratiosSum += _poolConfiguration.tranches[i].ratio;
         }
