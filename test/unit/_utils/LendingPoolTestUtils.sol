@@ -19,6 +19,10 @@ import "./LockingTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
 import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
 import "../../../src/core/FeeManager.sol";
+import "../../../src/core/Swapper.sol";
+import "../../shared/MockExchange.sol";
+import "../../shared/ArraysUtil.sol";
+import {WETH9} from "../../shared/MockWeth.sol";
 
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     LendingPoolManager internal lendingPoolManager;
@@ -31,6 +35,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
     IClearingCoordinator internal clearingCoordinator;
+    ISwapper internal swapper;
+    WETH9 internal weth;
 
     mapping(address => PendingPoolHarness) internal pendingPools;
 
@@ -106,11 +112,13 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         userLoyaltyRewards.initialize(address(userManager), true);
 
         // lending pool manager
-        LendingPoolManager lendingPoolManagerImpl = new LendingPoolManager(address(mockUsdc), kasuController);
+        swapper = new Swapper(kasuController);
+        weth = new WETH9();
+        LendingPoolManager lendingPoolManagerImpl =
+            new LendingPoolManager(address(mockUsdc), kasuController, IWETH9(address(weth)), swapper);
         TransparentUpgradeableProxy lendingPoolManagerProxy =
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
-
         userManager.initialize(address(lendingPoolManager));
 
         // clearing
@@ -161,6 +169,10 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // access control - init
         kasuController.initialize(admin, address(lendingPoolFactory));
         lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator);
+
+        vm.startPrank(admin);
+        kasuController.grantRole(ROLE_SWAPPER, address(lendingPoolManager));
+        vm.stopPrank();
 
         // kasu allow list - allow users
         vm.startPrank(admin);
@@ -277,6 +289,16 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.stopPrank();
     }
 
+    function _createMockExchange(uint256 rate) internal returns (address exchange, address inToken) {
+        MockERC20Permit tokenA = new MockERC20Permit("TokenB", "TKB", 18);
+        MockExchange mockExchange = new MockExchange(address(tokenA), address(mockUsdc), rate);
+
+        deal(address(mockUsdc), address(mockExchange), 1_000_000_000 * 1e6);
+        deal(address(tokenA), address(mockExchange), 1_000_000 ether);
+
+        return (address(mockExchange), address(tokenA));
+    }
+
     // USER
 
     function _requestDeposit(address sender, address lendingPool, address tranche, uint256 amount)
@@ -286,7 +308,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     {
         deal(address(mockUsdc), sender, amount, true);
         mockUsdc.approve(address(lendingPoolManager), amount);
-        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
+        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "");
     }
 
     function _cancelDepositRequest(address sender, address lendingPool, uint256 dNftId) internal prank(sender) {
