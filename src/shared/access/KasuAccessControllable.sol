@@ -12,7 +12,7 @@ abstract contract KasuAccessControllable {
     /* ========== CONSTANTS ========== */
 
     /**
-     * @dev Spool access control manager.
+     * @dev Kasu access control manager.
      */
     IKasuController internal immutable controller;
 
@@ -87,7 +87,7 @@ abstract contract KasuAccessControllable {
     }
 
     /**
-     * @notice Only allows accounts that are Spool admins or admins of a smart vault.
+     * @notice Only allows accounts that are Kasu admins or admins of a smart vault.
      * @dev Reverts when the account fails check.
      * @param lendingPool Address of the smart vault.
      * @param account Account to check.
