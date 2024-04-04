@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
 error MissingRole(bytes32 role, address account);
 
 /**
- * @notice Used when interacting with Spool when the system is paused.
+ * @notice Used when interacting with Kasu when the system is paused.
  */
 error SystemPaused();
 
@@ -53,7 +53,7 @@ interface IKasuController is IAccessControl {
         returns (bool hasRole);
 
     /**
-     * @notice Checks if an account is either Spool admin or admin for a lending pool.
+     * @notice Checks if an account is either Kasu admin or admin for a lending pool.
      * @dev The function reverts if account is neither.
      * @param lendingPool Address of the lending pool.
      * @param account to check.
@@ -71,7 +71,7 @@ interface IKasuController is IAccessControl {
     /**
      * @notice Grants role to an account for a lending pool.
      * @dev Requirements:
-     * - caller must have either role ROLE_SPOOL_ADMIN or role ROLE_SMART_VAULT_ADMIN for the lending pool
+     * - caller must have either role ROLE_LENDING_POOL_FACTORY or role ROLE_POOL_ADMIN for the lending pool
      * @param lendingPool Address of the lending pool.
      * @param role Role to grant.
      * @param account Account to grant the role to.
@@ -81,7 +81,7 @@ interface IKasuController is IAccessControl {
     /**
      * @notice Revokes role from an account for a lending pool.
      * @dev Requirements:
-     * - caller must have either role ROLE_SPOOL_ADMIN or role ROLE_SMART_VAULT_ADMIN for the lending pool
+     * - caller must have either role ROLE_KASU_ADMIN or role ROLE_POOL_ADMIN for the lending pool
      * @param lendingPool Address of the lending pool.
      * @param role Role to revoke.
      * @param account Account to revoke the role from.
