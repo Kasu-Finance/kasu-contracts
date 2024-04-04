@@ -38,7 +38,7 @@ abstract contract LockingTestUtils is BaseTestUtils {
     function __locking_setUp() internal virtual {
         _ksu = new MockERC20Permit("KSU", "KSU", 18);
 
-        // TODO: maybe reuse same controller for tests with locking
+        // TODO: reuse same controller for tests with locking
         KasuController kasuControllerImpl = new KasuController();
         TransparentUpgradeableProxy kasuControllerProxy =
             new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");

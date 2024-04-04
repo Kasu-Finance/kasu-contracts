@@ -117,4 +117,19 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
     error WithdrawalRequestIsForced(address user, address lendingPool, uint256 wNftID);
     error CannotCancelRequestIfClearingIsPending();
     error UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(address user);
+    error RequestDepositAmountLessThanMinimumAllowed(
+        address lendingPool,
+        address tranche,
+        uint256 minDepositAmountAllowed,
+        uint256 totalDeposited,
+        uint256 requestedAmount
+    );
+    error RequestDepositAmountMoreThanMaximumAllowed(
+        address lendingPool,
+        address tranche,
+        uint256 maxDepositAmountAllowed,
+        uint256 totalDeposited,
+        uint256 requestedAmount
+    );
+    error RequestWithdrawSharesAreZero();
 }

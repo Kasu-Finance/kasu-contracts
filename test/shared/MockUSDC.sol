@@ -9,9 +9,6 @@ contract MockUSDC is ERC20PermitUpgradeable {
     function initialize(address recipient) external initializer {
         __ERC20_init("USDC Token", "USDC");
         __ERC20Permit_init("USDC Token");
-
-        // TODO: remove total supply for recipient, makes test harder, we can use vm.deal
-        _mint(recipient, TOTAL_SUPPLY);
     }
 
     function test_mock() external pure {}

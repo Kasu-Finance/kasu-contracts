@@ -260,22 +260,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function _getLendingPoolClearingConfig(address lendingPoolAddress) private returns (ClearingConfiguration memory) {
-        ILendingPool lendingPool = ILendingPool(lendingPoolAddress);
-
-        // TODO: ideally update to only fetch necessary data
-        PoolConfiguration memory poolConfig = lendingPool.poolConfiguration();
-        uint256[] memory trancheRatios = new uint256[](poolConfig.tranches.length);
-        for (uint256 i; i < poolConfig.tranches.length; ++i) {
-            trancheRatios[i] = poolConfig.tranches[i].ratio;
-        }
-
-        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
-            poolConfig.desiredDrawAmount,
-            trancheRatios,
-            poolConfig.targetExcessLiquidityPercentage,
-            poolConfig.minimumExcessLiquidityPercentage
-        );
-        return clearingConfiguration;
+        return ILendingPool(lendingPoolAddress).getClearingConfig();
     }
 
     function _getLendingPoolBalance(address lendingPoolAddress) private view returns (LendingPoolBalance memory) {

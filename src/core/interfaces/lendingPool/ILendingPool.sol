@@ -38,6 +38,10 @@ interface ILendingPool is IERC20 {
 
     function poolConfiguration() external returns (PoolConfiguration memory);
 
+    function trancheConfigurationDepositLimits(address tranche)
+        external
+        returns (uint256 minDepositAmount, uint256 maxDepositAmount);
+
     function isLendingPoolTranche(address tranche) external view returns (bool);
 
     function getTrancheIndex(address tranche) external view returns (uint256);
@@ -58,6 +62,8 @@ interface ILendingPool is IERC20 {
     function applyInterests(uint256 epoch) external;
 
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
+
+    function getClearingConfig() external returns (ClearingConfiguration memory clearingConfig);
 
     // #### POOL DELEGATE #### //
     function drawFunds(uint256 amount) external;
@@ -132,6 +138,8 @@ interface ILendingPool is IERC20 {
     event PaidFees(uint256 feesPaid);
 
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
+
+    event LendingPoolStopped();
 
     // Errors
 

@@ -228,8 +228,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         vm.prank(admin);
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
         // create lending
-        uint256 minDepositAmount = 500 * 1e6;
-        uint256 maxDepositAmount = 100_000 * 1e6;
+        uint256 minDepositAmount = 10 * 1e6;
+        uint256 maxDepositAmount = 1_000_000 * 1e6;
         uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
         uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
@@ -270,7 +270,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         returns (uint256 dNftId)
     {
         deal(address(mockUsdc), sender, amount, true);
-        // TODO: approve pendingPool, even though we cannot query it ?? gas
         mockUsdc.approve(address(lendingPoolManager), amount);
         return lendingPoolManager.requestDeposit(lendingPool, tranche, amount);
     }

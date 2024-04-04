@@ -132,6 +132,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
+    function trancheConfigurationDepositLimits(address tranche)
+        external
+        returns (uint256 minDepositAmount, uint256 maxDepositAmount)
+    {
+        return (
+            _poolConfiguration.tranches[getTrancheIndex(tranche)].minDepositAmount,
+            _poolConfiguration.tranches[getTrancheIndex(tranche)].maxDepositAmount
+        );
+    }
+
     /**
      * @notice Returns the pending pool address.
      * @return The pending pool address.
@@ -274,6 +284,21 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         if (ratiosSum != FULL_PERCENT) {
             revert PoolConfigurationIsIncorrect("invalid tranche ratio sum");
         }
+    }
+
+    function getClearingConfig() external returns (ClearingConfiguration memory clearingConfig) {
+        uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
+        for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
+            trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
+        }
+
+        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+            _poolConfiguration.desiredDrawAmount,
+            trancheRatios,
+            _poolConfiguration.targetExcessLiquidityPercentage,
+            _poolConfiguration.minimumExcessLiquidityPercentage
+        );
+        return clearingConfiguration;
     }
 
     function _applyTrancheInterest(address tranche, uint256 epoch) internal {
@@ -540,7 +565,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit ImmediateWithdrawal(user, tranche, sharesToWithdraw, assetAmount);
     }
 
-    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager {
+    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager verifyClearingNotPending {
         if (_userOwedAmount > 0) {
             revert UserOwedAmountIsGreaterThanZero(_userOwedAmount);
         }
@@ -552,9 +577,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         if (firstLossCapital > 0) {
             _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
         }
-
-        // TODO: check the clearing was done including paying interests
-        // TODO: pay fees
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             _poolConfiguration.tranches[i].interestRate = 0;
@@ -571,9 +593,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         IPendingPool(getPendingPool()).stop();
 
-        // TODO: emit event
-
         _stopLendingPool();
+
+        emit LendingPoolStopped();
     }
 
     // config

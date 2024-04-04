@@ -819,13 +819,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         assertEq(poolConfiguration.tranches[1].ratio, 25_00);
         assertEq(poolConfiguration.tranches[1].interestRate, 2000000000000000);
-        assertEq(poolConfiguration.tranches[1].minDepositAmount, 500 * 1e6);
-        assertEq(poolConfiguration.tranches[1].maxDepositAmount, 100_000 * 1e6);
+        assertEq(poolConfiguration.tranches[1].minDepositAmount, 10 * 1e6);
+        assertEq(poolConfiguration.tranches[1].maxDepositAmount, 1_000_000 * 1e6);
 
         assertEq(poolConfiguration.tranches[2].ratio, 60_00);
         assertEq(poolConfiguration.tranches[2].interestRate, 1500000000000000);
-        assertEq(poolConfiguration.tranches[2].minDepositAmount, 500 * 1e6);
-        assertEq(poolConfiguration.tranches[2].maxDepositAmount, 100_000 * 1e6);
+        assertEq(poolConfiguration.tranches[2].minDepositAmount, 10 * 1e6);
+        assertEq(poolConfiguration.tranches[2].maxDepositAmount, 1_000_000 * 1e6);
 
         // update interest rate epoch delay
         uint256 interestRateEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
@@ -964,5 +964,63 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ACT ###
         vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.OnlyClearingCoordinator.selector));
         ILendingPool(lpd.lendingPool).applyInterests(1);
+    }
+
+    function test_requestDepositAmountOutsideAllowedRange() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        vm.startPrank(poolManagerAccount);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 100 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200 * 1e6);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[1], 1_000 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[1], 10_000 * 1e6);
+
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[2], 50 * 1e6);
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[2], 500 * 1e6);
+
+        vm.stopPrank();
+
+        // ### ACT / ASSERT ###
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 150 * 1e6);
+
+        deal(address(mockUsdc), alice, 51 * 1e6, true);
+        vm.startPrank(alice);
+        mockUsdc.approve(address(lendingPoolManager), 51 * 1e6);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.RequestDepositAmountMoreThanMaximumAllowed.selector,
+                lpd.lendingPool,
+                lpd.tranches[0],
+                200 * 1e6,
+                201 * 1e6,
+                51 * 1e6
+            )
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 51 * 1e6);
+        vm.stopPrank();
+
+        deal(address(mockUsdc), bob, 500 * 1e6, true);
+        vm.startPrank(bob);
+        mockUsdc.approve(address(lendingPoolManager), 500 * 1e6);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPendingPool.RequestDepositAmountLessThanMinimumAllowed.selector,
+                lpd.lendingPool,
+                lpd.tranches[1],
+                1_000 * 1e6,
+                500 * 1e6,
+                500 * 1e6
+            )
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(AmountShouldBeGreaterThanZero.selector));
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 0);
+        vm.stopPrank();
     }
 }

@@ -96,7 +96,6 @@ contract LendingPoolManager is
     }
 
     function _requestDeposit(address lendingPool, address tranche, uint256 amount) internal returns (uint256 dNftID) {
-        // TODO: more than 0
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
@@ -118,7 +117,6 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
         returns (uint256 wNftID)
     {
-        // TODO: more than 0
         wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 

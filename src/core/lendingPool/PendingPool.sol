@@ -130,7 +130,12 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
-        // TODO: verify the request is between min and max deposit amount
+        ILendingPool lendingPool = _getOwnLendingPool();
+
+        if (amount == 0) {
+            revert AmountShouldBeGreaterThanZero();
+        }
+
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
@@ -152,6 +157,21 @@ contract PendingPool is
         } else {
             // update existing dNft
             _trancheDepositNftDetails[dNftID].assetAmount += amount;
+        }
+
+        // verify the request is between min and max deposit amount
+        (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
+        uint256 totalDeposited = _trancheDepositNftDetails[dNftID].assetAmount;
+        if (totalDeposited < minDepositAmount) {
+            revert RequestDepositAmountLessThanMinimumAllowed(
+                address(lendingPool), tranche, minDepositAmount, totalDeposited, amount
+            );
+        }
+
+        if (totalDeposited > maxDepositAmount) {
+            revert RequestDepositAmountMoreThanMaximumAllowed(
+                address(lendingPool), tranche, maxDepositAmount, totalDeposited, amount
+            );
         }
 
         emit DepositRequested(user, tranche, dNftID, requestEpochId, amount);
@@ -270,6 +290,8 @@ contract PendingPool is
         uint256 requestEpochId,
         RequestedFrom requestedFrom
     ) internal returns (uint256 wNftID) {
+        if (sharesToWithdraw == 0) revert RequestWithdrawSharesAreZero();
+
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
             revert InsufficientSharesBalance(
