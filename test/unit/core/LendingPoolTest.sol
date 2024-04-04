@@ -983,22 +983,23 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         vm.stopPrank();
 
-        vm.startPrank(admin);
-
         // ### ACT / ASSERT ###
-        deal(address(mockUsdc), alice, 500 * 1e6, true);
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 150 * 1e6);
+
+        deal(address(mockUsdc), alice, 51 * 1e6, true);
         vm.startPrank(alice);
-        mockUsdc.approve(address(lendingPoolManager), 500 * 1e6);
+        mockUsdc.approve(address(lendingPoolManager), 51 * 1e6);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IPendingPool.RequestDepositAmountMoreThanMaximumAllowed.selector,
                 lpd.lendingPool,
                 lpd.tranches[0],
                 200 * 1e6,
-                500 * 1e6
+                201 * 1e6,
+                51 * 1e6
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 500 * 1e6);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 51 * 1e6);
         vm.stopPrank();
 
         deal(address(mockUsdc), bob, 500 * 1e6, true);
@@ -1010,6 +1011,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 lpd.lendingPool,
                 lpd.tranches[1],
                 1_000 * 1e6,
+                500 * 1e6,
                 500 * 1e6
             )
         );

@@ -130,21 +130,10 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
-        // verify the request is between min and max deposit amount
-        uint256 trancheIndex = _getTrancheIndex(tranche);
         ILendingPool lendingPool = _getOwnLendingPool();
-        (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
 
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
-        }
-
-        if (amount < minDepositAmount) {
-            revert RequestDepositAmountLessThanMinimumAllowed(address(lendingPool), tranche, minDepositAmount, amount);
-        }
-
-        if (amount > maxDepositAmount) {
-            revert RequestDepositAmountMoreThanMaximumAllowed(address(lendingPool), tranche, maxDepositAmount, amount);
         }
 
         // receive the asset from the lending pool manager
@@ -168,6 +157,21 @@ contract PendingPool is
         } else {
             // update existing dNft
             _trancheDepositNftDetails[dNftID].assetAmount += amount;
+        }
+
+        // verify the request is between min and max deposit amount
+        (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
+        uint256 totalDeposited = _trancheDepositNftDetails[dNftID].assetAmount;
+        if (totalDeposited < minDepositAmount) {
+            revert RequestDepositAmountLessThanMinimumAllowed(
+                address(lendingPool), tranche, minDepositAmount, totalDeposited, amount
+            );
+        }
+
+        if (totalDeposited > maxDepositAmount) {
+            revert RequestDepositAmountMoreThanMaximumAllowed(
+                address(lendingPool), tranche, maxDepositAmount, totalDeposited, amount
+            );
         }
 
         emit DepositRequested(user, tranche, dNftID, requestEpochId, amount);

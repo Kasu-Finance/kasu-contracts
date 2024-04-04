@@ -118,10 +118,18 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
     error CannotCancelRequestIfClearingIsPending();
     error UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(address user);
     error RequestDepositAmountLessThanMinimumAllowed(
-        address lendingPool, address tranche, uint256 minDepositAmountAllowed, uint256 requestedAmount
+        address lendingPool,
+        address tranche,
+        uint256 minDepositAmountAllowed,
+        uint256 totalDeposited,
+        uint256 requestedAmount
     );
     error RequestDepositAmountMoreThanMaximumAllowed(
-        address lendingPool, address tranche, uint256 maxDepositAmountAllowed, uint256 requestedAmount
+        address lendingPool,
+        address tranche,
+        uint256 maxDepositAmountAllowed,
+        uint256 totalDeposited,
+        uint256 requestedAmount
     );
     error RequestWithdrawSharesAreZero();
 }
