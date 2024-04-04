@@ -40,7 +40,9 @@ contract LendingPoolManager is
         DepositSwap(weth_, swapper_)
         AssetFunctionsBase(underlyingAsset_)
         KasuAccessControllable(controller_)
-    {}
+    {
+        _disableInitializers();
+    }
 
     function initialize(
         ILendingPoolFactory lendingPoolFactory_,

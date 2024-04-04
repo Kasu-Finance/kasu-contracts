@@ -14,6 +14,7 @@ abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
     constructor(ILendingPoolManager lendingPoolManager_) {
         AddressLib.checkIfZero(address(lendingPoolManager_));
         lendingPoolManager = lendingPoolManager_;
+        _disableInitializers();
     }
 
     function __LendingPoolHelpers_init(ILendingPool lendingPool_) internal onlyInitializing {

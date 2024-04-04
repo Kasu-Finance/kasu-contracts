@@ -11,7 +11,9 @@ contract LockingWorkflowTest is LockingTestUtils {
         __baseTestUtils_setUp();
         __locking_setUp();
 
-        _KSULockBonus = new KSULockBonus();
+        TransparentUpgradeableProxy ksuLockBonusProxy =
+            new TransparentUpgradeableProxy(address(new KSULockBonus()), address(proxyAdmin), "");
+        _KSULockBonus = KSULockBonus(address(ksuLockBonusProxy));
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
         vm.prank(admin);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
