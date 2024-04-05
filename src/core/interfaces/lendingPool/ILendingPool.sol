@@ -54,6 +54,8 @@ interface ILendingPool is IERC20 {
 
     function getFeesOwedAmount() external view returns (uint256);
 
+    function getAvailableFunds() external view returns (uint256);
+
     function getMaximumLossAmount() external view returns (uint256 maximumLossAmount);
 
     // #### CLEARING #### //
@@ -69,7 +71,7 @@ interface ILendingPool is IERC20 {
 
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
 
-    function getClearingConfig() external returns (ClearingConfiguration memory clearingConfig);
+    function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig);
 
     // #### POOL DELEGATE #### //
     function drawFunds(uint256 amount) external;

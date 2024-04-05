@@ -186,6 +186,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _feesOwed;
     }
 
+    function getAvailableFunds() external view returns (uint256) {
+        return totalSupply() - _userOwedAmount;
+    }
+
     /**
      * @notice Returns the balance of the tranche.
      * @param tranche The tranche address.
@@ -306,7 +310,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig) {
+    function getClearingConfig() external view returns (ClearingConfiguration memory) {
         uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
         for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
             trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
@@ -318,6 +322,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _poolConfiguration.targetExcessLiquidityPercentage,
             _poolConfiguration.minimumExcessLiquidityPercentage
         );
+
         return clearingConfiguration;
     }
 

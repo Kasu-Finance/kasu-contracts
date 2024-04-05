@@ -23,6 +23,7 @@ enum ClearingStatus {
 struct AppliedClearingConfiguration {
     ClearingConfiguration config;
     bool isOverridden;
+    bool isSet;
 }
 
 interface IClearingCoordinator {
@@ -73,7 +74,8 @@ interface IClearingCoordinator {
         view
         returns (ClearingConfiguration memory);
 
-    event ClearingExecuted(address lendingPool, uint256 epoch, ClearingStatus clearingStatus);
+    event ClearingExecuted(address indexed lendingPool, uint256 indexed epoch, ClearingStatus clearingStatus);
+    event ClearingConfigSet(address indexed lendingPool, uint256 indexed epoch, ClearingConfiguration clearingConfig);
 
     error ClearingAlreadyExecuted(uint256 epoch);
     error TargetEpochNotStarted(uint256 targetEpoch, uint256 currentEpoch);
