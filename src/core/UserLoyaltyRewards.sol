@@ -10,20 +10,41 @@ import "../shared/CommonErrors.sol";
 import "../shared/AddressLib.sol";
 import "./Constants.sol";
 
+/**
+ * @title User Loyalty Rewards Contract
+ * @notice This contract is used to handle KSU rewards for users based on their active liquidity and loyalty level.
+ */
 contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Initializable {
+    /// @notice Maximum epoch reward rate.
     uint256 private constant MAX_REWARD_EPOCH_RATE = INTEREST_RATE_FULL_PERCENT / 20; // 5%
 
+    /// @notice KSU token price contract.
     IKsuPrice public immutable ksuPrice;
+
+    /// @notice KSU token contract.
     IERC20 public immutable ksuToken;
+
+    /// @notice User manager contract.
     address public userManager;
 
+    /// @notice Flag to enable/disable rewards emission.
     bool public doEmitRewards;
 
+    /// @notice Total unclaimed rewards of users.
     uint256 public totalUnclaimedRewards;
 
+    /// @notice Mapping of loyalty level to reward rate per epoch.
     mapping(uint256 loyaltyLevel => uint256 epochRewardRate) public loyaltyEpochRewardRates;
+
+    /// @notice Mapping of user to unclaimed reward amount.
     mapping(address user => uint256 rewardAmount) public userRewards;
 
+    /**
+     * @notice Constructor.
+     * @param ksuPrice_ KSU token price contract.
+     * @param ksuToken_ KSU token contract.
+     * @param controller_ Kasu controller contract.
+     */
     constructor(IKsuPrice ksuPrice_, IERC20 ksuToken_, IKasuController controller_)
         KasuAccessControllable(controller_)
     {
@@ -36,6 +57,11 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         _disableInitializers();
     }
 
+    /**
+     * @notice Initializes the contract.
+     * @param userManager_ User manager contract.
+     * @param doEmitRewards_ Flag to enable/disable rewards emission.
+     */
     function initialize(address userManager_, bool doEmitRewards_) external initializer {
         AddressLib.checkIfZero(address(userManager_));
 
@@ -43,6 +69,10 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         _setDoEmitRewards(doEmitRewards_);
     }
 
+    /**
+     * @notice Enables or disables rewards emission.
+     * @param doEmitRewards_ Flag to enable/disable rewards emission.
+     */
     function setDoEmitRewards(bool doEmitRewards_) external onlyAdmin {
         _setDoEmitRewards(doEmitRewards_);
     }
@@ -61,11 +91,15 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         }
     }
 
+    /**
+     * @notice Sets reward rates per loyalty level.
+     * @param loyaltyEpochRewardRatesInput Array of loyalty level and reward rate per epoch.
+     */
     function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRatesInput)
         external
         onlyAdmin
     {
-        for (uint256 i; i < loyaltyEpochRewardRatesInput.length; i++) {
+        for (uint256 i; i < loyaltyEpochRewardRatesInput.length; ++i) {
             if (loyaltyEpochRewardRatesInput[i].epochRewardRate > MAX_REWARD_EPOCH_RATE) {
                 revert InvalidConfiguration();
             }
@@ -79,10 +113,23 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         }
     }
 
+    /**
+     * @notice Recovers ERC20 tokens.
+     * @dev Only admin can call this function.
+     * @param tokenAddress Token address.
+     * @param tokenAmount Token amount.
+     * @param recipient Recipient address.
+     */
     function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external onlyAdmin {
         IERC20(tokenAddress).transfer(recipient, tokenAmount);
     }
 
+    /**
+     * @notice Emits user loyalty rewards for a batch of users.
+     * @dev Only admin can call this function.
+     * @param userRewardInputs Array of user reward details.
+     * @param ksuTokenPrice KSU token price. Iz zero, the current price will be used.
+     */
     function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice)
         external
         onlyAdmin
@@ -102,6 +149,14 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         }
     }
 
+    /**
+     * @notice Emits user loyalty rewards.
+     * @dev Only user manager contract can call this function.
+     * @param user User address.
+     * @param epoch Epoch number.
+     * @param userLoyaltyLevel User loyalty level.
+     * @param amountDeposited Active amount deposited by user.
+     */
     function emitUserLoyaltyReward(address user, uint256 epoch, uint256 userLoyaltyLevel, uint256 amountDeposited)
         external
     {
@@ -135,6 +190,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
             return;
         }
 
+        // calculate reward in KSU tokens based on user's active liquidity, epoch reward rate and KSU token price.
         uint256 ksuReward = (amountDeposited * epochRewardRate * KSU_PRICE_MULTIPLIER * 1e12) / ksuTokenPrice
             / INTEREST_RATE_FULL_PERCENT;
 
@@ -144,6 +200,10 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         emit UserLoyaltyRewardsEmitted(user, epoch, ksuReward);
     }
 
+    /**
+     * @notice Claims user reward.
+     * @param amount Reward amount to claim. If value is more than user's reward, the full reward will be claimed.
+     */
     function claimReward(uint256 amount) external {
         uint256 reward = userRewards[msg.sender];
 
