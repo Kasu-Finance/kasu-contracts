@@ -46,6 +46,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal poolManagerAccount = address(0xad5);
     address internal poolClearingManagerAccount = address(0xad5);
 
+    address internal feeRecieverAccount = address(0xfee);
+
     function test_mock() external pure {}
 
     function __lendingPool_setUp() internal {
@@ -235,6 +237,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
         systemVariablesSetup.ecosystemFeeRate = 50_00;
         systemVariablesSetup.protocolFeeRate = 50_00;
+        systemVariablesSetup.protocolFeeReceiver = feeRecieverAccount;
 
         systemVariables.initialize(systemVariablesSetup);
     }
