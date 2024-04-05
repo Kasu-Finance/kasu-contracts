@@ -106,7 +106,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         mockUsdcDeployment.address,
         adminSigner,
     );
-    tx = await mockUsdc.initialize(admin);
+    tx = await mockUsdc.initialize();
     await tx.wait(1);
 
     const kasuControllerDeployment = await deployTransparentProxy(
@@ -191,9 +191,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const swapper = await deployTransparentProxy(
         'Swapper',
-        deployOptions(deployer, [
-            kasuControllerDeployment.address,
-        ]),
+        deployOptions(deployer, [kasuControllerDeployment.address]),
     );
 
     const lendingPoolManagerDeployment = await deployTransparentProxy(
