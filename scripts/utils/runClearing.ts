@@ -5,19 +5,21 @@ import {
     LendingPoolManager__factory,
     SystemVariablesTestable__factory,
     UserManager__factory,
-} from '../typechain-types';
+} from '../../typechain-types';
 import { ethers } from 'ethers';
-import { ClearingConfigurationStruct } from '../typechain-types/src/core/clearing/ClearingSteps';
+import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
 
+export async function runClearing(
+    lendingPoolAddress: string,
+    drawAmount: bigint,
+) {
+    console.log(
+        `running clearing for lending pool: ${lendingPoolAddress}, draw amount: ${hre.ethers.formatUnits(
+            drawAmount,
+            6,
+        )} USDC`,
+    );
 
-const POOL_CLEARING_MANAGER_PK = "";
-
-const LENDING_POOL_ADDRESS = '0x270169E35502A1d3637b562fEc0b69027b79C83b';
-const DRAW_AMOUNT = hre.ethers.parseUnits("2500", 6); // 2500 USDC
-
-console.log(`running clearing for lending pool: ${LENDING_POOL_ADDRESS}, draw amount: ${hre.ethers.formatUnits(DRAW_AMOUNT, 6)} USDC`);
-
-async function main() {
     const deploymentAddressesPath = path.join(
         `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
     );
@@ -25,11 +27,10 @@ async function main() {
         fs.readFileSync(deploymentAddressesPath).toString(),
     );
 
-    const clearingManager = new hre.ethers.Wallet(POOL_CLEARING_MANAGER_PK, hre.ethers.provider);
-
     // signers
     const namedSigners = await hre.ethers.getNamedSigners();
     const admin = namedSigners['admin'];
+    const clearingManager = namedSigners['carol'];
 
     // contracts
     const userManager = UserManager__factory.connect(
@@ -68,20 +69,11 @@ async function main() {
         await systemVariablesTestable.getCurrentEpochNumber();
 
     const clearingConfiguration: ClearingConfigurationStruct = {
-        drawAmount: DRAW_AMOUNT,
+        drawAmount: drawAmount,
         trancheDesiredRatios: [20_00, 30_00, 50_00], // 20%, 30%, 50%
         maxExcessPercentage: 0, // 10%
         minExcessPercentage: 0, // 0%
-        isOverridden: true,
     };
-
-    console.log('Overwrite clearing config');
-    tx = await lendingPoolManager.registerClearingConfig(
-        LENDING_POOL_ADDRESS,
-        currentEpochNumber,
-        clearingConfiguration,
-    );
-    await tx.wait(1);
 
     // run clearing
     const pendingRequestsPriorityCalculationBatchSize = ethers.MaxUint256;
@@ -89,10 +81,12 @@ async function main() {
 
     console.log('Run clearing');
     tx = await lendingPoolManager.doClearing(
-        LENDING_POOL_ADDRESS,
+        lendingPoolAddress,
         currentEpochNumber,
         pendingRequestsPriorityCalculationBatchSize,
         acceptedRequestsExecutionBatchSize,
+        clearingConfiguration,
+        true,
     );
     await tx.wait(1);
 
@@ -101,8 +95,3 @@ async function main() {
     tx = await systemVariablesTestable.endClearing();
     await tx.wait(1);
 }
-
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
