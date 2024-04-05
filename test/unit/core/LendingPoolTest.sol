@@ -25,7 +25,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId1_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
 
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(true);
 
         _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
 
@@ -40,7 +40,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.stopPrank();
 
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(false);
 
         // request deposit on user that is not allowed
         vm.startPrank(userNotAllowed);

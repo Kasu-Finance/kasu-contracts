@@ -32,8 +32,8 @@ interface ISystemVariables {
     function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds) external;
 
     // LENDING POOL
-    function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
-    function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external;
+    function getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
+    function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external;
 
     // TRANCHE
     function defaultTrancheInterestChangeEpochDelay() external view returns (uint256);

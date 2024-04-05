@@ -45,7 +45,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     uint256[] private _loyaltyThresholds;
 
-    bool private _userCanDepositToJuniorTrancheWhenHeHasRKSU;
+    bool private _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
 
     uint256 private _defaultTrancheInterestChangeEpochDelay;
 
@@ -282,19 +282,19 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     // LENDING POOL
 
     /**
-     * @notice Returns whether users can deposit to junior tranches only when having rKSU.
+     * @notice Returns whether users can only deposit to junior tranches only when having rKSU.
      * @return true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
      */
-    function getUserCanDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
-        return _userCanDepositToJuniorTrancheWhenHeHasRKSU;
+    function getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
+        return _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
     }
 
     /**
      * @notice Sets whether users are allowed to deposit only when the own rKSU
      * @param value Set to true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
      */
-    function setUserCanDepositToJuniorTrancheWhenHeHasRKSU(bool value) external whenNotPaused onlyAdmin {
-        _userCanDepositToJuniorTrancheWhenHeHasRKSU = value;
+    function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external whenNotPaused onlyAdmin {
+        _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU = value;
     }
 
     // TRANCHE
