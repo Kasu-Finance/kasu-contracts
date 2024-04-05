@@ -13,6 +13,10 @@ contract MockUSDC is ERC20PermitUpgradeable {
 
     function test_mock() external pure {}
 
+    function mint(address account, uint256 value) external {
+        _mint(account, value);
+    }
+
     function decimals() public pure override returns (uint8) {
         return 6;
     }
