@@ -129,7 +129,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return 6;
     }
 
-    function lendingPoolInfo() external view returns (LendingPoolInfo memory) {
+    function getlendingPoolInfo() external view returns (LendingPoolInfo memory) {
         return _lendingPoolInfo;
     }
 

@@ -33,7 +33,7 @@ interface ILendingPool is IERC20 {
 
     function getUserBalance(address user) external view returns (uint256);
 
-    function lendingPoolInfo() external view returns (LendingPoolInfo memory);
+    function getlendingPoolInfo() external view returns (LendingPoolInfo memory);
 
     function poolConfiguration() external view returns (PoolConfiguration memory);
 
