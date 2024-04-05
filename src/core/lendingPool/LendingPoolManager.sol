@@ -78,7 +78,7 @@ contract LendingPoolManager is
         clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
     }
 
-    // #### USER DEPOSITS #### //
+    // #### USER #### //
     function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
         external
         payable
@@ -226,13 +226,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).depositFirstLossCapital(amount);
     }
 
-    function repayLoan(address lendingPool, uint256 amount, address repaymentAddress)
+    function repayOwedFunds(address lendingPool, uint256 amount, address repaymentAddress)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).repayLoan(amount, repaymentAddress);
+        ILendingPool(lendingPool).repayOwedFunds(amount, repaymentAddress);
     }
 
     /**

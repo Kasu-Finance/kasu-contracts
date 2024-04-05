@@ -369,7 +369,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param amount The amount of the repayment.
      * @param repaymentAddress The address of the repayment.
      */
-    function repayLoan(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
+    function repayOwedFunds(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -386,7 +386,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         _userOwedAmount -= amountLeft;
 
-        emit LoanRepaid(amountLeft, feesPaid);
+        emit OwedFundsRepaid(amountLeft, feesPaid);
     }
 
     function _payFees(uint256 amount) private returns (uint256 feesPaid) {

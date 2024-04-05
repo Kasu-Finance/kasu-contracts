@@ -42,27 +42,43 @@ interface ILendingPoolManager {
 
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
+    function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
+        external
+        returns (uint256 claimedAmount);
+
     // #### LENDING POOL CREATOR #### //
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 
-    // #### LENDING POOL LOAN MANAGER #### //
-    function repayLoan(address lendingPool, uint256 amount, address repaymentAddress) external;
+    // #### POOL ADMIN #### //
 
-    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens) external returns (uint256 lossId);
+    function updateDrawRecipient(address lendingPool, address drawRecipient) external;
 
-    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
+    // #### POOL FUNDS MANAGER #### //
 
-    function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
-        external
-        returns (uint256 claimedAmount);
+    function repayOwedFunds(address lendingPool, uint256 amount, address repaymentAddress) external;
 
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress) external;
 
-    // #### LENDING POOL MANAGER #### //
+    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens) external returns (uint256 lossId);
+
+    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
+
+    // #### POOL CLEARING MANAGER #### //
+
+    function doClearing(
+        address lendingPool,
+        uint256 targetEpoch,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize,
+        ClearingConfiguration calldata clearingConfigOverride,
+        bool isConfigOverridden
+    ) external;
+
+    // #### POOL MANAGER #### //
 
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external;
@@ -77,20 +93,7 @@ interface ILendingPoolManager {
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
-    // clearing
-
-    function doClearing(
-        address lendingPool,
-        uint256 targetEpoch,
-        uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize,
-        ClearingConfiguration calldata clearingConfigOverride,
-        bool isConfigOverridden
-    ) external;
-
     // config
-
-    function updateDrawRecipient(address lendingPool, address drawRecipient) external;
 
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount) external;
 

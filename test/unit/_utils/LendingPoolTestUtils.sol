@@ -343,12 +343,12 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         ILendingPool(lendingPool).drawFunds(amount);
     }
 
-    function _repayLoan(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
+    function _repayOwedFunds(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
         deal(address(mockUsdc), repaymentAddress, amount, true);
         vm.prank(repaymentAddress);
         mockUsdc.approve(lendingPool, amount);
         vm.prank(caller);
-        lendingPoolManager.repayLoan(lendingPool, amount, repaymentAddress);
+        lendingPoolManager.repayOwedFunds(lendingPool, amount, repaymentAddress);
     }
 
     function _depositFirstLossCapital(address caller, address lendingPool, uint256 amount) internal prank(caller) {
