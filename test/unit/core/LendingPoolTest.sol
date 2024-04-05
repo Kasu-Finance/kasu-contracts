@@ -469,7 +469,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 200 * 10 ** 6);
     }
 
-    function test_repayLoan_noFees() public {
+    function test_repayOwedFunds_noFees() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -501,9 +501,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 ILendingPool.RepayAmountCantBeGreaterThanOwedAmount.selector, owedAmount + 1, owedAmount
             )
         );
-        lendingPoolManager.repayLoan(lpd.lendingPool, owedAmount + 1, poolFundsManagerAccount);
+        lendingPoolManager.repayOwedFunds(lpd.lendingPool, owedAmount + 1, poolFundsManagerAccount);
 
-        lendingPoolManager.repayLoan(lpd.lendingPool, 100 * 10 ** 6, poolFundsManagerAccount);
+        lendingPoolManager.repayOwedFunds(lpd.lendingPool, 100 * 10 ** 6, poolFundsManagerAccount);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
@@ -512,7 +512,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
     }
 
-    function test_repayLoan_repayIncludingFees() public {
+    function test_repayOwedFunds_repayIncludingFees() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -534,7 +534,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 usdcBefore = mockUsdc.balanceOf(lpd.lendingPool);
 
         // ### ACT ###
-        _repayLoan(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, feesOwedAmount / 2);
+        _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, feesOwedAmount / 2);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore);
@@ -542,7 +542,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), userOwedAmount);
 
         // ### ACT ###
-        _repayLoan(
+        _repayOwedFunds(
             poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, feesOwedAmount / 2 + userOwedAmount / 2
         );
 
@@ -552,7 +552,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertApproxEqAbs(ILendingPool(lpd.lendingPool).getUserOwedAmount(), userOwedAmount / 2, 1);
 
         // ### ACT ###
-        _repayLoan(
+        _repayOwedFunds(
             poolFundsManagerAccount,
             poolFundsManagerAccount,
             lpd.lendingPool,
@@ -676,7 +676,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.UserOwedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
         _stop(poolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
 
-        _repayLoan(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
+        _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
         _stop(poolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
         assertEq(mockUsdc.balanceOf(lendingPoolAdminAccount), 50 * 10 ** 6);
@@ -697,7 +697,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         lendingPoolManager.depositFirstLossCapital(lpd.lendingPool, 10 * 10 ** 6);
         vm.stopPrank();
 
-        // draw loan after stop - even though balance is zero not allowed
+        // draw funds after stop - even though balance is zero not allowed
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
         _drawFunds(lpd.lendingPool, 10 * 10 ** 6);
 
