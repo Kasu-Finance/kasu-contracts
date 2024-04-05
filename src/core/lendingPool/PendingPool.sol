@@ -81,12 +81,14 @@ contract PendingPool is
      * @param symbol_ The symbol of the pending NFT.
      * @param lendingPool_ The address of the lending pool.
      */
-    function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
+    function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) external initializer {
         __ERC721_init(name_, symbol_);
         __LendingPoolHelpers_init(lendingPool_);
+
+        _setUpTranches();
     }
 
-    function setUpTranches() public {
+    function _setUpTranches() private {
         address[] memory trancheAddresses = _getOwnLendingPool().getLendingPoolTranches();
         for (uint256 i; i < trancheAddresses.length; ++i) {
             _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);

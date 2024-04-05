@@ -24,6 +24,7 @@ import "../../shared/AddressLib.sol";
  */
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     ISystemVariables public immutable systemVariables;
+    address public immutable lendingPoolManager;
     IClearingCoordinator public immutable clearingCoordinator;
     IFeeManager public immutable feeManager;
 
@@ -44,21 +45,23 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     mapping(address tranche => FutureTrancheInterestRates[]) private _futureTrancheInterests;
     mapping(address tranche => uint256) private _trancheInterestIndex;
 
-    address public lendingPoolManager;
     uint256 public firstLossCapital;
     uint256 public nextLossId;
 
     constructor(
         ISystemVariables systemVariables_,
+        address lendingPoolManager_,
         IClearingCoordinator clearingCoordinator_,
         IFeeManager feeManager_,
         address underlyingAsset_
     ) AssetFunctionsBase(underlyingAsset_) {
         AddressLib.checkIfZero(address(systemVariables_));
+        AddressLib.checkIfZero(lendingPoolManager_);
         AddressLib.checkIfZero(address(clearingCoordinator_));
         AddressLib.checkIfZero(address(feeManager_));
 
         systemVariables = systemVariables_;
+        lendingPoolManager = lendingPoolManager_;
         clearingCoordinator = clearingCoordinator_;
         feeManager = feeManager_;
 
@@ -68,27 +71,25 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     /**
      * @notice Initializes the lending pool.
      * @param createPoolConfig Create lending pool configuration.
-     * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
+     * @param lendingPoolInfo Lending pool info containing other addresses and configuration.
      */
-    function initialize(
-        CreatePoolConfig memory createPoolConfig,
-        LendingPoolInfo memory lendingPoolInfo_,
-        address lendingPoolManager_
-    ) public initializer returns (PoolConfiguration memory) {
+    function initialize(CreatePoolConfig memory createPoolConfig, LendingPoolInfo memory lendingPoolInfo)
+        public
+        initializer
+        returns (PoolConfiguration memory)
+    {
         AddressLib.checkIfZero(createPoolConfig.poolAdmin);
         AddressLib.checkIfZero(createPoolConfig.drawRecipient);
-        AddressLib.checkIfZero(lendingPoolInfo_.pendingPoolAddress);
-        AddressLib.checkIfZero(lendingPoolManager_);
+        AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
 
-        _lendingPoolInfo.pendingPoolAddress = lendingPoolInfo_.pendingPoolAddress;
+        _lendingPoolInfo = lendingPoolInfo;
 
         uint256 defaultTrancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
 
         // copy memory to storage
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
-        _poolConfiguration.poolAdmin = createPoolConfig.poolAdmin; // TODO: can remove pool admin from here, as pool admin can change
         _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
         _poolConfiguration.trancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay;
 
@@ -105,19 +106,17 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
                 )
             );
 
-            _futureTrancheInterests[lendingPoolInfo_.trancheAddresses[i]].push(
+            _futureTrancheInterests[lendingPoolInfo.trancheAddresses[i]].push(
                 FutureTrancheInterestRates({epoch: 0, interestRate: createPoolConfig.tranches[i].interestRate})
             );
 
-            _lendingPoolInfo.trancheAddresses.push(lendingPoolInfo_.trancheAddresses[i]);
-            _setTrancheIndex(lendingPoolInfo_.trancheAddresses[i], i);
+            _setTrancheIndex(lendingPoolInfo.trancheAddresses[i], i);
 
-            _approve(address(this), lendingPoolInfo_.trancheAddresses[i], type(uint256).max);
+            _approve(address(this), lendingPoolInfo.trancheAddresses[i], type(uint256).max);
         }
 
         _verifyPoolConfiguration();
 
-        lendingPoolManager = lendingPoolManager_;
         nextLossId = 1;
 
         return _poolConfiguration;
@@ -160,7 +159,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @return The pending pool address.
      */
     function getPendingPool() public view returns (address) {
-        return _lendingPoolInfo.pendingPoolAddress;
+        return _lendingPoolInfo.pendingPool;
     }
 
     function isLendingPoolTranche(address tranche) public view returns (bool) {
@@ -776,9 +775,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function _verifyPoolConfiguration() private view {
         // verify addresses
         AddressLib.checkIfZero(_poolConfiguration.drawRecipient);
-        if (_poolConfiguration.poolAdmin == address(0)) {
-            revert PoolConfigurationIsIncorrect("pool admin is zero address");
-        }
 
         uint256 maxTrancheInterestRate = systemVariables.maxTrancheInterestRate();
 
@@ -805,8 +801,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     function _onlyPendingPool() private view {
-        if (msg.sender != _lendingPoolInfo.pendingPoolAddress) {
-            revert OnlyOwnPendingPool(msg.sender, _lendingPoolInfo.pendingPoolAddress);
+        if (msg.sender != _lendingPoolInfo.pendingPool) {
+            revert OnlyOwnPendingPool(msg.sender, _lendingPoolInfo.pendingPool);
         }
     }
 

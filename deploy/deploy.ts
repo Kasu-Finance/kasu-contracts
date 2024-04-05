@@ -240,6 +240,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     // beacons
 
+    const lendingPoolBeacon = await deployBeacon(
+        'LendingPool',
+        deployOptions(deployer, [
+            systemVariablesDeployment.address,
+            lendingPoolManagerDeployment.address,
+            clearingCoordinatorDeployment.address,
+            feeManagerDeployment.address,
+            mockUsdcDeployment.address,
+        ]),
+    );
+
     const pendingPoolBeacon = await deployBeacon(
         'PendingPool',
         deployOptions(deployer, [
@@ -249,16 +260,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             userManagerDeployment.address,
             clearingCoordinatorDeployment.address,
             acceptedRequestsCalculationDeployment.address,
-        ]),
-    );
-
-    const lendingPoolBeacon = await deployBeacon(
-        'LendingPool',
-        deployOptions(deployer, [
-            systemVariablesDeployment.address,
-            clearingCoordinatorDeployment.address,
-            feeManagerDeployment.address,
-            mockUsdcDeployment.address,
         ]),
     );
 
