@@ -27,6 +27,7 @@ struct SystemVariablesSetup {
     uint256 defaultTrancheInterestChangeEpochDelay;
     uint256 ecosystemFeeRate;
     uint256 protocolFeeRate;
+    address protocolFeeReceiver;
 }
 
 /**
@@ -140,6 +141,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _trancheNameInfo.push(TrancheInfo("Senior Tranche", "SR"));
 
         _setFeeRates(systemVariablesSetup.ecosystemFeeRate, systemVariablesSetup.protocolFeeRate);
+
+        _setProtocolFeeReceiver(systemVariablesSetup.protocolFeeReceiver);
     }
 
     // EPOCH
@@ -458,6 +461,10 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param receiver The protocol fee receiver.
      */
     function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
+        _setProtocolFeeReceiver(receiver);
+    }
+
+    function _setProtocolFeeReceiver(address receiver) private {
         AddressLib.checkIfZero(receiver);
         _protocolFeeReceiver = receiver;
 
