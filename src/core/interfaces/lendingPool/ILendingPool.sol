@@ -54,6 +54,8 @@ interface ILendingPool is IERC20 {
 
     function getFeesOwedAmount() external view returns (uint256);
 
+    function getMaximumLossAmount() external view returns (uint256 maximumLossAmount);
+
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
         external
@@ -150,8 +152,8 @@ interface ILendingPool is IERC20 {
     error DrawAmountCantBeGreaterThanAvailableAmount(uint256 drawAmount, uint256 availableAmount);
     error RepayAmountCantBeGreaterThanOwedAmount(uint256 repayAmount, uint256 owedAmount);
     error WithdrawAmountCantBeGreaterThanFirstLostCapital(uint256 withdrawAmount, uint256 firstLostCapital);
-    error LossAmountCantBeGreaterThanSupply(uint256 lossAmount, uint256 supply);
-    error LossAmountShouldBeGreaterThanZero(uint256 lossAmount);
+    error LossAmountCantBeGreaterThanMaxLossAmount(uint256 reportedLossAmount, uint256 maxLossAmount);
+    error LossAmountShouldBeGreaterThanZero(uint256 reportedLossAmount);
     error UserOwedAmountIsGreaterThanZero(uint256 userOwedAmount);
     error FeesOwedAmountIsGreaterThanZero(uint256 feesOwedAmount);
     error LendingPoolIsStopped();

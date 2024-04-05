@@ -417,6 +417,27 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     /**
+     * @notice Returns the maximum loss amount of the lending pool that can be reported.
+     * @dev
+     * Returns the first loss capita amount plus the sum of the maximum loss amount of each tranche.
+     * The loss amount can't be greater than the user owed amount. If it is, returns the user owed amount.
+     * @return maximumLossAmount The maximum loss amount of the lending pool that can be reported.
+     */
+    function getMaximumLossAmount() public view returns (uint256 maximumLossAmount) {
+        maximumLossAmount = firstLossCapital;
+
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
+            uint256 trancheMximumLossAmount =
+                ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).getMaximumLossAmount();
+            maximumLossAmount += trancheMximumLossAmount;
+        }
+
+        if (_userOwedAmount < maximumLossAmount) {
+            maximumLossAmount = _userOwedAmount;
+        }
+    }
+
+    /**
      * @notice Reports the loss of the lending pool.
      * @dev
      * Applies the loss first to the first loss capital.
@@ -424,7 +445,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * the loss is applied to the tranches in order from the junior to the senior.
      * Burns tranche shares if needed.
      * Burns the lending pool token in te amount of the loss.
-     * @param lossAmount The amount of the loss.
+     * @param lossAmount The amount of the loss. Shouldn't be more than the maximum loss amount.
      * @param doMintLossTokens If true, mints loss tokens to all the users.
      * @return lossId The id of the loss.
      */
@@ -443,9 +464,10 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert LossAmountShouldBeGreaterThanZero(lossAmount);
         }
 
-        // verify the amount is not greater than total balance
-        if (lossAmount > _userOwedAmount) {
-            revert LossAmountCantBeGreaterThanSupply(lossAmount, _userOwedAmount);
+        // verify the amount is not greater than maximum loss amount
+        uint256 maxLossAmount = getMaximumLossAmount();
+        if (lossAmount > maxLossAmount) {
+            revert LossAmountCantBeGreaterThanMaxLossAmount(lossAmount, maxLossAmount);
         }
 
         // get loss id and increment next loss id
