@@ -146,6 +146,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function trancheConfigurationDepositLimits(address tranche)
         external
+        view
         returns (uint256 minDepositAmount, uint256 maxDepositAmount)
     {
         return (
@@ -168,6 +169,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function getTrancheIndex(address tranche) public view verifyTranche(tranche) returns (uint256) {
         return _trancheIndex[tranche] - 1;
+    }
+
+    function getLendingPoolTranches() external view returns (address[] memory) {
+        return _lendingPoolInfo.trancheAddresses;
+    }
+
+    function getLendingPoolTrancheCount() external view returns (uint256) {
+        return _lendingPoolInfo.trancheAddresses.length;
     }
 
     function getUserOwedAmount() external view returns (uint256) {
@@ -298,7 +307,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    function getClearingConfig() external returns (ClearingConfiguration memory clearingConfig) {
+    function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig) {
         uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
         for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
             trancheRatios[i] = _poolConfiguration.tranches[i].ratio;

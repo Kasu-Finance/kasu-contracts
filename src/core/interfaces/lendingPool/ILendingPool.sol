@@ -36,15 +36,20 @@ interface ILendingPool is IERC20 {
 
     function lendingPoolInfo() external view returns (LendingPoolInfo memory);
 
-    function poolConfiguration() external returns (PoolConfiguration memory);
+    function poolConfiguration() external view returns (PoolConfiguration memory);
 
     function trancheConfigurationDepositLimits(address tranche)
         external
+        view
         returns (uint256 minDepositAmount, uint256 maxDepositAmount);
 
     function isLendingPoolTranche(address tranche) external view returns (bool);
 
     function getTrancheIndex(address tranche) external view returns (uint256);
+
+    function getLendingPoolTranches() external view returns (address[] memory);
+
+    function getLendingPoolTrancheCount() external view returns (uint256);
 
     function getUserOwedAmount() external view returns (uint256);
 

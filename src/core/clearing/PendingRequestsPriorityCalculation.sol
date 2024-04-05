@@ -51,6 +51,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         uint256 loyaltyLevelCount = _getLoyaltyLevelCount();
 
+        address[] memory tranches = _getLendingPoolTranches();
+
         for (userRequestId; userRequestId < endIndex; ++userRequestId) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
@@ -64,7 +66,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 if (depositNftDetails.epochId > targetEpoch) continue;
 
                 (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
-                uint256 trancheIndex = _getTrancheIndex(trancheAddress);
+                uint256 trancheIndex = _getTrancheIndex(tranches, trancheAddress);
 
                 clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
                 clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
@@ -90,7 +92,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     withdrawLoyaltyLevel = loyaltyLevelCount;
                 }
 
-                uint256 trancheIndex = _getTrancheIndex(withdrawalNftDetails.tranche);
+                uint256 trancheIndex = _getTrancheIndex(tranches, withdrawalNftDetails.tranche);
                 tempPriorityTrancheWithdrawalShares[withdrawLoyaltyLevel][trancheIndex] +=
                     withdrawalNftDetails.sharesAmount;
 
@@ -116,9 +118,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
                     ++trancheIndex
                 ) {
-                    withdrawalPriorityAmountSum += ILendingPoolTranche(_getTranche(trancheIndex)).convertToAssets(
-                        tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
-                    );
+                    withdrawalPriorityAmountSum += ILendingPoolTranche(_getTranche(tranches, trancheIndex))
+                        .convertToAssets(tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]);
                 }
                 clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
                 clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] +=
@@ -197,11 +198,13 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         virtual
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function _getTrancheIndex(address tranche) internal view virtual returns (uint256);
+    function _getLendingPoolTranches() internal view virtual returns (address[] memory);
+
+    function _getTrancheIndex(address[] memory tranches, address tranche) internal view virtual returns (uint256);
 
     function _getTrancheCount() internal view virtual returns (uint256);
 
-    function _getTranche(uint256 index) internal view virtual returns (address);
+    function _getTranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
     function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint256);
 
