@@ -15,7 +15,7 @@ import "../shared/AddressLib.sol";
 
 /**
  * @title User Manager Contract
- * @notice This contract is pribarily used to calculate user loyalty level each epoch.
+ * @notice This contract is primarily used to calculate a user loyalty level for the current epoch.
  */
 contract UserManager is IUserManager, Initializable {
     /// @notice System variables contract.
