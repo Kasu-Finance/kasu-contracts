@@ -147,8 +147,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
-        LendingPool lendingPoolImp =
-            new LendingPool(systemVariables, clearingCoordinator, feeManager, address(mockUsdc));
+        LendingPool lendingPoolImp = new LendingPool(
+            systemVariables, address(lendingPoolManager), clearingCoordinator, feeManager, address(mockUsdc)
+        );
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
@@ -159,7 +160,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             address(lendingPoolBeacon),
             address(lendingPoolTrancheBeacon),
             kasuController,
-            lendingPoolManager,
+            address(lendingPoolManager),
             systemVariables
         );
         TransparentUpgradeableProxy lendingPoolFactoryProxy =

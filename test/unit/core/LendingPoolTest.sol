@@ -265,17 +265,17 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(ILendingPoolTranche(lpd.tranches[0]).totalSupply(), 40 * 10 ** 18);
         assertEq(ILendingPoolTranche(lpd.tranches[1]).totalSupply(), 250 * 10 ** 18);
 
-        address pendingPoolAddress = lendingPool.getPendingPool();
-        assertEq(ILendingPoolTranche(lpd.tranches[0]).balanceOf(pendingPoolAddress), 40 * 10 ** 18);
-        assertEq(ILendingPoolTranche(lpd.tranches[1]).balanceOf(pendingPoolAddress), 200 * 10 ** 18);
+        assertEq(ILendingPoolTranche(lpd.tranches[0]).balanceOf(lpd.pendingPool), 40 * 10 ** 18);
+        assertEq(ILendingPoolTranche(lpd.tranches[1]).balanceOf(lpd.pendingPool), 200 * 10 ** 18);
 
-        IPendingPool pendingPool = IPendingPool(pendingPoolAddress);
-        assertEq(pendingPool.ownerOf(wNftId_alice), alice);
-        WithdrawalNftDetails memory withdrawalNftDetails_alice = pendingPool.trancheWithdrawalNftDetails(wNftId_alice);
+        assertEq(IPendingPool(lpd.pendingPool).ownerOf(wNftId_alice), alice);
+        WithdrawalNftDetails memory withdrawalNftDetails_alice =
+            IPendingPool(lpd.pendingPool).trancheWithdrawalNftDetails(wNftId_alice);
         assertEq(withdrawalNftDetails_alice.sharesAmount, 40 * 10 ** 18);
 
-        assertEq(pendingPool.ownerOf(wNftId1_bob), bob);
-        WithdrawalNftDetails memory withdrawalNftDetails_bob = pendingPool.trancheWithdrawalNftDetails(wNftId1_bob);
+        assertEq(IPendingPool(lpd.pendingPool).ownerOf(wNftId1_bob), bob);
+        WithdrawalNftDetails memory withdrawalNftDetails_bob =
+            IPendingPool(lpd.pendingPool).trancheWithdrawalNftDetails(wNftId1_bob);
         assertEq(withdrawalNftDetails_bob.sharesAmount, 200 * 10 ** 18);
     }
 
@@ -637,13 +637,10 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(ILendingPoolTranche(lpd.tranches[0]).totalSupply(), acceptDepositAmount_alice * 10 ** 12);
         assertEq(ILendingPoolTranche(lpd.tranches[1]).totalSupply(), acceptedDepositAmount_bob * 10 ** 12);
 
-        address pendingPoolAddress = lendingPool.getPendingPool();
-        assertEq(
-            ILendingPoolTranche(lpd.tranches[0]).balanceOf(pendingPoolAddress), requestWithdrawalSharesAmount_alice
-        );
-        assertEq(ILendingPoolTranche(lpd.tranches[1]).balanceOf(pendingPoolAddress), requestWithdrawalSharesAmount_bob);
+        assertEq(ILendingPoolTranche(lpd.tranches[0]).balanceOf(lpd.pendingPool), requestWithdrawalSharesAmount_alice);
+        assertEq(ILendingPoolTranche(lpd.tranches[1]).balanceOf(lpd.pendingPool), requestWithdrawalSharesAmount_bob);
 
-        IPendingPool pendingPool = IPendingPool(pendingPoolAddress);
+        IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
         assertEq(pendingPool.ownerOf(wNftId_alice), alice);
         WithdrawalNftDetails memory withdrawalNftDetails_alice = pendingPool.trancheWithdrawalNftDetails(wNftId_alice);
         assertEq(withdrawalNftDetails_alice.sharesAmount, requestWithdrawalSharesAmount_alice);

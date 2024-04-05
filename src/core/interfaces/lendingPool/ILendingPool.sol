@@ -6,7 +6,7 @@ import "./ILendingPoolFactory.sol";
 
 struct LendingPoolInfo {
     address[] trancheAddresses;
-    address pendingPoolAddress;
+    address pendingPool;
 }
 
 struct TrancheConfig {
@@ -18,7 +18,6 @@ struct TrancheConfig {
 
 struct PoolConfiguration {
     TrancheConfig[] tranches;
-    address poolAdmin;
     address drawRecipient;
     uint256 desiredDrawAmount;
     uint256 trancheInterestChangeEpochDelay;

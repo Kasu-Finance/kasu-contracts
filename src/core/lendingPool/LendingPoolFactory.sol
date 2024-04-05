@@ -7,8 +7,7 @@ import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "../../shared/interfaces/IKasuController.sol";
 import "../../shared/access/Roles.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
-import "../interfaces/lendingPool/ILendingPoolManager.sol";
-import "../lendingPool/LendingPoolHelpers.sol";
+import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "./LendingPool.sol";
 import "./LendingPoolManager.sol";
 import "./PendingPool.sol";
@@ -16,21 +15,22 @@ import "./LendingPoolTranche.sol";
 import "../SystemVariables.sol";
 import "../../shared/AddressLib.sol";
 
-contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
-    address private immutable pendingPoolBeacon;
-    address private immutable lendingPoolBeacon;
-    address private immutable lendingPoolTrancheBeacon;
-    IKasuController private immutable kasuController;
-    ISystemVariables private immutable systemVariables;
+contract LendingPoolFactory is ILendingPoolFactory {
+    address public immutable pendingPoolBeacon;
+    address public immutable lendingPoolBeacon;
+    address public immutable lendingPoolTrancheBeacon;
+    IKasuController public immutable kasuController;
+    address public immutable lendingPoolManager;
+    ISystemVariables public immutable systemVariables;
 
     constructor(
         address pendingPoolBeacon_,
         address lendingPoolBeacon_,
         address lendingPoolTrancheBeacon_,
         IKasuController kasuController_,
-        ILendingPoolManager lendingPoolManager_,
+        address lendingPoolManager_,
         ISystemVariables systemVariables_
-    ) LendingPoolHelpers(lendingPoolManager_) {
+    ) {
         AddressLib.checkIfZero(pendingPoolBeacon_);
         AddressLib.checkIfZero(lendingPoolBeacon_);
         AddressLib.checkIfZero(lendingPoolTrancheBeacon_);
@@ -41,50 +41,50 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         lendingPoolBeacon = lendingPoolBeacon_;
         lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
         kasuController = kasuController_;
+        lendingPoolManager = lendingPoolManager_;
         systemVariables = systemVariables_;
     }
 
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
-        onlyLendingPoolManager
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        // lending pool deploy
-        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
-        LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
-
-        // tranches deploy
-        uint256 trancheCount = createPoolConfig.tranches.length;
-        lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
-        lendingPoolDeployment.tranches = new address[](trancheCount);
-
-        address[] memory trancheAddresses = new address[](trancheCount);
-
-        for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
-            trancheAddresses[i] = _deployLendingPoolTranche(
-                createPoolConfig.poolName, createPoolConfig.poolSymbol, i, trancheCount, lendingPool
-            );
-            lendingPoolDeployment.tranches[i] = trancheAddresses[i];
+        if (msg.sender != lendingPoolManager) {
+            revert ILendingPoolErrors.OnlyLendingPoolManager();
         }
 
-        // pending pool deploy
+        // deploy lending pool
+        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
+        LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
+        lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
+
+        // deploy tranches
+        uint256 trancheCount = createPoolConfig.tranches.length;
+        lendingPoolDeployment.tranches = new address[](trancheCount);
+
+        for (uint256 i; i < createPoolConfig.tranches.length; ++i) {
+            lendingPoolDeployment.tranches[i] = _deployLendingPoolTranche(
+                createPoolConfig.poolName, createPoolConfig.poolSymbol, i, trancheCount, lendingPool
+            );
+        }
+
+        // deploy pending pool
         BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
         PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
-        pendingPool.initialize("Pending pool nft", "PP", lendingPool);
-        address pendingPoolAddress = address(pendingPool);
+        lendingPoolDeployment.pendingPool = address(pendingPool);
 
-        lendingPoolDeployment.pendingPool = pendingPoolAddress;
+        // initialize lending pool
+        LendingPoolInfo memory lendingPoolInfo =
+            LendingPoolInfo({pendingPool: address(pendingPool), trancheAddresses: lendingPoolDeployment.tranches});
 
-        LendingPoolInfo memory lendingPoolInfo;
-        lendingPoolInfo.pendingPoolAddress = pendingPoolAddress;
-        lendingPoolInfo.trancheAddresses = trancheAddresses;
+        PoolConfiguration memory poolConfiguration = lendingPool.initialize(createPoolConfig, lendingPoolInfo);
 
-        PoolConfiguration memory poolConfiguration =
-            lendingPool.initialize(createPoolConfig, lendingPoolInfo, address(lendingPoolManager));
+        // initialize pending pool
+        (string memory pendingPoolName, string memory pendingPoolSymbol) =
+            _getPendingPoolName(createPoolConfig.poolName, createPoolConfig.poolSymbol);
+        pendingPool.initialize(pendingPoolName, pendingPoolSymbol, lendingPool);
 
-        pendingPool.setUpTranches();
-
-        // access control
+        // set pool admin
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_ADMIN, createPoolConfig.poolAdmin
         );
@@ -103,14 +103,14 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
 
         (string memory fullTrancheName, string memory fullTrancheSymbol) =
-            getTrancheName(poolName, poolSymbol, trancheIndex, trancheCount);
+            _getTrancheName(poolName, poolSymbol, trancheIndex, trancheCount);
 
         lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
 
         return address(lendingPoolTranche);
     }
 
-    function getTrancheName(
+    function _getTrancheName(
         string memory lendingPoolName,
         string memory lendingPoolSymbol,
         uint256 trancheIndex,
@@ -138,5 +138,13 @@ contract LendingPoolFactory is ILendingPoolFactory, LendingPoolHelpers {
             string.concat(lendingPoolName, " - ", trancheInfo.trancheName),
             string.concat(trancheInfo.tokenSymbol, "_", lendingPoolSymbol)
         );
+    }
+
+    function _getPendingPoolName(string memory poolName, string memory lendingPoolSymbol)
+        internal
+        pure
+        returns (string memory, string memory)
+    {
+        return (string.concat(poolName, " - Request NFT"), string.concat(lendingPoolSymbol, "_RQST"));
     }
 }
