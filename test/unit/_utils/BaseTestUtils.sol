@@ -43,7 +43,7 @@ abstract contract BaseTestUtils is Test {
         TransparentUpgradeableProxy mockUsdcProxy =
             new TransparentUpgradeableProxy(address(mockUsdcImpl), address(proxyAdmin), "");
         mockUsdc = MockUSDC(address(mockUsdcProxy));
-        mockUsdc.initialize(admin);
+        mockUsdc.initialize();
     }
 
     function test_baseUtils() external pure {}

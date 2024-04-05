@@ -6,7 +6,7 @@ import "@openzeppelin-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUp
 contract MockUSDC is ERC20PermitUpgradeable {
     uint256 private constant TOTAL_SUPPLY = 1_000_000_000 ether;
 
-    function initialize(address recipient) external initializer {
+    function initialize() external initializer {
         __ERC20_init("USDC Token", "USDC");
         __ERC20Permit_init("USDC Token");
     }
