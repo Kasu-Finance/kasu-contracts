@@ -11,7 +11,7 @@ abstract contract rKSU is ERC20Upgradeable {
     }
 
     function _initializeRKSU() internal onlyInitializing {
-        __ERC20_init("rKasu Token", "rKSU");
+        __ERC20_init("rKasu", "rKSU");
     }
 
     function transfer(address, uint256) public pure override returns (bool) {

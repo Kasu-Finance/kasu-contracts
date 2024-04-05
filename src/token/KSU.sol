@@ -11,8 +11,8 @@ contract KSU is ERC20PermitUpgradeable {
     }
 
     function initialize(address recipient) external initializer {
-        __ERC20_init("Kasu Token", "KSU");
-        __ERC20Permit_init("Kasu Token");
+        __ERC20_init("Kasu", "KSU");
+        __ERC20Permit_init("Kasu");
 
         _mint(recipient, TOTAL_SUPPLY);
     }
