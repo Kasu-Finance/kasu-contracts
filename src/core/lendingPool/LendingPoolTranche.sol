@@ -115,9 +115,9 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     function _getMaximumLossAmount() internal view override returns (uint256 maxLossAmount) {
         uint256 totalAssets_ = totalAssets();
 
-        if (totalAssets_ > minimumLeftAmountAfterLoss) {
+        if (totalAssets_ > minimumAssetAmountLeftAfterLoss) {
             unchecked {
-                maxLossAmount = totalAssets_ - minimumLeftAmountAfterLoss;
+                maxLossAmount = totalAssets_ - minimumAssetAmountLeftAfterLoss;
             }
         }
     }

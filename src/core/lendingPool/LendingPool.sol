@@ -423,6 +423,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function reportLoss(uint256 lossAmount, bool doMintLossTokens)
         external
         onlyLendingPoolManager
+        verifyClearingNotPending
         returns (uint256 lossId)
     {
         if (systemVariables.isClearingTime()) {
