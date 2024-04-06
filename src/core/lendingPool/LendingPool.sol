@@ -378,9 +378,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
         if (isLendingPoolStopped) {
             if (
-                clearingConfig.drawAmount != 0 ||
-                clearingConfig.maxExcessPercentage != 0 ||
-                clearingConfig.minExcessPercentage != 0
+                clearingConfig.drawAmount != 0 || clearingConfig.maxExcessPercentage != 0
+                    || clearingConfig.minExcessPercentage != 0
             ) {
                 revert PoolConfigurationIsIncorrect("drawAmount must be 0 if pool is stopped");
             }
