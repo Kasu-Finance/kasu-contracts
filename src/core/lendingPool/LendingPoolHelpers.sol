@@ -7,6 +7,10 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../../shared/AddressLib.sol";
 
+/**
+ * @title LendingPoolHelpers abstract contract.
+ * @notice Helper contract for lending pool contracts.
+ */
 abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
     ILendingPoolManager public immutable lendingPoolManager;
     ILendingPool private _lendingPool;
