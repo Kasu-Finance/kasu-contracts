@@ -94,8 +94,6 @@ contract PendingPool is
             _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);
             _nextTrancheWithdrawalNFTId[trancheAddresses[i]] =
                 UserRequestIds.composeWithdrawalId(trancheAddresses[i], 0);
-
-            IERC20(trancheAddresses[i]).approve(address(_getOwnLendingPool()), type(uint256).max);
         }
     }
 

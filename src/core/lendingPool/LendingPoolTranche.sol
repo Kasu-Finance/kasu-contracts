@@ -18,11 +18,17 @@ import "./LendingPoolHelpers.sol";
  * - when impairment happens, users receive ERC1155 impairment receipt tokens
  */
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
+    /// @dev User active shares. This includes user pending withdrawal shares.
     mapping(address user => uint256 activeShares) private _userActiveShares;
+    /// @dev Index of a user in the _trancheUsers array.
     mapping(address user => uint256 index) private _userArrayIndex;
-
+    /// @dev Array of users with active tranche shares.
     address[] private _trancheUsers;
 
+    /**
+     * @param lendingPoolManager_ Lending pool manager address.
+     * @param lossAsset_ Loss repayment asset address.
+     */
     constructor(ILendingPoolManager lendingPoolManager_, address lossAsset_)
         LendingPoolHelpers(lendingPoolManager_)
         AssetFunctionsBase(lossAsset_)
@@ -31,9 +37,10 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     }
 
     /**
-     * @param name_ The name of the lending pool tranche token
-     * @param symbol_ The symbol of the lending pool tranche token
-     * @param lendingPool_ Lending pool address
+     * @notice Initializes the lending pool tranche contract.
+     * @param name_ The name of the lending pool tranche token.
+     * @param symbol_ The symbol of the lending pool tranche token.
+     * @param lendingPool_ Lending pool address.
      */
     function initialize(string memory name_, string memory symbol_, ILendingPool lendingPool_) public initializer {
         __ERC20_init(name_, symbol_);
@@ -42,6 +49,17 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         __LendingPoolHelpers_init(lendingPool_);
     }
 
+    /**
+     * @notice Deposits assets to the lending pool tranche.
+     * @dev
+     * Overrides the ERC4626 deposit function.
+     * Only the lending pool can call this function.
+     * The user receives tranche shares.
+     * If the user had no shares before, they are added to the trancheUsers array.
+     * @param assets The amount of assets to deposit.
+     * @param receiver The receiver address of the tranche shares.
+     * @return shares The amount of shares received.
+     */
     function deposit(uint256 assets, address receiver)
         public
         override(ERC4626Upgradeable, IERC4626)
@@ -60,6 +78,18 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         _userActiveShares[receiver] += shares;
     }
 
+    /**
+     * @notice Redeems assets from the lending pool tranche.
+     * @dev
+     * Overrides the ERC4626 redeem function.
+     * Only the lending pool can call this function.
+     * The user receives assets.
+     * function removeUserActiveShares with the user address should be called right after redeem.
+     * @param shares The amount of shares to redeem.
+     * @param receiver The receiver address of the lending pool token. Should be lending pool address.
+     * @param owner The owner address of the tranche shares to redeem. Should be pending pool address.
+     * @return assets The amount of assets received.
+     */
     function redeem(uint256 shares, address receiver, address owner)
         public
         override(ERC4626Upgradeable, IERC4626)
@@ -70,6 +100,14 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         assets = super.redeem(shares, receiver, owner);
     }
 
+    /**
+     * @notice Remove user active shares after redeem was called.
+     * @dev
+     * Lending pool should call this function right after redeem.
+     * If user has no shares left, they are removed from the trancheUsers array.
+     * @param user The address of the user.
+     * @param shares The amount of shares that were redeemed.
+     */
     function removeUserActiveShares(address user, uint256 shares) external onlyOwnLendingPool {
         _userActiveShares[user] -= shares;
 
@@ -108,6 +146,10 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         return _userActiveShares[user];
     }
 
+    /**
+     * @notice Returns the maximum amount of assets that can be reported as a loss.
+     * @return maxLossAmount The maximum amount of assets that can be reported as a loss.
+     */
     function getMaximumLossAmount() public view returns (uint256 maxLossAmount) {
         return _getMaximumLossAmount();
     }
@@ -122,33 +164,16 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         }
     }
 
-    function withdraw(uint256, address, address) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {
-        revert NotSupported();
-    }
-
-    function mint(uint256, address) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {
-        revert NotSupported();
-    }
-
     function _decimalsOffset() internal pure override returns (uint8) {
         return 12;
     }
 
-    function _spendAllowance(address owner, address spender, uint256 value) internal override {
-        if (spender == _getPendingPool()) return;
-        if (spender == address(_getOwnLendingPool())) return;
-        super._spendAllowance(owner, spender, value);
-    }
-
-    function approve(address spender, uint256 value)
-        public
-        override(IERC20, ERC20Upgradeable)
-        onlyPendingPool
-        returns (bool)
-    {
-        return super.approve(spender, value);
-    }
-
+    /**
+     * @notice Transfers the given amount to the given address. Can only be called by the pending pool.
+     * @param to The address of the receiver.
+     * @param value The amount to transfer.
+     * @return success Whether the transfer was successful.
+     */
     function transfer(address to, uint256 value)
         public
         override(IERC20, ERC20Upgradeable)
@@ -158,6 +183,13 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         return super.transfer(to, value);
     }
 
+    /**
+     * @notice Transfers the given amount from the given address to the given address. Can only be called by the pending pool.
+     * @param from The address of the sender.
+     * @param to The address of the receiver.
+     * @param value The amount to transfer.
+     * @return success Whether the transfer was successful.
+     */
     function transferFrom(address from, address to, uint256 value)
         public
         override(IERC20, ERC20Upgradeable)
@@ -166,6 +198,40 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     {
         return super.transferFrom(from, to, value);
     }
+
+    /**
+     * @dev Allows all spending for the lending pool and the pending pool.
+     */
+    function _spendAllowance(address owner, address spender, uint256 value) internal override {
+        if (spender == _getPendingPool()) return;
+        if (spender == address(_getOwnLendingPool())) return;
+        super._spendAllowance(owner, spender, value);
+    }
+
+    // NOT SUPPORTED FUNCTIONS
+
+    /**
+     * @notice Not supported function.
+     */
+    function approve(address, uint256) public override(IERC20, ERC20Upgradeable) returns (bool) {
+        revert NotSupported();
+    }
+
+    /**
+     * @notice Not supported function.
+     */
+    function withdraw(uint256, address, address) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {
+        revert NotSupported();
+    }
+
+    /**
+     * @notice Not supported function.
+     */
+    function mint(uint256, address) public pure override(ERC4626Upgradeable, IERC4626) returns (uint256) {
+        revert NotSupported();
+    }
+
+    // MODIFIERS
 
     modifier onlyPendingPool() {
         if (msg.sender != _getPendingPool()) {
