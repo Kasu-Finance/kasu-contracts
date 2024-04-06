@@ -308,18 +308,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // try to cancel forced withdrawal request
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IPendingPool.CannotCancelSystemWithdrawalRequest.selector, carol, wNftId_carol
-            )
+            abi.encodeWithSelector(IPendingPool.CannotCancelSystemWithdrawalRequest.selector, carol, wNftId_carol)
         );
         _cancelWithdrawalRequest(carol, lpd.lendingPool, wNftId_carol);
 
         // non existing dNftId
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IERC721Errors.ERC721NonexistentToken.selector, 1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 1));
         _cancelWithdrawalRequest(carol, lpd.lendingPool, 1);
 
         uint256 wNftId2_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 18);
@@ -492,7 +486,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         deal(address(mockUsdc), poolFundsManagerAccount, 300 * 10 ** 6, true);
         vm.startPrank(poolFundsManagerAccount);
-        mockUsdc.approve(lpd.lendingPool, 300 * 10 ** 6);
+        mockUsdc.approve(address(lendingPoolManager), 300 * 10 ** 6);
 
         // ### ACT ###
 

@@ -17,8 +17,6 @@ struct ForceWithdrawalResult {
 }
 
 interface ILendingPoolManager {
-    function ownLendingPool(address contractAddress) external view returns (address lendingPool);
-
     // #### USER #### //
     function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
         external
@@ -72,8 +70,8 @@ interface ILendingPoolManager {
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,
-        uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize,
+        uint256 priorityCalculationBatchSize,
+        uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
         bool isConfigOverridden
     ) external;

@@ -312,7 +312,9 @@ contract PendingPool is
 
     /**
      * @notice Request a withdrawal by the sistem for multiple users.
-     * @dev These withdrawal requests are forced and cannot be cancelled.
+     * @dev
+     * These withdrawal requests are forced and cannot be cancelled.
+     * Forced withdrawal has the higest priority (above highest standard priority) when clearing.
      * @param input The input data for the forced withdrawals.
      * @return wNftIDs The withdrawal NFT ids that were created.
      */

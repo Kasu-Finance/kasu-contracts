@@ -76,7 +76,7 @@ interface ILendingPool is IERC20 {
     // #### POOL DELEGATE #### //
     function drawFunds(uint256 amount) external;
 
-    function repayOwedFunds(uint256 amount, address repaymentAddress) external;
+    function repayOwedFunds(uint256 amount) external;
 
     function reportLoss(uint256 lossAmount, bool doMintLossTokens) external returns (uint256 appliedLoss);
 

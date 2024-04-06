@@ -487,9 +487,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Repays the owed funds to the lending pool of the desired amount.
      * @dev First we repay the owed fees, then we repay the user owed amount.
      * @param amount The amount of the repayment.
-     * @param repaymentAddress The address of the repayment.
      */
-    function repayOwedFunds(uint256 amount, address repaymentAddress) external onlyLendingPoolManager {
+    function repayOwedFunds(uint256 amount) external onlyLendingPoolManager {
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -498,7 +497,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert RepayAmountCantBeGreaterThanOwedAmount(amount, _userOwedAmount + _feesOwed);
         }
 
-        _transferAssetsFrom(repaymentAddress, address(this), amount);
+        _transferAssetsFrom(msg.sender, address(this), amount);
 
         uint256 feesPaid = _payFees(amount);
 

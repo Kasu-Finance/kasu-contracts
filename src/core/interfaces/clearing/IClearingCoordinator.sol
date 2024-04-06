@@ -47,9 +47,9 @@ interface IClearingCoordinator {
      * This task can be completed in multiple transactions.
      * @param lendingPoolAddress The lending pool that clearing config will be registered.
      * @param targetEpoch The epoch to run clearing against.
-     * @param pendingRequestsPriorityCalculationBatchSize The amount of user requests that `pending requests priority
+     * @param priorityCalculationBatchSize The amount of user requests that `pending requests priority
      * calculation` will process in one transaction.
-     * @param acceptedRequestsExecutionBatchSize The amount of user requests that `accepted requests execution` task
+     * @param acceptRequestsBatchSize The amount of user requests that `accepted requests execution` task
      * will process in one transaction.
      * @param clearingConfigOverride The config that will be overridden at step3 if isConfigOverridden is true
      * @param isConfigOverridden Determines whether the clearingConfigOverride will be applied instead of default one
@@ -57,8 +57,8 @@ interface IClearingCoordinator {
     function doClearing(
         address lendingPoolAddress,
         uint256 targetEpoch,
-        uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize,
+        uint256 priorityCalculationBatchSize,
+        uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
         bool isConfigOverridden
     ) external;
