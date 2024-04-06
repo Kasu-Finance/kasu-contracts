@@ -376,6 +376,16 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param clearingConfig The clearing configuration to verify.
      */
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
+        if (isLendingPoolStopped) {
+            if (
+                clearingConfig.drawAmount != 0 ||
+                clearingConfig.maxExcessPercentage != 0 ||
+                clearingConfig.minExcessPercentage != 0
+            ) {
+                revert PoolConfigurationIsIncorrect("drawAmount must be 0 if pool is stopped");
+            }
+        }
+
         if (clearingConfig.minExcessPercentage > clearingConfig.maxExcessPercentage) {
             revert PoolConfigurationIsIncorrect("minExcessPercentage more than maxExcessPercentage");
         }
@@ -764,9 +774,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             delete _trancheInterestIndex[tranche];
 
             _futureTrancheInterests[tranche].push(FutureTrancheInterestRates({epoch: 0, interestRate: 0}));
+            // TODO: emit event
         }
 
         _updateDesiredDrawAmount(0);
+        // TODO: update excess liquidity percentage and max/min deposit to 0
 
         IPendingPool(getPendingPool()).stop();
 
@@ -820,9 +832,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      */
     function updateTrancheInterestRate(address tranche, uint256 interestRate)
         external
+        lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
         verifyTranche(tranche)
-        lendingPoolShouldNotBeStopped
     {
         uint256 maxTrancheInterestRate = systemVariables.maxTrancheInterestRate();
 
@@ -905,6 +917,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
         external
         onlyLendingPoolManager
+        lendingPoolShouldNotBeStopped
     {
         if (targetExcessLiquidityPercentage < _poolConfiguration.minimumExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
@@ -926,6 +939,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage)
         external
         onlyLendingPoolManager
+        lendingPoolShouldNotBeStopped
     {
         if (minumumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
