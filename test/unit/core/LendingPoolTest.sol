@@ -183,7 +183,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // approve tranche shares
         vm.startPrank(bob);
-        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        vm.expectRevert(abi.encodeWithSelector(NotSupported.selector));
         ILendingPoolTranche(juniorTrancheAddress).approve(alice, 10 * 10 ** 6);
         vm.stopPrank();
 

@@ -10,7 +10,11 @@ import "../../shared/CommonErrors.sol";
 /**
  * @title Lending Pool Tranche Loss Contract
  * @notice This contract is used to handle the loss of assets in a tranche.
- * @dev When impairment happens, users receive ERC1155 impairment receipt tokens with id of the loss.
+ * @dev
+ * When impairment happens, users receive ERC1155 impairment receipt tokens with id of the unrelized loss.
+ * If the loss is repaid, users can claim their share of the loss.
+ * Considering the amount of users, the loss tokens can minted in multiple batches.
+ * Tranche share updates should be blocked during the loss token minting.
  */
 abstract contract LendingPoolTrancheLoss is
     ILendingPoolTrancheLoss,
@@ -41,12 +45,18 @@ abstract contract LendingPoolTrancheLoss is
 
     function _getMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
 
+    /**
+     * @notice Gets the loss details for the id.
+     * @param lossId The id of the loss.
+     * @return lossDetails The loss details.
+     */
     function getLossDetails(uint256 lossId) external view override returns (LossDetails memory) {
         return _lossDetails[lossId];
     }
 
     /**
      * @notice Checks if there is a pending loss mint.
+     * @return True if there is a pending loss mint.
      */
     function isPendingLossMint() public view returns (bool) {
         return pendingMintLossId > 0;
@@ -55,8 +65,8 @@ abstract contract LendingPoolTrancheLoss is
     /**
      * @notice Registers a loss in the tranche.
      * @param lossId The id of the loss.
-     * @param lossAmount The amount of the loss.
-     * @param doMintLossTokens If true, mint all loss tokens to users.
+     * @param lossAmount The loss amount.
+     * @param doMintLossTokens If true, mint all loss tokens to users. If false, only register the loss and mint has to be called separately.
      * @return lossApplied The amount of the loss applied.
      */
     function registerTrancheLoss(uint256 lossId, uint256 lossAmount, bool doMintLossTokens)
@@ -98,7 +108,7 @@ abstract contract LendingPoolTrancheLoss is
      * @dev
      * Anyone can call this function to mint loss tokens to users.
      * Tranche share operations should be blocked when there is a pending loss mint.
-     * Can only be called when there is a pending loss mint.
+     * Can only be called when there is a pending loss mint for the id.
      * @param lossId The id of the loss.
      * @param batchSize The amount of users to mint tokens to. If the value is more than remaining users, mint to all remaining users.
      */
@@ -207,6 +217,8 @@ abstract contract LendingPoolTrancheLoss is
 
     /**
      * @notice Checks if the minting of loss tokens for the id is complete.
+     * @param lossId The id of the loss.
+     * @return True if minting of unrealied loss tokens for the loss id is complete.
      */
     function isLossMintingComplete(uint256 lossId) external view returns (bool) {
         return _isLossMintingComplete(lossId);
@@ -214,22 +226,6 @@ abstract contract LendingPoolTrancheLoss is
 
     function _isLossMintingComplete(uint256 lossId) internal view returns (bool) {
         return _lossDetails[lossId].usersCount == _lossDetails[lossId].usersMintedCount;
-    }
-
-    // Disable ERC1155 transfer functions
-
-    /**
-     * @notice ERC1155 safeTransferFrom is disabled.
-     */
-    function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
-        revert NotSupported();
-    }
-
-    /**
-     * @notice ERC1155 setApprovalForAll is disabled.
-     */
-    function setApprovalForAll(address, bool) public pure override {
-        revert NotSupported();
     }
 
     /**
@@ -258,6 +254,22 @@ abstract contract LendingPoolTrancheLoss is
             // Update the free memory pointer by pointing after the second array
             mstore(0x40, add(array2, 0x40))
         }
+    }
+
+    // Disable ERC1155 transfer functions
+
+    /**
+     * @notice ERC1155 safeTransferFrom is disabled.
+     */
+    function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
+        revert NotSupported();
+    }
+
+    /**
+     * @notice ERC1155 setApprovalForAll is disabled.
+     */
+    function setApprovalForAll(address, bool) public pure override {
+        revert NotSupported();
     }
 
     modifier NotPendingLossMint() {
