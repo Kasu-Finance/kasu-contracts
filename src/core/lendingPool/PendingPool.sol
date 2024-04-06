@@ -21,11 +21,17 @@ import "./UserRequestIds.sol";
 import "../../shared/AddressLib.sol";
 
 /**
+ * @title PendingPool contract.
+ * @notice Contract for managing pending deposits and withdrawal requests.
  * @dev
- * - when depositing, users receive IERC721 deposit NFTs
- * - when withdrawing, users receive IERC721 withdrawal NFTs
- * - when deposits are accepted, users burn their deposit NFTs
- * - when withdrawals are accepted, users burn their withdrawal NFTs
+ * When depositing, user receives ERC721 deposit NFT in exchange for the deposited asset.
+ * When withdrawing, user receives ERC721 withdrawal NFT in exchange for the tranche shares.
+ * Deposit and withdrawal request ids are composed of the tranche address and a unique sequential id.
+ * When deposit is fully accepted or rejected, user's NFT is burned and the asset is transferred to the lending pool.
+ *   User receives tranche shares in exchange.
+ * When withdrawal is fully accepted, user's NFT is burned and the tranche shares are transferred to the lending pool.
+ *   User receives the asset in exchange.
+ * Clearing logic is also part of the PendingPool contract, it can be found in ClearingSteps contract.
  */
 contract PendingPool is
     IPendingPool,
@@ -38,23 +44,42 @@ contract PendingPool is
     ISystemVariables public immutable systemVariables;
     IUserManager public immutable userManager;
 
-    mapping(address => uint256) private _nextTrancheDepositNFTId;
+    /// @dev tranche address => next deposit NFT id
+    mapping(address tranche => uint256 dNftId) private _nextTrancheDepositNFTId;
 
     /// @dev deposit NFT id => DepositNftDetails
-    mapping(uint256 => DepositNftDetails) private _trancheDepositNftDetails;
+    mapping(uint256 dNftId => DepositNftDetails) private _trancheDepositNftDetails;
 
-    mapping(address => uint256) private _nextTrancheWithdrawalNFTId;
+    /// @dev user => epoch => tranche => dNftId
+    /// Used to track user's deposit NFTs for each epoch and tranche. If user deposits in same epoch and tranche multiple times, the same dNFT is reused.
+    mapping(address user => mapping(uint256 epoch => mapping(address tranche => uint256 dNftId))) private
+        _dNftIdPerUserPerEpochPerTranche;
+
+    /// @dev tranche address => next deposit NFT id
+    mapping(address tranche => uint256 wNFT) private _nextTrancheWithdrawalNFTId;
 
     /// @dev withdrawal NFT id => WithdrawalNftDetails.
-    mapping(uint256 => WithdrawalNftDetails) private _trancheWithdrawalNftDetails;
+    mapping(uint256 wNFT => WithdrawalNftDetails) private _trancheWithdrawalNftDetails;
 
-    // user => epoch => tranche => dNftId
-    mapping(address => mapping(uint256 => mapping(address => uint256))) private _dNftIdPerUserPerEpochPerTranche;
+    /// @dev user => epoch => tranche => RequestedFrom => wNftId
+    /// Used to track user's withdrawal NFTs for each epoch, tranche and the request source (either user or a force withdrawal).
+    /// If user withdraws in same epoch, tranche and request source multiple times, the same wNFT is reused.
+    mapping(
+        address user
+            => mapping(
+                uint256 epoch => mapping(address tranche => mapping(RequestedFrom requestedFrom => uint256 wNftId))
+            )
+    ) private _wNftIdPerUserPerEpochPerTranchePerPriority;
 
-    // user => epoch => tranche => priority => wNftId
-    mapping(address => mapping(uint256 => mapping(address => mapping(RequestedFrom => uint256)))) private
-        _wNftIdPerUserPerEpochPerTranchePerPriority;
-
+    /**
+     * @notice Constructor.
+     * @param systemVariables_ System variables contract.
+     * @param underlyingAsset_ Underlying asset address.
+     * @param lendingPoolManager_ Lending pool manager address.
+     * @param userManger_ User manager address.
+     * @param clearingCoordinator_ Clearing coordinator address.
+     * @param acceptedRequestsCalculation_ Accepted requests calculation contract.
+     */
     constructor(
         ISystemVariables systemVariables_,
         address underlyingAsset_,
@@ -98,6 +123,12 @@ contract PendingPool is
     }
 
     // VIEW
+
+    /**
+     * @notice Returns the deposit NFT details.
+     * @param dNftId The deposit NFT id.
+     * @return depositNftDetails The deposit NFT details.
+     */
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view
@@ -107,6 +138,11 @@ contract PendingPool is
         return _trancheDepositNftDetails[dNftId];
     }
 
+    /**
+     * @notice Returns the withdrawal NFT details.
+     * @param wNftId The withdrawal NFT id.
+     * @return withdrawalNftDetails The withdrawal NFT details.
+     */
     function trancheWithdrawalNftDetails(uint256 wNftId)
         public
         view
@@ -120,11 +156,14 @@ contract PendingPool is
 
     /**
      * @notice Creates a pending deposit for the user.
-     * @dev Transfers asset from lending pool manager to the pending pool.
+     * @dev
+     * Transfers asset from lending pool manager to the pending pool.
+     * If the deposit is done during the clearing period the deposit is set for the next epoch.
+     * If user already deposited in the current epoch, and tranche the same deposit NFT is reused and requested asset amount increased.
      * @param user The user requesting the deposit.
-     * @param tranche The user's desired tranche for the pending deposit.
+     * @param tranche The user's desired tranche for the deposit.
      * @param amount The requested deposit amount.
-     * @return dNftID The deposit NFT id that acts as a receipt for the pending deposit.
+     * @return dNftID The deposit NFT id that acts as a receipt for the requested deposit.
      */
     function requestDeposit(address user, address tranche, uint256 amount)
         external
@@ -183,7 +222,10 @@ contract PendingPool is
 
     /**
      * @notice Cancels a pending deposit for the user.
-     * @dev Transfers asset from the pending pool to the user.
+     * @dev
+     * Transfers asset from the pending pool back to the user.
+     * Burns the deposit NFT.
+     * Can only cancel if the lending pool is not pending clearing.
      * @param user The user cancelling the deposit.
      * @param dNftID The deposit id to cancel.
      */
@@ -202,6 +244,9 @@ contract PendingPool is
 
     /**
      * @notice Creates a pending withdrawal for the user.
+     * @dev Transfers tranche shares from the user to the pending pool.
+     * If the deposit is done during the clearing period the deposit is set for the next epoch.
+     * If user already withdrew in the current epoch, and tranche the same withdrawal NFT is reused and requested share amount increased.
      * @param user The user making withdrawal request.
      * @param tranche The tranche user is withdrawing from.
      * @param trancheShares amount of tranche shares to withdraw.
@@ -220,23 +265,43 @@ contract PendingPool is
     }
 
     /**
+     * @notice Force cancels a pending withdrawal request.
+     * @dev Transfers tranche shares from the pending pool back to the user.
+     * @param wNftID The withdrawal id to cancel.
+     */
+    function forceCancelWithdrawalRequest(uint256 wNftID) external onlyLendingPoolManager canCancel nftExists(wNftID) {
+        address user = ownerOf(wNftID);
+        _cancelWithdrawalRequest(user, wNftID);
+    }
+
+    /**
      * @notice Cancels a pending withdrawal request for the user.
      * @dev Transfers tranche shares from the pending pool back to the user.
      * @param user The user cancelling the withdrawal request.
      * @param wNftID The withdrawal id to cancel.
      */
-    function cancelWithdrawalRequest(address user, uint256 wNftID) external canCancel isNftOwner(user, wNftID) {
+    function cancelWithdrawalRequest(address user, uint256 wNftID)
+        external
+        onlyLendingPoolManager
+        canCancel
+        isNftOwner(user, wNftID)
+    {
         WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         if (withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM) {
-            revert WithdrawalRequestIsForced(user, address(_getOwnLendingPool()), wNftID);
+            revert CannotCancelSystemWithdrawalRequest(user, wNftID);
         }
 
-        (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
+        _cancelWithdrawalRequest(user, wNftID);
+    }
+
+    function _cancelWithdrawalRequest(address user, uint256 wNftID) private {
+        WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
 
         // Burn the withdrawal NFT
-        _update(address(0), wNftID, address(0));
+        _burnRequestNft(wNftID);
 
+        (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
         IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
 
         // delete nft storage
@@ -245,6 +310,12 @@ contract PendingPool is
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
 
+    /**
+     * @notice Request a withdrawal by the sistem for multiple users.
+     * @dev These withdrawal requests are forced and cannot be cancelled.
+     * @param input The input data for the forced withdrawals.
+     * @return wNftIDs The withdrawal NFT ids that were created.
+     */
     function batchForceWithdrawals(ForceWithdrawalInput[] calldata input)
         external
         onlyLendingPoolManager
@@ -252,7 +323,7 @@ contract PendingPool is
     {
         uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
         wNftIDs = new uint256[](input.length);
-        for (uint256 i = 0; i < input.length; ++i) {
+        for (uint256 i; i < input.length; ++i) {
             _verifyTranche(input[i].tranche);
             wNftIDs[i] = _requestWithdrawal(
                 input[i].user, input[i].tranche, input[i].sharesToWithdraw, requestEpochId, RequestedFrom.SYSTEM
@@ -263,22 +334,38 @@ contract PendingPool is
         }
     }
 
+    /**
+     * @notice Called when the lending pool is stopped.
+     * @dev After the pool is stopped new deposits should be disabled.
+     */
     function stop() external onlyOwnLendingPool {
         _stopLendingPool();
     }
 
+    /**
+     * @notice Token is non-transferable.
+     */
     function setApprovalForAll(address, bool) public pure override(IERC721, ERC721Upgradeable) {
         revert NonTransferable();
     }
 
+    /**
+     * @notice Token is non-transferable.
+     */
     function approve(address, uint256) public pure override(IERC721, ERC721Upgradeable) {
         revert NonTransferable();
     }
 
+    /**
+     * @notice Token is non-transferable.
+     */
     function transferFrom(address, address, uint256) public pure override(IERC721, ERC721Upgradeable) {
         revert NonTransferable();
     }
 
+    /**
+     * @notice Token is non-transferable.
+     */
     function safeTransferFrom(address, address, uint256, bytes memory)
         public
         pure
@@ -296,6 +383,7 @@ contract PendingPool is
     ) internal returns (uint256 wNftID) {
         if (sharesToWithdraw == 0) revert RequestWithdrawSharesAreZero();
 
+        // verify user has enough tranche shares
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
             revert InsufficientSharesBalance(
@@ -303,24 +391,28 @@ contract PendingPool is
             );
         }
 
+        // transfer tranche shares from user to pending pool
         IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
 
-        // get user's dNftID for current epoch
+        // get user's wNFT id for current epoch
         wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom];
 
+        // if wNFT is not created yet, create new wNFT
         if (wNftID == 0) {
-            // create new wNft
+            // create new wNFT
             wNftID = _nextTrancheWithdrawalNFTId[tranche];
             _nextTrancheWithdrawalNFTId[tranche] = _incrementWithdrawalRequestId(wNftID);
 
-            _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom] = wNftID;
-
+            // mint the wNFT
             _mint(user, wNftID);
 
+            // store the wNFT details
             _trancheWithdrawalNftDetails[wNftID] =
                 WithdrawalNftDetails(sharesToWithdraw, tranche, uint64(requestEpochId), 0, requestedFrom);
+
+            _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom] = wNftID;
         } else {
-            // update existing wNft
+            // update existing wNFT
             _trancheWithdrawalNftDetails[wNftID].sharesAmount += sharesToWithdraw;
         }
     }
@@ -343,7 +435,7 @@ contract PendingPool is
         address user = ownerOf(dNftID);
 
         if (depositNftDetails.assetAmount == 0) {
-            _burnDepositNft(dNftID);
+            _burnRequestNft(dNftID);
 
             _deleteDNftDetails(user, dNftID);
         }
@@ -368,17 +460,12 @@ contract PendingPool is
     function _returnDepositRequest(uint256 dNftID, address user) private {
         DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
 
-        _burnDepositNft(dNftID);
+        _burnRequestNft(dNftID);
 
         // return funds directly to the user
-        // NOTE: Maybe verify if there is any assetAmount left or if the deposit was already accepted
         _transferAssets(user, depositNftDetails.assetAmount);
 
         _deleteDNftDetails(user, dNftID);
-    }
-
-    function _burnDepositNft(uint256 dNftID) internal nftExists(dNftID) {
-        _update(address(0), dNftID, address(0));
     }
 
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal override nftExists(wNftID) {
@@ -396,7 +483,7 @@ contract PendingPool is
 
         if (withdrawalNftDetails.sharesAmount == 0) {
             // Burn the deposit NFT
-            _update(address(0), wNftID, address(0));
+            _burnRequestNft(wNftID);
 
             _deleteWNftDetails(user, wNftID);
         }
@@ -407,6 +494,30 @@ contract PendingPool is
         uint256 assetsWithdrawn = lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
 
         emit WithdrawalRequestAccepted(user, tranche, wNftID, acceptedShares, assetsWithdrawn);
+    }
+
+    /**
+     * @notice Returns the amount of pending deposit for the user for the given epoch or earlier.
+     * @param user The user to check.
+     * @param depositEpochId The deposit epoch id.
+     * @return pendingDepositAmount The amount of pending deposit for the user for the given epoch or earlier.
+     */
+    function getUserPendingDepositAmount(address user, uint256 depositEpochId)
+        external
+        view
+        returns (uint256 pendingDepositAmount)
+    {
+        uint256 ownerNftCount = balanceOf(user);
+
+        for (uint256 i; i < ownerNftCount; ++i) {
+            uint256 nftId = tokenOfOwnerByIndex(user, i);
+            if (UserRequestIds.isDepositNft(nftId)) {
+                DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[nftId];
+                if (depositNftDetails.epochId <= depositEpochId) {
+                    pendingDepositAmount += depositNftDetails.assetAmount;
+                }
+            }
+        }
     }
 
     function _deleteDNftDetails(address user, uint256 dNftID) private {
@@ -421,29 +532,8 @@ contract PendingPool is
         delete _trancheWithdrawalNftDetails[wNftID];
     }
 
-    // ID
-
-    // deposit id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 0
-    // withdrawal id: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 + 2^95
-    // id: withdrawal id (12 bytes), tranche address (20bytes)
-    // 000000000000000000000000 0000000000000000000000000000000000000000
-
-    function getUserPendingDepositAmount(address user, uint256 depositEpochId)
-        external
-        view
-        returns (uint256 pendingDepositAmount)
-    {
-        uint256 ownerNftCount = balanceOf(user);
-
-        for (uint256 i; i < ownerNftCount; ++i) {
-            uint256 nftId = tokenOfOwnerByIndex(user, i);
-            if (UserRequestIds.isDepositNft(nftId)) {
-                DepositNftDetails memory depositNftDetails = _trancheDepositNftDetails[nftId];
-                if (depositNftDetails.epochId <= depositEpochId) {
-                    pendingDepositAmount += depositNftDetails.assetAmount;
-                }
-            }
-        }
+    function _burnRequestNft(uint256 dNftID) internal {
+        _update(address(0), dNftID, address(0));
     }
 
     function _canCancel() private view {
@@ -471,6 +561,12 @@ contract PendingPool is
     function _verifyTranche(address tranche) private view {
         if (!_getOwnLendingPool().isLendingPoolTranche(tranche)) {
             revert InvalidTranche(address(_getOwnLendingPool()), tranche);
+        }
+    }
+
+    function _nftExists(uint256 nftId) private view {
+        if (ownerOf(nftId) == address(0)) {
+            revert IERC721Errors.ERC721NonexistentToken(nftId);
         }
     }
 
@@ -530,9 +626,7 @@ contract PendingPool is
     }
 
     modifier nftExists(uint256 nftId) {
-        if (ownerOf(nftId) == address(0)) {
-            revert IERC721Errors.ERC721NonexistentToken(nftId);
-        }
+        _nftExists(nftId);
         _;
     }
 

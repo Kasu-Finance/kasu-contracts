@@ -339,8 +339,7 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
     {
         IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
-        address wNftOwner = pendingPool.ownerOf(wNftID);
-        pendingPool.cancelDepositRequest(wNftOwner, wNftID);
+        pendingPool.forceCancelWithdrawalRequest(wNftID);
     }
 
     // config
