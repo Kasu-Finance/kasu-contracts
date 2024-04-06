@@ -6,49 +6,35 @@ import {
     LendingPoolFactory__factory,
     LendingPoolManager__factory,
     MockUSDC__factory,
-} from '../typechain-types';
+} from '../../typechain-types';
 import * as hre from 'hardhat';
 import {
     CreatePoolConfigStruct,
     CreateTrancheConfigStruct,
-} from '../typechain-types/src/core/lendingPool/LendingPool';
+} from '../../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse, Signer } from 'ethers';
 
-const POOL_CLEARING_MANAGER_PK = "";
-// address: 0x97cbcD33f1075070e59F354E4eCf71Ed6267E1ED
-
-async function main() {
+export async function createLendingPool() {
     let tx: ContractTransactionResponse;
 
-    const deploymentAddressesPath = path.join(`./deployments/${hre.network.name}/addresses-${hre.network.name}.json`);
-    const deploymentAddresses = JSON.parse((fs.readFileSync(deploymentAddressesPath)).toString());
-
-    const clearingManager = new hre.ethers.Wallet(POOL_CLEARING_MANAGER_PK, hre.ethers.provider);
+    const deploymentAddressesPath = path.join(
+        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
+    );
+    const deploymentAddresses = JSON.parse(
+        fs.readFileSync(deploymentAddressesPath).toString(),
+    );
 
     // signers
     const namedSigners = await hre.ethers.getNamedSigners();
     const adminAccount = namedSigners['admin'];
     const aliceAccount = namedSigners['alice'];
     const bobAccount = namedSigners['bob'];
+    const clearingManagerAccount = namedSigners['carol'];
 
     const unNamedSigners = await hre.ethers.getUnnamedSigners();
     const poolCreatorAccount = unNamedSigners[0];
     const poolAdminAccount = unNamedSigners[1];
     const drawRecipientAccount = unNamedSigners[2];
-
-    // fund accounts
-    console.info('Finding accounts with USDC');
-
-    const usdcAdmin = MockUSDC__factory.connect(
-        deploymentAddresses['USDC'].address,
-        adminAccount,
-    );
-
-    tx = await usdcAdmin.transfer(aliceAccount, 2000_000_000); // alice: 1000 USDC
-    await tx.wait(1);
-
-    tx = await usdcAdmin.transfer(bobAccount, 2000_000_000); // bob: 1000 USDC
-    await tx.wait(1);
 
     // access control
     console.info('Granting ROLE_LENDING_POOL_CREATOR role');
@@ -120,7 +106,7 @@ async function main() {
     const allPoolCreatedFilter = lendingPoolFactory.filters.PoolCreated();
     const allPoolCreatedEvents = await lendingPoolFactory.queryFilter(
         allPoolCreatedFilter,
-        txReceipt ? txReceipt.blockNumber : undefined
+        txReceipt ? txReceipt.blockNumber : undefined,
     );
 
     const lastEvent = allPoolCreatedEvents[allPoolCreatedEvents.length - 1];
@@ -135,80 +121,18 @@ async function main() {
     const ROLE_POOL_CLEARING_MANAGER = hre.ethers.id(
         'ROLE_POOL_CLEARING_MANAGER',
     );
-    tx = await kasuControllerAdmin.connect(poolAdminAccount).grantLendingPoolRole(
-        createdLendingPoolAddress,
-        ROLE_POOL_CLEARING_MANAGER,
-        clearingManager.address,
-    );
+    tx = await kasuControllerAdmin
+        .connect(poolAdminAccount)
+        .grantLendingPoolRole(
+            createdLendingPoolAddress,
+            ROLE_POOL_CLEARING_MANAGER,
+            clearingManagerAccount.address,
+        );
     await tx.wait(1);
 
-    // add users to allow list
-    console.info('Add users to allow list');
-    const kasuAllowListAdmin = KasuAllowList__factory.connect(
-        deploymentAddresses['KasuAllowList'].address,
-        adminAccount,
-    );
-
-    tx = await kasuAllowListAdmin.allowUser(aliceAccount);
-    await tx.wait(1);
-
-    tx = await kasuAllowListAdmin.allowUser(bobAccount);
-    await tx.wait(1);
-
-    // deposit request
-    await requestDeposit(
-        deploymentAddresses,
-        aliceAccount,
+    return {
         createdLendingPoolAddress,
-        createdTrancheAddresses[2],
-        BigInt(2000_000_000),
-    );
-
-    await requestDeposit(
-        deploymentAddresses,
-        bobAccount,
-        createdLendingPoolAddress,
-        createdTrancheAddresses[2],
-        BigInt(1000_000_000),
-    );
+        createdPendingPoolAddress,
+        createdTrancheAddresses,
+    };
 }
-
-async function requestDeposit(
-    addresses: any,
-    requester: Signer,
-    lendingPoolAddress: string,
-    trancheAddress: string,
-    amount: bigint,
-) {
-    let tx: ContractTransactionResponse;
-
-    console.info('User deposit request');
-    const usdcUser = MockUSDC__factory.connect(
-        addresses['USDC'].address,
-        requester,
-    );
-
-    tx = await usdcUser.approve(
-        addresses['LendingPoolManager'].address,
-        amount,
-    );
-    await tx.wait(1);
-
-    const lendingPoolManagerAlice = LendingPoolManager__factory.connect(
-        addresses['LendingPoolManager'].address,
-        requester,
-    );
-    tx = await lendingPoolManagerAlice.requestDeposit(
-        lendingPoolAddress,
-        trancheAddress,
-        amount,
-        ""
-    );
-    await tx.wait(1);
-    return tx;
-}
-
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
