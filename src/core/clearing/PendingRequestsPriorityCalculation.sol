@@ -24,6 +24,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     mapping(uint256 => PendingRequestsEpoch) internal _pendingRequestsPerEpoch;
 
     function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external {
+        _onlyClearingCoordinator();
+
         if (_pendingRequestsPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
@@ -216,4 +218,6 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     // Clearing Steps
     function _getClearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
+
+    function _onlyClearingCoordinator() internal view virtual;
 }

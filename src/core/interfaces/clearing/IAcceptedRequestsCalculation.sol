@@ -15,7 +15,6 @@ struct ClearingInput {
     LendingPoolBalance balance;
     PendingDeposits pendingDeposits;
     PendingWithdrawals pendingWithdrawals;
-    uint256 targetEpoch;
 }
 
 /**
