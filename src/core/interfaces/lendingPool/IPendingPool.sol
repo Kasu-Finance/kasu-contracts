@@ -75,6 +75,8 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
 
+    function forceCancelWithdrawalRequest(uint256 wNftID) external;
+
     function batchForceWithdrawals(ForceWithdrawalInput[] calldata input) external returns (uint256[] memory wNftIDs);
 
     function stop() external;
@@ -114,7 +116,7 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
     error InsufficientSharesBalance(
         address user, address lendingPool, address tranche, uint256 availableShares, uint256 requestedShares
     );
-    error WithdrawalRequestIsForced(address user, address lendingPool, uint256 wNftID);
+    error CannotCancelSystemWithdrawalRequest(address user, uint256 wNftID);
     error CannotCancelRequestIfClearingIsPending();
     error UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(address user);
     error RequestDepositAmountLessThanMinimumAllowed(

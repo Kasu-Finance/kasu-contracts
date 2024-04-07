@@ -15,14 +15,33 @@ import "./LendingPoolTranche.sol";
 import "../SystemVariables.sol";
 import "../../shared/AddressLib.sol";
 
+/**
+ * @title LendingPoolFactory contract
+ * @notice Factory contract for creating lending pools.
+ */
 contract LendingPoolFactory is ILendingPoolFactory {
+    /// @notice Pending pool beacon address.
     address public immutable pendingPoolBeacon;
+    /// @notice Lending pool beacon address.
     address public immutable lendingPoolBeacon;
+    /// @notice Lending pool tranche beacon address.
     address public immutable lendingPoolTrancheBeacon;
+    /// @notice Kasu controller contract.
     IKasuController public immutable kasuController;
+    /// @notice Lending pool manager contract.
     address public immutable lendingPoolManager;
+    /// @notice System variables contract.
     ISystemVariables public immutable systemVariables;
 
+    /**
+     * @notice Constructor.
+     * @param pendingPoolBeacon_ Pending pool beacon address.
+     * @param lendingPoolBeacon_ Lending pool beacon address.
+     * @param lendingPoolTrancheBeacon_ Lending pool tranche beacon address.
+     * @param kasuController_ Kasu controller contract.
+     * @param lendingPoolManager_ Lending pool manager contract.
+     * @param systemVariables_ System variables contract.
+     */
     constructor(
         address pendingPoolBeacon_,
         address lendingPoolBeacon_,
@@ -45,6 +64,11 @@ contract LendingPoolFactory is ILendingPoolFactory {
         systemVariables = systemVariables_;
     }
 
+    /**
+     * @notice Creates a lending pool.
+     * @param createPoolConfig Configuration for creating a lending pool.
+     * @return lendingPoolDeployment Deployment information of the lending pool.
+     */
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment)

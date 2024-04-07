@@ -3,6 +3,10 @@ pragma solidity 0.8.23;
 
 import "../interfaces/lendingPool/ILendingPool.sol";
 
+/**
+ * @title LendingPoolStoppable abstract contract.
+ * @notice Helper contract for stopping the lending pool.
+ */
 abstract contract LendingPoolStoppable {
     bool public isLendingPoolStopped;
 

@@ -46,6 +46,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal poolManagerAccount = address(0xad5);
     address internal poolClearingManagerAccount = address(0xad5);
 
+    address internal feeRecieverAccount = address(0xfee);
+
     function test_mock() external pure {}
 
     function __lendingPool_setUp() internal {
@@ -235,6 +237,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
         systemVariablesSetup.ecosystemFeeRate = 50_00;
         systemVariablesSetup.protocolFeeRate = 50_00;
+        systemVariablesSetup.protocolFeeReceiver = feeRecieverAccount;
 
         systemVariables.initialize(systemVariablesSetup);
     }
@@ -258,7 +261,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // create lending
         uint256 minDepositAmount = 10 * 1e6;
         uint256 maxDepositAmount = 1_000_000 * 1e6;
-        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 10_00;
         uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
         createTrancheConfig[0] = CreateTrancheConfig(10_00, 2500000000000000, minDepositAmount, maxDepositAmount);
@@ -347,7 +350,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     function _repayOwedFunds(address caller, address repaymentAddress, address lendingPool, uint256 amount) internal {
         deal(address(mockUsdc), repaymentAddress, amount, true);
         vm.prank(repaymentAddress);
-        mockUsdc.approve(lendingPool, amount);
+        mockUsdc.approve(address(lendingPoolManager), amount);
         vm.prank(caller);
         lendingPoolManager.repayOwedFunds(lendingPool, amount, repaymentAddress);
     }

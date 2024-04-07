@@ -45,6 +45,8 @@ let deploymentPath = path.join('./deployment-addresses-none.json');
 let blockNumber = 0;
 const NEXERA_ID_SIGNER = '0x0BAd9DaD98143b2E946e8A40E4f27537be2f55E2';
 
+let PROTOCOL_FEE_RECEIVER = '';
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (!fs.existsSync(path.join(`./deployments/${hre.network.name}`))) {
         fs.mkdirSync(path.join(`./deployments/${hre.network.name}`), {
@@ -70,6 +72,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const { admin } = await hre.getNamedAccounts();
     const deployer = admin;
+
+    if (PROTOCOL_FEE_RECEIVER === '') {
+        PROTOCOL_FEE_RECEIVER = admin;
+    }
 
     console.log();
     console.log('deployer account: ', deployer);
@@ -312,17 +318,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     const systemVariablesSetup: SystemVariablesSetupStruct = {
         firstEpochStartTimestamp: Math.round(Date.now() / 1000) + 3600 * 24 * 3,
-        clearingPeriodLength: 1,
+        clearingPeriodLength: 60 * 60 * 36,
         performanceFee: 10_00,
         loyaltyThresholds: [10_00, 30_00],
         defaultTrancheInterestChangeEpochDelay: 1,
         ecosystemFeeRate: 50_00,
         protocolFeeRate: 50_00,
+        protocolFeeReceiver: PROTOCOL_FEE_RECEIVER
     };
-    console.info('Initializing System Variables');
+    console.info('Initializing System Variables', PROTOCOL_FEE_RECEIVER);
     tx = await systemVariables.initialize(systemVariablesSetup);
     await tx.wait(1);
-
+    console.log('System Variables initialized');
     // add lock periods
     tx = await ksuLocking.setKSULockBonus(ksuLockBonusDeployment.address);
     await tx.wait(1);

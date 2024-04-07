@@ -35,7 +35,7 @@ contract UserManagerTest is LockingTestUtils {
         // ARRANGE
         _lock(alice, 50 ether, lockPeriod30);
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(false);
 
         // ACT
         bool canAliceDepositInJuniorTranche = userManager.canUserDepositInJuniorTranche(alice);
@@ -48,7 +48,7 @@ contract UserManagerTest is LockingTestUtils {
         // ARRANGE
         _lock(alice, 50 ether, lockPeriod30);
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(true);
 
         // ACT
         bool canAliceDepositInJuniorTranche = userManager.canUserDepositInJuniorTranche(alice);
@@ -60,7 +60,7 @@ contract UserManagerTest is LockingTestUtils {
     function test_canUserDepositInJuniorTranche_whenUserHasNoRKsuLockedAndFlagIsFalse() public {
         // ARRANGE
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(false);
 
         // ACT
         bool canAliceDepositInJuniorTranche = userManager.canUserDepositInJuniorTranche(alice);
@@ -72,7 +72,7 @@ contract UserManagerTest is LockingTestUtils {
     function test_canUserDepositInJuniorTranche_whenUserHasNoRKsuLockedAndFlagIsTrue() public {
         // ARRANGE
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(true);
 
         // ACT
         bool canAliceDepositInJuniorTranche = userManager.canUserDepositInJuniorTranche(alice);

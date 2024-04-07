@@ -25,7 +25,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId1_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
 
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(true);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(true);
 
         _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], 50 * 10 ** 6);
 
@@ -40,7 +40,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.stopPrank();
 
         vm.prank(admin);
-        systemVariables.setUserCanDepositToJuniorTrancheWhenHeHasRKSU(false);
+        systemVariables.setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(false);
 
         // request deposit on user that is not allowed
         vm.startPrank(userNotAllowed);
@@ -183,7 +183,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // approve tranche shares
         vm.startPrank(bob);
-        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
+        vm.expectRevert(abi.encodeWithSelector(NotSupported.selector));
         ILendingPoolTranche(juniorTrancheAddress).approve(alice, 10 * 10 ** 6);
         vm.stopPrank();
 
@@ -308,19 +308,13 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // try to cancel forced withdrawal request
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IPendingPool.WithdrawalRequestIsForced.selector, carol, lpd.lendingPool, wNftId_carol
-            )
+            abi.encodeWithSelector(IPendingPool.CannotCancelSystemWithdrawalRequest.selector, carol, wNftId_carol)
         );
         _cancelWithdrawalRequest(carol, lpd.lendingPool, wNftId_carol);
 
         // non existing dNftId
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IPendingPool.WithdrawalRequestIsForced.selector, carol, lpd.lendingPool, wNftId_carol
-            )
-        );
-        _cancelWithdrawalRequest(carol, lpd.lendingPool, wNftId_carol);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 1));
+        _cancelWithdrawalRequest(carol, lpd.lendingPool, 1);
 
         uint256 wNftId2_bob = _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 18);
 
@@ -492,7 +486,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         deal(address(mockUsdc), poolFundsManagerAccount, 300 * 10 ** 6, true);
         vm.startPrank(poolFundsManagerAccount);
-        mockUsdc.approve(lpd.lendingPool, 300 * 10 ** 6);
+        mockUsdc.approve(address(lendingPoolManager), 300 * 10 ** 6);
 
         // ### ACT ###
 

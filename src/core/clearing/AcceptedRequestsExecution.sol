@@ -35,6 +35,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     }
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
+        _onlyClearingCoordinator();
+
         if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALISED) {
             _initialiseAcceptedRequests(targetEpoch);
 
@@ -218,4 +220,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function _getAcceptedPriorityWithdrawalAmounts(uint256 epoch) internal view virtual returns (uint256[] memory);
 
     function _getClearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
+
+    function _onlyClearingCoordinator() internal view virtual;
 }

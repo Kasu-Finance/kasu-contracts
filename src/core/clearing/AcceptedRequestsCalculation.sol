@@ -6,6 +6,29 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../Constants.sol";
 
+/**
+ * @title Accepted requests calculation contract
+ * @notice Contract for calculating the accepted deposit and withdrawal amounts.
+ * @dev
+ * The calculation is done in 4 steps:
+ * 1. Calculate the total accepted deposit and withdrawal amounts.
+ * 2. Calculate the total accepted deposit amount for each tranche.
+ * 3. Calculate the accepted deposit to each tranche by the tranche and periority request.
+ * 4. Calculate the accepted withdrawal amounts for each priority.
+ * The output of the calculation is verified at the end.
+ * The calculation is done in a single function call.
+ * In step 1 we check if the draw amount is less than the maximum available funds. If not, the call will revert.
+ * If the tranche is oversubscribed, the excess is distributed to higher tranches according to priority.
+ * Hiher priority will be prioritized when accepted over lower priority.
+ * If same deposit priority, when accepting to higher tranche, the higer tranche request will be prioritized.
+ *   e.g. If senior priority 1 will have priority over junior priority 1 when accepting deposits to the senior tranche.
+ * Withdrawals are accepted in the order of priority top down.
+ * There are two outputs of this calculation:
+ * 1. 3D array mapping of each tranche priority group absolute amount being accepted to each tranche.
+ * - e.g. junior priority 1 deposit amount being accepted to tranche 1, tranche 2, tranche 3, etc.
+ * - first index is the tranche requested deposit, second index is the priority, and third index is the tranche it got accepted to.
+ * - 1D array mapping each accepted withdrawal for each priority.
+ */
 contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
     struct Step1In {
         uint256 totalDepositAmount;
@@ -50,7 +73,8 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
     }
 
     /**
-     * @notice Calculates the accepted pending deposits and withdrawals and draw amount.
+     * @notice Calculates the accepted requested deposit and requested withdrawal amount.
+     * @dev Draw amount must be less than the maximum available funds otherwise the call will revert.
      * @param input The input data for the clearing.
      * @return tranchePriorityDepositsAccepted The accepted deposits amounts to tranche for each tranche and priority. The first index is the requested tranche, the second index is the priority, and the third index is the tranche it got accepted to.
      * @return acceptedPriorityWithdrawalAmounts The accepted withdrawal amounts for each priority.
@@ -132,7 +156,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             ? 0
             : Math.min(maxWithdrawalAmount, maximumExcessAfterDraw - newMinExcessAmount);
 
-        // calculate accepted deposit amount
+        // calculate the total accepted deposit amount
         uint256 maximumExcessAfterWithdrawal = maximumExcessAfterDraw - outputData.acceptedWithdrawalAmount;
 
         if (maximumExcessAfterWithdrawal < newMaxExcessAmount) {
@@ -147,6 +171,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             }
         }
 
+        // calculate the increased excess amount
         uint256 newExcessAmount = inputData.lendingPoolBalance.excess + outputData.acceptedDepositAmount
             - inputData.config.drawAmount - outputData.acceptedWithdrawalAmount;
 
@@ -250,20 +275,23 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
                 // iterate over the tranche priority deposits - also apply to lower tranches, considering the priority
                 for (uint256 k = i + 1; k > 0; --k) {
-                    if (tranchePriorityDepositsAmounts[k - 1][j - 1] == 0) {
-                        continue;
-                    }
+                    // can be unchecked as we check all values before we perform the subtraction
+                    unchecked {
+                        if (tranchePriorityDepositsAmounts[k - 1][j - 1] == 0) {
+                            continue;
+                        }
 
-                    if (tranchePriorityDepositsAmounts[k - 1][j - 1] < amountLeft) {
-                        outputData.tranchePriorityDepositsAccepted[k - 1][j - 1][i] =
-                            tranchePriorityDepositsAmounts[k - 1][j - 1];
-                        amountLeft -= tranchePriorityDepositsAmounts[k - 1][j - 1];
-                        tranchePriorityDepositsAmounts[k - 1][j - 1] = 0;
-                    } else {
-                        outputData.tranchePriorityDepositsAccepted[k - 1][j - 1][i] = amountLeft;
-                        tranchePriorityDepositsAmounts[k - 1][j - 1] -= amountLeft;
-                        amountLeft = 0;
-                        break;
+                        if (tranchePriorityDepositsAmounts[k - 1][j - 1] < amountLeft) {
+                            outputData.tranchePriorityDepositsAccepted[k - 1][j - 1][i] =
+                                tranchePriorityDepositsAmounts[k - 1][j - 1];
+                            amountLeft -= tranchePriorityDepositsAmounts[k - 1][j - 1];
+                            tranchePriorityDepositsAmounts[k - 1][j - 1] = 0;
+                        } else {
+                            outputData.tranchePriorityDepositsAccepted[k - 1][j - 1][i] = amountLeft;
+                            tranchePriorityDepositsAmounts[k - 1][j - 1] -= amountLeft;
+                            amountLeft = 0;
+                            break;
+                        }
                     }
                 }
             }
@@ -285,12 +313,15 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
         uint256 amountLeft = inputData.acceptedWithdrawalAmount;
         for (uint256 i = inputData.priorityWithdrawalAmounts.length; i > 0; --i) {
-            if (inputData.priorityWithdrawalAmounts[i - 1] < amountLeft) {
-                outputData.acceptedPriorityWithdrawalAmounts[i - 1] = inputData.priorityWithdrawalAmounts[i - 1];
-                amountLeft -= inputData.priorityWithdrawalAmounts[i - 1];
-            } else {
-                outputData.acceptedPriorityWithdrawalAmounts[i - 1] = amountLeft;
-                break;
+            // can be unchecked as we check all values before we perform the subtraction
+            unchecked {
+                if (inputData.priorityWithdrawalAmounts[i - 1] < amountLeft) {
+                    outputData.acceptedPriorityWithdrawalAmounts[i - 1] = inputData.priorityWithdrawalAmounts[i - 1];
+                    amountLeft -= inputData.priorityWithdrawalAmounts[i - 1];
+                } else {
+                    outputData.acceptedPriorityWithdrawalAmounts[i - 1] = amountLeft;
+                    break;
+                }
             }
         }
     }
@@ -311,7 +342,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         Step3Out memory outputData3,
         Step4Out memory outputData4
     ) internal pure {
-        // verify the deposit result
+        // VERIFY DEPOSIT RESULT
         uint256 totalAcceptedDepositAmountSum2;
         for (uint256 i; i < outputData2.acceptedTrancheDepositAmounts.length; ++i) {
             totalAcceptedDepositAmountSum2 += outputData2.acceptedTrancheDepositAmounts[i];
@@ -321,11 +352,14 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         for (uint256 i; i < outputData3.tranchePriorityDepositsAccepted.length; ++i) {
             for (uint256 j; j < outputData3.tranchePriorityDepositsAccepted[i].length; ++j) {
                 uint256 totalAcceptedDepositAmountPerTranchePriority;
-                for (uint256 k; k < outputData3.tranchePriorityDepositsAccepted[i][j].length; ++k) {
-                    totalAcceptedDepositAmountSum3 += outputData3.tranchePriorityDepositsAccepted[i][j][k];
+                // k == i is because the tranche deposits are only accepted for the same tranche or higher ones
+                for (uint256 k = i; k < outputData3.tranchePriorityDepositsAccepted[i][j].length; ++k) {
                     totalAcceptedDepositAmountPerTranchePriority += outputData3.tranchePriorityDepositsAccepted[i][j][k];
                 }
 
+                totalAcceptedDepositAmountSum3 += totalAcceptedDepositAmountPerTranchePriority;
+
+                // verify the accepted deposit for each tranche is less than or equal to the requested deposit for each tranche
                 if (
                     totalAcceptedDepositAmountPerTranchePriority
                         > input.pendingDeposits.tranchePriorityDepositsAmounts[i][j]
@@ -335,6 +369,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             }
         }
 
+        // verify all accepted deposit sums are equal and that the accepted deposit is less than or equal to the total requested deposit
         if (
             outputData1.acceptedDepositAmount != totalAcceptedDepositAmountSum2
                 || outputData1.acceptedDepositAmount != totalAcceptedDepositAmountSum3
@@ -343,11 +378,12 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             revert InvalidDepositResult();
         }
 
-        // verify the withdrawal result
+        // VERIFY WITHDRAWAL RESULT
         uint256 totalAcceptedWithdrawalAmountSum4;
         for (uint256 i; i < outputData4.acceptedPriorityWithdrawalAmounts.length; ++i) {
             totalAcceptedWithdrawalAmountSum4 += outputData4.acceptedPriorityWithdrawalAmounts[i];
 
+            // verify the accepted withdrawal for each priority is less than or equal to the requested withdrawal for each priority
             if (
                 outputData4.acceptedPriorityWithdrawalAmounts[i] > input.pendingWithdrawals.priorityWithdrawalAmounts[i]
             ) {
@@ -355,6 +391,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             }
         }
 
+        // verify all accepted withdrawal sums are equal and that the accepted withdrawal is less than or equal to the total requested withdrawal
         if (
             outputData1.acceptedWithdrawalAmount != totalAcceptedWithdrawalAmountSum4
                 || outputData1.acceptedWithdrawalAmount > input.pendingWithdrawals.totalWithdrawalsAmount
@@ -362,7 +399,8 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
             revert InvalidWithdrawalResult();
         }
 
-        // verify the deposit, withdrawal and draw result numbers
+        // VERIFY ALL
+        // verify there is more accepted deposit and existing excess funds, than the new withdrawal and draw amount
         if (
             input.balance.excess + outputData1.acceptedDepositAmount
                 < outputData1.acceptedWithdrawalAmount + input.config.drawAmount

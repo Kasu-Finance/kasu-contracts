@@ -9,12 +9,30 @@ import "./Constants.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "../shared/AddressLib.sol";
 
+/**
+ * @title FeeManager contract.
+ * @notice Contract for managing and distributing platform fees.
+ * @dev
+ * The fees collected are split into ecosystem and protocol fees.
+ * Ecosystem fees are sent to the KSU Locking contract and distributed to rKSU holders,
+ * while protocol fees are stored in the contract until claimed.
+ */
 contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
+    /// @notice KSU Locking contract.
     IKSULocking private immutable _ksuLocking;
+    /// @notice System variables contract.
     ISystemVariables private immutable _systemVariables;
 
+    /// @notice Total amount of protocol fees pending to be claimed.
     uint256 public totalProtocolFeeAmount;
 
+    /**
+     * @notice Constructor.
+     * @param underlyingAsset_ Underlying asset address.
+     * @param systemVariables_ System variables contract.
+     * @param controller_ Access control for Kasu protocol.
+     * @param ksuLocking_ KSU Locking contract.
+     */
     constructor(
         address underlyingAsset_,
         ISystemVariables systemVariables_,
@@ -28,6 +46,13 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         _systemVariables = systemVariables_;
     }
 
+    /**
+     * @notice Transfers fee amount from the caller and emits them to the FeeManager contract.
+     * @dev The fees are split into ecosystem and protocol fees.
+     * Ecosystem fees are sent to the KSU Locking contract and distributed to rKSU holders,
+     * while protocol fees are stored in the contract until claimed.
+     * @param amount Amount of fees to emit.
+     */
     function emitFees(uint256 amount) external whenNotPaused {
         _transferAssetsFrom(msg.sender, address(this), amount);
 
@@ -43,13 +68,17 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         emit FeesEmitted(msg.sender, ecosystemFeeAmount, protocolFeeAmount);
     }
 
+    /**
+     * @notice Claims the total protocol fees and transfers them to the protocol fee receiver.
+     * @dev Only the protocol fee claimer role can call this function.
+     */
     function claimProtocolFees() external whenNotPaused onlyRole(ROLE_PROTOCOL_FEE_CLAIMER, msg.sender) {
         address protocolFeeReceiver = _systemVariables.getProtocolFeeReceiver();
-        if (protocolFeeReceiver == address(0)) {
-            revert ConfigurationAddressZero();
-        }
         uint256 totalProtocolFeeAmount_ = totalProtocolFeeAmount;
+
+        // Reset the total unclaimed protocol fee amount.
         totalProtocolFeeAmount = 0;
+
         _transferAssets(protocolFeeReceiver, totalProtocolFeeAmount_);
 
         emit ProtocolFeesClaimed(protocolFeeReceiver, totalProtocolFeeAmount_);

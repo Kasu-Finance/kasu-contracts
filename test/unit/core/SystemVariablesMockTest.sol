@@ -19,8 +19,6 @@ contract SystemVariablesMockTest is BaseTestUtils {
         ksuPrice = new MockKsuPrice();
         kasuController = IKasuController(address(0xcccc));
 
-        ProxyAdmin proxyAdmin = new ProxyAdmin(admin);
-
         SystemVariables systemVariablesImpl = new SystemVariables(ksuPrice, kasuController);
         TransparentUpgradeableProxy systemVariablesProxy =
             new TransparentUpgradeableProxy(address(systemVariablesImpl), address(proxyAdmin), "");
@@ -262,6 +260,7 @@ contract SystemVariablesMockTest is BaseTestUtils {
         systemVariablesSetup.defaultTrancheInterestChangeEpochDelay = 4;
         systemVariablesSetup.ecosystemFeeRate = 50_00;
         systemVariablesSetup.protocolFeeRate = 50_00;
+        systemVariablesSetup.protocolFeeReceiver = address(0xfee);
 
         systemVariables.initialize(systemVariablesSetup);
     }

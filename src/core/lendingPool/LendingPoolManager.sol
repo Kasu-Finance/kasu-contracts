@@ -19,6 +19,10 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../DepositSwap.sol";
 import "../../shared/AddressLib.sol";
 
+/**
+ * @title Lending Pool Manager Contract
+ * @notice This contract is used as an entry point for all the lending pool interactions.
+ */
 contract LendingPoolManager is
     ILendingPoolManager,
     DepositSwap,
@@ -27,15 +31,25 @@ contract LendingPoolManager is
     KasuAccessControllable,
     Initializable
 {
-    mapping(address => address) public ownLendingPool;
-
-    mapping(address => LendingPoolDeployment) private lendingPools;
-
+    /// @notice Lending pool factory contract.
     ILendingPoolFactory private lendingPoolFactory;
+    /// @notice Kasu allow list contract.
     IKasuAllowList private kasuAllowList;
+    /// @notice User manager contract.
     IUserManager private userManager;
+    /// @notice Clearing coordinator contract.
     IClearingCoordinator private clearingCoordinator;
 
+    /// @notice Lending pool deployment addresses.
+    mapping(address => LendingPoolDeployment) public lendingPools;
+
+    /**
+     * @notice Constructor.
+     * @param underlyingAsset_ Underlying asset contract address.
+     * @param controller_ Kasu controller contract.
+     * @param weth_ WETH contract.
+     * @param swapper_ Swapper contract.
+     */
     constructor(address underlyingAsset_, IKasuController controller_, IWETH9 weth_, ISwapper swapper_)
         DepositSwap(weth_, swapper_)
         AssetFunctionsBase(underlyingAsset_)
@@ -44,6 +58,13 @@ contract LendingPoolManager is
         _disableInitializers();
     }
 
+    /**
+     * @notice Initializes the contract.
+     * @param lendingPoolFactory_ Lending pool factory contract.
+     * @param kasuAllowList_ Kasu allow list contract.
+     * @param userManager_ User manager contract.
+     * @param clearingCoordinator_ Clearing coordinator contract.
+     */
     function initialize(
         ILendingPoolFactory lendingPoolFactory_,
         IKasuAllowList kasuAllowList_,
@@ -63,6 +84,11 @@ contract LendingPoolManager is
 
     // #### CREATE POOL #### //
 
+    /**
+     * @notice Creates a new lending pool.
+     * @param createPoolConfig Configuration for creating a lending pool.
+     * @return lendingPoolDeployment Deployment addresses of the lending pool.
+     */
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
         whenNotPaused
@@ -79,6 +105,18 @@ contract LendingPoolManager is
     }
 
     // #### USER #### //
+
+    /**
+     * @notice Request deposit to the lending pool tranche.
+     * @dev
+     * User should not be blocked to deposit.
+     * User should be on the allowlist to deposit.
+     * @param lendingPool Address of the lending pool to deposit to.
+     * @param tranche Address of the tranche to deposit to.
+     * @param maxAmount Maximum amount to deposit. If no swap data is provided, this amount will be deposited.
+     * @param swapData Swap data for deposit. Ignore if empty.
+     * @return dNftID ID of the deposit NFT.
+     */
     function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
         external
         payable
@@ -91,6 +129,19 @@ contract LendingPoolManager is
         return _requestDeposit(lendingPool, tranche, maxAmount, swapData);
     }
 
+    /**
+     * @notice Request deposit to the lending pool tranche with user KYC.
+     * @dev
+     * User should not be blocked to deposit.
+     * User should be KYC'd to deposit.
+     * @param lendingPool Address of the lending pool to deposit to.
+     * @param tranche Address of the tranche to deposit to.
+     * @param maxAmount Maximum amount to deposit. If no swap data is provided, this amount will be deposited.
+     * @param swapData Swap data for deposit. Ignore if empty.
+     * @param blockExpiration Expiration block number for the KYC signature.
+     * @param signature KYC signature.
+     * @return dNftID ID of the deposit NFT.
+     */
     function requestDepositWithKyc(
         address lendingPool,
         address tranche,
@@ -129,36 +180,53 @@ contract LendingPoolManager is
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
         userManager.userRequestedDeposit(msg.sender, lendingPool);
-        dNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestDeposit(msg.sender, tranche, amount);
+        dNftID = _getPendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
 
         if (swapTokens.length > 0 || msg.value > 0) {
             _postSwap(swapTokens, address(underlyingAsset));
         }
     }
 
+    /**
+     * @notice Cancel deposit request.
+     * @param lendingPool Address of the lending pool.
+     * @param dNftID ID of the deposit NFT to cancel.
+     */
     function cancelDepositRequest(address lendingPool, uint256 dNftID)
         external
         whenNotPaused
         validLendingPool(lendingPool)
     {
-        IPendingPool(lendingPools[lendingPool].pendingPool).cancelDepositRequest(msg.sender, dNftID);
+        _getPendingPool(lendingPool).cancelDepositRequest(msg.sender, dNftID);
     }
 
+    /**
+     * @notice Request withdrawal from the lending pool tranche.
+     * @param lendingPool Address of the lending pool to withdraw from.
+     * @param tranche Address of the tranche to withdraw from.
+     * @param amount Amount of tranche shares to withdraw.
+     * @return wNftID ID of the withdrawal NFT.
+     */
     function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
         external
         whenNotPaused
         validLendingPool(lendingPool)
         returns (uint256 wNftID)
     {
-        wNftID = IPendingPool(lendingPools[lendingPool].pendingPool).requestWithdrawal(msg.sender, tranche, amount);
+        wNftID = _getPendingPool(lendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
+    /**
+     * @notice Cancel withdrawal request.
+     * @param lendingPool Address of the lending pool.
+     * @param wNftID ID of the withdrawal NFT to cancel.
+     */
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID)
         external
         whenNotPaused
         validLendingPool(lendingPool)
     {
-        IPendingPool(lendingPools[lendingPool].pendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
+        _getPendingPool(lendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
     /**
@@ -178,6 +246,11 @@ contract LendingPoolManager is
 
     // #### POOL ADMIN #### //
 
+    /**
+     * @notice Update draw recipient address.
+     * @param lendingPool Address of the lending pool.
+     * @param drawRecipient Address of the draw recipient.
+     */
     function updateDrawRecipient(address lendingPool, address drawRecipient)
         external
         whenNotPaused
@@ -190,11 +263,11 @@ contract LendingPoolManager is
     // #### POOL FUNDS MANAGER #### //
 
     /**
-     * @notice Report loss to the lending pool.
-     * @param lendingPool Address of the lending pool.
-     * @param amount Amount of loss.
-     * @param doMintLossTokens Whether to mint loss tokens to all the users.
-     * @return lossId ID of the lending pool loss.
+     * @notice Report unrelized loss to the lending pool.
+     * @param lendingPool Address of the lending pool to report loss to.
+     * @param amount Reported loss amount.
+     * @param doMintLossTokens Whether to mint loss tokens to all the users in this transaction.
+     * @return lossId ID of the reported lending pool loss.
      */
     function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens)
         external
@@ -206,15 +279,11 @@ contract LendingPoolManager is
         return ILendingPool(lendingPool).reportLoss(amount, doMintLossTokens);
     }
 
-    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
-    }
-
+    /**
+     * @notice Deposit first loss capital to the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param amount Amount to deposit.
+     */
     function depositFirstLossCapital(address lendingPool, uint256 amount)
         external
         whenNotPaused
@@ -226,13 +295,37 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).depositFirstLossCapital(amount);
     }
 
+    /**
+     * @notice Withdraw first loss capital from the lending pool.
+     * @dev The pool should be stopped before withdrawing first loss capital.
+     * @param lendingPool Address of the lending pool.
+     * @param withdrawAmount Amount to withdraw.
+     * @param withdrawAddress Address to withdraw assets to.
+     */
+    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
+    }
+
+    /**
+     * @notice Repay owed funds to the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param amount Amount to repay.
+     * @param repaymentAddress Address to repay from.
+     */
     function repayOwedFunds(address lendingPool, uint256 amount, address repaymentAddress)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).repayOwedFunds(amount, repaymentAddress);
+        _transferAssetsFrom(repaymentAddress, address(this), amount);
+        _approveAsset(lendingPool, amount);
+        ILendingPool(lendingPool).repayOwedFunds(amount);
     }
 
     /**
@@ -255,19 +348,29 @@ contract LendingPoolManager is
 
     // #### POOL CLEARING MANAGER #### //
 
+    /**
+     * @notice Execute clearing for the lending pool.
+     * @dev Can possibly be executed in multiple transactions.
+     * @param lendingPool Address of the lending pool.
+     * @param targetEpoch Target epoch to clear.
+     * @param priorityCalculationBatchSize Numbers of user requests to process in step 2 of the clearing process.
+     * @param acceptRequestsBatchSize Numbers of user requests to process in step 4 of the clearing process.
+     * @param clearingConfigOverride Clearing configuration override. Ignore if isConfigOverridden is false. Only applied when step 3 is executed.
+     * @param isConfigOverridden Whether the clearing configuration is overridden.
+     */
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,
-        uint256 pendingRequestsPriorityCalculationBatchSize,
-        uint256 acceptedRequestsExecutionBatchSize,
+        uint256 priorityCalculationBatchSize,
+        uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
         bool isConfigOverridden
     ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
         clearingCoordinator.doClearing(
             lendingPool,
             targetEpoch,
-            pendingRequestsPriorityCalculationBatchSize,
-            acceptedRequestsExecutionBatchSize,
+            priorityCalculationBatchSize,
+            acceptRequestsBatchSize,
             clearingConfigOverride,
             isConfigOverridden
         );
@@ -275,24 +378,17 @@ contract LendingPoolManager is
 
     // #### POOL MANAGER #### //
 
-    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).updateTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
-    }
-
-    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).updateMinimumExcessLiquidityPercentage(minumumExcessLiquidityPercentage);
-    }
-
+    /**
+     * @notice Force immediate withdrawal for user from the lending pool tranche by the pool manager.
+     * @dev
+     * Can only be called by the pool manager.
+     * User tranche shares are immediately withdrawn and assets are transferred to the user.
+     * Will fail if the lending pool doesn't have enough assets to return.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche.
+     * @param user Address of the user to withdraw for.
+     * @param sharesToWithdraw Amount of tranche shares to withdraw.
+     */
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external
         whenNotPaused
@@ -302,6 +398,15 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
     }
 
+    /**
+     * @notice Force withdrawals for multiple users from the lending pool by the pool manager.
+     * @dev
+     * Can only be called by the pool manager.
+     * Same as normal withdrawal but cannot be canceled by the user.
+     * Forced withdrawal has the higest priority (above highest standard priority) when clearing.
+     * @param lendingPool Address of the lending pool.
+     * @param input Array of force withdrawal details.
+     */
     function batchForceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
         external
         whenNotPaused
@@ -309,9 +414,47 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
         returns (uint256[] memory wNftIDs)
     {
-        wNftIDs = IPendingPool(ILendingPool(lendingPool).getPendingPool()).batchForceWithdrawals(input);
+        wNftIDs = _getPendingPool(lendingPool).batchForceWithdrawals(input);
     }
 
+    /**
+     * @notice Force cancel deposit request for the user by the pool manager.
+     * @param lendingPool Address of the lending pool.
+     * @param dNftID ID of the deposit NFT to cancel.
+     */
+    function forceCancelDepositRequest(address lendingPool, uint256 dNftID)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        IPendingPool pendingPool = _getPendingPool(lendingPool);
+        address dNftOwner = pendingPool.ownerOf(dNftID);
+        pendingPool.cancelDepositRequest(dNftOwner, dNftID);
+    }
+
+    /**
+     * @notice Force cancel withdrawal request for the user by the pool manager.
+     * @dev Can cancel forced withdrawal requests.
+     * @param lendingPool Address of the lending pool.
+     * @param wNftID ID of the withdrawal NFT to cancel.
+     */
+    function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        _getPendingPool(lendingPool).forceCancelWithdrawalRequest(wNftID);
+    }
+
+    /**
+     * @notice Stop lending pool.
+     * @dev
+     * Pool Funds Manager must first repay all owed funds before the pool can be stopped.
+     * @param lendingPool Address of the lending pool.
+     * @param firstLossCapitalReceiver Address of the first loss capital receiver.
+     */
     function stopLendingPool(address lendingPool, address firstLossCapitalReceiver)
         external
         whenNotPaused
@@ -321,30 +464,43 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
     }
 
-    function forceCancelDepositRequest(address lendingPool, uint256 dNftID)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
-        address dNftOwner = pendingPool.ownerOf(dNftID);
-        pendingPool.cancelDepositRequest(dNftOwner, dNftID);
-    }
-
-    function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        IPendingPool pendingPool = IPendingPool(lendingPools[lendingPool].pendingPool);
-        address wNftOwner = pendingPool.ownerOf(wNftID);
-        pendingPool.cancelDepositRequest(wNftOwner, wNftID);
-    }
-
     // config
 
+    /**
+     * @notice Update target excess liquidity percentage.
+     * @param lendingPool Address of the lending pool.
+     * @param targetExcessLiquidityPercentage New target excess liquidity percentage. 100% is 10^5.
+     */
+    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        ILendingPool(lendingPool).updateTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
+    }
+
+    /**
+     * @notice Update minimum excess liquidity percentage.
+     * @param lendingPool Address of the lending pool.
+     * @param minumumExcessLiquidityPercentage New minimum excess liquidity percentage. 100% is 10^5.
+     */
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        ILendingPool(lendingPool).updateMinimumExcessLiquidityPercentage(minumumExcessLiquidityPercentage);
+    }
+
+    /**
+     * @notice Update minumum deposit amount for the lending pool tranche.
+     * @dev Can't be more than the maximum deposit amount.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche.
+     * @param minimumDepositAmount New minimum deposit amount for the tranche.
+     */
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount)
         external
         whenNotPaused
@@ -354,6 +510,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateMinimumDepositAmount(tranche, minimumDepositAmount);
     }
 
+    /**
+     * @notice Update maximum deposit amount for the lending pool tranche.
+     * @dev Can't be less than the minimum deposit amount.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche.
+     * @param maximumDepositAmount New maximum deposit amount for the tranche.
+     */
     function updateMaximumDepositAmount(address lendingPool, address tranche, uint256 maximumDepositAmount)
         external
         whenNotPaused
@@ -363,6 +526,13 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateMaximumDepositAmount(tranche, maximumDepositAmount);
     }
 
+    /**
+     * @notice Update tranche interest rate per epoch for the lending pool.
+     * @dev Interest rate update has a delay measured in epochs. This delay is set in the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche.
+     * @param interestRate New interest rate per epoch for the tranche. 100% is 10^18.
+     */
     function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate)
         external
         whenNotPaused
@@ -372,6 +542,15 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheInterestRate(tranche, interestRate);
     }
 
+    /**
+     * @notice Update tranche desired ratios for the lending pool.
+     * @dev
+     * Desired ratios are in the same order as the tranches.
+     * The length of the desired ratios array must be equal to the number of tranches.
+     * The sum of the desired ratios must be 100%.
+     * @param lendingPool Address of the lending pool.
+     * @param desiredRatios New desired ratios for the tranches. 100% is 10^5.
+     */
     function updateTrancheDesiredRatios(address lendingPool, uint256[] calldata desiredRatios)
         external
         whenNotPaused
@@ -381,15 +560,12 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheDesiredRatios(desiredRatios);
     }
 
-    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay)
-        external
-        whenNotPaused
-        onlyRole(ROLE_KASU_ADMIN, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
-    }
-
+    /**
+     * @notice Update desired draw amount for the lending pool for the next time clearing is executed.
+     * @dev Lending pool desired draw amount is decreased every time a draw is executed.
+     * @param lendingPool Address of the lending pool.
+     * @param amount New desired draw amount.
+     */
     function updateDesiredDrawAmount(address lendingPool, uint256 amount)
         external
         whenNotPaused
@@ -399,7 +575,30 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateDesiredDrawAmount(amount);
     }
 
-    function _validLendingPool(address lendingPool) internal view {
+    // #### KASU ADMIN #### //
+
+    /**
+     * @notice Update tranche interest rate change epoch delay for the lending pool.
+     * @dev Only Kasu admin can call this function.
+     * @param lendingPool Address of the lending pool.
+     * @param epochDelay New tranche interest rate change delay in epochs.
+     */
+    function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay)
+        external
+        whenNotPaused
+        onlyRole(ROLE_KASU_ADMIN, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
+    }
+
+    // #### PRIVATE FUNCTIONS #### //
+
+    function _getPendingPool(address lendingPool) private view returns (IPendingPool) {
+        return IPendingPool(lendingPools[lendingPool].pendingPool);
+    }
+
+    function _validLendingPool(address lendingPool) private view {
         if (lendingPools[lendingPool].lendingPool == address(0)) {
             revert InvalidLendingPool(lendingPool);
         }
