@@ -114,9 +114,9 @@ contract UserManager is IUserManager, Initializable {
     }
 
     /**
-     * @notice Get all active users.¸
+     * @notice Get all active users.
      * @dev Users are only removed by manually calling updateUserLendingPools.
-     * @return The all active users.
+     * @return The array of all active users.
      */
     function getAllUsers() external view returns (address[] memory) {
         return _allUsers;
@@ -126,30 +126,34 @@ contract UserManager is IUserManager, Initializable {
      * @notice Get the total pending and active deposited amount.
      * @dev Returns the amount including pending deposits for the next epoch.
      * @param user The address of the user.
-     * @return The total deposited amount for the user.
+     * @return activeDepositAmount The active deposited amount for the user.
+     * @return pendingDepositAmount The pending deposited amount for the user.
      */
-    function getUserTotalPendingAndActiveDepositedAmount(address user) external view returns (uint256) {
+    function getUserTotalPendingAndActiveDepositedAmount(address user)
+        external
+        view
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
+    {
         uint256 nextEpoch = systemVariables.getCurrentEpochNumber() + 1;
 
-        (uint256 activeDepositAmount, uint256 pendingDepositAmount) =
-            _getUserTotalPendingAndActiveDepositedAmount(user, nextEpoch);
-
-        return activeDepositAmount + pendingDepositAmount;
+        (activeDepositAmount, pendingDepositAmount) = _getUserTotalPendingAndActiveDepositedAmount(user, nextEpoch);
     }
 
     /**
      * @notice Get the total pending and active deposited amount for the user for the current epoch.
      * @dev Only returns the amount that will be used to calculate the user's loyalty level this clearing period.
      * @param user The address of the user.
-     * @return The total deposited amount for the user for the current epoch.
+     * @return activeDepositAmount The active deposited amount for the user for the current epoch.
+     * @return pendingDepositAmount The pending deposited amount for the user for the current epoch.
      */
-    function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user) external view returns (uint256) {
+    function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user)
+        external
+        view
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
+    {
         uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
 
-        (uint256 activeDepositAmount, uint256 pendingDepositAmount) =
-            _getUserTotalPendingAndActiveDepositedAmount(user, currentEpoch);
-
-        return activeDepositAmount + pendingDepositAmount;
+        (activeDepositAmount, pendingDepositAmount) = _getUserTotalPendingAndActiveDepositedAmount(user, currentEpoch);
     }
 
     /**

@@ -8,8 +8,14 @@ struct EpochUserLoyaltyProcessing {
 }
 
 interface IUserManager {
-    function getUserTotalPendingAndActiveDepositedAmount(address user) external view returns (uint256);
-    function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user) external view returns (uint256);
+    function getUserTotalPendingAndActiveDepositedAmount(address user)
+        external
+        view
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount);
+    function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user)
+        external
+        view
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount);
     function getCalculatedUserEpochLoyaltyLevel(address user, uint256 epoch)
         external
         view
