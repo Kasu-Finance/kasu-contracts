@@ -147,6 +147,8 @@ interface ILendingPool is IERC20 {
 
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
 
+    event UpdatedDrawRecipient(address indexed drawRecipient);
+
     event LendingPoolStopped();
 
     // Errors

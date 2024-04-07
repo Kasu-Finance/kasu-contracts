@@ -107,7 +107,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         returns (PoolConfiguration memory)
     {
         AddressLib.checkIfZero(createPoolConfig.poolAdmin);
-        AddressLib.checkIfZero(createPoolConfig.drawRecipient);
         AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
@@ -116,7 +115,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // setup pool configuration
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
-        _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
+        _updateDrawRecipient(createPoolConfig.drawRecipient);
         _poolConfiguration.trancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
 
         _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
@@ -792,8 +791,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param drawRecipient The draw recipient address.
      */
     function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
+        _updateDrawRecipient(drawRecipient);
+    }
+
+    function _updateDrawRecipient(address drawRecipient) private {
         AddressLib.checkIfZero(drawRecipient);
         _poolConfiguration.drawRecipient = drawRecipient;
+
+        emit UpdatedDrawRecipient(drawRecipient);
     }
 
     /**
