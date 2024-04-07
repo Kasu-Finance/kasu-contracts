@@ -24,14 +24,15 @@ import "../../shared/AddressLib.sol";
  * @title PendingPool contract.
  * @notice Contract for managing pending deposits and withdrawal requests.
  * @dev
- * When depositing, user receives ERC721 deposit NFT in exchange for the deposited asset.
- * When withdrawing, user receives ERC721 withdrawal NFT in exchange for the tranche shares.
+ * When depositing, user receives ERC721 deposit NFT (dNFT) in exchange for the deposited asset.
+ * When withdrawing, user receives ERC721 withdrawal NFT (wNFT) in exchange for the tranche shares.
  * Deposit and withdrawal request ids are composed of the tranche address and a unique sequential id.
  * When deposit is fully accepted or rejected, user's NFT is burned and the asset is transferred to the lending pool.
  *   User receives tranche shares in exchange.
  * When withdrawal is fully accepted, user's NFT is burned and the tranche shares are transferred to the lending pool.
  *   User receives the asset in exchange.
  * Clearing logic is also part of the PendingPool contract, it can be found in ClearingSteps contract.
+ * Clearing requires looping over user pending requests. ERC721Enumerable is used to loop over the request NFTs.
  */
 contract PendingPool is
     IPendingPool,
@@ -41,7 +42,9 @@ contract PendingPool is
     LendingPoolStoppable,
     ClearingSteps
 {
+    /// @notice System variables contract.
     ISystemVariables public immutable systemVariables;
+    /// @notice User manager contract.
     IUserManager public immutable userManager;
 
     /// @dev tranche address => next deposit NFT id
