@@ -23,6 +23,7 @@ struct SystemVariablesSetup {
     uint256 defaultTrancheInterestChangeEpochDelay;
     uint256 ecosystemFeeRate;
     uint256 protocolFeeRate;
+    address protocolFeeReceiver;
 }
 
 /**
@@ -105,6 +106,8 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
 
         _ecosystemFeeRate = 50_00;
         _protocolFeeRate = 50_00;
+
+        _protocolFeeReceiver = systemVariablesSetup.protocolFeeReceiver;
     }
 
     function startClearing() external {
