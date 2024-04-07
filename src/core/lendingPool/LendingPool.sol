@@ -116,7 +116,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // setup pool configuration
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
         _updateDrawRecipient(createPoolConfig.drawRecipient);
-        _poolConfiguration.trancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+        _updateTrancheInterestRateChangeEpochDelay(systemVariables.defaultTrancheInterestChangeEpochDelay());
 
         _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
 
@@ -893,7 +893,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param epochDelay The epoch delay for the interest rate change.
      */
     function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external onlyLendingPoolManager {
+        _updateTrancheInterestRateChangeEpochDelay(epochDelay);
+    }
+
+    function _updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) private {
         _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
+
+        emit UpdatedTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
     /**

@@ -149,6 +149,8 @@ interface ILendingPool is IERC20 {
 
     event UpdatedDrawRecipient(address indexed drawRecipient);
 
+    event UpdatedTrancheInterestRateChangeEpochDelay(uint256 epochDelay);
+
     event LendingPoolStopped();
 
     // Errors
