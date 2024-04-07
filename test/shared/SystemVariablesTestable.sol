@@ -261,6 +261,10 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         return _loyaltyThresholds;
     }
 
+    function loyaltyLevelsCount() external view returns (uint8) {
+        return uint8(_loyaltyThresholds.length + 1);
+    }
+
     /**
      * @notice Sets the loyalty thresholds.
      * @param loyaltyThresholds_ The new loyalty thresholds array.

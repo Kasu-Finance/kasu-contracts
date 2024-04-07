@@ -597,25 +597,20 @@ contract PendingPool is
         return _getOwnLendingPool().getLendingPoolTrancheCount();
     }
 
-    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch)
-        internal
-        view
-        override
-        returns (uint256)
-    {
+    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
         return userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
     }
 
-    function _getLoyaltyLevelCount() internal view override returns (uint256) {
-        return systemVariables.loyaltyThresholds().length + 1;
+    function _getLoyaltyLevelCount() internal view override returns (uint8) {
+        return systemVariables.loyaltyLevelsCount();
     }
 
-    function _setDepositRequestPriority(uint256 dNftId, uint256 priority) internal override {
-        _trancheDepositNftDetails[dNftId].priority = uint8(priority);
+    function _setDepositRequestPriority(uint256 dNftId, uint8 priority) internal override {
+        _trancheDepositNftDetails[dNftId].priority = priority;
     }
 
-    function _setWithdrawalRequestPriority(uint256 wNftId, uint256 priority) internal override {
-        _trancheWithdrawalNftDetails[wNftId].priority = uint8(priority);
+    function _setWithdrawalRequestPriority(uint256 wNftId, uint8 priority) internal override {
+        _trancheWithdrawalNftDetails[wNftId].priority = priority;
     }
 
     // MODIFIERS

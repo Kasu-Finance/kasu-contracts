@@ -29,6 +29,7 @@ interface ISystemVariables {
 
     // LOYALTY THRESHOLD
     function loyaltyThresholds() external view returns (uint256[] memory loyaltyThresholds);
+    function loyaltyLevelsCount() external view returns (uint8);
     function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds) external;
 
     // LENDING POOL

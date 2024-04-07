@@ -45,7 +45,7 @@ contract UserManager is IUserManager, Initializable {
     mapping(address user => address[] lendingPools) private _userLendingPools;
 
     /// @dev Calculated user epoch loyalty level.
-    mapping(address user => mapping(uint256 epochId => uint256 loyaltyLevel)) private _userEpochLoyaltyLevel;
+    mapping(address user => mapping(uint256 epochId => uint8 loyaltyLevel)) private _userEpochLoyaltyLevel;
 
     /// @dev Details of processing user loyalty levels for the epoch.
     mapping(uint256 epochId => EpochUserLoyaltyProcessing) private _epochUserLoyaltyProcessing;
@@ -90,7 +90,7 @@ contract UserManager is IUserManager, Initializable {
      * @param epoch The epoch number.
      * @return The calculated user's loyalty level for the epoch.
      */
-    function getCalculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint256) {
+    function getCalculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint8) {
         return _userEpochLoyaltyLevel[user][epoch];
     }
 
@@ -216,7 +216,7 @@ contract UserManager is IUserManager, Initializable {
         for (uint256 i = startUser; i < endUser; ++i) {
             address user = _allUsers[i];
 
-            (uint256 loyaltyLevel, uint256 activeDepositAmount,) = _getUserLoyaltyLevel(user, params);
+            (uint8 loyaltyLevel, uint256 activeDepositAmount,) = _getUserLoyaltyLevel(user, params);
 
             // update user loyalty level
             _userEpochLoyaltyLevel[user][params.currentEpoch] = loyaltyLevel;
@@ -256,7 +256,7 @@ contract UserManager is IUserManager, Initializable {
      * @return currentEpoch The current epoch number.
      * @return loyaltyLevel The user's loyalty level.
      */
-    function getUserLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint256 loyaltyLevel) {
+    function getUserLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel) {
         LoyaltyGlobalParameters memory params = _getLoyaltyParameters();
         currentEpoch = params.currentEpoch;
         (loyaltyLevel,,) = _getUserLoyaltyLevel(user, params);
@@ -265,7 +265,7 @@ contract UserManager is IUserManager, Initializable {
     function _getUserLoyaltyLevel(address user, LoyaltyGlobalParameters memory params)
         private
         view
-        returns (uint256 loyaltyLevel, uint256 activeDepositAmount, uint256 pendingDepositAmount)
+        returns (uint8 loyaltyLevel, uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
         // get user deposit amount for the current epoch
         (activeDepositAmount, pendingDepositAmount) =

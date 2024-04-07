@@ -51,7 +51,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
-        uint256 loyaltyLevelCount = _getLoyaltyLevelCount();
+        uint8 loyaltyLevelCount = _getLoyaltyLevelCount();
 
         address[] memory tranches = _getLendingPoolTranches();
 
@@ -67,8 +67,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId > targetEpoch) continue;
 
-                (address trancheAddress,) = UserRequestIds.decomposeDepositId(userRequestNftId);
-                uint256 trancheIndex = _getTrancheIndex(tranches, trancheAddress);
+
+                uint8 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
 
                 clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
                 clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
@@ -83,15 +83,17 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 // only consider all past withdrawal requests
                 if (withdrawalNftDetails.epochId > targetEpoch) continue;
 
-                // we explicitly set priority for admin enforced withdrawals
-                uint256 withdrawLoyaltyLevel = ownerLoyaltyLevel;
-                // we explicitly set priority to longstanding pending withdrawals and
-                if (targetEpoch - withdrawalNftDetails.epochId >= REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION) {
-                    withdrawLoyaltyLevel = loyaltyLevelCount - 1;
-                }
-
+                // set the withdrawal request priority
+                uint8 withdrawLoyaltyLevel;
                 if (withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM) {
+                    // we explicitly set highest priority for admin enforced withdrawals
                     withdrawLoyaltyLevel = loyaltyLevelCount;
+                } else if (targetEpoch - withdrawalNftDetails.epochId >= HIGHEST_PRIORITY_WITHDRAWAL_EPOCH_AGE) {
+                    // we explicitly set highest user priority to longstanding pending withdrawals and
+                    withdrawLoyaltyLevel = loyaltyLevelCount - 1;
+                } else {
+                    // we set the user loyalty level as the priority
+                    withdrawLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
                 }
 
                 uint256 trancheIndex = _getTrancheIndex(tranches, withdrawalNftDetails.tranche);
@@ -208,13 +210,13 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     function _getTranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
-    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint256);
+    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint8);
 
-    function _getLoyaltyLevelCount() internal view virtual returns (uint256);
+    function _getLoyaltyLevelCount() internal view virtual returns (uint8);
 
-    function _setDepositRequestPriority(uint256 dNftId, uint256 priority) internal virtual;
+    function _setDepositRequestPriority(uint256 dNftId, uint8 priority) internal virtual;
 
-    function _setWithdrawalRequestPriority(uint256 wNftId, uint256 priority) internal virtual;
+    function _setWithdrawalRequestPriority(uint256 wNftId, uint8 priority) internal virtual;
 
     // Clearing Steps
     function _getClearingData(uint256 epoch) internal view virtual returns (ClearingData storage);

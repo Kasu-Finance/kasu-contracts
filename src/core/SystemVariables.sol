@@ -37,6 +37,9 @@ struct SystemVariablesSetup {
  * Kasu epoch number always starts from 0.
  */
 contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializable {
+    /// @notice Maximum number of loyalty levels in addition to the default level.
+    uint256 public constant MAX_ADDITIONAL_LOYALTY_LEVELS = 10;
+
     /// @notice The KSU token price contract.
     IKsuPrice public immutable ksuPrice;
 
@@ -297,6 +300,14 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     }
 
     /**
+     * @notice Returns the number of loyalty levels including the default level.
+     * @return The number of loyalty levels is the number of thresholds plus 1.
+     */
+    function loyaltyLevelsCount() external view returns (uint8) {
+        return uint8(_loyaltyThresholds.length + 1);
+    }
+
+    /**
      * @notice Sets the loyalty thresholds percentages.
      * @dev
      * The loyalty thresholds are denominated in FULL_PERCENT and values must be in ascending order.
@@ -313,7 +324,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     }
 
     function _setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) internal {
-        if (loyaltyThresholds_.length > 10) {
+        if (loyaltyThresholds_.length > MAX_ADDITIONAL_LOYALTY_LEVELS) {
             revert InvalidConfiguration();
         }
 
