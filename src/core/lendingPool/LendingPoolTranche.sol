@@ -213,7 +213,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     /**
      * @notice Not supported function.
      */
-    function approve(address, uint256) public override(IERC20, ERC20Upgradeable) returns (bool) {
+    function approve(address, uint256) public pure override(IERC20, ERC20Upgradeable) returns (bool) {
         revert NotSupported();
     }
 

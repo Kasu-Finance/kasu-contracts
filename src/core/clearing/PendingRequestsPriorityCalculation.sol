@@ -10,6 +10,12 @@ import "../../shared/CommonErrors.sol";
 import "../interfaces/clearing/IClearingStepsData.sol";
 import "../lendingPool/UserRequestIds.sol";
 
+/**
+ * @notice Pending requests calculation helper struct
+ * @custom:member tempPriorityTrancheWithdrawalShares Temporary storage for withdrawal shares per priority and tranche.
+ * @custom:member nextIndexToProcess Next index to process in the pending requests array for the clearing epoch.
+ * @custom:member status Task status.
+ */
 struct PendingRequestsEpoch {
     // array by priority and trancheIndex
     uint256[][] tempPriorityTrancheWithdrawalShares;
@@ -17,12 +23,39 @@ struct PendingRequestsEpoch {
     TaskStatus status;
 }
 
+/**
+ * @notice Pending requests priority calculation contract
+ * @dev This contract is used for step 2 of the clearing process.
+ * It calculates the priority of each pending request.
+ * It also partially creates the input for the accepted requests calculation (step 3) by calculating the total deposit and withdrawal amounts.
+ * The deposit priority is based on the loyalty level of the user.
+ * The withdrawal priority is based on the loyalty level of the user, the age of the request and if it was enforced by the system.
+ *   If the withdrawal request is older than 5 epochs, it gets the highest user priority.
+ *   If the withdrawal request is enforced by the system, it gets the highest priority above all other user requests.
+ */
 abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriorityCalculation {
-    uint256 private constant REQUEST_WITHDRAWAL_MAX_EPOCH_DURATION = 5;
+    /// @dev Number of epochs after which a withdrawal request gets the highest priority.
+    uint256 private constant HIGHEST_PRIORITY_WITHDRAWAL_EPOCH_AGE = 5;
 
-    // epochId => PendingRequestsEpoch
+    /// @dev Pending requests calculation data.
     mapping(uint256 => PendingRequestsEpoch) internal _pendingRequestsPerEpoch;
 
+    /**
+     * @notice Calculates the priority of pending requests.
+     * @dev
+     * This is step 2 of the clearing process.
+     * This function can only be called by the clearing coordinator contract.
+     * Requests can be processed in batches to avoid exceeding the block gas limit.
+     * Calculate the priority for every pending request in the pending pool for the target epoch or the epoch before the target epoch.
+     * The deposit priority is based on the loyalty level of the user.
+     * The withdrawal priority is based on the loyalty level of the user, the age of the request and if it was enforced by the system.
+     *   If the withdrawal request is older than 5 epochs, it gets the highest user priority.
+     *   If the withdrawal request is enforced by the system, it gets the highest priority above all other user requests.
+     * Deposit requests are groupped and stored in a 2D by requested tranche and loyalty level.
+     * Withdrawal requests are groupped and stored in a 1D array by priority.
+     * @param batchSize Number of requests to process in a single batch. If the number is equal or higher than the remaining requests, all the remaining requests are processed.
+     * @param targetEpoch Epoch for which to calculate the pending requests priority.
+     */
     function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external {
         _onlyClearingCoordinator();
 
@@ -58,7 +91,6 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         for (userRequestId; userRequestId < endIndex; ++userRequestId) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
-            uint256 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
 
             if (UserRequestIds.isDepositNft(userRequestNftId)) {
                 // ### Deposit Requests Processing ###
@@ -67,6 +99,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId > targetEpoch) continue;
 
+                uint256 trancheIndex = _getTrancheIndex(tranches, depositNftDetails.tranche);
 
                 uint8 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
 

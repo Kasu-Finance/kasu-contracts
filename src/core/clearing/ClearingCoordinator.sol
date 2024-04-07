@@ -289,7 +289,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingConfigSet(lendingPool, epoch, clearingConfig);
     }
 
-    function _getLendingPoolClearingConfig(address lendingPool) private returns (ClearingConfiguration memory) {
+    function _getLendingPoolClearingConfig(address lendingPool) private view returns (ClearingConfiguration memory) {
         return ILendingPool(lendingPool).getClearingConfig();
     }
 
