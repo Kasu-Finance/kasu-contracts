@@ -114,7 +114,7 @@ interface ILendingPool is IERC20 {
 
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) external;
 
-    function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage) external;
+    function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) external;
 
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
@@ -158,6 +158,8 @@ interface ILendingPool is IERC20 {
     event UpdatedMinimumDepositAmount(uint256 amount);
 
     event UpdatedMaximumDepositAmount(uint256 amount);
+
+    event UpdatedTrancheDesiredRatios(uint256[] ratios);
 
     // Errors
 
