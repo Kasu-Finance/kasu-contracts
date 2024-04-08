@@ -951,6 +951,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
+
+        emit UpdatedTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
     }
 
     /**
@@ -970,6 +972,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         _poolConfiguration.minimumExcessLiquidityPercentage = minimumExcessLiquidityPercentage;
+
+        emit UpdatedMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
     }
 
     // functions to handle the delay of interest rates

@@ -161,6 +161,10 @@ interface ILendingPool is IERC20 {
 
     event UpdatedTrancheDesiredRatios(uint256[] ratios);
 
+    event UpdatedTargetExcessLiquidityPercentage(uint256 amount);
+
+    event UpdatedMinimumExcessLiquidityPercentage(uint256 amount);
+
     // Errors
 
     error DrawAmountCantBeGreaterThanAvailableAmount(uint256 drawAmount, uint256 availableAmount);
