@@ -813,7 +813,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     {
         _getTrancheConfiguration(tranche).minDepositAmount = minimumDepositAmount;
 
-        emit UpdatedMinimumDepositAmount(minimumDepositAmount);
+        emit UpdatedMinimumDepositAmount(tranche, minimumDepositAmount);
     }
 
     /**
@@ -828,7 +828,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     {
         _getTrancheConfiguration(tranche).maxDepositAmount = maximumDepositAmount;
 
-        emit UpdatedMaximumDepositAmount(maximumDepositAmount);
+        emit UpdatedMaximumDepositAmount(tranche, maximumDepositAmount);
     }
 
     /**

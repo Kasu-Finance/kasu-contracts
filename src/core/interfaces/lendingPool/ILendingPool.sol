@@ -155,9 +155,9 @@ interface ILendingPool is IERC20 {
 
     event LendingPoolStopped();
 
-    event UpdatedMinimumDepositAmount(uint256 amount);
+    event UpdatedMinimumDepositAmount(address indexed tranche, uint256 amount);
 
-    event UpdatedMaximumDepositAmount(uint256 amount);
+    event UpdatedMaximumDepositAmount(address indexed tranche, uint256 amount);
 
     event UpdatedTrancheDesiredRatios(uint256[] ratios);
 
