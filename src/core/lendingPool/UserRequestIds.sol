@@ -2,7 +2,6 @@
 pragma solidity 0.8.23;
 
 library UserRequestIds {
-    uint256 private constant TRANCHE_START_DEPOSIT_NFT_ID = 0;
     uint256 private constant TRANCHE_START_WITHDRAWAL_NFT_ID = 2 ** 95;
 
     function composeDepositId(address tranche, uint256 id) internal pure returns (uint256) {

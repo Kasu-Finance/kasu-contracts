@@ -54,6 +54,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         AddressLib.checkIfZero(lendingPoolBeacon_);
         AddressLib.checkIfZero(lendingPoolTrancheBeacon_);
         AddressLib.checkIfZero(address(kasuController_));
+        AddressLib.checkIfZero(lendingPoolManager_);
         AddressLib.checkIfZero(address(systemVariables_));
 
         pendingPoolBeacon = pendingPoolBeacon_;

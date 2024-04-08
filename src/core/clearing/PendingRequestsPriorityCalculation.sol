@@ -88,7 +88,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         address[] memory tranches = _getLendingPoolTranches();
 
-        for (userRequestId; userRequestId < endIndex; ++userRequestId) {
+        for (;userRequestId < endIndex; ++userRequestId) {
             uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
             address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
 

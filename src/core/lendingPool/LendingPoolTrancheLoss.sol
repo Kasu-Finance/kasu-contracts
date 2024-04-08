@@ -72,7 +72,7 @@ abstract contract LendingPoolTrancheLoss is
     function registerTrancheLoss(uint256 lossId, uint256 lossAmount, bool doMintLossTokens)
         external
         onlyOwnLendingPool
-        NotPendingLossMint
+        notPendingLossMint
         returns (uint256 lossApplied)
     {
         uint256 maxLossAmount = _getMaximumLossAmount();
@@ -272,7 +272,7 @@ abstract contract LendingPoolTrancheLoss is
         revert NotSupported();
     }
 
-    modifier NotPendingLossMint() {
+    modifier notPendingLossMint() {
         if (isPendingLossMint()) {
             revert LossMintingInProgress(pendingMintLossId);
         }

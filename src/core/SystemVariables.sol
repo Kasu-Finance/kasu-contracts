@@ -92,7 +92,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     address private _protocolFeeReceiver;
 
     /// @notice The tranche name information.
-    TrancheInfo[] public _trancheNameInfo;
+    TrancheInfo[] private _trancheNameInfo;
 
     /**
      * @notice Constructor.

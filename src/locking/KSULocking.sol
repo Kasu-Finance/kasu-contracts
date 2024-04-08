@@ -23,7 +23,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     mapping(address => uint256) public userTotalDeposits;
     mapping(address => UserLock[]) private _userLocks;
-    mapping(uint256 => LockPeriodDetails) public _lockDetails;
+    mapping(uint256 => LockPeriodDetails) private _lockDetails;
 
     // Global reward attributes
     uint256 public accumulatedRewardsPerShare;
