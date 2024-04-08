@@ -114,12 +114,12 @@ interface ILendingPool is IERC20 {
 
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) external;
 
-    function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage) external;
+    function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) external;
 
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 
-    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
+    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares, uint256 assetAmount);
 
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
 
@@ -137,7 +137,9 @@ interface ILendingPool is IERC20 {
 
     event UpdatedTrancheInterestRate(address indexed tranche, uint256 indexed applicableEpoch, uint256 newInterestRate);
 
-    event RemovedTracheInterestRateUpdate(address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex);
+    event RemovedTrancheInterestRateUpdate(
+        address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex
+    );
 
     event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
 
@@ -147,7 +149,21 @@ interface ILendingPool is IERC20 {
 
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
 
+    event UpdatedDrawRecipient(address indexed drawRecipient);
+
+    event UpdatedTrancheInterestRateChangeEpochDelay(uint256 epochDelay);
+
     event LendingPoolStopped();
+
+    event UpdatedMinimumDepositAmount(address indexed tranche, uint256 amount);
+
+    event UpdatedMaximumDepositAmount(address indexed tranche, uint256 amount);
+
+    event UpdatedTrancheDesiredRatios(uint256[] ratios);
+
+    event UpdatedTargetExcessLiquidityPercentage(uint256 percentage);
+
+    event UpdatedMinimumExcessLiquidityPercentage(uint256 percentage);
 
     // Errors
 

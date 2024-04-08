@@ -107,7 +107,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         returns (PoolConfiguration memory)
     {
         AddressLib.checkIfZero(createPoolConfig.poolAdmin);
-        AddressLib.checkIfZero(createPoolConfig.drawRecipient);
         AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
@@ -116,8 +115,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // setup pool configuration
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
-        _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
-        _poolConfiguration.trancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+        _updateDrawRecipient(createPoolConfig.drawRecipient);
+        _updateTrancheInterestRateChangeEpochDelay(systemVariables.defaultTrancheInterestChangeEpochDelay());
 
         _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
 
@@ -345,7 +344,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // transfer usdc to the user
         _transferAssets(user, assetAmount);
 
-        emit WithdrawalAccepted(user, tranche, acceptedShares);
+        emit WithdrawalAccepted(user, tranche, acceptedShares, assetAmount);
     }
 
     /**
@@ -792,8 +791,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param drawRecipient The draw recipient address.
      */
     function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
+        _updateDrawRecipient(drawRecipient);
+    }
+
+    function _updateDrawRecipient(address drawRecipient) private {
         AddressLib.checkIfZero(drawRecipient);
         _poolConfiguration.drawRecipient = drawRecipient;
+
+        emit UpdatedDrawRecipient(drawRecipient);
     }
 
     /**
@@ -807,6 +812,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         verifyTranche(tranche)
     {
         _getTrancheConfiguration(tranche).minDepositAmount = minimumDepositAmount;
+
+        emit UpdatedMinimumDepositAmount(tranche, minimumDepositAmount);
     }
 
     /**
@@ -820,6 +827,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         verifyTranche(tranche)
     {
         _getTrancheConfiguration(tranche).maxDepositAmount = maximumDepositAmount;
+
+        emit UpdatedMaximumDepositAmount(tranche, maximumDepositAmount);
     }
 
     /**
@@ -849,7 +858,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
                 FutureTrancheInterestRates memory futureTrancheInterest = _futureTrancheInterests[tranche][i];
                 _futureTrancheInterests[tranche].pop();
 
-                emit RemovedTracheInterestRateUpdate(tranche, futureTrancheInterest.epoch, i);
+                emit RemovedTrancheInterestRateUpdate(tranche, futureTrancheInterest.epoch, i);
             } else {
                 break;
             }
@@ -885,6 +894,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         _verifyPoolConfiguration();
+
+        emit UpdatedTrancheDesiredRatios(ratios);
     }
 
     /**
@@ -892,7 +903,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param epochDelay The epoch delay for the interest rate change.
      */
     function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external onlyLendingPoolManager {
+        _updateTrancheInterestRateChangeEpochDelay(epochDelay);
+    }
+
+    function _updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) private {
         _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
+
+        emit UpdatedTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
     /**
@@ -934,25 +951,29 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
+
+        emit UpdatedTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
     }
 
     /**
      * @notice Updates the minimum excess liquidity percentage. Used to calculate how much excess liquidity should stay in the lending pool if there are more withdrawals.
-     * @param minumumExcessLiquidityPercentage The minimum excess liquidity percentage.
+     * @param minimumExcessLiquidityPercentage The minimum excess liquidity percentage.
      */
-    function updateMinimumExcessLiquidityPercentage(uint256 minumumExcessLiquidityPercentage)
+    function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage)
         external
         onlyLendingPoolManager
         lendingPoolShouldNotBeStopped
         verifyClearingNotPending
     {
-        if (minumumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
+        if (minimumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
                 "Minimum excess liquidity percentage is more than target excess liquidity percentage"
             );
         }
 
-        _poolConfiguration.minimumExcessLiquidityPercentage = minumumExcessLiquidityPercentage;
+        _poolConfiguration.minimumExcessLiquidityPercentage = minimumExcessLiquidityPercentage;
+
+        emit UpdatedMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
     }
 
     // functions to handle the delay of interest rates
