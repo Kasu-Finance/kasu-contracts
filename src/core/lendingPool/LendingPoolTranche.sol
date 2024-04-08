@@ -64,7 +64,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         public
         override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
-        NotPendingLossMint
+        notPendingLossMint
         returns (uint256 shares)
     {
         shares = super.deposit(assets, receiver);
@@ -94,7 +94,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         public
         override(ERC4626Upgradeable, IERC4626)
         onlyOwnLendingPool
-        NotPendingLossMint
+        notPendingLossMint
         returns (uint256 assets)
     {
         assets = super.redeem(shares, receiver, owner);

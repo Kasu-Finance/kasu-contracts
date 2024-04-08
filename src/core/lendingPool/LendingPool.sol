@@ -106,7 +106,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         initializer
         returns (PoolConfiguration memory)
     {
-        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
         AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
@@ -330,9 +329,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         verifyTranche(tranche)
         returns (uint256 assetAmount)
     {
-        // transfer tranche shares from the pending pool to the lending pool
-        // ILendingPoolTranche(tranche).transferFrom(msg.sender, address(this), acceptedShares);
-
         // transfer lending pool tokens from tranche to lending pool and burn tranche shares
         assetAmount = ILendingPoolTranche(tranche).redeem(acceptedShares, address(this), msg.sender);
         // inform tranche user shares were redeemed.

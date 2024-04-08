@@ -7,8 +7,8 @@ import "./CommonErrors.sol";
  * @dev Collection of functions related to the address type
  */
 library AddressLib {
-    function checkIfZero(address _address) internal pure {
-        if (_address == address(0)) {
+    function checkIfZero(address addressToCheck) internal pure {
+        if (addressToCheck == address(0)) {
             revert ConfigurationAddressZero();
         }
     }

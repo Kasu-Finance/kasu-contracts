@@ -42,6 +42,8 @@ contract PendingPool is
     LendingPoolStoppable,
     ClearingSteps
 {
+    using SafeERC20 for IERC20;
+
     /// @notice System variables contract.
     ISystemVariables public immutable systemVariables;
     /// @notice User manager contract.
@@ -299,16 +301,16 @@ contract PendingPool is
     }
 
     function _cancelWithdrawalRequest(address user, uint256 wNftID) private {
-        WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
+        uint256 sharesAmount = _trancheWithdrawalNftDetails[wNftID].sharesAmount;
 
         // Burn the withdrawal NFT
         _burnRequestNft(wNftID);
 
-        (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
-        IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
-
         // delete nft storage
         _deleteWNftDetails(user, wNftID);
+
+        (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
+        IERC20(tranche).safeTransfer(user, sharesAmount);
 
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
     }
@@ -397,7 +399,7 @@ contract PendingPool is
         }
 
         // transfer tranche shares from user to pending pool
-        IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
+        IERC20(tranche).safeTransferFrom(user, address(this), sharesToWithdraw);
 
         // get user's wNFT id for current epoch
         wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom];
@@ -463,14 +465,14 @@ contract PendingPool is
     }
 
     function _returnDepositRequest(uint256 dNftID, address user) private {
-        DepositNftDetails storage depositNftDetails = _trancheDepositNftDetails[dNftID];
+        uint256 assetAmount = _trancheDepositNftDetails[dNftID].assetAmount;
 
         _burnRequestNft(dNftID);
 
-        // return funds directly to the user
-        _transferAssets(user, depositNftDetails.assetAmount);
-
         _deleteDNftDetails(user, dNftID);
+
+        // return funds directly to the user
+        _transferAssets(user, assetAmount);
     }
 
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal override nftExists(wNftID) {

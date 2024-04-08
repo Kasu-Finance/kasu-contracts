@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "./interfaces/IUserLoyaltyRewards.sol";
 import "./interfaces/IKsuPrice.sol";
@@ -15,6 +15,8 @@ import "./Constants.sol";
  * @notice This contract is used to handle KSU rewards for users based on their active liquidity and loyalty level.
  */
 contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Initializable {
+    using SafeERC20 for IERC20;
+
     /// @notice Maximum epoch reward rate.
     uint256 private constant MAX_REWARD_EPOCH_RATE = INTEREST_RATE_FULL_PERCENT / 20; // 5%
 
@@ -121,7 +123,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
      * @param recipient Recipient address.
      */
     function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external onlyAdmin {
-        IERC20(tokenAddress).transfer(recipient, tokenAmount);
+        IERC20(tokenAddress).safeTransfer(recipient, tokenAmount);
     }
 
     /**
@@ -225,7 +227,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         totalUnclaimedRewards -= amount;
 
         // transfer reward to user
-        ksuToken.transfer(msg.sender, amount);
+        ksuToken.safeTransfer(msg.sender, amount);
 
         emit UserRewardClaimed(msg.sender, amount);
     }

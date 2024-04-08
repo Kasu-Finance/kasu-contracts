@@ -267,7 +267,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         _setClearingConfig(lendingPool, targetEpoch, clearingConfig, true);
     }
 
-    function _setDefaultClearingConfig(address lendingPool, uint256 epoch) public onlyLendingPoolManager {
+    function _setDefaultClearingConfig(address lendingPool, uint256 epoch) private {
         ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
         _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
     }

@@ -88,31 +88,35 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         )
     {
         // Step 1: calculate total deposit and total withdrawal amounts
-        Step1In memory inputData1;
-        inputData1.totalDepositAmount = input.pendingDeposits.totalDepositAmount;
-        inputData1.totalWithdrawalsAmount = input.pendingWithdrawals.totalWithdrawalsAmount;
-        inputData1.config = input.config;
-        inputData1.lendingPoolBalance = input.balance;
+        Step1In memory inputData1 = Step1In({
+            totalDepositAmount: input.pendingDeposits.totalDepositAmount,
+            totalWithdrawalsAmount: input.pendingWithdrawals.totalWithdrawalsAmount,
+            config: input.config,
+            lendingPoolBalance: input.balance
+        });
         Step1Out memory outputData1 = _calculateDepositAndWithdrawalAmounts(inputData1);
 
         // Step 2: calculate total accepted deposits for each tranche
-        Step2In memory inputData2;
-        inputData2.acceptedDepositAmount = outputData1.acceptedDepositAmount;
-        inputData2.increasedExcessAmount = outputData1.increasedExcessAmount;
-        inputData2.trancheDepositsAmounts = input.pendingDeposits.trancheDepositsAmounts;
-        inputData2.trancheDesiredRatios = input.config.trancheDesiredRatios;
+        Step2In memory inputData2 = Step2In({
+            acceptedDepositAmount: outputData1.acceptedDepositAmount,
+            increasedExcessAmount: outputData1.increasedExcessAmount,
+            trancheDepositsAmounts: input.pendingDeposits.trancheDepositsAmounts,
+            trancheDesiredRatios: input.config.trancheDesiredRatios
+        });
         Step2Out memory outputData2 = _calculateAcceptedDepositAmountForEachTranche(inputData2);
 
         // Step 3: calculate accepted deposit to each tranche and priority request
-        Step3In memory inputData3;
-        inputData3.acceptedTrancheDepositAmounts = outputData2.acceptedTrancheDepositAmounts;
-        inputData3.tranchePriorityDepositsAmounts = input.pendingDeposits.tranchePriorityDepositsAmounts;
+        Step3In memory inputData3 = Step3In({
+            acceptedTrancheDepositAmounts: outputData2.acceptedTrancheDepositAmounts,
+            tranchePriorityDepositsAmounts: input.pendingDeposits.tranchePriorityDepositsAmounts
+        });
         Step3Out memory outputData3 = _calculateAcceptedDepositToEachTrancheAndPriorityRequest(inputData3);
 
         // Step 4: calculate accepted withdrawal amounts for each priority
-        Step4In memory inputData4;
-        inputData4.acceptedWithdrawalAmount = outputData1.acceptedWithdrawalAmount;
-        inputData4.priorityWithdrawalAmounts = input.pendingWithdrawals.priorityWithdrawalAmounts;
+        Step4In memory inputData4 = Step4In({
+            acceptedWithdrawalAmount: outputData1.acceptedWithdrawalAmount,
+            priorityWithdrawalAmounts: input.pendingWithdrawals.priorityWithdrawalAmounts
+        });
         Step4Out memory outputData4 = _calculateAcceptedWithdrawalAmountsForEachPriority(inputData4);
 
         // apply the result

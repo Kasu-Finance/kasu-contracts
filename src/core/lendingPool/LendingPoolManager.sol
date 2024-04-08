@@ -388,14 +388,16 @@ contract LendingPoolManager is
      * @param tranche Address of the tranche.
      * @param user Address of the user to withdraw for.
      * @param sharesToWithdraw Amount of tranche shares to withdraw.
+     * @return assetAmount Amount of assets withdrawn.
      */
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
+        returns (uint256)
     {
-        ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
+        return ILendingPool(lendingPool).forceImmediateWithdrawal(tranche, user, sharesToWithdraw);
     }
 
     /**

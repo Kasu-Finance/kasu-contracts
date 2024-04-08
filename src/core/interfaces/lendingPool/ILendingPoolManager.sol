@@ -79,7 +79,8 @@ interface ILendingPoolManager {
     // #### POOL MANAGER #### //
 
     function forceImmediateWithdrawal(address lendingPool, address tranche, address user, uint256 sharesToWithdraw)
-        external;
+        external
+        returns (uint256);
 
     function batchForceWithdrawals(address lendingPool, ForceWithdrawalInput[] calldata input)
         external

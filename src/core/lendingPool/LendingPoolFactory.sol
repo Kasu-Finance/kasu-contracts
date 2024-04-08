@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -54,6 +54,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         AddressLib.checkIfZero(lendingPoolBeacon_);
         AddressLib.checkIfZero(lendingPoolTrancheBeacon_);
         AddressLib.checkIfZero(address(kasuController_));
+        AddressLib.checkIfZero(lendingPoolManager_);
         AddressLib.checkIfZero(address(systemVariables_));
 
         pendingPoolBeacon = pendingPoolBeacon_;
@@ -76,6 +77,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
         if (msg.sender != lendingPoolManager) {
             revert ILendingPoolErrors.OnlyLendingPoolManager();
         }
+
+        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
 
         // deploy lending pool
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");

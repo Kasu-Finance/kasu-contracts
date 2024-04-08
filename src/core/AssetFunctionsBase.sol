@@ -35,10 +35,6 @@ abstract contract AssetFunctionsBase {
         underlyingAsset.safeIncreaseAllowance(recipient, amount);
     }
 
-    function _approveAssetMax(address recipient) internal {
-        underlyingAsset.safeIncreaseAllowance(recipient, type(uint256).max);
-    }
-
     function _myAssetBalance() internal view returns (uint256) {
         return underlyingAsset.balanceOf(address(this));
     }
