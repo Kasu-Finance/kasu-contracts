@@ -38,9 +38,10 @@ struct ForceWithdrawalInput {
  */
 interface IPendingPool is IERC721Enumerable, IClearingSteps {
     // VIEWS
-    function trancheDepositNftDetails(uint256 dNftId) external returns (DepositNftDetails memory depositNftDetails);
+    function trancheDepositNftDetails(uint256 dNftId) external view returns (DepositNftDetails memory depositNftDetails);
     function trancheWithdrawalNftDetails(uint256 wNftId)
         external
+        view
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
     function getUserPendingDepositAmount(address user, uint256 depositEpochId)
