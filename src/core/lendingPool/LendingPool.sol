@@ -107,7 +107,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         returns (PoolConfiguration memory)
     {
         AddressLib.checkIfZero(createPoolConfig.poolAdmin);
-        AddressLib.checkIfZero(createPoolConfig.drawRecipient);
         AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
@@ -116,8 +115,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // setup pool configuration
         _poolConfiguration.targetExcessLiquidityPercentage = createPoolConfig.targetExcessLiquidityPercentage;
-        _poolConfiguration.drawRecipient = createPoolConfig.drawRecipient;
-        _poolConfiguration.trancheInterestChangeEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
+        _updateDrawRecipient(createPoolConfig.drawRecipient);
+        _updateTrancheInterestRateChangeEpochDelay(systemVariables.defaultTrancheInterestChangeEpochDelay());
 
         _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
 
@@ -792,8 +791,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param drawRecipient The draw recipient address.
      */
     function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
+        _updateDrawRecipient(drawRecipient);
+    }
+
+    function _updateDrawRecipient(address drawRecipient) private {
         AddressLib.checkIfZero(drawRecipient);
         _poolConfiguration.drawRecipient = drawRecipient;
+
+        emit UpdatedDrawRecipient(drawRecipient);
     }
 
     /**
@@ -888,7 +893,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param epochDelay The epoch delay for the interest rate change.
      */
     function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external onlyLendingPoolManager {
+        _updateTrancheInterestRateChangeEpochDelay(epochDelay);
+    }
+
+    function _updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) private {
         _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
+
+        emit UpdatedTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
     /**
