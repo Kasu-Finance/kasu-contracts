@@ -42,6 +42,8 @@ contract PendingPool is
     LendingPoolStoppable,
     ClearingSteps
 {
+    using SafeERC20 for IERC20;
+
     /// @notice System variables contract.
     ISystemVariables public immutable systemVariables;
     /// @notice User manager contract.
@@ -305,7 +307,7 @@ contract PendingPool is
         _burnRequestNft(wNftID);
 
         (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
-        IERC20(tranche).transfer(user, withdrawalNftDetails.sharesAmount);
+        IERC20(tranche).safeTransfer(user, withdrawalNftDetails.sharesAmount);
 
         // delete nft storage
         _deleteWNftDetails(user, wNftID);
@@ -397,7 +399,7 @@ contract PendingPool is
         }
 
         // transfer tranche shares from user to pending pool
-        IERC20(tranche).transferFrom(user, address(this), sharesToWithdraw);
+        IERC20(tranche).safeTransferFrom(user, address(this), sharesToWithdraw);
 
         // get user's wNFT id for current epoch
         wNftID = _wNftIdPerUserPerEpochPerTranchePerPriority[user][requestEpochId][tranche][requestedFrom];

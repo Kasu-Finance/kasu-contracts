@@ -11,6 +11,7 @@ import "../shared/AddressLib.sol";
 
 contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     using SafeERC20 for IERC20;
+    using SafeERC20 for ERC20Permit;
 
     uint256 private constant REWARDS_PRECISION = 1e24;
 
@@ -210,7 +211,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         userTotalDeposits[user] -= withdrawAmount;
 
         // transfer KSU token to receiver
-        ksuToken.transfer(transferTo, withdrawAmount);
+        ksuToken.safeTransfer(transferTo, withdrawAmount);
 
         // update user reward debt
         _updateUserRewardDebt(user);
@@ -228,7 +229,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         }
 
         // transfer KSU token from user
-        ksuToken.transferFrom(msg.sender, address(this), amount);
+        ksuToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // calculate current user rewards
         _updateUserRewards(msg.sender);
@@ -293,7 +294,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         }
 
         if (ksuSentAmount > 0) {
-            ksuToken.transferFrom(ksuBonusTokens, address(this), ksuSentAmount);
+            ksuToken.safeTransferFrom(ksuBonusTokens, address(this), ksuSentAmount);
         }
     }
 }
