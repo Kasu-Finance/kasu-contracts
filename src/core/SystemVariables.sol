@@ -40,11 +40,11 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     /// @notice Maximum number of loyalty levels in addition to the default level.
     uint256 public constant MAX_ADDITIONAL_LOYALTY_LEVELS = 10;
 
+    /// @notice The timestamp of the start of the first epoch.
+    uint256 private constant EPOCH_DURATION = 1 weeks;
+
     /// @notice The KSU token price contract.
     IKsuPrice public immutable ksuPrice;
-
-    /// @notice The timestamp of the start of the first epoch.
-    uint256 private constant _epochDuration = 1 weeks;
 
     /// @notice The timestamp of the start of the first epoch.
     uint256 private _firstEpochStartTimestamp;
@@ -114,14 +114,14 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     function initialize(SystemVariablesSetup memory systemVariablesSetup) external initializer {
         if (
             systemVariablesSetup.firstEpochStartTimestamp < block.timestamp
-                || systemVariablesSetup.firstEpochStartTimestamp >= block.timestamp + _epochDuration
+                || systemVariablesSetup.firstEpochStartTimestamp >= block.timestamp + EPOCH_DURATION
         ) {
             revert InvalidConfiguration();
         }
 
         if (
             systemVariablesSetup.clearingPeriodLength == 0
-                || systemVariablesSetup.clearingPeriodLength >= _epochDuration
+                || systemVariablesSetup.clearingPeriodLength >= EPOCH_DURATION
         ) {
             revert InvalidConfiguration();
         }
@@ -160,7 +160,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         }
 
         unchecked {
-            return (block.timestamp - _firstEpochStartTimestamp) / _epochDuration;
+            return (block.timestamp - _firstEpochStartTimestamp) / EPOCH_DURATION;
         }
     }
 
@@ -170,7 +170,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The timestamp of the start of the given epoch.
      */
     function getEpochStartTimestamp(uint256 epoch) external view returns (uint256) {
-        return _firstEpochStartTimestamp + epoch * _epochDuration;
+        return _firstEpochStartTimestamp + epoch * EPOCH_DURATION;
     }
 
     /**
@@ -178,7 +178,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The duration of an epoch.
      */
     function getEpochDuration() external pure returns (uint256) {
-        return _epochDuration;
+        return EPOCH_DURATION;
     }
 
     /**
@@ -186,7 +186,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The timestamp of the start of the next epoch.
      */
     function getNextEpochStartTimestamp() public view returns (uint256) {
-        return _firstEpochStartTimestamp + (getCurrentEpochNumber() + 1) * _epochDuration;
+        return _firstEpochStartTimestamp + (getCurrentEpochNumber() + 1) * EPOCH_DURATION;
     }
 
     /**
