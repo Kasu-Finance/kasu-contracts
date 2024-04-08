@@ -955,7 +955,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Updates the minimum excess liquidity percentage. Used to calculate how much excess liquidity should stay in the lending pool if there are more withdrawals.
-     * @param minumumExcessLiquidityPercentage The minimum excess liquidity percentage.
+     * @param minimumExcessLiquidityPercentage The minimum excess liquidity percentage.
      */
     function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage)
         external
@@ -963,13 +963,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         lendingPoolShouldNotBeStopped
         verifyClearingNotPending
     {
-        if (minumumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
+        if (minimumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
                 "Minimum excess liquidity percentage is more than target excess liquidity percentage"
             );
         }
 
-        _poolConfiguration.minimumExcessLiquidityPercentage = minumumExcessLiquidityPercentage;
+        _poolConfiguration.minimumExcessLiquidityPercentage = minimumExcessLiquidityPercentage;
     }
 
     // functions to handle the delay of interest rates
