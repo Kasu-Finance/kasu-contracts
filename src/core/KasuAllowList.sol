@@ -33,24 +33,24 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     /**
      * @notice Initialize the contract.
      * @param lendingPoolManager_ Lending Pool Manager address.
-     * @param signer The address of the user KYC data signer.
+     * @param signer_ The address of the user KYC data signer.
      */
-    function initialize(address lendingPoolManager_, address signer) public initializer {
+    function initialize(address lendingPoolManager_, address signer_) public initializer {
         AddressLib.checkIfZero(lendingPoolManager_);
-        AddressLib.checkIfZero(signer);
+        AddressLib.checkIfZero(signer_);
 
         lendingPoolManager = lendingPoolManager_;
-        __TxAuthDataVerifierUpgradeable_init(signer);
+        __TxAuthDataVerifierUpgradeable_init(signer_);
     }
 
     /**
      * @notice Sets the Nexera ID signer address.
      * @dev Can only be called by the admin.
-     * @param signer The address of the user KYC data signer.
+     * @param signer_ The address of the user KYC data signer.
      */
-    function setNexeraIDSigner(address signer) external whenNotPaused onlyAdmin {
-        AddressLib.checkIfZero(signer);
-        _setSigner(signer);
+    function setNexeraIDSigner(address signer_) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(signer_);
+        _setSigner(signer_);
     }
 
     /**
