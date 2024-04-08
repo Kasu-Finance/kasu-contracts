@@ -412,14 +412,19 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
         _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
 
+        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsNotStopped.selector));
+        _withdrawFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 20 * 10 ** 6, poolFundsManagerAccount);
+
+        _stop(poolManagerAccount, lpd.lendingPool);
+
         // ### ACT ###
         vm.expectRevert(
             abi.encodeWithSelector(
                 ILendingPool.WithdrawAmountCantBeGreaterThanFirstLostCapital.selector, 61 * 10 ** 6, 60 * 10 ** 6
             )
         );
-        _withdrawFirstLossCapital(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 61 * 10 ** 6);
-        _withdrawFirstLossCapital(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 20 * 10 ** 6);
+        _withdrawFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 61 * 10 ** 6, poolFundsManagerAccount);
+        _withdrawFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 20 * 10 ** 6, poolFundsManagerAccount);
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(poolFundsManagerAccount), 20 * 10 ** 6);
@@ -665,11 +670,15 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // stop without repaying full owed amount
         vm.expectRevert(abi.encodeWithSelector(ILendingPool.UserOwedAmountIsGreaterThanZero.selector, 200 * 10 ** 6));
-        _stop(poolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
+        _stop(poolManagerAccount, lpd.lendingPool);
 
         _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, 200 * 10 ** 6);
 
-        _stop(poolManagerAccount, lpd.lendingPool, lendingPoolAdminAccount);
+        _stop(poolManagerAccount, lpd.lendingPool);
+
+        _withdrawFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6, lendingPoolAdminAccount);
+
+        // TODO: w
         assertEq(mockUsdc.balanceOf(lendingPoolAdminAccount), 50 * 10 ** 6);
 
         // request deposit after stop - not allowed

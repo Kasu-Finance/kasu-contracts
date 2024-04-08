@@ -24,4 +24,11 @@ abstract contract LendingPoolStoppable {
         }
         _;
     }
+
+    modifier lendingPoolShouldBeStopped() {
+        if (!_isLendingPoolStopped()) {
+            revert ILendingPool.LendingPoolIsNotStopped();
+        }
+        _;
+    }
 }

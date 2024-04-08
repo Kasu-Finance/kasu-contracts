@@ -90,7 +90,7 @@ interface ILendingPool is IERC20 {
         external
         returns (uint256 assetAmount);
 
-    function stop(address firstLossCapitalReceiver) external;
+    function stop() external;
 
     // #### USER #### //
 
@@ -175,6 +175,7 @@ interface ILendingPool is IERC20 {
     error UserOwedAmountIsGreaterThanZero(uint256 userOwedAmount);
     error FeesOwedAmountIsGreaterThanZero(uint256 feesOwedAmount);
     error LendingPoolIsStopped();
+    error LendingPoolIsNotStopped();
     error PoolConfigurationIsIncorrect(string reason);
     error LossIdNotValid(uint256 lossId);
     error ClearingIsPending();

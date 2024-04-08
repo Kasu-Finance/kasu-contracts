@@ -677,14 +677,22 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FirstLossCapitalAdded(amount, firstLossCapital);
     }
 
+    /**
+     * @notice Withdraws the first loss capital from the lending pool.
+     * @dev
+     * Can only be called once lending pool is stopped.
+     * Transfers the assets to the first loss capital receiver.
+     * Burns the lending pool token.
+     * @param withdrawAmount The amount of the first loss capital to withdraw.
+     * @param withdrawAddress The address to withdraw the first loss capital to.
+     */
     function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress)
         external
         onlyLendingPoolManager
+        lendingPoolShouldBeStopped
     {
-        _withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
-    }
+        AddressLib.checkIfZero(withdrawAddress);
 
-    function _withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) internal {
         if (withdrawAmount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -693,11 +701,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert WithdrawAmountCantBeGreaterThanFirstLostCapital(withdrawAmount, firstLossCapital);
         }
 
-        _transferAssets(withdrawAddress, withdrawAmount);
+        firstLossCapital -= withdrawAmount;
 
         _burn(address(this), withdrawAmount);
 
-        firstLossCapital -= withdrawAmount;
+        _transferAssets(withdrawAddress, withdrawAmount);
 
         emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
     }
@@ -739,23 +747,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * Can only be stopped if all owed amounts are repaid.
      * After stopping the lending pool, the lending pool can't accept new deposits.
      * The pool can't be resumed after stopping.
-     * Withdraws the first loss capital to the first loss capital receiver.
      * Sets the interest rates of the tranches to zero.
-     * @param firstLossCapitalReceiver The address of the first loss capital receiver.
      */
-    function stop(address firstLossCapitalReceiver) external onlyLendingPoolManager verifyClearingNotPending {
+    function stop() external onlyLendingPoolManager verifyClearingNotPending {
         if (_userOwedAmount > 0) {
             revert UserOwedAmountIsGreaterThanZero(_userOwedAmount);
         }
 
         if (_feesOwed > 0) {
             revert FeesOwedAmountIsGreaterThanZero(_feesOwed);
-        }
-
-        AddressLib.checkIfZero(firstLossCapitalReceiver);
-
-        if (firstLossCapital > 0) {
-            _withdrawFirstLossCapital(firstLossCapital, firstLossCapitalReceiver);
         }
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
