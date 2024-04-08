@@ -119,7 +119,7 @@ interface ILendingPool is IERC20 {
     // Events
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 
-    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares);
+    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares, uint256 assetAmount);
 
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
 

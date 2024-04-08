@@ -345,7 +345,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // transfer usdc to the user
         _transferAssets(user, assetAmount);
 
-        emit WithdrawalAccepted(user, tranche, acceptedShares);
+        emit WithdrawalAccepted(user, tranche, acceptedShares, assetAmount);
     }
 
     /**
