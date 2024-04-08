@@ -155,6 +155,10 @@ interface ILendingPool is IERC20 {
 
     event LendingPoolStopped();
 
+    event UpdatedMinimumDepositAmount(uint256 amount);
+
+    event UpdatedMaximumDepositAmount(uint256 amount);
+
     // Errors
 
     error DrawAmountCantBeGreaterThanAvailableAmount(uint256 drawAmount, uint256 availableAmount);
