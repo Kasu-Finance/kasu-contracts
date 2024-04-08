@@ -106,7 +106,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         initializer
         returns (PoolConfiguration memory)
     {
-        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
+        AddressLib.checkIfZero(createPoolConfig.drawRecipient);
         AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);

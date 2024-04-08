@@ -77,6 +77,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
             revert ILendingPoolErrors.OnlyLendingPoolManager();
         }
 
+        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
+
         // deploy lending pool
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
