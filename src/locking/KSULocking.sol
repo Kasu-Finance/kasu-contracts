@@ -139,9 +139,9 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
         rewards[msg.sender] = 0;
 
-        feeToken.safeTransfer(msg.sender, earned);
-
         _updateUserRewardDebt(msg.sender);
+
+        feeToken.safeTransfer(msg.sender, earned);
 
         emit FeesClaimed(msg.sender, earned);
     }
@@ -210,11 +210,11 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         userLock_.rKSUAmount = rKSURemaining;
         userTotalDeposits[user] -= withdrawAmount;
 
-        // transfer KSU token to receiver
-        ksuToken.safeTransfer(transferTo, withdrawAmount);
-
         // update user reward debt
         _updateUserRewardDebt(user);
+
+        // transfer KSU token to receiver
+        ksuToken.safeTransfer(transferTo, withdrawAmount);
 
         return rKSUBurned;
     }
