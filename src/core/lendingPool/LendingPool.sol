@@ -871,7 +871,11 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @dev The sum of the ratios should be 100%.
      * @param ratios The desired ratios of the tranches.
      */
-    function updateTrancheDesiredRatios(uint256[] calldata ratios) external onlyLendingPoolManager {
+    function updateTrancheDesiredRatios(uint256[] calldata ratios)
+        external
+        onlyLendingPoolManager
+        verifyClearingNotPending
+    {
         if (ratios.length != _lendingPoolInfo.trancheAddresses.length) {
             revert InvalidArrayLength();
         }
@@ -899,6 +903,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
         lendingPoolShouldNotBeStopped
+        verifyClearingNotPending
     {
         _updateDesiredDrawAmount(desiredDrawAmount);
     }
@@ -916,6 +921,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
         lendingPoolShouldNotBeStopped
+        verifyClearingNotPending
     {
         if (targetExcessLiquidityPercentage < _poolConfiguration.minimumExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
@@ -938,6 +944,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         external
         onlyLendingPoolManager
         lendingPoolShouldNotBeStopped
+        verifyClearingNotPending
     {
         if (minumumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
             revert PoolConfigurationIsIncorrect(
