@@ -849,7 +849,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
                 FutureTrancheInterestRates memory futureTrancheInterest = _futureTrancheInterests[tranche][i];
                 _futureTrancheInterests[tranche].pop();
 
-                emit RemovedTracheInterestRateUpdate(tranche, futureTrancheInterest.epoch, i);
+                emit RemovedTrancheInterestRateUpdate(tranche, futureTrancheInterest.epoch, i);
             } else {
                 break;
             }

@@ -137,7 +137,9 @@ interface ILendingPool is IERC20 {
 
     event UpdatedTrancheInterestRate(address indexed tranche, uint256 indexed applicableEpoch, uint256 newInterestRate);
 
-    event RemovedTracheInterestRateUpdate(address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex);
+    event RemovedTrancheInterestRateUpdate(
+        address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex
+    );
 
     event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
 
