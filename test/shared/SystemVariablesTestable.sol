@@ -39,10 +39,12 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     uint256 private _firstEpochStartTimestamp;
     uint256 private _clearingPeriodLength;
 
-    uint256 private _priceUpdateEpoch;
-    uint256 private _ksuTokenPrice;
+    // @notice The epoch number when the price was last updated.
+    uint256 public priceUpdateEpoch;
+    // @notice The price of the KSU token for the epoch.
+    uint256 public ksuEpochTokenPrice;
 
-    uint256 private _performanceFee;
+    uint256 public performanceFee;
 
     uint256[] private _loyaltyThresholds;
 
@@ -192,38 +194,21 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     // TOKEN PRICE
 
     /**
-     * @notice Returns the price of the KSU token for the epoch.
-     * @dev The price is locked for the duration of the epoch.
-     * @return The epoch price of the KSU token.
-     */
-    function ksuEpochTokenPrice() external view returns (uint256) {
-        return _ksuTokenPrice;
-    }
-
-    /**
-     * @notice Returns the epoch number when the price was last updated.
-     * @return The epoch number when the price was last updated.
-     */
-    function priceUpdateEpoch() external view returns (uint256) {
-        return _priceUpdateEpoch;
-    }
-
-    /**
      * @notice Updates the price of the KSU token at the start of the epoch.
      * @dev This function should be called at the start of each epoch.
      */
     function updateKsuEpochTokenPrice() external {
-        if (currentEpochNumber() > _priceUpdateEpoch) {
+        if (currentEpochNumber() > priceUpdateEpoch) {
             _updateKsuTokenPrice();
         }
     }
 
     function _updateKsuTokenPrice() internal {
-        _priceUpdateEpoch = currentEpochNumber();
+        priceUpdateEpoch = currentEpochNumber();
 
-        _ksuTokenPrice = ksuPrice.getKsuTokenPrice();
+        ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
 
-        emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
+        emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }
 
     // PERFORMANCE FEE
@@ -241,17 +226,9 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
             revert InvalidConfiguration();
         }
 
-        _performanceFee = performanceFee_;
+        performanceFee = performanceFee_;
 
         emit PerformanceFeeUpdated(performanceFee_);
-    }
-
-    /**
-     * @notice Returns the performance fee.
-     * @return The performance fee.
-     */
-    function performanceFee() external view returns (uint256) {
-        return _performanceFee;
     }
 
     // LOYALTY THRESHOLDS
