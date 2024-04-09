@@ -56,6 +56,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 public priceUpdateEpoch;
 
     /// @notice The price of the KSU token for the epoch.
+    /// @dev The price is locked for the duration of the epoch. Updated when updateKsuEpochTokenPrice is called.
     uint256 public ksuEpochTokenPrice;
 
     /// @notice The performance fee percentage.
@@ -391,7 +392,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param index The index of the tranche.
      * @return The default name and symbol for tranche.
      */
-    function trancheInfo(uint256 index) external view returns (TrancheInfo memory) {
+    function trancheNameInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheNameInfo[index];
     }
 

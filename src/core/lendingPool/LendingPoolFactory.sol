@@ -159,11 +159,11 @@ contract LendingPoolFactory is ILendingPoolFactory {
             revert InvalidConfiguration();
         }
 
-        TrancheInfo memory trancheInfo = _systemVariables.trancheInfo(trancheIndex);
+        TrancheInfo memory trancheNameInfo = _systemVariables.trancheNameInfo(trancheIndex);
 
         return (
-            string.concat(lendingPoolName, " - ", trancheInfo.trancheName),
-            string.concat(trancheInfo.tokenSymbol, "_", lendingPoolSymbol)
+            string.concat(lendingPoolName, " - ", trancheNameInfo.trancheName),
+            string.concat(trancheNameInfo.tokenSymbol, "_", lendingPoolSymbol)
         );
     }
 

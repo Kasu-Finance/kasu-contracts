@@ -311,7 +311,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Returns the default names and symbols for tranches
      * @return The default names and symbols for tranches
      */
-    function trancheInfo(uint256 index) external view returns (TrancheInfo memory) {
+    function trancheNameInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheInfo[index];
     }
 
