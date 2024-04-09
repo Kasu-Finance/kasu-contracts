@@ -76,6 +76,12 @@ contract PendingPool is
             )
     ) private _wNftIdPerUserPerEpochPerTranchePerPriority;
 
+    /// @notice Total pending deposit amount.
+    uint256 public totalPendingDepositAmount;
+
+    /// @dev epoch => total pending deposit amount for the epoch
+    mapping(uint256 epoch => uint256 totalEpochPendingDepositAmount) private _totalEpochPendingDepositAmount;
+
     /**
      * @notice Constructor.
      * @param systemVariables_ System variables contract.
@@ -157,6 +163,16 @@ contract PendingPool is
         return _trancheWithdrawalNftDetails[wNftId];
     }
 
+    /**
+     * @notice Returns the total pending deposit amount for the current epoch.
+     * @dev Exclude the next epoch's pending deposit amount from total pending deposit amount.
+     * @return The total pending deposit amount for the current epoch.
+     */
+    function getPendingDepositAmountForCurrentEpoch() external view returns (uint256) {
+        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        return totalPendingDepositAmount - _totalEpochPendingDepositAmount[currentEpoch + 1];
+    }
+
     // DEPOSIT/WITHDRAWAL REQUESTS
 
     /**
@@ -207,6 +223,8 @@ contract PendingPool is
             _trancheDepositNftDetails[dNftID].assetAmount += amount;
         }
 
+        ILendingPool lendingPool = _ownLendingPool();
+
         // verify the request is between min and max deposit amount
         (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
         uint256 totalDeposited = _trancheDepositNftDetails[dNftID].assetAmount;
@@ -221,6 +239,8 @@ contract PendingPool is
                 address(lendingPool), tranche, maxDepositAmount, totalDeposited, amount
             );
         }
+
+        _increasePendingDepositAmount(requestEpochId, amount);
 
         emit DepositRequested(user, tranche, dNftID, requestEpochId, amount);
     }
@@ -440,6 +460,7 @@ contract PendingPool is
         }
 
         address user = ownerOf(dNftID);
+        uint256 epochId = depositNftDetails.epochId;
 
         if (depositNftDetails.assetAmount == 0) {
             _burnRequestNft(dNftID);
@@ -452,6 +473,8 @@ contract PendingPool is
         _approveAsset(address(lendingPool), acceptedAmount);
 
         uint256 trancheSharesMinted = lendingPool.acceptDeposit(tranche, user, acceptedAmount);
+
+        _decreasePendingDepositAmount(epochId, acceptedAmount);
 
         emit DepositRequestAccepted(user, tranche, dNftID, acceptedAmount, trancheSharesMinted);
     }
@@ -466,6 +489,7 @@ contract PendingPool is
 
     function _returnDepositRequest(uint256 dNftID, address user) private {
         uint256 assetAmount = _trancheDepositNftDetails[dNftID].assetAmount;
+        uint256 epochId = _trancheDepositNftDetails[dNftID].epochId;
 
         _burnRequestNft(dNftID);
 
@@ -473,6 +497,8 @@ contract PendingPool is
 
         // return funds directly to the user
         _transferAssets(user, assetAmount);
+
+        _decreasePendingDepositAmount(epochId, assetAmount);
     }
 
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal override nftExists(wNftID) {
@@ -537,6 +563,16 @@ contract PendingPool is
         WithdrawalNftDetails storage wNftDetails = _trancheWithdrawalNftDetails[wNftID];
         delete _wNftIdPerUserPerEpochPerTranchePerPriority[user][wNftDetails.epochId][wNftDetails.tranche][wNftDetails.requestedFrom];
         delete _trancheWithdrawalNftDetails[wNftID];
+    }
+
+    function _increasePendingDepositAmount(uint256 epoch, uint256 amount) internal {
+        _totalEpochPendingDepositAmount[epoch] += amount;
+        totalPendingDepositAmount += amount;
+    }
+
+    function _decreasePendingDepositAmount(uint256 epoch, uint256 amount) internal {
+        _totalEpochPendingDepositAmount[epoch] -= amount;
+        totalPendingDepositAmount -= amount;
     }
 
     function _burnRequestNft(uint256 dNftID) internal {

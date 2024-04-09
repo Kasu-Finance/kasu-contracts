@@ -84,6 +84,21 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     /**
+     * @notice Returns the maximum amount that can be drawn from the lending pool for the current epoch.
+     * @dev Can only be drawn if it's the clearing time and the clearing for the current epoch is not yet processed.
+     * @param lendingPool Lending pool address.
+     * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
+     */
+    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
+        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).getAvailableFunds();
+
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).getPendingPool());
+        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
+
+        return lendingPoolAvailableFunds + pendingDepositAmount;
+    }
+
+    /**
      * @notice Returns true if clearing for the lending pool is pending.
      * @dev Clearing is pending if previous epoch clearing is not yet ended or if current clearing is not yet ended and it's clearing time.
      * @param lendingPool Lending pool address.
