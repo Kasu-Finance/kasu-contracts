@@ -154,7 +154,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the current epoch number.
      * @return The current epoch number.
      */
-    function getCurrentEpochNumber() public view returns (uint256) {
+    function currentEpochNumber() public view returns (uint256) {
         if (block.timestamp < _firstEpochStartTimestamp) {
             return 0;
         }
@@ -169,7 +169,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param epoch The epoch number.
      * @return The timestamp of the start of the given epoch.
      */
-    function getEpochStartTimestamp(uint256 epoch) external view returns (uint256) {
+    function epochStartTimestamp(uint256 epoch) external view returns (uint256) {
         return _firstEpochStartTimestamp + epoch * EPOCH_DURATION;
     }
 
@@ -177,7 +177,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the duration of an epoch.
      * @return The duration of an epoch.
      */
-    function getEpochDuration() external pure returns (uint256) {
+    function epochDuration() external pure returns (uint256) {
         return EPOCH_DURATION;
     }
 
@@ -185,8 +185,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the timestamp of the start of the next epoch.
      * @return The timestamp of the start of the next epoch.
      */
-    function getNextEpochStartTimestamp() public view returns (uint256) {
-        return _firstEpochStartTimestamp + (getCurrentEpochNumber() + 1) * EPOCH_DURATION;
+    function nextEpochStartTimestamp() public view returns (uint256) {
+        return _firstEpochStartTimestamp + (currentEpochNumber() + 1) * EPOCH_DURATION;
     }
 
     /**
@@ -194,8 +194,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @dev If the current epoch is in the clearing period, the next epoch number is returned.
      * @return requestEpoch The current epoch request number.
      */
-    function getCurrentRequestEpoch() external view returns (uint256 requestEpoch) {
-        requestEpoch = getCurrentEpochNumber();
+    function currentRequestEpoch() external view returns (uint256 requestEpoch) {
+        requestEpoch = currentEpochNumber();
 
         if (isClearingTime()) {
             requestEpoch++;
@@ -209,7 +209,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return True if the current epoch is in the clearing period, false otherwise.
      */
     function isClearingTime() public view returns (bool) {
-        return getNextEpochStartTimestamp() - block.timestamp <= clearingPeriodLength;
+        return nextEpochStartTimestamp() - block.timestamp <= clearingPeriodLength;
     }
 
     // TOKEN PRICE
@@ -219,13 +219,13 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @dev This function should be called at the start of each epoch.
      */
     function updateKsuEpochTokenPrice() external {
-        if (getCurrentEpochNumber() > priceUpdateEpoch) {
+        if (currentEpochNumber() > priceUpdateEpoch) {
             _updateKsuTokenPrice();
         }
     }
 
     function _updateKsuTokenPrice() internal {
-        priceUpdateEpoch = getCurrentEpochNumber();
+        priceUpdateEpoch = currentEpochNumber();
         ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
 
         emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);

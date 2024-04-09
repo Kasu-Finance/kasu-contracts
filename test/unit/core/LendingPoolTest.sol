@@ -808,7 +808,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ACT ###
         skip(6 days + 1);
-        uint256 epochId = systemVariables.getCurrentEpochNumber();
+        uint256 epochId = systemVariables.currentEpochNumber();
         uint256 userPendingDepositBalance_alice =
             IPendingPool(lpd.pendingPool).userPendingDepositAmount(alice, epochId);
         uint256 userPendingDepositBalance_bob = IPendingPool(lpd.pendingPool).userPendingDepositAmount(bob, epochId);

@@ -134,7 +134,7 @@ contract UserManager is IUserManager, Initializable {
         view
         returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
-        uint256 nextEpoch = systemVariables.getCurrentEpochNumber() + 1;
+        uint256 nextEpoch = systemVariables.currentEpochNumber() + 1;
 
         (activeDepositAmount, pendingDepositAmount) = _getUserTotalPendingAndActiveDepositedAmount(user, nextEpoch);
     }
@@ -151,7 +151,7 @@ contract UserManager is IUserManager, Initializable {
         view
         returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = systemVariables.currentEpochNumber();
 
         (activeDepositAmount, pendingDepositAmount) = _getUserTotalPendingAndActiveDepositedAmount(user, currentEpoch);
     }
@@ -249,7 +249,7 @@ contract UserManager is IUserManager, Initializable {
     }
 
     function _getLoyaltyParameters() private view returns (LoyaltyGlobalParameters memory params) {
-        params.currentEpoch = systemVariables.getCurrentEpochNumber();
+        params.currentEpoch = systemVariables.currentEpochNumber();
         params.ksuPrice = systemVariables.ksuEpochTokenPrice();
         params.loyaltyThresholds = systemVariables.loyaltyThresholds();
     }
@@ -388,7 +388,7 @@ contract UserManager is IUserManager, Initializable {
         }
 
         // include the pending deposit amount for the next epoch as well
-        uint256 nextEpoch = systemVariables.getCurrentEpochNumber() + 1;
+        uint256 nextEpoch = systemVariables.currentEpochNumber() + 1;
 
         while (fromIndex <= toIndex) {
             address user = _allUsers[toIndex];

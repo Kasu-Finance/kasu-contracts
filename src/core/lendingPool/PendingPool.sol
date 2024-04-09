@@ -169,7 +169,7 @@ contract PendingPool is
      * @return The total pending deposit amount for the current epoch.
      */
     function getPendingDepositAmountForCurrentEpoch() external view returns (uint256) {
-        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.currentEpochNumber();
         return totalPendingDepositAmount - _totalEpochPendingDepositAmount[currentEpoch + 1];
     }
 
@@ -202,7 +202,7 @@ contract PendingPool is
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        uint256 requestEpochId = _systemVariables.getCurrentRequestEpoch();
+        uint256 requestEpochId = _systemVariables.currentRequestEpoch();
 
         // get user's dNftID for current epoch
         dNftID = _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche];
@@ -282,7 +282,7 @@ contract PendingPool is
         verifyTranche(tranche)
         returns (uint256 wNftID)
     {
-        uint256 requestEpochId = _systemVariables.getCurrentRequestEpoch();
+        uint256 requestEpochId = _systemVariables.currentRequestEpoch();
         wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, RequestedFrom.USER);
 
         emit WithdrawalRequested(user, tranche, wNftID, requestEpochId, trancheShares);
@@ -347,7 +347,7 @@ contract PendingPool is
         onlyLendingPoolManager
         returns (uint256[] memory wNftIDs)
     {
-        uint256 requestEpochId = _systemVariables.getCurrentRequestEpoch();
+        uint256 requestEpochId = _systemVariables.currentRequestEpoch();
         wNftIDs = new uint256[](input.length);
         for (uint256 i; i < input.length; ++i) {
             _verifyTranche(input[i].tranche);

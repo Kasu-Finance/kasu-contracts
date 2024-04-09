@@ -52,7 +52,7 @@ contract UserManagerMockTest is BaseTestUtils {
 
         vm.mockCall(
             address(systemVariables),
-            abi.encodeWithSelector(ISystemVariables.getCurrentEpochNumber.selector),
+            abi.encodeWithSelector(ISystemVariables.currentEpochNumber.selector),
             abi.encode(0)
         );
 
@@ -166,7 +166,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool2);
 
         uint256 expectedLoyaltyLevel = 2;
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = systemVariables.currentEpochNumber();
 
         vm.mockCall(
             address(systemVariables), abi.encodeWithSelector(ISystemVariables.isClearingTime.selector), abi.encode(true)
@@ -326,7 +326,7 @@ contract UserManagerMockTest is BaseTestUtils {
         );
 
         address pendingPool = ILendingPool(lendingPool).pendingPool();
-        uint256 epochId = systemVariables.getCurrentEpochNumber() + 1;
+        uint256 epochId = systemVariables.currentEpochNumber() + 1;
 
         vm.mockCall(
             address(pendingPool),

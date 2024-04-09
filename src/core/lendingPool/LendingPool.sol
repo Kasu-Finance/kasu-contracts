@@ -168,7 +168,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function poolConfiguration() external view returns (PoolConfiguration memory poolConfiguration_) {
         poolConfiguration_ = _poolConfiguration;
 
-        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.currentEpochNumber();
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             poolConfiguration_.tranches[i].interestRate =
                 _trancheInterestRate(_lendingPoolInfo.trancheAddresses[i], currentEpoch);
@@ -830,7 +830,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         uint256 epochDelay = _poolConfiguration.trancheInterestChangeEpochDelay;
-        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.currentEpochNumber();
         uint256 applicableEpoch = currentEpoch + epochDelay;
 
         for (uint256 i = _futureTrancheInterests[tranche].length - 1; i > 0; --i) {

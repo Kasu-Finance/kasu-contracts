@@ -127,7 +127,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Returns the current epoch number.
      * @return The current epoch number.
      */
-    function getCurrentEpochNumber() public view returns (uint256) {
+    function currentEpochNumber() public view returns (uint256) {
         return _epochNumber;
     }
 
@@ -137,7 +137,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @param epoch The epoch number.
      * @return The timestamp of the start of the given epoch.
      */
-    function getEpochStartTimestamp(uint256 epoch) external view returns (uint256) {
+    function epochStartTimestamp(uint256 epoch) external view returns (uint256) {
         return _firstEpochStartTimestamp + epoch * _epochDuration;
     }
 
@@ -146,7 +146,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Returns the duration of an epoch.
      * @return The duration of an epoch.
      */
-    function getEpochDuration() external pure returns (uint256) {
+    function epochDuration() external pure returns (uint256) {
         return _epochDuration;
     }
 
@@ -154,8 +154,8 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Returns the timestamp of the start of the next epoch.
      * @return The timestamp of the start of the next epoch.
      */
-    function getNextEpochStartTimestamp() public view returns (uint256) {
-        return _firstEpochStartTimestamp + (getCurrentEpochNumber() + 1) * _epochDuration;
+    function nextEpochStartTimestamp() public view returns (uint256) {
+        return _firstEpochStartTimestamp + (currentEpochNumber() + 1) * _epochDuration;
     }
 
     /**
@@ -163,8 +163,8 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @dev If the current epoch is in the clearing period, the next epoch number is returned.
      * @return requestEpoch The current epoch request number.
      */
-    function getCurrentRequestEpoch() external view returns (uint256 requestEpoch) {
-        requestEpoch = getCurrentEpochNumber();
+    function currentRequestEpoch() external view returns (uint256 requestEpoch) {
+        requestEpoch = currentEpochNumber();
 
         if (isClearingTime()) {
             requestEpoch++;
@@ -213,13 +213,13 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @dev This function should be called at the start of each epoch.
      */
     function updateKsuEpochTokenPrice() external {
-        if (getCurrentEpochNumber() > _priceUpdateEpoch) {
+        if (currentEpochNumber() > _priceUpdateEpoch) {
             _updateKsuTokenPrice();
         }
     }
 
     function _updateKsuTokenPrice() internal {
-        _priceUpdateEpoch = getCurrentEpochNumber();
+        _priceUpdateEpoch = currentEpochNumber();
 
         _ksuTokenPrice = ksuPrice.getKsuTokenPrice();
 

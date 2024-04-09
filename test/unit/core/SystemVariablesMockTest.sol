@@ -33,60 +33,60 @@ contract SystemVariablesMockTest is BaseTestUtils {
         );
     }
 
-    function test_getCurrentEpochNumber() public {
+    function test_currentEpochNumber() public {
         _initalize();
-        assertEq(systemVariables.getCurrentEpochNumber(), 0);
+        assertEq(systemVariables.currentEpochNumber(), 0);
 
         skip(uint256(6 days + 1));
-        assertEq(systemVariables.getCurrentEpochNumber(), 0);
+        assertEq(systemVariables.currentEpochNumber(), 0);
 
         skip(uint256(1 days));
-        assertEq(systemVariables.getCurrentEpochNumber(), 1);
+        assertEq(systemVariables.currentEpochNumber(), 1);
     }
 
-    function test_getEpochStartTimestamp() public {
+    function test_epochStartTimestamp() public {
         _initalize();
-        assertEq(systemVariables.getEpochStartTimestamp(0), block.timestamp);
+        assertEq(systemVariables.epochStartTimestamp(0), block.timestamp);
 
-        assertEq(systemVariables.getEpochStartTimestamp(1), block.timestamp + 1 weeks);
+        assertEq(systemVariables.epochStartTimestamp(1), block.timestamp + 1 weeks);
     }
 
-    function test_getNextEpochStartTimestamp() public {
+    function test_nextEpochStartTimestamp() public {
         _initalize();
 
         uint256 nextEpochStartTime = block.timestamp + 1 weeks;
-        assertEq(systemVariables.getNextEpochStartTimestamp(), nextEpochStartTime);
+        assertEq(systemVariables.nextEpochStartTimestamp(), nextEpochStartTime);
 
         skip(1 days);
-        assertEq(systemVariables.getNextEpochStartTimestamp(), nextEpochStartTime);
+        assertEq(systemVariables.nextEpochStartTimestamp(), nextEpochStartTime);
 
         skip(1 weeks);
-        assertEq(systemVariables.getNextEpochStartTimestamp(), nextEpochStartTime + 1 weeks);
+        assertEq(systemVariables.nextEpochStartTimestamp(), nextEpochStartTime + 1 weeks);
     }
 
-    function test_getEpochDuration() public {
+    function test_epochDuration() public {
         _initalize();
-        assertEq(systemVariables.getEpochDuration(), 1 weeks);
+        assertEq(systemVariables.epochDuration(), 1 weeks);
     }
 
-    function test_getCurrentRequestEpoch() public {
+    function test_currentRequestEpoch() public {
         _initalize();
-        assertEq(systemVariables.getCurrentRequestEpoch(), 0);
+        assertEq(systemVariables.currentRequestEpoch(), 0);
 
         skip(1 days);
-        assertEq(systemVariables.getCurrentRequestEpoch(), 0);
+        assertEq(systemVariables.currentRequestEpoch(), 0);
 
         skip(5 days);
-        assertEq(systemVariables.getCurrentRequestEpoch(), 1);
+        assertEq(systemVariables.currentRequestEpoch(), 1);
 
         skip(12 hours);
-        assertEq(systemVariables.getCurrentRequestEpoch(), 1);
+        assertEq(systemVariables.currentRequestEpoch(), 1);
 
         skip(12 hours);
-        assertEq(systemVariables.getCurrentRequestEpoch(), 1);
+        assertEq(systemVariables.currentRequestEpoch(), 1);
 
         skip(6 days);
-        assertEq(systemVariables.getCurrentRequestEpoch(), 2);
+        assertEq(systemVariables.currentRequestEpoch(), 2);
     }
 
     function test_isClearingTime() public {

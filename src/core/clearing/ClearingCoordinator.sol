@@ -80,7 +80,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         AddressLib.checkIfZero(lendingPool);
 
         // sets the next clearing epoch to the current request epoch (if clearing period is active the next epoch is applied)
-        nextLendingPoolClearingEpoch[lendingPool] = _systemVariables.getCurrentRequestEpoch();
+        nextLendingPoolClearingEpoch[lendingPool] = _systemVariables.currentRequestEpoch();
     }
 
     /**
@@ -106,7 +106,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      */
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending) {
         uint256 nextTargetEpoch = nextLendingPoolClearingEpoch[lendingPool];
-        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.currentEpochNumber();
 
         if (nextTargetEpoch < currentEpoch) {
             // is pending if previous epoch clearing is not yet ended
@@ -156,7 +156,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // check if the clearing for the target epoch is started and if clearing period is already over for the target epoch
         bool isPastClearingTime;
-        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.currentEpochNumber();
         if (targetEpoch == currentEpoch) {
             if (!_systemVariables.isClearingTime()) {
                 revert TargetEpochClearingNotStarted(targetEpoch);

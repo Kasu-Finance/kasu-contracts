@@ -8,11 +8,11 @@ struct TrancheInfo {
 
 interface ISystemVariables {
     // EPOCH
-    function getCurrentEpochNumber() external view returns (uint256);
-    function getCurrentRequestEpoch() external view returns (uint256 requestEpoch);
-    function getEpochStartTimestamp(uint256 epoch) external view returns (uint256);
-    function getEpochDuration() external view returns (uint256);
-    function getNextEpochStartTimestamp() external view returns (uint256);
+    function currentEpochNumber() external view returns (uint256);
+    function currentRequestEpoch() external view returns (uint256 requestEpoch);
+    function epochStartTimestamp(uint256 epoch) external view returns (uint256);
+    function epochDuration() external view returns (uint256);
+    function nextEpochStartTimestamp() external view returns (uint256);
 
     // CLEARING PERIOD
     function isClearingTime() external view returns (bool);
