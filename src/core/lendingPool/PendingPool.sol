@@ -45,9 +45,9 @@ contract PendingPool is
     using SafeERC20 for IERC20;
 
     /// @notice System variables contract.
-    ISystemVariables public immutable systemVariables;
+    ISystemVariables private immutable _systemVariables;
     /// @notice User manager contract.
-    IUserManager public immutable userManager;
+    IUserManager private immutable _userManager;
 
     /// @dev tranche address => next deposit NFT id
     mapping(address tranche => uint256 dNftId) private _nextTrancheDepositNFTId;
@@ -100,8 +100,8 @@ contract PendingPool is
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(userManger_));
 
-        systemVariables = systemVariables_;
-        userManager = userManger_;
+        _systemVariables = systemVariables_;
+        _userManager = userManger_;
         _disableInitializers();
     }
 
@@ -187,7 +187,7 @@ contract PendingPool is
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
+        uint256 requestEpochId = _systemVariables.getCurrentRequestEpoch();
 
         // get user's dNftID for current epoch
         dNftID = _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche];
@@ -263,7 +263,7 @@ contract PendingPool is
         verifyTranche(tranche)
         returns (uint256 wNftID)
     {
-        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
+        uint256 requestEpochId = _systemVariables.getCurrentRequestEpoch();
         wNftID = _requestWithdrawal(user, tranche, trancheShares, requestEpochId, RequestedFrom.USER);
 
         emit WithdrawalRequested(user, tranche, wNftID, requestEpochId, trancheShares);
@@ -328,7 +328,7 @@ contract PendingPool is
         onlyLendingPoolManager
         returns (uint256[] memory wNftIDs)
     {
-        uint256 requestEpochId = systemVariables.getCurrentRequestEpoch();
+        uint256 requestEpochId = _systemVariables.getCurrentRequestEpoch();
         wNftIDs = new uint256[](input.length);
         for (uint256 i; i < input.length; ++i) {
             _verifyTranche(input[i].tranche);
@@ -509,7 +509,7 @@ contract PendingPool is
      * @param depositEpochId The deposit epoch id.
      * @return pendingDepositAmount The amount of pending deposit for the user for the given epoch or earlier.
      */
-    function getUserPendingDepositAmount(address user, uint256 depositEpochId)
+    function userPendingDepositAmount(address user, uint256 depositEpochId)
         external
         view
         returns (uint256 pendingDepositAmount)
@@ -600,11 +600,11 @@ contract PendingPool is
     }
 
     function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
-        return userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
+        return _userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
     }
 
     function _loyaltyLevelCount() internal view override returns (uint8) {
-        return systemVariables.loyaltyLevelsCount();
+        return _systemVariables.loyaltyLevelsCount();
     }
 
     function _setDepositRequestPriority(uint256 dNftId, uint8 priority) internal override {
@@ -635,7 +635,7 @@ contract PendingPool is
     modifier canUserRequestDeposit(address user, address tranche) {
         address[] memory trancheAddresses = _ownLendingPool().lendingPoolTranches();
         if (trancheAddresses.length <= 1) return;
-        if (trancheAddresses[0] == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
+        if (trancheAddresses[0] == tranche && !_userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
         }
         _;

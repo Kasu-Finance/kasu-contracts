@@ -48,7 +48,7 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         view
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function getUserPendingDepositAmount(address user, uint256 depositEpochId)
+    function userPendingDepositAmount(address user, uint256 depositEpochId)
         external
         view
         returns (uint256 pendingDepositAmount);

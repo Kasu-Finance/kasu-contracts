@@ -744,7 +744,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(userAvailableBalance_bob, requestDepositAmount_bob);
     }
 
-    function test_getUserPendingDepositAmount() public {
+    function test_userPendingDepositAmount() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -769,8 +769,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         skip(6 days + 1);
         uint256 epochId = systemVariables.getCurrentEpochNumber();
         uint256 userPendingDepositBalance_alice =
-            IPendingPool(lpd.pendingPool).getUserPendingDepositAmount(alice, epochId);
-        uint256 userPendingDepositBalance_bob = IPendingPool(lpd.pendingPool).getUserPendingDepositAmount(bob, epochId);
+            IPendingPool(lpd.pendingPool).userPendingDepositAmount(alice, epochId);
+        uint256 userPendingDepositBalance_bob = IPendingPool(lpd.pendingPool).userPendingDepositAmount(bob, epochId);
 
         // ### ASSERT ###
         assertEq(userPendingDepositBalance_alice, requestDepositAmount_alice1 + requestDepositAmount_alice2);

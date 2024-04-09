@@ -310,7 +310,7 @@ contract UserManagerMockTest is BaseTestUtils {
 
         vm.mockCall(
             address(pendingPool),
-            abi.encodeWithSelector(IPendingPool.getUserPendingDepositAmount.selector),
+            abi.encodeWithSelector(IPendingPool.userPendingDepositAmount.selector),
             abi.encode(uint256(0))
         );
     }
@@ -330,7 +330,7 @@ contract UserManagerMockTest is BaseTestUtils {
 
         vm.mockCall(
             address(pendingPool),
-            abi.encodeCall(IPendingPool.getUserPendingDepositAmount, (user, epochId)),
+            abi.encodeCall(IPendingPool.userPendingDepositAmount, (user, epochId)),
             abi.encode(pendingDeposit)
         );
     }

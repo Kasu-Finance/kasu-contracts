@@ -325,7 +325,7 @@ contract UserManager is IUserManager, Initializable {
 
         // get user pending deposit amount
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
-        pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, epochId);
+        pendingDepositAmount = pendingPool.userPendingDepositAmount(user, epochId);
     }
 
     function _getRKSUInUSDC(uint256 rKSUAmount, uint256 ksuPrice) internal pure returns (uint256 rKSUInUSDC) {
