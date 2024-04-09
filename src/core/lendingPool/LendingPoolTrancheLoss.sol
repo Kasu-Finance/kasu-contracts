@@ -39,9 +39,9 @@ abstract contract LendingPoolTrancheLoss is
         __ERC1155_init("");
     }
 
-    function _getUsers() internal view virtual returns (address[] storage users);
+    function _trancheUsersStorage() internal view virtual returns (address[] storage users);
 
-    function _getUserActiveTrancheBalance(address user) internal view virtual returns (uint256);
+    function _userActiveTrancheBalance(address user) internal view virtual returns (uint256);
 
     function _maximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
 
@@ -87,7 +87,7 @@ abstract contract LendingPoolTrancheLoss is
     }
 
     function _registerLoss(uint256 lossId, uint256 lossAmount, uint256 batchSize) internal {
-        address[] storage users = _getUsers();
+        address[] storage users = _trancheUsersStorage();
         uint256 usersCount = users.length;
 
         _lossDetails[lossId] = LossDetails(lossAmount, usersCount, 0, 0, 0);
@@ -132,13 +132,13 @@ abstract contract LendingPoolTrancheLoss is
             return;
         }
 
-        address[] storage users = _getUsers();
+        address[] storage users = _trancheUsersStorage();
 
         uint256 mintToUserIndex = usersMintedCount + batchSize;
 
         for (uint256 i = usersMintedCount; i < mintToUserIndex; ++i) {
             address user = users[i];
-            uint256 userLossShares = _getUserActiveTrancheBalance(user);
+            uint256 userLossShares = _userActiveTrancheBalance(user);
             _mintUserLossTokens(user, lossId, userLossShares);
         }
 

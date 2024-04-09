@@ -19,7 +19,7 @@ import "./LendingPoolHelpers.sol";
  */
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
     /// @dev User active shares. This includes user pending withdrawal shares.
-    mapping(address user => uint256 activeShares) private _userActiveShares;
+    mapping(address user => uint256 activeShares) public _userActiveShares;
     /// @dev Index of a user in the _trancheUsers array.
     mapping(address user => uint256 index) private _userArrayIndex;
     /// @dev Array of users with active tranche shares.
@@ -134,15 +134,15 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @param user The address of the user.
      * @return userActiveAssets The active assets of the user.
      */
-    function getUserActiveAssets(address user) external view returns (uint256 userActiveAssets) {
+    function userActiveAssets(address user) external view returns (uint256 userActiveAssets) {
         userActiveAssets = convertToAssets(_userActiveShares[user]);
     }
 
-    function _getUsers() internal view override returns (address[] storage users) {
+    function _trancheUsersStorage() internal view override returns (address[] storage users) {
         return _trancheUsers;
     }
 
-    function _getUserActiveTrancheBalance(address user) internal view override returns (uint256) {
+    function _userActiveTrancheBalance(address user) internal view override returns (uint256) {
         return _userActiveShares[user];
     }
 

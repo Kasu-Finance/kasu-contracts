@@ -261,7 +261,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function userBalance(address user) external view returns (uint256 availableBalance) {
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             ILendingPoolTranche tranche = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]);
-            availableBalance += tranche.getUserActiveAssets(user);
+            availableBalance += tranche.userActiveAssets(user);
         }
     }
 

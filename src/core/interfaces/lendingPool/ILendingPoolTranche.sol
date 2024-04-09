@@ -15,6 +15,6 @@ import "./ILendingPoolTrancheLoss.sol";
  */
 interface ILendingPoolTranche is ILendingPoolTrancheLoss, IERC4626, IERC1155 {
     function removeUserActiveShares(address user, uint256 shares) external;
-    function getUserActiveAssets(address user) external view returns (uint256 activeAssets);
+    function userActiveAssets(address user) external view returns (uint256 activeAssets);
     function maximumLossAmount() external view returns (uint256 maxLossAmount);
 }

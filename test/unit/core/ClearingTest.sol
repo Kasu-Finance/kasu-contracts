@@ -1047,17 +1047,17 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(lendingPool.userBalance(alice), aliceAccepted, 3);
 
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(alice),
+            ILendingPoolTranche(lpd.tranches[0]).userActiveAssets(alice),
             aliceAccepted * poolConfig.tranches[0].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[1]).getUserActiveAssets(alice),
+            ILendingPoolTranche(lpd.tranches[1]).userActiveAssets(alice),
             aliceAccepted * poolConfig.tranches[1].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[2]).getUserActiveAssets(alice),
+            ILendingPoolTranche(lpd.tranches[2]).userActiveAssets(alice),
             aliceAccepted * poolConfig.tranches[2].ratio / FULL_PERCENT,
             1
         );
@@ -1067,17 +1067,17 @@ contract ClearingTest is LendingPoolTestUtils {
         assertApproxEqAbs(lendingPool.userBalance(bob), bobAccepted, 3);
 
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(bob),
+            ILendingPoolTranche(lpd.tranches[0]).userActiveAssets(bob),
             bobAccepted * poolConfig.tranches[0].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[1]).getUserActiveAssets(bob),
+            ILendingPoolTranche(lpd.tranches[1]).userActiveAssets(bob),
             bobAccepted * poolConfig.tranches[1].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[2]).getUserActiveAssets(bob),
+            ILendingPoolTranche(lpd.tranches[2]).userActiveAssets(bob),
             bobAccepted * poolConfig.tranches[2].ratio / FULL_PERCENT,
             1
         );
