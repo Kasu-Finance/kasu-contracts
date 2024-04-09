@@ -226,7 +226,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         _cancelDepositRequest(bob, lpd.lendingPool, dNftId2_bob);
 
-        skip(6 days);
+        // skip to the next epoch
+        skip(1 weeks);
 
         uint256 aliceAccepted = 40 * 10 ** 6;
         _acceptDepositRequest(lpd.lendingPool, dNftId1_alice, aliceAccepted);
@@ -234,15 +235,22 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 carolDeposit = 301 * 10 ** 6;
         _requestDeposit(carol, lpd.lendingPool, lpd.tranches[1], carolDeposit);
 
+        // skip to the clearing period
+        skip(6 days);
+
+        // request deposit to the next epoch as it's clearing period
+        uint256 aliceDeposit3 = 1000 * 10 ** 6;
+        _requestDeposit(david, lpd.lendingPool, lpd.tranches[2], aliceDeposit3);
+
         // ### ACT ###
         uint256 pendingDepositAmountForCurrentEpoch =
             IPendingPool(lpd.pendingPool).getPendingDepositAmountForCurrentEpoch();
         uint256 totalPendingDepositAmount = IPendingPool(lpd.pendingPool).totalPendingDepositAmount();
 
         // ### ASSERT ###
-        uint256 currentEpochPending = aliceDeposit1 + aliceDeposit2 - aliceAccepted;
+        uint256 currentEpochPending = aliceDeposit1 + aliceDeposit2 + carolDeposit - aliceAccepted;
         assertEq(pendingDepositAmountForCurrentEpoch, currentEpochPending);
-        assertEq(totalPendingDepositAmount, currentEpochPending + carolDeposit);
+        assertEq(totalPendingDepositAmount, currentEpochPending + aliceDeposit3);
     }
 
     function test_requestWithdrawal() public {
