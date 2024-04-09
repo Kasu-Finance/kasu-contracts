@@ -13,7 +13,7 @@ import "../shared/AddressLib.sol";
  */
 contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVerifierUpgradeable {
     /// @notice Lending Pool Manager address.
-    address public lendingPoolManager;
+    address private _lendingPoolManager;
 
     /**
      * @notice Constructor.
@@ -39,7 +39,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
         AddressLib.checkIfZero(lendingPoolManager_);
         AddressLib.checkIfZero(signer_);
 
-        lendingPoolManager = lendingPoolManager_;
+        _lendingPoolManager = lendingPoolManager_;
         __TxAuthDataVerifierUpgradeable_init(signer_);
     }
 
@@ -120,7 +120,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
      * @return A boolean indicating whether the user KYC is verified.
      */
     function verifyUserKyc(address user, uint256 blockExpiration, bytes calldata signature) external returns (bool) {
-        if (msg.sender != lendingPoolManager) {
+        if (msg.sender != _lendingPoolManager) {
             revert ILendingPoolErrors.OnlyLendingPoolManager();
         }
 
