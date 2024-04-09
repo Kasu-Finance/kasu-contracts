@@ -599,11 +599,11 @@ contract PendingPool is
         return _getOwnLendingPool().getLendingPoolTrancheCount();
     }
 
-    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
+    function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
         return userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
     }
 
-    function _getLoyaltyLevelCount() internal view override returns (uint8) {
+    function _loyaltyLevelCount() internal view override returns (uint8) {
         return systemVariables.loyaltyLevelsCount();
     }
 

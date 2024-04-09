@@ -96,7 +96,7 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(lendingPools[1], lendingPool2);
     }
 
-    function test_getUserLoyaltyLevel_defaultState_shouldReturnZero() public {
+    function test_userLoyaltyLevel_defaultState_shouldReturnZero() public {
         // ACT
         (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
 
@@ -105,7 +105,7 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(loyaltyLevel, 0);
     }
 
-    function test_getUserLoyaltyLevel1() public {
+    function test_userLoyaltyLevel1() public {
         // ARRANGE
         uint256 aliceAvailableBalance = 850 * 1e6;
         uint256 alicePendingDeposit = 150 * 1e6;
@@ -128,7 +128,7 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(loyaltyLevel, 1);
     }
 
-    function test_getUserLoyaltyLevel2() public {
+    function test_userLoyaltyLevel2() public {
         // ARRANGE
         uint256 aliceAvailableBalance = 850 * 1e6;
         uint256 alicePendingDeposit = 150 * 1e6;

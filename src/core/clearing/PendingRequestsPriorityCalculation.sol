@@ -38,7 +38,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     uint256 private constant HIGHEST_PRIORITY_WITHDRAWAL_EPOCH_AGE = 5;
 
     /// @dev Pending requests calculation data.
-    mapping(uint256 => PendingRequestsEpoch) internal _pendingRequestsPerEpoch;
+    mapping(uint256 => PendingRequestsEpoch) private _pendingRequestsPerEpoch;
 
     /**
      * @notice Calculates the priority of pending requests.
@@ -65,7 +65,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         _initialisePendingRequests(targetEpoch);
 
-        uint256 remainingPendingRequests = getRemainingPendingRequestsPriorityCalculation(targetEpoch);
+        uint256 remainingPendingRequests = remainingPendingRequestsPriorityCalculation(targetEpoch);
 
         if (remainingPendingRequests == 0) {
             _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
@@ -84,7 +84,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
-        uint8 loyaltyLevelCount = _getLoyaltyLevelCount();
+        uint8 loyaltyLevelCount = _loyaltyLevelCount();
 
         address[] memory tranches = _lendingPoolTranches();
 
@@ -101,7 +101,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
                 uint256 trancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
 
-                uint8 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
+                uint8 ownerLoyaltyLevel = _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
 
                 clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
                 clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
@@ -126,7 +126,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     withdrawLoyaltyLevel = loyaltyLevelCount - 1;
                 } else {
                     // we set the user loyalty level as the priority
-                    withdrawLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
+                    withdrawLoyaltyLevel = _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
                 }
 
                 uint256 trancheIndex = _lendingPoolTranches(tranches, withdrawalNftDetails.tranche);
@@ -168,7 +168,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         }
     }
 
-    function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
+    function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
         return _clearingData(targetEpoch).totalPendingRequestsToProcess
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
@@ -184,7 +184,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         unchecked {
             uint256 trancheCount = _trancheCount();
-            uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
+            uint256 loyaltyLevelsCount = _loyaltyLevelCount();
 
             ClearingData storage clearingData = _clearingData(targetEpoch);
 
@@ -244,9 +244,9 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     function _tranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
-    function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint8);
+    function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint8);
 
-    function _getLoyaltyLevelCount() internal view virtual returns (uint8);
+    function _loyaltyLevelCount() internal view virtual returns (uint8);
 
     function _setDepositRequestPriority(uint256 dNftId, uint8 priority) internal virtual;
 

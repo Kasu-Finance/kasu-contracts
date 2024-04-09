@@ -26,7 +26,7 @@ interface IPendingRequestsPriorityCalculation {
      * @param targetEpoch The epoch of pending user request.
      * @return The amount of pending user requests remaining to complete the task.
      */
-    function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
+    function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
 
     /**
      * @notice Returns the status of the pending requests priority calculation task.

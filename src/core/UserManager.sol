@@ -220,7 +220,7 @@ contract UserManager is IUserManager, Initializable {
         for (uint256 i = startUser; i < endUser; ++i) {
             address user = _allUsers[i];
 
-            (uint8 loyaltyLevel, uint256 activeDepositAmount,) = _getUserLoyaltyLevel(user, params);
+            (uint8 loyaltyLevel, uint256 activeDepositAmount,) = _userLoyaltyLevel(user, params);
 
             // update user loyalty level
             _userEpochLoyaltyLevel[user][params.currentEpoch] = loyaltyLevel;
@@ -263,10 +263,10 @@ contract UserManager is IUserManager, Initializable {
     function getUserLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel) {
         LoyaltyGlobalParameters memory params = _getLoyaltyParameters();
         currentEpoch = params.currentEpoch;
-        (loyaltyLevel,,) = _getUserLoyaltyLevel(user, params);
+        (loyaltyLevel,,) = _userLoyaltyLevel(user, params);
     }
 
-    function _getUserLoyaltyLevel(address user, LoyaltyGlobalParameters memory params)
+    function _userLoyaltyLevel(address user, LoyaltyGlobalParameters memory params)
         private
         view
         returns (uint8 loyaltyLevel, uint256 activeDepositAmount, uint256 pendingDepositAmount)
