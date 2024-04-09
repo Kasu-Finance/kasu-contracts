@@ -66,17 +66,6 @@ interface IClearingCoordinator {
         bool isConfigOverridden
     ) external;
 
-    /**
-     * @notice Returns the active config for the clearing task.
-     * @param lendingPoolAddress The lending pool of the clearing config.
-     * @param targetEpoch The epoch of the clearing config.
-     * @return clearingConfig The clearing config that will overwrite the default one.
-     */
-    function getClearingConfig(address lendingPoolAddress, uint256 targetEpoch)
-        external
-        view
-        returns (ClearingConfiguration memory);
-
     event ClearingExecuted(address indexed lendingPool, uint256 indexed epoch, ClearingStatus clearingStatus);
     event ClearingConfigSet(address indexed lendingPool, uint256 indexed epoch, ClearingConfiguration clearingConfig);
 

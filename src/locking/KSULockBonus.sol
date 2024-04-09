@@ -8,8 +8,8 @@ import "../shared/AddressLib.sol";
 contract KSULockBonus is Initializable {
     using SafeERC20 for IERC20;
 
-    address public ksuLocking;
-    IERC20 public ksuToken;
+    address private _ksuLocking;
+    IERC20 private _ksuToken;
 
     constructor() {
         _disableInitializers();
@@ -19,9 +19,9 @@ contract KSULockBonus is Initializable {
         AddressLib.checkIfZero(ksuLocking_);
         AddressLib.checkIfZero(address(ksuToken_));
 
-        ksuLocking = ksuLocking_;
-        ksuToken = ksuToken_;
+        _ksuLocking = ksuLocking_;
+        _ksuToken = ksuToken_;
 
-        ksuToken.safeIncreaseAllowance(ksuLocking, type(uint256).max);
+        _ksuToken.safeIncreaseAllowance(_ksuLocking, type(uint256).max);
     }
 }

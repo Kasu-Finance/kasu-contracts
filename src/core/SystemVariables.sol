@@ -50,16 +50,17 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _firstEpochStartTimestamp;
 
     /// @notice The length of the clearing period.
-    uint256 private _clearingPeriodLength;
+    uint256 public clearingPeriodLength;
 
     /// @notice The epoch number when the price was last updated.
-    uint256 private _priceUpdateEpoch;
+    uint256 public priceUpdateEpoch;
 
     /// @notice The price of the KSU token for the epoch.
-    uint256 private _ksuTokenPrice;
+    /// @dev The price is locked for the duration of the epoch. Updated when updateKsuEpochTokenPrice is called.
+    uint256 public ksuEpochTokenPrice;
 
     /// @notice The performance fee percentage.
-    uint256 private _performanceFee;
+    uint256 public performanceFee;
 
     /// @notice The loyalty level threshold percentages.
     uint256[] private _loyaltyThresholds;
@@ -127,7 +128,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         }
 
         _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
-        _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
+        clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
         _setPerformanceFee(systemVariablesSetup.performanceFee);
         _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
@@ -154,7 +155,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the current epoch number.
      * @return The current epoch number.
      */
-    function getCurrentEpochNumber() public view returns (uint256) {
+    function currentEpochNumber() public view returns (uint256) {
         if (block.timestamp < _firstEpochStartTimestamp) {
             return 0;
         }
@@ -169,7 +170,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param epoch The epoch number.
      * @return The timestamp of the start of the given epoch.
      */
-    function getEpochStartTimestamp(uint256 epoch) external view returns (uint256) {
+    function epochStartTimestamp(uint256 epoch) external view returns (uint256) {
         return _firstEpochStartTimestamp + epoch * EPOCH_DURATION;
     }
 
@@ -177,7 +178,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the duration of an epoch.
      * @return The duration of an epoch.
      */
-    function getEpochDuration() external pure returns (uint256) {
+    function epochDuration() external pure returns (uint256) {
         return EPOCH_DURATION;
     }
 
@@ -185,8 +186,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the timestamp of the start of the next epoch.
      * @return The timestamp of the start of the next epoch.
      */
-    function getNextEpochStartTimestamp() public view returns (uint256) {
-        return _firstEpochStartTimestamp + (getCurrentEpochNumber() + 1) * EPOCH_DURATION;
+    function nextEpochStartTimestamp() public view returns (uint256) {
+        return _firstEpochStartTimestamp + (currentEpochNumber() + 1) * EPOCH_DURATION;
     }
 
     /**
@@ -194,8 +195,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @dev If the current epoch is in the clearing period, the next epoch number is returned.
      * @return requestEpoch The current epoch request number.
      */
-    function getCurrentRequestEpoch() external view returns (uint256 requestEpoch) {
-        requestEpoch = getCurrentEpochNumber();
+    function currentRequestEpoch() external view returns (uint256 requestEpoch) {
+        requestEpoch = currentEpochNumber();
 
         if (isClearingTime()) {
             requestEpoch++;
@@ -209,51 +210,26 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return True if the current epoch is in the clearing period, false otherwise.
      */
     function isClearingTime() public view returns (bool) {
-        return getNextEpochStartTimestamp() - block.timestamp <= _clearingPeriodLength;
-    }
-
-    /**
-     * @notice Returns the length of the clearing period.
-     * @return The length of the clearing period.
-     */
-    function clearingPeriodLength() external view returns (uint256) {
-        return _clearingPeriodLength;
+        return nextEpochStartTimestamp() - block.timestamp <= clearingPeriodLength;
     }
 
     // TOKEN PRICE
-
-    /**
-     * @notice Returns the price of the KSU token for the epoch.
-     * @dev The price is locked for the duration of the epoch.
-     * @return The epoch price of the KSU token.
-     */
-    function ksuEpochTokenPrice() external view returns (uint256) {
-        return _ksuTokenPrice;
-    }
-
-    /**
-     * @notice Returns the epoch number when the price was last updated.
-     * @return The epoch number when the price was last updated.
-     */
-    function getPriceUpdateEpoch() external view returns (uint256) {
-        return _priceUpdateEpoch;
-    }
 
     /**
      * @notice Updates the price of the KSU token at the start of the epoch.
      * @dev This function should be called at the start of each epoch.
      */
     function updateKsuEpochTokenPrice() external {
-        if (getCurrentEpochNumber() > _priceUpdateEpoch) {
+        if (currentEpochNumber() > priceUpdateEpoch) {
             _updateKsuTokenPrice();
         }
     }
 
     function _updateKsuTokenPrice() internal {
-        _priceUpdateEpoch = getCurrentEpochNumber();
-        _ksuTokenPrice = ksuPrice.getKsuTokenPrice();
+        priceUpdateEpoch = currentEpochNumber();
+        ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
 
-        emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
+        emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }
 
     // performance fee
@@ -272,17 +248,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
             revert InvalidConfiguration();
         }
 
-        _performanceFee = performanceFee_;
+        performanceFee = performanceFee_;
 
         emit PerformanceFeeUpdated(performanceFee_);
-    }
-
-    /**
-     * @notice Returns the performance fee.
-     * @return The performance fee.
-     */
-    function performanceFee() external view returns (uint256) {
-        return _performanceFee;
     }
 
     // LOYALTY THRESHOLDS
@@ -347,7 +315,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns whether users can only deposit to junior tranches only when having rKSU.
      * @return true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around.
      */
-    function getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
+    function userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
         return _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
     }
 
@@ -424,7 +392,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param index The index of the tranche.
      * @return The default name and symbol for tranche.
      */
-    function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
+    function trancheNameInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheNameInfo[index];
     }
 
@@ -435,7 +403,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return ecosystemFeeRate The ecosystem fee rate.
      * @return protocolFeeRate The protocol fee rate.
      */
-    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
+    function feeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
         return (_ecosystemFeeRate, _protocolFeeRate);
     }
 
@@ -463,7 +431,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the protocol fee receiver.
      * @return The protocol fee receiver.
      */
-    function getProtocolFeeReceiver() public view returns (address) {
+    function protocolFeeReceiver() public view returns (address) {
         return _protocolFeeReceiver;
     }
 

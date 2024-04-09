@@ -56,7 +56,7 @@ contract ClearingTest is LendingPoolTestUtils {
         input1[0] = ForceWithdrawalInput(lpd.tranches[2], user8, 10 * 10 ** 18);
         _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input1)[0];
 
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = systemVariables.currentEpochNumber();
 
         // user locking
         // loyalty levels: 0-1%: 0, 1%-3%:1, 3%+: 2
@@ -83,7 +83,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
-        PendingDeposits memory pendingDeposits = pendingPool.getPendingDeposits(currentEpoch);
+        PendingDeposits memory pendingDeposits = pendingPool.pendingDeposits(currentEpoch);
         assertEq(pendingDeposits.totalDepositAmount, 1070 * 1e6);
 
         assertEq(pendingDeposits.trancheDepositsAmounts.length, 3);
@@ -103,7 +103,7 @@ contract ClearingTest is LendingPoolTestUtils {
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][1], 0);
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][2], 0);
 
-        PendingWithdrawals memory pendingWithdrawals = pendingPool.getPendingWithdrawals(currentEpoch);
+        PendingWithdrawals memory pendingWithdrawals = pendingPool.pendingWithdrawals(currentEpoch);
         assertEq(pendingWithdrawals.totalWithdrawalsAmount, 270 * 1e6);
 
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[0], 220 * 1e6);
@@ -189,7 +189,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
         userManager.batchCalculateUserLoyaltyLevels(10);
 
-        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch1 = systemVariables.currentEpochNumber();
 
         // ### ACT ###
 
@@ -307,7 +307,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
 
         // ### ACT ###
-        uint256 currentEpoch2 = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch2 = systemVariables.currentEpochNumber();
         ClearingConfiguration memory clearingConfiguration2 = ClearingConfiguration(0, trancheDesiredRatios, 10_00, 0);
 
         _doClearing(
@@ -349,7 +349,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
 
         // ### ACT ###
-        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch1 = systemVariables.currentEpochNumber();
 
         uint256[] memory trancheDesiredRatios = new uint256[](3);
         trancheDesiredRatios[0] = 20_00;
@@ -368,7 +368,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
 
         // ### ACT ###
-        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch1 = systemVariables.currentEpochNumber();
 
         uint256[] memory trancheDesiredRatios = new uint256[](3);
         trancheDesiredRatios[0] = 20_00;
@@ -387,7 +387,7 @@ contract ClearingTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(10);
 
         // ### ACT ###
-        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch1 = systemVariables.currentEpochNumber();
 
         uint256[] memory trancheDesiredRatios = new uint256[](3);
         trancheDesiredRatios[0] = 20_00;
@@ -483,7 +483,7 @@ contract ClearingTest is LendingPoolTestUtils {
         skip(6 days);
         userManager.batchCalculateUserLoyaltyLevels(30);
 
-        uint256 currentEpoch1 = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch1 = systemVariables.currentEpochNumber();
 
         // ### ACT ###
         uint256[] memory trancheDesiredRatios = new uint256[](3);
@@ -759,7 +759,7 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 aliceDepositId = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[2], 10_000 * 1e6);
         _requestDeposit(bob, lpd.lendingPool, lpd.tranches[2], 20_000 * 1e6);
 
-        uint256 nextClearingEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 nextClearingEpoch = systemVariables.currentEpochNumber();
         assertEq(clearingCoordinator.nextLendingPoolClearingEpoch(lpd.lendingPool), nextClearingEpoch);
 
         uint256[] memory trancheDesiredRatios = new uint256[](3);
@@ -1026,7 +1026,7 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 bobDeposit = 1000_000001;
         _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], bobDeposit);
 
-        uint256 nextClearingEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 nextClearingEpoch = systemVariables.currentEpochNumber();
 
         skip(6 days);
 
@@ -1045,40 +1045,40 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // assert alice
         uint256 aliceAccepted = aliceDeposit * drawAmount / (aliceDeposit + bobDeposit);
-        assertApproxEqAbs(lendingPool.getUserBalance(alice), aliceAccepted, 3);
+        assertApproxEqAbs(lendingPool.userBalance(alice), aliceAccepted, 3);
 
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(alice),
+            ILendingPoolTranche(lpd.tranches[0]).userActiveAssets(alice),
             aliceAccepted * poolConfig.tranches[0].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[1]).getUserActiveAssets(alice),
+            ILendingPoolTranche(lpd.tranches[1]).userActiveAssets(alice),
             aliceAccepted * poolConfig.tranches[1].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[2]).getUserActiveAssets(alice),
+            ILendingPoolTranche(lpd.tranches[2]).userActiveAssets(alice),
             aliceAccepted * poolConfig.tranches[2].ratio / FULL_PERCENT,
             1
         );
 
         // assert bob
         uint256 bobAccepted = bobDeposit * drawAmount / (aliceDeposit + bobDeposit);
-        assertApproxEqAbs(lendingPool.getUserBalance(bob), bobAccepted, 3);
+        assertApproxEqAbs(lendingPool.userBalance(bob), bobAccepted, 3);
 
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(bob),
+            ILendingPoolTranche(lpd.tranches[0]).userActiveAssets(bob),
             bobAccepted * poolConfig.tranches[0].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[1]).getUserActiveAssets(bob),
+            ILendingPoolTranche(lpd.tranches[1]).userActiveAssets(bob),
             bobAccepted * poolConfig.tranches[1].ratio / FULL_PERCENT,
             1
         );
         assertApproxEqAbs(
-            ILendingPoolTranche(lpd.tranches[2]).getUserActiveAssets(bob),
+            ILendingPoolTranche(lpd.tranches[2]).userActiveAssets(bob),
             bobAccepted * poolConfig.tranches[2].ratio / FULL_PERCENT,
             1
         );

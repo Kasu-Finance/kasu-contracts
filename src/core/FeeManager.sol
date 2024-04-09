@@ -56,7 +56,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     function emitFees(uint256 amount) external whenNotPaused {
         _transferAssetsFrom(msg.sender, address(this), amount);
 
-        (uint256 ecosystemFeeRate,) = _systemVariables.getFeeRates();
+        (uint256 ecosystemFeeRate,) = _systemVariables.feeRates();
 
         uint256 ecosystemFeeAmount = ecosystemFeeRate * amount / FULL_PERCENT;
         _approveAsset(address(_ksuLocking), ecosystemFeeAmount);
@@ -73,7 +73,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
      * @dev Only the protocol fee claimer role can call this function.
      */
     function claimProtocolFees() external whenNotPaused onlyRole(ROLE_PROTOCOL_FEE_CLAIMER, msg.sender) {
-        address protocolFeeReceiver = _systemVariables.getProtocolFeeReceiver();
+        address protocolFeeReceiver = _systemVariables.protocolFeeReceiver();
         uint256 totalProtocolFeeAmount_ = totalProtocolFeeAmount;
 
         // Reset the total unclaimed protocol fee amount.

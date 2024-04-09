@@ -15,36 +15,36 @@ struct AcceptedRequestsExecutionEpoch {
 
 abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
-    mapping(uint256 => AcceptedRequestsExecutionEpoch) public acceptedRequestsExecutionPerEpoch;
+    mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
     function _initialiseAcceptedRequests(uint256 targetEpoch) private {
-        if (acceptedRequestsExecutionPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) {
+        if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) {
             revert AcceptedRequestsExecutionAlreadyInitialised(targetEpoch);
         }
 
-        uint256 totalPendingRequests = _getClearingData(targetEpoch).totalPendingRequestsToProcess;
+        uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
 
         if (totalPendingRequests == 0) {
-            acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+            _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
         } else {
             unchecked {
-                acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
+                _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
             }
-            acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
+            _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
         }
     }
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
 
-        if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALISED) {
+        if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALISED) {
             _initialiseAcceptedRequests(targetEpoch);
 
             // if there are no pending requests, we can skip the processing
-            if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
+            if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
                 return;
             }
-        } else if (acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
+        } else if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
             revert AcceptedRequestsExecutionAlreadyProcessed(targetEpoch);
         }
 
@@ -52,7 +52,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             return;
         }
 
-        uint256 nextIndexToProcess = acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
+        uint256 nextIndexToProcess = _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
 
         uint256 endingIndexInclusive;
         if (batchSize <= nextIndexToProcess) {
@@ -61,12 +61,12 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             }
         }
 
-        address[] memory tranches = _getLendingPoolTranches();
+        address[] memory tranches = _lendingPoolTranches();
 
         // internal loop current transaction userRequest
         uint256 i = nextIndexToProcess;
         while (i >= endingIndexInclusive) {
-            uint256 userRequestNftId = _getPendingRequestIdByIndex(i);
+            uint256 userRequestNftId = _pendingRequestIdByIndex(i);
 
             if (UserRequestIds.isDepositNft(userRequestNftId)) {
                 // ### Deposit Requests Processing ###
@@ -75,32 +75,30 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // only consider deposit requests from current and past epochs
                 if (depositNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request deposit will be accepted in different tranches
-                    uint256 requestTrancheIndex = _getTrancheIndex(tranches, depositNftDetails.tranche);
-                    uint256[] memory trancheDepositAcceptedAmounts = _getTranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails
-                        .priority];
+                    uint256 requestTrancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
+                    uint256[] memory trancheDepositAcceptedAmounts =
+                        _tranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails.priority];
 
                     // loop through the target tranches that the deposit request will accepted
                     // accepted tranche index is always same or greater than the request tranche index
 
                     uint256 requestAmountLeft = depositNftDetails.assetAmount;
                     for (
-                        uint256 targetTrancheIndex = requestTrancheIndex;
-                        targetTrancheIndex < trancheDepositAcceptedAmounts.length;
-                        ++targetTrancheIndex
+                        uint256 tartrancheIndex = requestTrancheIndex;
+                        tartrancheIndex < trancheDepositAcceptedAmounts.length;
+                        ++tartrancheIndex
                     ) {
-                        uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[targetTrancheIndex];
+                        uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[tartrancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
-                        uint256 totalTranchePriorityDepositedAmount = _getPendingDeposits(targetEpoch)
+                        uint256 totalTranchePriorityDepositedAmount = _pendingDeposits(targetEpoch)
                             .tranchePriorityDepositsAmounts[requestTrancheIndex][depositNftDetails.priority];
 
                         // calculate the amount that will be accepted in this tranche
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
                             // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
                             _acceptDepositRequest(
-                                userRequestNftId,
-                                _getTranche(tranches, targetTrancheIndex),
-                                depositNftDetails.assetAmount
+                                userRequestNftId, _tranche(tranches, tartrancheIndex), depositNftDetails.assetAmount
                             );
                             requestAmountLeft = 0;
                             break;
@@ -123,7 +121,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             }
 
                             _acceptDepositRequest(
-                                userRequestNftId, _getTranche(tranches, targetTrancheIndex), userAcceptedDepositAmount
+                                userRequestNftId, _tranche(tranches, tartrancheIndex), userAcceptedDepositAmount
                             );
 
                             requestAmountLeft -= userAcceptedDepositAmount;
@@ -142,10 +140,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // only consider withdrawals from current and past epochs
                 if (withdrawalNftDetails.epochId <= targetEpoch) {
                     uint256 totalAcceptedAmount =
-                        _getAcceptedPriorityWithdrawalAmounts(targetEpoch)[withdrawalNftDetails.priority];
+                        _acceptedPriorityWithdrawalAmounts(targetEpoch)[withdrawalNftDetails.priority];
                     if (totalAcceptedAmount > 0) {
                         uint256 totalWithdrawalAmount =
-                            _getPendingWithdrawals(targetEpoch).priorityWithdrawalAmounts[withdrawalNftDetails.priority];
+                            _pendingWithdrawals(targetEpoch).priorityWithdrawalAmounts[withdrawalNftDetails.priority];
 
                         // calculate the amount withdrawn that will be accepted in this tranche
                         if (totalWithdrawalAmount > 0) {
@@ -159,7 +157,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             }
 
             if (i == 0) {
-                acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+                _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
                 break;
             }
 
@@ -168,21 +166,21 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             }
         }
 
-        acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
+        _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
     }
 
-    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) external view returns (TaskStatus) {
-        return acceptedRequestsExecutionPerEpoch[targetEpoch].status;
+    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
+        return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
     //*** Virtual Methods ***/
 
     // ERC721
-    function _getTotalPendingRequests() internal view virtual returns (uint256);
+    function _totalPendingRequests() internal view virtual returns (uint256);
 
-    function _getPendingRequestIdByIndex(uint256 index) internal view virtual returns (uint256);
+    function _pendingRequestIdByIndex(uint256 index) internal view virtual returns (uint256);
 
-    function _getPendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
+    function _pendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
 
     // Pending Pool
 
@@ -198,11 +196,11 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         virtual
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function _getLendingPoolTranches() internal view virtual returns (address[] memory);
+    function _lendingPoolTranches() internal view virtual returns (address[] memory);
 
-    function _getTrancheIndex(address[] memory tranches, address tranche) internal view virtual returns (uint256);
+    function _lendingPoolTranches(address[] memory tranches, address tranche) internal view virtual returns (uint256);
 
-    function _getTranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
+    function _tranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
     function _acceptDepositRequest(uint256 dNftID, address tranche, uint256 acceptedAmount) internal virtual;
 
@@ -211,15 +209,15 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal virtual;
 
     // Clearing Steps
-    function _getPendingDeposits(uint256 epoch) internal view virtual returns (PendingDeposits memory);
+    function _pendingDeposits(uint256 epoch) internal view virtual returns (PendingDeposits memory);
 
-    function _getPendingWithdrawals(uint256 epoch) internal view virtual returns (PendingWithdrawals memory);
+    function _pendingWithdrawals(uint256 epoch) internal view virtual returns (PendingWithdrawals memory);
 
-    function _getTranchePriorityDepositsAccepted(uint256 epoch) internal view virtual returns (uint256[][][] memory);
+    function _tranchePriorityDepositsAccepted(uint256 epoch) internal view virtual returns (uint256[][][] memory);
 
-    function _getAcceptedPriorityWithdrawalAmounts(uint256 epoch) internal view virtual returns (uint256[] memory);
+    function _acceptedPriorityWithdrawalAmounts(uint256 epoch) internal view virtual returns (uint256[] memory);
 
-    function _getClearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
+    function _clearingDataStorage(uint256 epoch) internal view virtual returns (ClearingData storage);
 
     function _onlyClearingCoordinator() internal view virtual;
 }

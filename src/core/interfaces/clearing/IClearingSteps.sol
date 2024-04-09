@@ -15,9 +15,9 @@ interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedReques
 
     // Getters
 
-    function getPendingDeposits(uint256 epoch) external view returns (PendingDeposits memory);
+    function pendingDeposits(uint256 epoch) external view returns (PendingDeposits memory);
 
-    function getPendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory);
+    function pendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory);
 
     function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory);
 

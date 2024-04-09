@@ -21,17 +21,17 @@ import "../../shared/AddressLib.sol";
  */
 contract LendingPoolFactory is ILendingPoolFactory {
     /// @notice Pending pool beacon address.
-    address public immutable pendingPoolBeacon;
+    address private immutable _pendingPoolBeacon;
     /// @notice Lending pool beacon address.
-    address public immutable lendingPoolBeacon;
+    address private immutable _lendingPoolBeacon;
     /// @notice Lending pool tranche beacon address.
-    address public immutable lendingPoolTrancheBeacon;
+    address private immutable _lendingPoolTrancheBeacon;
     /// @notice Kasu controller contract.
-    IKasuController public immutable kasuController;
+    IKasuController private immutable _kasuController;
     /// @notice Lending pool manager contract.
-    address public immutable lendingPoolManager;
+    address private immutable _lendingPoolManager;
     /// @notice System variables contract.
-    ISystemVariables public immutable systemVariables;
+    ISystemVariables private immutable _systemVariables;
 
     /**
      * @notice Constructor.
@@ -57,12 +57,12 @@ contract LendingPoolFactory is ILendingPoolFactory {
         AddressLib.checkIfZero(lendingPoolManager_);
         AddressLib.checkIfZero(address(systemVariables_));
 
-        pendingPoolBeacon = pendingPoolBeacon_;
-        lendingPoolBeacon = lendingPoolBeacon_;
-        lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
-        kasuController = kasuController_;
-        lendingPoolManager = lendingPoolManager_;
-        systemVariables = systemVariables_;
+        _pendingPoolBeacon = pendingPoolBeacon_;
+        _lendingPoolBeacon = lendingPoolBeacon_;
+        _lendingPoolTrancheBeacon = lendingPoolTrancheBeacon_;
+        _kasuController = kasuController_;
+        _lendingPoolManager = lendingPoolManager_;
+        _systemVariables = systemVariables_;
     }
 
     /**
@@ -74,14 +74,14 @@ contract LendingPoolFactory is ILendingPoolFactory {
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        if (msg.sender != lendingPoolManager) {
+        if (msg.sender != _lendingPoolManager) {
             revert ILendingPoolErrors.OnlyLendingPoolManager();
         }
 
         AddressLib.checkIfZero(createPoolConfig.poolAdmin);
 
         // deploy lending pool
-        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(lendingPoolBeacon, "");
+        BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(_lendingPoolBeacon, "");
         LendingPool lendingPool = LendingPool(address(lendingPoolBeaconProxy));
         lendingPoolDeployment.lendingPool = address(lendingPoolBeaconProxy);
 
@@ -96,7 +96,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         }
 
         // deploy pending pool
-        BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(pendingPoolBeacon, "");
+        BeaconProxy pendingPoolBeaconProxy = new BeaconProxy(_pendingPoolBeacon, "");
         PendingPool pendingPool = PendingPool(address(pendingPoolBeaconProxy));
         lendingPoolDeployment.pendingPool = address(pendingPool);
 
@@ -108,11 +108,11 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         // initialize pending pool
         (string memory pendingPoolName, string memory pendingPoolSymbol) =
-            _getPendingPoolName(createPoolConfig.poolName, createPoolConfig.poolSymbol);
+            _pendingPoolName(createPoolConfig.poolName, createPoolConfig.poolSymbol);
         pendingPool.initialize(pendingPoolName, pendingPoolSymbol, lendingPool);
 
         // set pool admin
-        kasuController.grantLendingPoolRole(
+        _kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_ADMIN, createPoolConfig.poolAdmin
         );
 
@@ -126,28 +126,28 @@ contract LendingPoolFactory is ILendingPoolFactory {
         uint256 trancheCount,
         ILendingPool lendingPool
     ) internal returns (address) {
-        BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(lendingPoolTrancheBeacon, "");
+        BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(_lendingPoolTrancheBeacon, "");
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
 
         (string memory fullTrancheName, string memory fullTrancheSymbol) =
-            _getTrancheName(poolName, poolSymbol, trancheIndex, trancheCount);
+            _trancheName(poolName, poolSymbol, trancheIndex, trancheCount);
 
         lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
 
         return address(lendingPoolTranche);
     }
 
-    function _getTrancheName(
+    function _trancheName(
         string memory lendingPoolName,
         string memory lendingPoolSymbol,
         uint256 trancheIndex,
         uint256 trancheCount
     ) internal view returns (string memory, string memory) {
-        if (trancheCount < systemVariables.minTrancheCountPerLendingPool()) {
+        if (trancheCount < _systemVariables.minTrancheCountPerLendingPool()) {
             revert ILendingPool.PoolConfigurationIsIncorrect("tranche count less than minimum");
         }
 
-        if (trancheCount > systemVariables.maxTrancheCountPerLendingPool()) {
+        if (trancheCount > _systemVariables.maxTrancheCountPerLendingPool()) {
             revert ILendingPool.PoolConfigurationIsIncorrect("tranche count more than maximum");
         }
 
@@ -159,15 +159,15 @@ contract LendingPoolFactory is ILendingPoolFactory {
             revert InvalidConfiguration();
         }
 
-        TrancheInfo memory trancheInfo = systemVariables.getTrancheInfo(trancheIndex);
+        TrancheInfo memory trancheNameInfo = _systemVariables.trancheNameInfo(trancheIndex);
 
         return (
-            string.concat(lendingPoolName, " - ", trancheInfo.trancheName),
-            string.concat(trancheInfo.tokenSymbol, "_", lendingPoolSymbol)
+            string.concat(lendingPoolName, " - ", trancheNameInfo.trancheName),
+            string.concat(trancheNameInfo.tokenSymbol, "_", lendingPoolSymbol)
         );
     }
 
-    function _getPendingPoolName(string memory poolName, string memory lendingPoolSymbol)
+    function _pendingPoolName(string memory poolName, string memory lendingPoolSymbol)
         internal
         pure
         returns (string memory, string memory)

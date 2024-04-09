@@ -27,7 +27,7 @@ abstract contract LendingPoolTrancheLoss is
 
     /// @notice Loss id that is pending for user tokens to be minted.
     /// @dev If 0 then no loss is pending.
-    uint256 public pendingMintLossId;
+    uint256 private _pendingMintLossId;
 
     /// @dev Loss details for each loss.
     mapping(uint256 lossId => LossDetails lossDetails) private _lossDetails;
@@ -39,18 +39,18 @@ abstract contract LendingPoolTrancheLoss is
         __ERC1155_init("");
     }
 
-    function _getUsers() internal view virtual returns (address[] storage users);
+    function _trancheUsersStorage() internal view virtual returns (address[] storage);
 
-    function _getUserActiveTrancheBalance(address user) internal view virtual returns (uint256);
+    function _userActiveTrancheBalance(address user) internal view virtual returns (uint256);
 
-    function _getMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
+    function _calculateMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
 
     /**
      * @notice Gets the loss details for the id.
      * @param lossId The id of the loss.
      * @return lossDetails The loss details.
      */
-    function getLossDetails(uint256 lossId) external view override returns (LossDetails memory) {
+    function lossDetails(uint256 lossId) external view override returns (LossDetails memory) {
         return _lossDetails[lossId];
     }
 
@@ -59,7 +59,7 @@ abstract contract LendingPoolTrancheLoss is
      * @return True if there is a pending loss mint.
      */
     function isPendingLossMint() public view returns (bool) {
-        return pendingMintLossId > 0;
+        return _pendingMintLossId > 0;
     }
 
     /**
@@ -75,7 +75,7 @@ abstract contract LendingPoolTrancheLoss is
         notPendingLossMint
         returns (uint256 lossApplied)
     {
-        uint256 maxLossAmount = _getMaximumLossAmount();
+        uint256 maxLossAmount = _calculateMaximumLossAmount();
 
         if (lossAmount > 0 && maxLossAmount > 0) {
             // check if total assets can cover the loss
@@ -87,7 +87,7 @@ abstract contract LendingPoolTrancheLoss is
     }
 
     function _registerLoss(uint256 lossId, uint256 lossAmount, uint256 batchSize) internal {
-        address[] storage users = _getUsers();
+        address[] storage users = _trancheUsersStorage();
         uint256 usersCount = users.length;
 
         _lossDetails[lossId] = LossDetails(lossAmount, usersCount, 0, 0, 0);
@@ -95,7 +95,7 @@ abstract contract LendingPoolTrancheLoss is
         emit LossRegistered(lossId, lossAmount, usersCount);
 
         if (usersCount > 0) {
-            pendingMintLossId = lossId;
+            _pendingMintLossId = lossId;
 
             if (batchSize > 0) {
                 _batchMintLossTokens(lossId, batchSize);
@@ -113,8 +113,8 @@ abstract contract LendingPoolTrancheLoss is
      * @param batchSize The amount of users to mint tokens to. If the value is more than remaining users, mint to all remaining users.
      */
     function batchMintLossTokens(uint256 lossId, uint256 batchSize) external {
-        if (pendingMintLossId != lossId || lossId == 0) {
-            revert LossMintingNotYetComplete(pendingMintLossId);
+        if (_pendingMintLossId != lossId || lossId == 0) {
+            revert LossMintingNotYetComplete(_pendingMintLossId);
         }
 
         _batchMintLossTokens(lossId, batchSize);
@@ -132,13 +132,13 @@ abstract contract LendingPoolTrancheLoss is
             return;
         }
 
-        address[] storage users = _getUsers();
+        address[] storage users = _trancheUsersStorage();
 
         uint256 mintToUserIndex = usersMintedCount + batchSize;
 
         for (uint256 i = usersMintedCount; i < mintToUserIndex; ++i) {
             address user = users[i];
-            uint256 userLossShares = _getUserActiveTrancheBalance(user);
+            uint256 userLossShares = _userActiveTrancheBalance(user);
             _mintUserLossTokens(user, lossId, userLossShares);
         }
 
@@ -147,7 +147,7 @@ abstract contract LendingPoolTrancheLoss is
         emit MintedLossTokensToUsers(lossId, batchSize);
 
         if (_isLossMintingComplete(lossId)) {
-            pendingMintLossId = 0;
+            _pendingMintLossId = 0;
             emit LossMintingComplete(lossId);
         }
     }
@@ -183,7 +183,7 @@ abstract contract LendingPoolTrancheLoss is
      * @param lossId The id of the loss.
      * @return claimableAmount The claimable loss amount.
      */
-    function getUserClaimableLoss(address user, uint256 lossId) public view returns (uint256 claimableAmount) {
+    function userClaimableLoss(address user, uint256 lossId) public view returns (uint256 claimableAmount) {
         if (!_isLossMintingComplete(lossId)) {
             revert LossMintingNotYetComplete(lossId);
         }
@@ -205,7 +205,7 @@ abstract contract LendingPoolTrancheLoss is
         onlyOwnLendingPool
         returns (uint256 claimedAmount)
     {
-        claimedAmount = getUserClaimableLoss(user, lossId);
+        claimedAmount = userClaimableLoss(user, lossId);
         userClaimedLosses[user][lossId] += claimedAmount;
 
         _transferAssets(user, claimedAmount);
@@ -274,7 +274,7 @@ abstract contract LendingPoolTrancheLoss is
 
     modifier notPendingLossMint() {
         if (isPendingLossMint()) {
-            revert LossMintingInProgress(pendingMintLossId);
+            revert LossMintingInProgress(_pendingMintLossId);
         }
         _;
     }

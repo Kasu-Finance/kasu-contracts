@@ -19,7 +19,7 @@ import "./LendingPoolHelpers.sol";
  */
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
     /// @dev User active shares. This includes user pending withdrawal shares.
-    mapping(address user => uint256 activeShares) private _userActiveShares;
+    mapping(address user => uint256 activeShares) public _userActiveShares;
     /// @dev Index of a user in the _trancheUsers array.
     mapping(address user => uint256 index) private _userArrayIndex;
     /// @dev Array of users with active tranche shares.
@@ -134,15 +134,15 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @param user The address of the user.
      * @return userActiveAssets The active assets of the user.
      */
-    function getUserActiveAssets(address user) external view returns (uint256 userActiveAssets) {
-        userActiveAssets = convertToAssets(_userActiveShares[user]);
+    function userActiveAssets(address user) external view returns (uint256) {
+        return convertToAssets(_userActiveShares[user]);
     }
 
-    function _getUsers() internal view override returns (address[] storage users) {
+    function _trancheUsersStorage() internal view override returns (address[] storage) {
         return _trancheUsers;
     }
 
-    function _getUserActiveTrancheBalance(address user) internal view override returns (uint256) {
+    function _userActiveTrancheBalance(address user) internal view override returns (uint256) {
         return _userActiveShares[user];
     }
 
@@ -150,11 +150,11 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @notice Returns the maximum amount of assets that can be reported as a loss.
      * @return maxLossAmount The maximum amount of assets that can be reported as a loss.
      */
-    function getMaximumLossAmount() public view returns (uint256 maxLossAmount) {
-        return _getMaximumLossAmount();
+    function calculateMaximumLossAmount() public view returns (uint256) {
+        return _calculateMaximumLossAmount();
     }
 
-    function _getMaximumLossAmount() internal view override returns (uint256 maxLossAmount) {
+    function _calculateMaximumLossAmount() internal view override returns (uint256 maxLossAmount) {
         uint256 totalAssets_ = totalAssets();
 
         if (totalAssets_ > minimumAssetAmountLeftAfterLoss) {
@@ -203,8 +203,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @dev Allows all spending for the lending pool and the pending pool.
      */
     function _spendAllowance(address owner, address spender, uint256 value) internal override {
-        if (spender == _getPendingPool()) return;
-        if (spender == address(_getOwnLendingPool())) return;
+        if (spender == _pendingPool()) return;
+        if (spender == address(_ownLendingPool())) return;
         super._spendAllowance(owner, spender, value);
     }
 
@@ -234,7 +234,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     // MODIFIERS
 
     modifier onlyPendingPool() {
-        if (msg.sender != _getPendingPool()) {
+        if (msg.sender != _pendingPool()) {
             revert NonTransferable();
         }
         _;

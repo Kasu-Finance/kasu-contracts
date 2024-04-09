@@ -12,12 +12,12 @@ import "../../shared/AddressLib.sol";
  * @notice Helper contract for lending pool contracts.
  */
 abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
-    ILendingPoolManager public immutable lendingPoolManager;
+    ILendingPoolManager private immutable __lendingPoolManager;
     ILendingPool private _lendingPool;
 
     constructor(ILendingPoolManager lendingPoolManager_) {
         AddressLib.checkIfZero(address(lendingPoolManager_));
-        lendingPoolManager = lendingPoolManager_;
+        __lendingPoolManager = lendingPoolManager_;
         _disableInitializers();
     }
 
@@ -26,16 +26,16 @@ abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
         _lendingPool = lendingPool_;
     }
 
-    function _getOwnLendingPool() internal view returns (ILendingPool) {
+    function _ownLendingPool() internal view returns (ILendingPool) {
         return _lendingPool;
     }
 
-    function _getLendingPoolManager() internal view returns (address) {
-        return address(lendingPoolManager);
+    function _lendingPoolManager() internal view returns (address) {
+        return address(__lendingPoolManager);
     }
 
-    function _getPendingPool() internal view returns (address) {
-        return _lendingPool.getPendingPool();
+    function _pendingPool() internal view returns (address) {
+        return _lendingPool.pendingPool();
     }
 
     function _onlyOwnLendingPool() internal view {
@@ -45,7 +45,7 @@ abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
     }
 
     function _onlyLendingPoolManager() internal view {
-        if (msg.sender != _getLendingPoolManager()) {
+        if (msg.sender != _lendingPoolManager()) {
             revert OnlyLendingPoolManager();
         }
     }

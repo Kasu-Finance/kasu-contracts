@@ -30,7 +30,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
     /// @dev Lending pool clearing data per epoch.
-    mapping(uint256 => ClearingData) internal _clearingDataPerEpoch;
+    mapping(uint256 => ClearingData) private _clearingDataPerEpoch;
 
     /**
      * @notice Constructor.
@@ -52,8 +52,8 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @param epoch Epoch number.
      * @return Pending deposit amounts.
      */
-    function getPendingDeposits(uint256 epoch) external view returns (PendingDeposits memory) {
-        return _getPendingDeposits(epoch);
+    function pendingDeposits(uint256 epoch) external view returns (PendingDeposits memory) {
+        return _pendingDeposits(epoch);
     }
 
     /**
@@ -61,8 +61,8 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @param epoch Epoch number.
      * @return Pending withdrawal amounts.
      */
-    function getPendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory) {
-        return _getPendingWithdrawals(epoch);
+    function pendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory) {
+        return _pendingWithdrawals(epoch);
     }
 
     /**
@@ -72,7 +72,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @return Accepted withdrawal amounts.
      */
     function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory) {
-        return (_getTranchePriorityDepositsAccepted(epoch), _getAcceptedPriorityWithdrawalAmounts(epoch));
+        return (_tranchePriorityDepositsAccepted(epoch), _acceptedPriorityWithdrawalAmounts(epoch));
     }
 
     /**
@@ -92,8 +92,8 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         ClearingInput memory input = ClearingInput({
             config: config,
             balance: balance,
-            pendingDeposits: _getPendingDeposits(targetEpoch),
-            pendingWithdrawals: _getPendingWithdrawals(targetEpoch)
+            pendingDeposits: _pendingDeposits(targetEpoch),
+            pendingWithdrawals: _pendingWithdrawals(targetEpoch)
         });
 
         (
@@ -104,19 +104,19 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
 
     //*** Virtual Methods ***/
 
-    function _getPendingDeposits(uint256 epoch) internal view override returns (PendingDeposits memory) {
+    function _pendingDeposits(uint256 epoch) internal view override returns (PendingDeposits memory) {
         return _clearingDataPerEpoch[epoch].pendingDeposits;
     }
 
-    function _getPendingWithdrawals(uint256 epoch) internal view override returns (PendingWithdrawals memory) {
+    function _pendingWithdrawals(uint256 epoch) internal view override returns (PendingWithdrawals memory) {
         return _clearingDataPerEpoch[epoch].pendingWithdrawals;
     }
 
-    function _getTranchePriorityDepositsAccepted(uint256 epoch) internal view override returns (uint256[][][] memory) {
+    function _tranchePriorityDepositsAccepted(uint256 epoch) internal view override returns (uint256[][][] memory) {
         return _clearingDataPerEpoch[epoch].tranchePriorityDepositsAccepted;
     }
 
-    function _getAcceptedPriorityWithdrawalAmounts(uint256 epoch) internal view override returns (uint256[] memory) {
+    function _acceptedPriorityWithdrawalAmounts(uint256 epoch) internal view override returns (uint256[] memory) {
         return _clearingDataPerEpoch[epoch].acceptedPriorityWithdrawalAmounts;
     }
 
@@ -125,7 +125,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @param epoch Epoch number.
      * @return Clearing data storage.
      */
-    function _getClearingData(uint256 epoch)
+    function _clearingDataStorage(uint256 epoch)
         internal
         view
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
@@ -136,9 +136,9 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
 
     /**
      * @notice Get the index of the tranche in the lending pool tranches array.
-     * @dev To get tranches array, use _getLendingPoolTranches() function.
+     * @dev To get tranches array, use _lendingPoolTranches() function.
      */
-    function _getTrancheIndex(address[] memory tranches, address tranche)
+    function _lendingPoolTranches(address[] memory tranches, address tranche)
         internal
         pure
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
@@ -165,9 +165,9 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
 
     /**
      * @notice Get the tranche address by index.
-     * @dev To get tranches array, use _getLendingPoolTranches() function.
+     * @dev To get tranches array, use _lendingPoolTranches() function.
      */
-    function _getTranche(address[] memory tranches, uint256 index)
+    function _tranche(address[] memory tranches, uint256 index)
         internal
         pure
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
@@ -179,21 +179,21 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     //*** Common Virtual Methods ***/
 
     // ERC721Enumerable
-    function _getPendingRequestIdByIndex(uint256 index)
+    function _pendingRequestIdByIndex(uint256 index)
         internal
         view
         virtual
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (uint256);
 
-    function _getTotalPendingRequests()
+    function _totalPendingRequests()
         internal
         view
         virtual
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (uint256);
 
-    function _getPendingRequestOwner(uint256 tokenId)
+    function _pendingRequestOwner(uint256 tokenId)
         internal
         view
         virtual
@@ -216,7 +216,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function _getLendingPoolTranches()
+    function _lendingPoolTranches()
         internal
         view
         virtual

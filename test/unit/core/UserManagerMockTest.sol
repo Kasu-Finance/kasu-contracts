@@ -52,7 +52,7 @@ contract UserManagerMockTest is BaseTestUtils {
 
         vm.mockCall(
             address(systemVariables),
-            abi.encodeWithSelector(ISystemVariables.getCurrentEpochNumber.selector),
+            abi.encodeWithSelector(ISystemVariables.currentEpochNumber.selector),
             abi.encode(0)
         );
 
@@ -90,22 +90,22 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool2);
 
         // ASSERT
-        address[] memory lendingPools = userManager.getUserLendingPools(alice);
+        address[] memory lendingPools = userManager.userLendingPools(alice);
         assertEq(lendingPools.length, 2);
         assertEq(lendingPools[0], lendingPool1);
         assertEq(lendingPools[1], lendingPool2);
     }
 
-    function test_getUserLoyaltyLevel_defaultState_shouldReturnZero() public {
+    function test_userLoyaltyLevel_defaultState_shouldReturnZero() public {
         // ACT
-        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
+        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
 
         // ASSERT
         assertEq(currentEpoch, 0);
         assertEq(loyaltyLevel, 0);
     }
 
-    function test_getUserLoyaltyLevel1() public {
+    function test_userLoyaltyLevel1() public {
         // ARRANGE
         uint256 aliceAvailableBalance = 850 * 1e6;
         uint256 alicePendingDeposit = 150 * 1e6;
@@ -117,7 +117,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
 
         // ACT
-        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
+        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
 
         // ASSERT
         // 1000 USDC deposits
@@ -128,7 +128,7 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(loyaltyLevel, 1);
     }
 
-    function test_getUserLoyaltyLevel2() public {
+    function test_userLoyaltyLevel2() public {
         // ARRANGE
         uint256 aliceAvailableBalance = 850 * 1e6;
         uint256 alicePendingDeposit = 150 * 1e6;
@@ -140,7 +140,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
 
         // ACT
-        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
+        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
 
         // ASSERT
         // 1000 USDC deposits
@@ -166,7 +166,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool2);
 
         uint256 expectedLoyaltyLevel = 2;
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = systemVariables.currentEpochNumber();
 
         vm.mockCall(
             address(systemVariables), abi.encodeWithSelector(ISystemVariables.isClearingTime.selector), abi.encode(true)
@@ -189,20 +189,20 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool2);
         _userRequestedDeposit(alice, lendingPool3);
         _userRequestedDeposit(alice, lendingPool4);
-        address[] memory allUsersBefore = userManager.getAllUsers();
+        address[] memory allUsersBefore = userManager.allUsers();
         assertEq(allUsersBefore.length, 1);
 
-        address[] memory userLendingPoolBefore = userManager.getUserLendingPools(alice);
+        address[] memory userLendingPoolBefore = userManager.userLendingPools(alice);
         assertEq(userLendingPoolBefore.length, 4);
 
         // ACT
         userManager.updateUserLendingPools(0, 0);
 
         // ASSERT
-        address[] memory allUsers = userManager.getAllUsers();
+        address[] memory allUsers = userManager.allUsers();
         assertEq(allUsers.length, 0);
 
-        address[] memory userLendingPool = userManager.getUserLendingPools(alice);
+        address[] memory userLendingPool = userManager.userLendingPools(alice);
         assertEq(userLendingPool.length, 0);
     }
 
@@ -211,14 +211,14 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
         _userRequestedDeposit(bob, lendingPool1);
         _userRequestedDeposit(carol, lendingPool1);
-        address[] memory allUsersBefore = userManager.getAllUsers();
+        address[] memory allUsersBefore = userManager.allUsers();
         assertEq(allUsersBefore.length, 3);
 
         // ACT
         userManager.updateUserLendingPools(0, 2);
 
         // ASSERT
-        address[] memory allUsers = userManager.getAllUsers();
+        address[] memory allUsers = userManager.allUsers();
         assertEq(allUsers.length, 0);
     }
 
@@ -248,27 +248,27 @@ contract UserManagerMockTest is BaseTestUtils {
         userManager.updateUserLendingPools(0, 2);
 
         // ASSERT
-        address[] memory allUsers = userManager.getAllUsers();
+        address[] memory allUsers = userManager.allUsers();
         assertEq(allUsers.length, 2);
         assertEq(allUsers[0], david);
         assertEq(allUsers[1], bob);
 
-        address[] memory userLendingPools = userManager.getUserLendingPools(alice);
+        address[] memory userLendingPools = userManager.userLendingPools(alice);
         assertEq(userLendingPools.length, 0);
 
-        userLendingPools = userManager.getUserLendingPools(bob);
+        userLendingPools = userManager.userLendingPools(bob);
         assertEq(userLendingPools.length, 1);
         assertEq(userLendingPools[0], lendingPool1);
 
-        userLendingPools = userManager.getUserLendingPools(carol);
+        userLendingPools = userManager.userLendingPools(carol);
         assertEq(userLendingPools.length, 0);
 
-        userLendingPools = userManager.getUserLendingPools(david);
+        userLendingPools = userManager.userLendingPools(david);
         assertEq(userLendingPools.length, 2);
         assertEq(userLendingPools[0], lendingPool3);
         assertEq(userLendingPools[1], lendingPool2);
 
-        userLendingPools = userManager.getUserLendingPools(user5);
+        userLendingPools = userManager.userLendingPools(user5);
         assertEq(userLendingPools.length, 0);
     }
 
@@ -301,16 +301,16 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function _mockDefaultLendingPool(address lendingPool, address pendingPool) internal {
         vm.mockCall(
-            address(lendingPool), abi.encodeWithSelector(ILendingPool.getUserBalance.selector), abi.encode(uint256(0))
+            address(lendingPool), abi.encodeWithSelector(ILendingPool.userBalance.selector), abi.encode(uint256(0))
         );
 
         vm.mockCall(
-            address(lendingPool), abi.encodeWithSelector(ILendingPool.getPendingPool.selector), abi.encode(pendingPool)
+            address(lendingPool), abi.encodeWithSelector(ILendingPool.pendingPool.selector), abi.encode(pendingPool)
         );
 
         vm.mockCall(
             address(pendingPool),
-            abi.encodeWithSelector(IPendingPool.getUserPendingDepositAmount.selector),
+            abi.encodeWithSelector(IPendingPool.userPendingDepositAmount.selector),
             abi.encode(uint256(0))
         );
     }
@@ -322,15 +322,15 @@ contract UserManagerMockTest is BaseTestUtils {
         uint256 pendingDeposit
     ) internal {
         vm.mockCall(
-            address(lendingPool), abi.encodeCall(ILendingPool.getUserBalance, (user)), abi.encode(userAvailableBalance)
+            address(lendingPool), abi.encodeCall(ILendingPool.userBalance, (user)), abi.encode(userAvailableBalance)
         );
 
-        address pendingPool = ILendingPool(lendingPool).getPendingPool();
-        uint256 epochId = systemVariables.getCurrentEpochNumber() + 1;
+        address pendingPool = ILendingPool(lendingPool).pendingPool();
+        uint256 epochId = systemVariables.currentEpochNumber() + 1;
 
         vm.mockCall(
             address(pendingPool),
-            abi.encodeCall(IPendingPool.getUserPendingDepositAmount, (user, epochId)),
+            abi.encodeCall(IPendingPool.userPendingDepositAmount, (user, epochId)),
             abi.encode(pendingDeposit)
         );
     }

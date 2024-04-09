@@ -506,7 +506,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 140 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(poolFundsManagerAccount), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
-        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 200 * 10 ** 6);
+        assertEq(ILendingPool(lpd.lendingPool).userOwedAmount(), 200 * 10 ** 6);
     }
 
     function test_repayOwedFunds_noFees() public {
@@ -547,7 +547,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), 190 * 10 ** 6);
-        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 100 * 10 ** 6);
+        assertEq(ILendingPool(lpd.lendingPool).userOwedAmount(), 100 * 10 ** 6);
         assertEq(mockUsdc.balanceOf(poolFundsManagerAccount), 200 * 10 ** 6);
         assertEq(ILendingPool(lpd.lendingPool).totalSupply(), lendingPoolTokenTotalSupplyBefore);
     }
@@ -567,9 +567,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         ILendingPool(lpd.lendingPool).applyInterests(0);
 
         // should be 100450000
-        uint256 userOwedAmount = ILendingPool(lpd.lendingPool).getUserOwedAmount();
+        uint256 userOwedAmount = ILendingPool(lpd.lendingPool).userOwedAmount();
         // should be 50000
-        uint256 feesOwedAmount = ILendingPool(lpd.lendingPool).getFeesOwedAmount();
+        uint256 feesOwedAmount = ILendingPool(lpd.lendingPool).feesOwedAmount();
 
         uint256 usdcBefore = mockUsdc.balanceOf(lpd.lendingPool);
 
@@ -578,8 +578,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore);
-        assertApproxEqAbs(ILendingPool(lpd.lendingPool).getFeesOwedAmount(), feesOwedAmount / 2, 1);
-        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), userOwedAmount);
+        assertApproxEqAbs(ILendingPool(lpd.lendingPool).feesOwedAmount(), feesOwedAmount / 2, 1);
+        assertEq(ILendingPool(lpd.lendingPool).userOwedAmount(), userOwedAmount);
 
         // ### ACT ###
         _repayOwedFunds(
@@ -588,21 +588,21 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore + userOwedAmount / 2, 1);
-        assertEq(ILendingPool(lpd.lendingPool).getFeesOwedAmount(), 0);
-        assertApproxEqAbs(ILendingPool(lpd.lendingPool).getUserOwedAmount(), userOwedAmount / 2, 1);
+        assertEq(ILendingPool(lpd.lendingPool).feesOwedAmount(), 0);
+        assertApproxEqAbs(ILendingPool(lpd.lendingPool).userOwedAmount(), userOwedAmount / 2, 1);
 
         // ### ACT ###
         _repayOwedFunds(
             poolFundsManagerAccount,
             poolFundsManagerAccount,
             lpd.lendingPool,
-            ILendingPool(lpd.lendingPool).getUserOwedAmount()
+            ILendingPool(lpd.lendingPool).userOwedAmount()
         );
 
         // ### ASSERT ###
         assertEq(mockUsdc.balanceOf(lpd.lendingPool), usdcBefore + userOwedAmount);
-        assertEq(ILendingPool(lpd.lendingPool).getFeesOwedAmount(), 0);
-        assertEq(ILendingPool(lpd.lendingPool).getUserOwedAmount(), 0);
+        assertEq(ILendingPool(lpd.lendingPool).feesOwedAmount(), 0);
+        assertEq(ILendingPool(lpd.lendingPool).userOwedAmount(), 0);
     }
 
     function test_forceImmediateWithdrawal() public {
@@ -774,8 +774,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId_bob, requestDepositAmount_bob);
 
         // ### ACT ###
-        uint256 userAvailableBalance_alice = ILendingPool(lpd.lendingPool).getUserBalance(alice);
-        uint256 userAvailableBalance_bob = ILendingPool(lpd.lendingPool).getUserBalance(bob);
+        uint256 userAvailableBalance_alice = ILendingPool(lpd.lendingPool).userBalance(alice);
+        uint256 userAvailableBalance_bob = ILendingPool(lpd.lendingPool).userBalance(bob);
 
         // ### ASSERT ###
         assertEq(
@@ -785,7 +785,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(userAvailableBalance_bob, requestDepositAmount_bob);
     }
 
-    function test_getUserPendingDepositAmount() public {
+    function test_userPendingDepositAmount() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -808,10 +808,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ACT ###
         skip(6 days + 1);
-        uint256 epochId = systemVariables.getCurrentEpochNumber();
-        uint256 userPendingDepositBalance_alice =
-            IPendingPool(lpd.pendingPool).getUserPendingDepositAmount(alice, epochId);
-        uint256 userPendingDepositBalance_bob = IPendingPool(lpd.pendingPool).getUserPendingDepositAmount(bob, epochId);
+        uint256 epochId = systemVariables.currentEpochNumber();
+        uint256 userPendingDepositBalance_alice = IPendingPool(lpd.pendingPool).userPendingDepositAmount(alice, epochId);
+        uint256 userPendingDepositBalance_bob = IPendingPool(lpd.pendingPool).userPendingDepositAmount(bob, epochId);
 
         // ### ASSERT ###
         assertEq(userPendingDepositBalance_alice, requestDepositAmount_alice1 + requestDepositAmount_alice2);

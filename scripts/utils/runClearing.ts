@@ -66,7 +66,7 @@ export async function runClearing(
 
     // overwrite clearing config - optional
     const currentEpochNumber =
-        await systemVariablesTestable.getCurrentEpochNumber();
+        await systemVariablesTestable.currentEpochNumber();
 
     const clearingConfiguration: ClearingConfigurationStruct = {
         drawAmount: drawAmount,
