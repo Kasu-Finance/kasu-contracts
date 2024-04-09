@@ -90,9 +90,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
      */
     function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
-        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).getAvailableFunds();
+        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
 
-        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).getPendingPool());
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
         uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
 
         return lendingPoolAvailableFunds + pendingDepositAmount;

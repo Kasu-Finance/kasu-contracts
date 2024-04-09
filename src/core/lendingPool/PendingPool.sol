@@ -169,7 +169,7 @@ contract PendingPool is
      * @return The total pending deposit amount for the current epoch.
      */
     function getPendingDepositAmountForCurrentEpoch() external view returns (uint256) {
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
         return totalPendingDepositAmount - _totalEpochPendingDepositAmount[currentEpoch + 1];
     }
 
@@ -194,7 +194,6 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
-        ILendingPool lendingPool = _ownLendingPool();
 
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
