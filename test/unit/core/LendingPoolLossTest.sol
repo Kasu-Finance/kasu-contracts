@@ -66,7 +66,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         // assert tranche loss
         assertTrue(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isLossMintingComplete(1));
-        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).getLossDetails(1);
+        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).lossDetails(1);
         assertEq(lossDetails.lossAmount, totalUserDeposits / 2);
         assertEq(lossDetails.usersCount, 3);
     }
@@ -114,19 +114,19 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         // assert tranche loss
         assertTrue(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isLossMintingComplete(1));
-        LossDetails memory lossDetails0 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(1);
+        LossDetails memory lossDetails0 = LendingPoolTranche(lpd.tranches[0]).lossDetails(1);
         assertEq(lossDetails0.lossAmount, trancheDeposits0 - minimumAssetAmountLeftAfterLoss);
         assertEq(lossDetails0.usersCount, 3);
 
         assertTrue(LendingPoolTranche(lpd.tranches[1]).isPendingLossMint());
         assertFalse(LendingPoolTranche(lpd.tranches[1]).isLossMintingComplete(1));
-        LossDetails memory lossDetails1 = LendingPoolTranche(lpd.tranches[1]).getLossDetails(1);
+        LossDetails memory lossDetails1 = LendingPoolTranche(lpd.tranches[1]).lossDetails(1);
         assertEq(lossDetails1.lossAmount, trancheDeposits1 - minimumAssetAmountLeftAfterLoss);
         assertEq(lossDetails1.usersCount, 4);
 
         assertTrue(LendingPoolTranche(lpd.tranches[2]).isPendingLossMint());
         assertFalse(LendingPoolTranche(lpd.tranches[2]).isLossMintingComplete(1));
-        LossDetails memory lossDetails2 = LendingPoolTranche(lpd.tranches[2]).getLossDetails(1);
+        LossDetails memory lossDetails2 = LendingPoolTranche(lpd.tranches[2]).lossDetails(1);
         assertEq(lossDetails2.lossAmount, trancheDeposits2 / 2 + minimumAssetAmountLeftAfterLoss * 2);
         assertEq(lossDetails2.usersCount, 5);
     }
@@ -154,7 +154,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         // ### ASSERT ###
 
         // assert tranche loss
-        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).getLossDetails(trancheLossId);
+        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).lossDetails(trancheLossId);
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
         assertTrue(LendingPoolTranche(lpd.tranches[0]).isLossMintingComplete(trancheLossId));
         assertEq(lossDetails.lossAmount, (totalUserDeposits / 2));
@@ -196,12 +196,12 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         // assert tranche loss after only half users minted
         assertTrue(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isLossMintingComplete(trancheLossId));
-        LossDetails memory lossDetailsPartial = LendingPoolTranche(lpd.tranches[0]).getLossDetails(trancheLossId);
+        LossDetails memory lossDetailsPartial = LendingPoolTranche(lpd.tranches[0]).lossDetails(trancheLossId);
         assertEq(lossDetailsPartial.usersMintedCount, 10);
 
         // ### ACT - mint the rest of users ###
         LendingPoolTranche(lpd.tranches[0]).batchMintLossTokens(trancheLossId, 12);
-        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).getLossDetails(trancheLossId);
+        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).lossDetails(trancheLossId);
 
         // ### ASSERT ###
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
@@ -246,17 +246,17 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         {
-            LossDetails memory lossDetails1 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(1);
+            LossDetails memory lossDetails1 = LendingPoolTranche(lpd.tranches[0]).lossDetails(1);
             assertEq(lossDetails1.lossAmount, lossAmount1);
             assertEq(lossDetails1.usersCount, usersCount);
             assertEq(lossDetails1.recoveredAmount, lossAmount1);
 
-            LossDetails memory lossDetails2 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(2);
+            LossDetails memory lossDetails2 = LendingPoolTranche(lpd.tranches[0]).lossDetails(2);
             assertEq(lossDetails2.lossAmount, lossAmount2);
             assertEq(lossDetails2.usersCount, usersCount);
             assertEq(lossDetails2.recoveredAmount, lossAmount2);
 
-            LossDetails memory lossDetails3 = LendingPoolTranche(lpd.tranches[0]).getLossDetails(3);
+            LossDetails memory lossDetails3 = LendingPoolTranche(lpd.tranches[0]).lossDetails(3);
             assertEq(lossDetails3.lossAmount, lossAmount3);
             assertEq(lossDetails3.usersCount, usersCount);
             assertEq(lossDetails3.recoveredAmount, lossAmount3);
@@ -300,7 +300,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, repayAmount);
 
         // ### ASSERT ###
-        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).getLossDetails(lossId);
+        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).lossDetails(lossId);
         assertEq(lossDetails.recoveredAmount, repayAmount);
         assertEq(mockUsdc.balanceOf(lpd.tranches[0]), repayAmount);
     }
