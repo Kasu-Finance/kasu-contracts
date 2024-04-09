@@ -32,13 +32,13 @@ contract LendingPoolManager is
     Initializable
 {
     /// @notice Lending pool factory contract.
-    ILendingPoolFactory private lendingPoolFactory;
+    ILendingPoolFactory private _lendingPoolFactory;
     /// @notice Kasu allow list contract.
-    IKasuAllowList private kasuAllowList;
+    IKasuAllowList private _kasuAllowList;
     /// @notice User manager contract.
-    IUserManager private userManager;
+    IUserManager private _userManager;
     /// @notice Clearing coordinator contract.
-    IClearingCoordinator private clearingCoordinator;
+    IClearingCoordinator private _clearingCoordinator;
 
     /// @notice Lending pool deployment addresses.
     mapping(address => LendingPoolDeployment) public lendingPools;
@@ -76,10 +76,10 @@ contract LendingPoolManager is
         AddressLib.checkIfZero(address(userManager_));
         AddressLib.checkIfZero(address(clearingCoordinator_));
 
-        lendingPoolFactory = lendingPoolFactory_;
-        kasuAllowList = kasuAllowList_;
-        userManager = userManager_;
-        clearingCoordinator = clearingCoordinator_;
+        _lendingPoolFactory = lendingPoolFactory_;
+        _kasuAllowList = kasuAllowList_;
+        _userManager = userManager_;
+        _clearingCoordinator = clearingCoordinator_;
     }
 
     // #### CREATE POOL #### //
@@ -95,13 +95,13 @@ contract LendingPoolManager is
         onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        lendingPoolDeployment = lendingPoolFactory.createPool(createPoolConfig);
+        lendingPoolDeployment = _lendingPoolFactory.createPool(createPoolConfig);
         _registerLendingPool(lendingPoolDeployment);
     }
 
     function _registerLendingPool(LendingPoolDeployment memory lendingPoolDeployment) internal {
         lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
-        clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
+        _clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
     }
 
     // #### USER #### //
@@ -179,7 +179,7 @@ contract LendingPoolManager is
 
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
-        userManager.userRequestedDeposit(msg.sender, lendingPool);
+        _userManager.userRequestedDeposit(msg.sender, lendingPool);
         dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
 
         if (swapTokens.length > 0 || msg.value > 0) {
@@ -366,7 +366,7 @@ contract LendingPoolManager is
         ClearingConfiguration calldata clearingConfigOverride,
         bool isConfigOverridden
     ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
-        clearingCoordinator.doClearing(
+        _clearingCoordinator.doClearing(
             lendingPool,
             targetEpoch,
             priorityCalculationBatchSize,
@@ -613,21 +613,21 @@ contract LendingPoolManager is
     }
 
     modifier isUserNotBlocked(address user) {
-        if (kasuAllowList.blockList(user)) {
+        if (_kasuAllowList.blockList(user)) {
             revert IKasuAllowList.UserBlocked(user);
         }
         _;
     }
 
     modifier isUserAllowed(address user) {
-        if (!kasuAllowList.allowList(user)) {
+        if (!_kasuAllowList.allowList(user)) {
             revert IKasuAllowList.UserNotInAllowList(user);
         }
         _;
     }
 
     modifier isUserKycd(address user, uint256 blockExpiration, bytes calldata signature) {
-        if (!kasuAllowList.verifyUserKyc(user, blockExpiration, signature)) {
+        if (!_kasuAllowList.verifyUserKyc(user, blockExpiration, signature)) {
             revert IKasuAllowList.UserNotKycd(user);
         }
         _;
