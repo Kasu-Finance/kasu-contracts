@@ -674,7 +674,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         firstLossCapital += amount;
 
-        emit FirstLossCapitalAdded(amount, firstLossCapital);
+        emit FirstLossCapitalAdded(amount);
     }
 
     /**
@@ -707,7 +707,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         _transferAssets(withdrawAddress, withdrawAmount);
 
-        emit FirstLossCapitalWithdrawn(withdrawAmount, firstLossCapital);
+        emit FirstLossCapitalWithdrawn(withdrawAmount);
     }
 
     /**
