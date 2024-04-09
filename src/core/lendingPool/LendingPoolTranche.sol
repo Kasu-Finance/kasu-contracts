@@ -204,7 +204,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      */
     function _spendAllowance(address owner, address spender, uint256 value) internal override {
         if (spender == _pendingPool()) return;
-        if (spender == address(_getOwnLendingPool())) return;
+        if (spender == address(_ownLendingPool())) return;
         super._spendAllowance(owner, spender, value);
     }
 

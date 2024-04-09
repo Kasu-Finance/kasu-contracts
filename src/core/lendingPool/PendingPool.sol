@@ -119,7 +119,7 @@ contract PendingPool is
     }
 
     function _setUpTranches() private {
-        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolTranches();
+        address[] memory trancheAddresses = _ownLendingPool().lendingPoolTranches();
         for (uint256 i; i < trancheAddresses.length; ++i) {
             _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);
             _nextTrancheWithdrawalNFTId[trancheAddresses[i]] =
@@ -178,7 +178,7 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
-        ILendingPool lendingPool = _getOwnLendingPool();
+        ILendingPool lendingPool = _ownLendingPool();
 
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
@@ -394,7 +394,7 @@ contract PendingPool is
         uint256 remainingUserShares = IERC20(tranche).balanceOf(user);
         if (remainingUserShares < sharesToWithdraw) {
             revert InsufficientSharesBalance(
-                user, address(_getOwnLendingPool()), tranche, remainingUserShares, sharesToWithdraw
+                user, address(_ownLendingPool()), tranche, remainingUserShares, sharesToWithdraw
             );
         }
 
@@ -447,7 +447,7 @@ contract PendingPool is
             _deleteDNftDetails(user, dNftID);
         }
 
-        ILendingPool lendingPool = _getOwnLendingPool();
+        ILendingPool lendingPool = _ownLendingPool();
 
         _approveAsset(address(lendingPool), acceptedAmount);
 
@@ -497,7 +497,7 @@ contract PendingPool is
 
         (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
 
-        ILendingPool lendingPool = _getOwnLendingPool();
+        ILendingPool lendingPool = _ownLendingPool();
         uint256 assetsWithdrawn = lendingPool.acceptWithdrawal(tranche, user, acceptedShares);
 
         emit WithdrawalRequestAccepted(user, tranche, wNftID, acceptedShares, assetsWithdrawn);
@@ -544,7 +544,7 @@ contract PendingPool is
     }
 
     function _canCancel() private view {
-        if (_clearingCoordinator.isLendingPoolClearingPending(address(_getOwnLendingPool()))) {
+        if (_clearingCoordinator.isLendingPoolClearingPending(address(_ownLendingPool()))) {
             revert CannotCancelRequestIfClearingIsPending();
         }
     }
@@ -566,8 +566,8 @@ contract PendingPool is
     }
 
     function _verifyTranche(address tranche) private view {
-        if (!_getOwnLendingPool().isLendingPoolTranche(tranche)) {
-            revert InvalidTranche(address(_getOwnLendingPool()), tranche);
+        if (!_ownLendingPool().isLendingPoolTranche(tranche)) {
+            revert InvalidTranche(address(_ownLendingPool()), tranche);
         }
     }
 
@@ -592,11 +592,11 @@ contract PendingPool is
     }
 
     function _lendingPoolTranches() internal view override returns (address[] memory) {
-        return _getOwnLendingPool().lendingPoolTranches();
+        return _ownLendingPool().lendingPoolTranches();
     }
 
     function _trancheCount() internal view override returns (uint256) {
-        return _getOwnLendingPool().lendingPoolTrancheCount();
+        return _ownLendingPool().lendingPoolTrancheCount();
     }
 
     function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
@@ -633,7 +633,7 @@ contract PendingPool is
     }
 
     modifier canUserRequestDeposit(address user, address tranche) {
-        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolTranches();
+        address[] memory trancheAddresses = _ownLendingPool().lendingPoolTranches();
         if (trancheAddresses.length <= 1) return;
         if (trancheAddresses[0] == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
