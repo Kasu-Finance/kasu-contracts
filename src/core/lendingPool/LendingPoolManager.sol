@@ -455,15 +455,14 @@ contract LendingPoolManager is
      * @dev
      * Pool Funds Manager must first repay all owed funds before the pool can be stopped.
      * @param lendingPool Address of the lending pool.
-     * @param firstLossCapitalReceiver Address of the first loss capital receiver.
      */
-    function stopLendingPool(address lendingPool, address firstLossCapitalReceiver)
+    function stopLendingPool(address lendingPool)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).stop(firstLossCapitalReceiver);
+        ILendingPool(lendingPool).stop();
     }
 
     // config

@@ -86,7 +86,7 @@ interface ILendingPoolManager {
         external
         returns (uint256[] memory);
 
-    function stopLendingPool(address lendingPool, address firstLossCapitalReceiver) external;
+    function stopLendingPool(address lendingPool) external;
 
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID) external;
 

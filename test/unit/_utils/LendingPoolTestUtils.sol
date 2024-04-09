@@ -361,7 +361,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager.depositFirstLossCapital(lendingPool, amount);
     }
 
-    function _withdrawFirstLossCapital(address caller, address withdrawAddress, address lendingPool, uint256 amount)
+    function _withdrawFirstLossCapital(address caller, address lendingPool, uint256 amount, address withdrawAddress)
         internal
         prank(caller)
     {
@@ -386,8 +386,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         return lendingPoolManager.batchForceWithdrawals(lendingPool, input);
     }
 
-    function _stop(address caller, address lendingPool, address firstLostCapitalReceiver) internal prank(caller) {
-        lendingPoolManager.stopLendingPool(lendingPool, firstLostCapitalReceiver);
+    function _stop(address caller, address lendingPool) internal prank(caller) {
+        lendingPoolManager.stopLendingPool(lendingPool);
     }
 
     function _reportLoss(address caller, address lendingPool, uint256 amount, bool doMintLossTokens)
