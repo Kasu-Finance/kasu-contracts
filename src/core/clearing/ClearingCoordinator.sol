@@ -45,16 +45,16 @@ import "../../shared/AddressLib.sol";
  *   In this case the clearing configuration mush be overriden (to set the valid draw amount) to proceed with the clearing and draw funds.
  */
 contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
-    ISystemVariables public immutable systemVariables;
-    IUserManager public immutable userManager;
+    ISystemVariables private immutable _systemVariables;
+    IUserManager private immutable _userManager;
 
     /// @notice Returns the next clearing epoch that needs to be processed for the lending pool.
     mapping(address lendingPool => uint256 nextClearingEpoch) public nextLendingPoolClearingEpoch;
     /// @notice Returns the status of the clearing process for the lending pool and epoch.
-    mapping(address lendingPool => mapping(uint256 epoch => ClearingStatus)) public lendingPoolClearingStatus;
-    /// @notice Returns the used clearing configuration for the lending pool and epoch.
-    mapping(address lendingPool => mapping(uint256 epoch => AppliedClearingConfiguration)) public
-        clearingConfigPerLendingPoolAndEpoch;
+    mapping(address lendingPool => mapping(uint256 epoch => ClearingStatus)) private _lendingPoolClearingStatus;
+    /// @notice Returns the applied configuration for the clearing task
+    mapping(address lendingPool => mapping(uint256 epoch => AppliedClearingConfiguration)) private
+        _clearingConfigPerLendingPoolAndEpoch;
 
     /**
      * @notice Constructor.
@@ -68,8 +68,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(userManager_));
 
-        systemVariables = systemVariables_;
-        userManager = userManager_;
+        _systemVariables = systemVariables_;
+        _userManager = userManager_;
     }
 
     /**
@@ -80,7 +80,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         AddressLib.checkIfZero(lendingPool);
 
         // sets the next clearing epoch to the current request epoch (if clearing period is active the next epoch is applied)
-        nextLendingPoolClearingEpoch[lendingPool] = systemVariables.getCurrentRequestEpoch();
+        nextLendingPoolClearingEpoch[lendingPool] = _systemVariables.getCurrentRequestEpoch();
     }
 
     /**
@@ -91,14 +91,14 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      */
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending) {
         uint256 nextTargetEpoch = nextLendingPoolClearingEpoch[lendingPool];
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
 
         if (nextTargetEpoch < currentEpoch) {
             // is pending if previous epoch clearing is not yet ended
             isPending = true;
         } else if (nextTargetEpoch == currentEpoch) {
-            if (systemVariables.isClearingTime()) {
-                if (lendingPoolClearingStatus[lendingPool][nextTargetEpoch] != ClearingStatus.ENDED) {
+            if (_systemVariables.isClearingTime()) {
+                if (_lendingPoolClearingStatus[lendingPool][nextTargetEpoch] != ClearingStatus.ENDED) {
                     // is pending if current clearing is not yet ended and it's clearing time
                     isPending = true;
                 }
@@ -124,7 +124,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         ClearingConfiguration calldata clearingConfig,
         bool isConfigOverridden
     ) external onlyLendingPoolManager {
-        ClearingStatus clearingStatus = lendingPoolClearingStatus[lendingPool][targetEpoch];
+        ClearingStatus clearingStatus = _lendingPoolClearingStatus[lendingPool][targetEpoch];
 
         if (clearingStatus == ClearingStatus.ENDED) {
             revert ClearingAlreadyExecuted(targetEpoch);
@@ -141,9 +141,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // check if the clearing for the target epoch is started and if clearing period is already over for the target epoch
         bool isPastClearingTime;
-        uint256 currentEpoch = systemVariables.getCurrentEpochNumber();
+        uint256 currentEpoch = _systemVariables.getCurrentEpochNumber();
         if (targetEpoch == currentEpoch) {
-            if (!systemVariables.isClearingTime()) {
+            if (!_systemVariables.isClearingTime()) {
                 revert TargetEpochClearingNotStarted(targetEpoch);
             }
         } else {
@@ -164,7 +164,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
                 clearingStatus = ClearingStatus.ENDED;
             } else {
                 // if clearing is run before epoch end, check if user loyalty levels are already processed before proceeding
-                bool areUserLoyaltyLevelsProcessed = userManager.areUserEpochLoyaltyLevelProcessed(targetEpoch);
+                bool areUserLoyaltyLevelsProcessed = _userManager.areUserEpochLoyaltyLevelProcessed(targetEpoch);
 
                 if (!areUserLoyaltyLevelsProcessed) {
                     revert UserLoyaltyLevelsNotYetProcessed(targetEpoch);
@@ -201,7 +201,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             }
 
             _clearingSteps.calculateAndSaveAcceptedRequests(
-                getClearingConfig(lendingPool, targetEpoch), _getLendingPoolBalance(lendingPool), targetEpoch
+                _clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config,
+                _lendingPoolBalance(lendingPool),
+                targetEpoch
             );
 
             clearingStatus = ClearingStatus.STEP4_PENDING;
@@ -218,16 +220,16 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         // Step 5 - Draw funds
         if (clearingStatus == ClearingStatus.STEP5_PENDING) {
-            if (clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount > 0) {
+            if (_clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount > 0) {
                 ILendingPool(lendingPool).drawFunds(
-                    clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount
+                    _clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount
                 );
             }
 
             clearingStatus = ClearingStatus.ENDED;
         }
 
-        lendingPoolClearingStatus[lendingPool][targetEpoch] = clearingStatus;
+        _lendingPoolClearingStatus[lendingPool][targetEpoch] = clearingStatus;
 
         if (clearingStatus == ClearingStatus.ENDED) {
             nextLendingPoolClearingEpoch[lendingPool] = targetEpoch + 1;
@@ -237,14 +239,12 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingExecuted(lendingPool, targetEpoch, clearingStatus);
     }
 
-    /**
-     * @notice Returns the applied clearing configuration for the lending pool and epoch.
-     * @param lendingPool Lending pool address.
-     * @param epoch Target epoch.
-     * @return clearingConfig Applied clearing configuration.
-     */
-    function getClearingConfig(address lendingPool, uint256 epoch) public view returns (ClearingConfiguration memory) {
-        return clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch].config;
+    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
+        external
+        view
+        returns (ClearingStatus status)
+    {
+        return _lendingPoolClearingStatus[lendingPool][epoch];
     }
 
     //*** Helper Methods ***/
@@ -260,7 +260,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             );
         }
 
-        if (lendingPoolClearingStatus[lendingPool][targetEpoch] > ClearingStatus.STEP3_PENDING) {
+        if (_lendingPoolClearingStatus[lendingPool][targetEpoch] > ClearingStatus.STEP3_PENDING) {
             revert CannotOverrideClearingConfig(lendingPool, targetEpoch);
         }
 
@@ -268,7 +268,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function _setDefaultClearingConfig(address lendingPool, uint256 epoch) private {
-        ClearingConfiguration memory clearingConfiguration = _getLendingPoolClearingConfig(lendingPool);
+        ClearingConfiguration memory clearingConfiguration = _lendingPoolClearingConfig(lendingPool);
         _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
     }
 
@@ -280,7 +280,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     ) private {
         ILendingPool(lendingPool).verifyClearingConfig(clearingConfig);
 
-        AppliedClearingConfiguration storage appliedConfing = clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch];
+        AppliedClearingConfiguration storage appliedConfing = _clearingConfigPerLendingPoolAndEpoch[lendingPool][epoch];
 
         appliedConfing.config = clearingConfig;
         appliedConfing.isOverridden = isOverridden;
@@ -289,11 +289,11 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingConfigSet(lendingPool, epoch, clearingConfig);
     }
 
-    function _getLendingPoolClearingConfig(address lendingPool) private view returns (ClearingConfiguration memory) {
+    function _lendingPoolClearingConfig(address lendingPool) private view returns (ClearingConfiguration memory) {
         return ILendingPool(lendingPool).getClearingConfig();
     }
 
-    function _getLendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
+    function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).getAvailableFunds();
         uint256 lendingPooluserOwedAmount = ILendingPool(lendingPool).getUserOwedAmount();
 

@@ -76,8 +76,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 if (depositNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request deposit will be accepted in different tranches
                     uint256 requestTrancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
-                    uint256[] memory trancheDepositAcceptedAmounts = _tranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails
-                        .priority];
+                    uint256[] memory trancheDepositAcceptedAmounts =
+                        _tranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails.priority];
 
                     // loop through the target tranches that the deposit request will accepted
                     // accepted tranche index is always same or greater than the request tranche index
@@ -98,9 +98,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
                             // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
                             _acceptDepositRequest(
-                                userRequestNftId,
-                                _tranche(tranches, targetTrancheIndex),
-                                depositNftDetails.assetAmount
+                                userRequestNftId, _tranche(tranches, targetTrancheIndex), depositNftDetails.assetAmount
                             );
                             requestAmountLeft = 0;
                             break;

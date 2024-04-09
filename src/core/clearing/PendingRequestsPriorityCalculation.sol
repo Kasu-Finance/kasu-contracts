@@ -155,8 +155,9 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
                     ++trancheIndex
                 ) {
-                    withdrawalPriorityAmountSum += ILendingPoolTranche(_tranche(tranches, trancheIndex))
-                        .convertToAssets(tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]);
+                    withdrawalPriorityAmountSum += ILendingPoolTranche(_tranche(tranches, trancheIndex)).convertToAssets(
+                        tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
+                    );
                 }
                 clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
                 clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] +=
