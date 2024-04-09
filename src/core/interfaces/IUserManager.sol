@@ -16,10 +16,7 @@ interface IUserManager {
         external
         view
         returns (uint256 activeDepositAmount, uint256 pendingDepositAmount);
-    function calculatedUserEpochLoyaltyLevel(address user, uint256 epoch)
-        external
-        view
-        returns (uint8 loyaltyLevel);
+    function calculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint8 loyaltyLevel);
     function epochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory);
     function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool);
     function batchCalculateUserLoyaltyLevels(uint256 batchSize) external;

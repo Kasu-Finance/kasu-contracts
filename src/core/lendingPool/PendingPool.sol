@@ -194,7 +194,6 @@ contract PendingPool is
         canUserRequestDeposit(user, tranche)
         returns (uint256 dNftID)
     {
-
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
