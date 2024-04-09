@@ -21,13 +21,13 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     uint256 private constant MAX_REWARD_EPOCH_RATE = INTEREST_RATE_FULL_PERCENT / 20; // 5%
 
     /// @notice KSU token price contract.
-    IKsuPrice public immutable ksuPrice;
+    IKsuPrice private immutable _ksuPrice;
 
     /// @notice KSU token contract.
-    IERC20 public immutable ksuToken;
+    IERC20 private immutable _ksuToken;
 
     /// @notice User manager contract.
-    address public userManager;
+    address private _userManager;
 
     /// @notice Flag to enable/disable rewards emission.
     bool public doEmitRewards;
@@ -53,8 +53,8 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         AddressLib.checkIfZero(address(ksuPrice_));
         AddressLib.checkIfZero(address(ksuToken_));
 
-        ksuPrice = ksuPrice_;
-        ksuToken = ksuToken_;
+        _ksuPrice = ksuPrice_;
+        _ksuToken = ksuToken_;
 
         _disableInitializers();
     }
@@ -67,7 +67,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     function initialize(address userManager_, bool doEmitRewards_) external initializer {
         AddressLib.checkIfZero(address(userManager_));
 
-        userManager = userManager_;
+        _userManager = userManager_;
         _setDoEmitRewards(doEmitRewards_);
     }
 
@@ -137,7 +137,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         onlyAdmin
     {
         if (ksuTokenPrice == 0) {
-            ksuTokenPrice = ksuPrice.getKsuTokenPrice();
+            ksuTokenPrice = _ksuPrice.getKsuTokenPrice();
         }
 
         for (uint256 i; i < userRewardInputs.length; ++i) {
@@ -166,11 +166,11 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
             return;
         }
 
-        if (msg.sender != userManager) {
+        if (msg.sender != _userManager) {
             revert OnlyUserManager();
         }
 
-        uint256 ksuTokenPrice = ksuPrice.getKsuTokenPrice();
+        uint256 ksuTokenPrice = _ksuPrice.getKsuTokenPrice();
 
         _emitUserLoyaltyReward(user, epoch, userLoyaltyLevel, amountDeposited, ksuTokenPrice);
     }
@@ -213,7 +213,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
             amount = reward;
         }
 
-        uint256 ksuBalance = ksuToken.balanceOf(address(this));
+        uint256 ksuBalance = _ksuToken.balanceOf(address(this));
 
         if (ksuBalance < amount) {
             amount = ksuBalance;
@@ -227,7 +227,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         totalUnclaimedRewards -= amount;
 
         // transfer reward to user
-        ksuToken.safeTransfer(msg.sender, amount);
+        _ksuToken.safeTransfer(msg.sender, amount);
 
         emit UserRewardClaimed(msg.sender, amount);
     }
