@@ -635,7 +635,7 @@ contract PendingPool is
     }
 
     function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
-        return _userManager.getCalculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
+        return _userManager.calculatedUserEpochLoyaltyLevel(pendingRequestOwner, epoch);
     }
 
     function _loyaltyLevelCount() internal view override returns (uint8) {

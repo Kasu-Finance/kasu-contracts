@@ -8,24 +8,24 @@ struct EpochUserLoyaltyProcessing {
 }
 
 interface IUserManager {
-    function getUserTotalPendingAndActiveDepositedAmount(address user)
+    function userTotalPendingAndActiveDepositedAmount(address user)
         external
         view
         returns (uint256 activeDepositAmount, uint256 pendingDepositAmount);
-    function getUserTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user)
+    function userTotalPendingAndActiveDepositedAmountForCurrentEpoch(address user)
         external
         view
         returns (uint256 activeDepositAmount, uint256 pendingDepositAmount);
-    function getCalculatedUserEpochLoyaltyLevel(address user, uint256 epoch)
+    function calculatedUserEpochLoyaltyLevel(address user, uint256 epoch)
         external
         view
         returns (uint8 loyaltyLevel);
-    function getEpochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory);
+    function epochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory);
     function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool);
     function batchCalculateUserLoyaltyLevels(uint256 batchSize) external;
-    function getUserLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel);
-    function getAllUsers() external view returns (address[] memory);
-    function getUserLendingPools(address user) external returns (address[] memory lendingPools);
+    function userLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel);
+    function allUsers() external view returns (address[] memory);
+    function userLendingPools(address user) external returns (address[] memory lendingPools);
     function hasUserRKSU(address user) external view returns (bool);
     function canUserDepositInJuniorTranche(address user) external view returns (bool);
     function userRequestedDeposit(address user, address lendingPool) external;

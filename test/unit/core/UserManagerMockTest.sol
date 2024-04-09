@@ -90,7 +90,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool2);
 
         // ASSERT
-        address[] memory lendingPools = userManager.getUserLendingPools(alice);
+        address[] memory lendingPools = userManager.userLendingPools(alice);
         assertEq(lendingPools.length, 2);
         assertEq(lendingPools[0], lendingPool1);
         assertEq(lendingPools[1], lendingPool2);
@@ -98,7 +98,7 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function test_userLoyaltyLevel_defaultState_shouldReturnZero() public {
         // ACT
-        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
+        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
 
         // ASSERT
         assertEq(currentEpoch, 0);
@@ -117,7 +117,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
 
         // ACT
-        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
+        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
 
         // ASSERT
         // 1000 USDC deposits
@@ -140,7 +140,7 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
 
         // ACT
-        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.getUserLoyaltyLevel(alice);
+        (uint256 currentEpoch, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
 
         // ASSERT
         // 1000 USDC deposits
@@ -189,20 +189,20 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool2);
         _userRequestedDeposit(alice, lendingPool3);
         _userRequestedDeposit(alice, lendingPool4);
-        address[] memory allUsersBefore = userManager.getAllUsers();
+        address[] memory allUsersBefore = userManager.allUsers();
         assertEq(allUsersBefore.length, 1);
 
-        address[] memory userLendingPoolBefore = userManager.getUserLendingPools(alice);
+        address[] memory userLendingPoolBefore = userManager.userLendingPools(alice);
         assertEq(userLendingPoolBefore.length, 4);
 
         // ACT
         userManager.updateUserLendingPools(0, 0);
 
         // ASSERT
-        address[] memory allUsers = userManager.getAllUsers();
+        address[] memory allUsers = userManager.allUsers();
         assertEq(allUsers.length, 0);
 
-        address[] memory userLendingPool = userManager.getUserLendingPools(alice);
+        address[] memory userLendingPool = userManager.userLendingPools(alice);
         assertEq(userLendingPool.length, 0);
     }
 
@@ -211,14 +211,14 @@ contract UserManagerMockTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
         _userRequestedDeposit(bob, lendingPool1);
         _userRequestedDeposit(carol, lendingPool1);
-        address[] memory allUsersBefore = userManager.getAllUsers();
+        address[] memory allUsersBefore = userManager.allUsers();
         assertEq(allUsersBefore.length, 3);
 
         // ACT
         userManager.updateUserLendingPools(0, 2);
 
         // ASSERT
-        address[] memory allUsers = userManager.getAllUsers();
+        address[] memory allUsers = userManager.allUsers();
         assertEq(allUsers.length, 0);
     }
 
@@ -248,27 +248,27 @@ contract UserManagerMockTest is BaseTestUtils {
         userManager.updateUserLendingPools(0, 2);
 
         // ASSERT
-        address[] memory allUsers = userManager.getAllUsers();
+        address[] memory allUsers = userManager.allUsers();
         assertEq(allUsers.length, 2);
         assertEq(allUsers[0], david);
         assertEq(allUsers[1], bob);
 
-        address[] memory userLendingPools = userManager.getUserLendingPools(alice);
+        address[] memory userLendingPools = userManager.userLendingPools(alice);
         assertEq(userLendingPools.length, 0);
 
-        userLendingPools = userManager.getUserLendingPools(bob);
+        userLendingPools = userManager.userLendingPools(bob);
         assertEq(userLendingPools.length, 1);
         assertEq(userLendingPools[0], lendingPool1);
 
-        userLendingPools = userManager.getUserLendingPools(carol);
+        userLendingPools = userManager.userLendingPools(carol);
         assertEq(userLendingPools.length, 0);
 
-        userLendingPools = userManager.getUserLendingPools(david);
+        userLendingPools = userManager.userLendingPools(david);
         assertEq(userLendingPools.length, 2);
         assertEq(userLendingPools[0], lendingPool3);
         assertEq(userLendingPools[1], lendingPool2);
 
-        userLendingPools = userManager.getUserLendingPools(user5);
+        userLendingPools = userManager.userLendingPools(user5);
         assertEq(userLendingPools.length, 0);
     }
 
