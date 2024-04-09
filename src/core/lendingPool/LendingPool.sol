@@ -513,12 +513,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * The loss amount can't be greater than the user owed amount. If it is, returns the user owed amount.
      * @return maximumLossAmount The maximum loss amount of the lending pool that can be reported.
      */
-    function maximumLossAmount() public view returns (uint256 maximumLossAmount) {
+    function calculateMaximumLossAmount() public view returns (uint256 maximumLossAmount) {
         maximumLossAmount = firstLossCapital;
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
             uint256 trancheMximumLossAmount =
-                ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).maximumLossAmount();
+                ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).calculateMaximumLossAmount();
             maximumLossAmount += trancheMximumLossAmount;
         }
 
@@ -555,7 +555,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
 
         // verify the amount is not greater than maximum loss amount
-        uint256 maxLossAmount = maximumLossAmount();
+        uint256 maxLossAmount = calculateMaximumLossAmount();
         if (lossAmount > maxLossAmount) {
             revert LossAmountCantBeGreaterThanMaxLossAmount(lossAmount, maxLossAmount);
         }

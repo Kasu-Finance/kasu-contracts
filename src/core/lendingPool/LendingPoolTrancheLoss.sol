@@ -39,11 +39,11 @@ abstract contract LendingPoolTrancheLoss is
         __ERC1155_init("");
     }
 
-    function _trancheUsersStorage() internal view virtual returns (address[] storage users);
+    function _trancheUsersStorage() internal view virtual returns (address[] storage);
 
     function _userActiveTrancheBalance(address user) internal view virtual returns (uint256);
 
-    function _maximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
+    function _calculateMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
 
     /**
      * @notice Gets the loss details for the id.
@@ -75,7 +75,7 @@ abstract contract LendingPoolTrancheLoss is
         notPendingLossMint
         returns (uint256 lossApplied)
     {
-        uint256 maxLossAmount = _maximumLossAmount();
+        uint256 maxLossAmount = _calculateMaximumLossAmount();
 
         if (lossAmount > 0 && maxLossAmount > 0) {
             // check if total assets can cover the loss

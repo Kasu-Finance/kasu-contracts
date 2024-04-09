@@ -134,11 +134,11 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @param user The address of the user.
      * @return userActiveAssets The active assets of the user.
      */
-    function userActiveAssets(address user) external view returns (uint256 userActiveAssets) {
-        userActiveAssets = convertToAssets(_userActiveShares[user]);
+    function userActiveAssets(address user) external view returns (uint256) {
+        return convertToAssets(_userActiveShares[user]);
     }
 
-    function _trancheUsersStorage() internal view override returns (address[] storage users) {
+    function _trancheUsersStorage() internal view override returns (address[] storage) {
         return _trancheUsers;
     }
 
@@ -150,11 +150,11 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @notice Returns the maximum amount of assets that can be reported as a loss.
      * @return maxLossAmount The maximum amount of assets that can be reported as a loss.
      */
-    function maximumLossAmount() public view returns (uint256 maxLossAmount) {
-        return _maximumLossAmount();
+    function calculateMaximumLossAmount() public view returns (uint256) {
+        return _calculateMaximumLossAmount();
     }
 
-    function _maximumLossAmount() internal view override returns (uint256 maxLossAmount) {
+    function _calculateMaximumLossAmount() internal view override returns (uint256 maxLossAmount) {
         uint256 totalAssets_ = totalAssets();
 
         if (totalAssets_ > minimumAssetAmountLeftAfterLoss) {

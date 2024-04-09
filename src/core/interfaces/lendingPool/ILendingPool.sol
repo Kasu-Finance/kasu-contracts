@@ -56,7 +56,7 @@ interface ILendingPool is IERC20 {
 
     function availableFunds() external view returns (uint256);
 
-    function maximumLossAmount() external view returns (uint256 maximumLossAmount);
+    function calculateMaximumLossAmount() external view returns (uint256 maximumLossAmount);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
