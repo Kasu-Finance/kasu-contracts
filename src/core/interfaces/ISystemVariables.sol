@@ -33,7 +33,7 @@ interface ISystemVariables {
     function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds) external;
 
     // LENDING POOL
-    function getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
+    function userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
     function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external;
 
     // TRANCHE
@@ -46,13 +46,13 @@ interface ISystemVariables {
     function minTrancheCountPerLendingPool() external view returns (uint256);
     function maxTrancheCountPerLendingPool() external view returns (uint256);
 
-    function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory);
+    function trancheInfo(uint256 index) external view returns (TrancheInfo memory);
 
     // FEES
-    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate);
+    function feeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate);
     function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external;
 
-    function getProtocolFeeReceiver() external view returns (address);
+    function protocolFeeReceiver() external view returns (address);
     function setProtocolFeeReceiver(address receiver) external;
 
     // EVENTS

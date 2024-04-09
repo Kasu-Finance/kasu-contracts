@@ -159,7 +159,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
             revert InvalidConfiguration();
         }
 
-        TrancheInfo memory trancheInfo = _systemVariables.getTrancheInfo(trancheIndex);
+        TrancheInfo memory trancheInfo = _systemVariables.trancheInfo(trancheIndex);
 
         return (
             string.concat(lendingPoolName, " - ", trancheInfo.trancheName),

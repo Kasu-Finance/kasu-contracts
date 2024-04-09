@@ -174,7 +174,7 @@ contract UserManager is IUserManager, Initializable {
      * @return True if the user can deposit in the junior tranche.
      */
     function canUserDepositInJuniorTranche(address user) external view returns (bool) {
-        if (systemVariables.getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU()) {
+        if (systemVariables.userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU()) {
             return hasUserRKSU(user);
         } else {
             return true;

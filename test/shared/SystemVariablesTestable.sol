@@ -48,18 +48,21 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
 
     uint256[] private _loyaltyThresholds;
 
-    bool private _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
+    // @notice Whether users can deposit to junior tranches only when having rKSU.
+    bool public userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
 
-    uint256 private _defaultTrancheInterestChangeEpochDelay;
+    // @notice Default epoch delay when tranche interest rate is changed
+    uint256 public defaultTrancheInterestChangeEpochDelay;
 
-    uint256 private _maxTrancheInterestRate;
+    // @notice The maximum allowed interest rate allowed in tranche
+    uint256 public maxTrancheInterestRate;
 
-    uint256 private _minTrancheCountPerLendingPool;
-    uint256 private _maxTrancheCountPerLendingPool;
+    uint256 public minTrancheCountPerLendingPool;
+    uint256 public maxTrancheCountPerLendingPool;
 
     uint256 private _ecosystemFeeRate;
     uint256 private _protocolFeeRate;
-    address private _protocolFeeReceiver;
+    address public protocolFeeReceiver;
 
     TrancheInfo[] public _trancheInfo;
 
@@ -97,10 +100,10 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
 
         _updateKsuTokenPrice();
 
-        _defaultTrancheInterestChangeEpochDelay = 4;
-        _maxTrancheInterestRate = INTEREST_RATE_FULL_PERCENT / 20; // 5%
-        _minTrancheCountPerLendingPool = 1;
-        _maxTrancheCountPerLendingPool = 3;
+        defaultTrancheInterestChangeEpochDelay = 4;
+        maxTrancheInterestRate = INTEREST_RATE_FULL_PERCENT / 20; // 5%
+        minTrancheCountPerLendingPool = 1;
+        maxTrancheCountPerLendingPool = 3;
 
         _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
         _trancheInfo.push(TrancheInfo("Mezzo Tranche", "MZ"));
@@ -109,7 +112,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         _ecosystemFeeRate = 50_00;
         _protocolFeeRate = 50_00;
 
-        _protocolFeeReceiver = systemVariablesSetup.protocolFeeReceiver;
+        protocolFeeReceiver = systemVariablesSetup.protocolFeeReceiver;
     }
 
     function startClearing() external {
@@ -276,30 +279,14 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     // LENDING POOL
 
     /**
-     * @notice Returns whether users can deposit to junior tranches only when having rKSU.
-     * @return true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
-     */
-    function getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
-        return _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
-    }
-
-    /**
      * @notice Sets whether users are allowed to deposit only when the own rKSU
      * @param value Set to true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around
      */
     function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external onlyAdmin {
-        _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU = value;
+        userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU = value;
     }
 
     // TRANCHE
-
-    /**
-     * @notice Returns default epoch delay when tranche interest rate is changed
-     * @return The default epoch delay when tranche interest rate is changed
-     */
-    function defaultTrancheInterestChangeEpochDelay() external view returns (uint256) {
-        return _defaultTrancheInterestChangeEpochDelay;
-    }
 
     /**
      * @notice Sets default epoch delay when tranche interest rate is changed
@@ -309,15 +296,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         public
         onlyAdmin
     {
-        _defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
-    }
-
-    /**
-     * @notice Returns the maximum allowed interest rate allowed in tranche
-     * @return The maximum interest rate allowed in tranche
-     */
-    function maxTrancheInterestRate() external view returns (uint256) {
-        return _maxTrancheInterestRate;
+        defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
     }
 
     /**
@@ -325,30 +304,14 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @param maxTrancheInterestRate_ maximum allowed interest rate per tranche
      */
     function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public onlyAdmin {
-        _maxTrancheInterestRate = maxTrancheInterestRate_;
-    }
-
-    /**
-     * @notice Returns the minimum tranche count per lending pool
-     * @return The minimum tranche count per lending pool
-     */
-    function minTrancheCountPerLendingPool() external view returns (uint256) {
-        return _minTrancheCountPerLendingPool;
-    }
-
-    /**
-     * @notice Returns the maximum tranche count per lending pool
-     * @return The maximum tranche count per lending pool
-     */
-    function maxTrancheCountPerLendingPool() external view returns (uint256) {
-        return _maxTrancheCountPerLendingPool;
+        maxTrancheInterestRate = maxTrancheInterestRate_;
     }
 
     /**
      * @notice Returns the default names and symbols for tranches
      * @return The default names and symbols for tranches
      */
-    function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
+    function trancheInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheInfo[index];
     }
 
@@ -359,7 +322,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @return ecosystemFeeRate The ecosystem fee rate
      * @return protocolFeeRate The protocol fee rate
      */
-    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
+    function feeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
         return (_ecosystemFeeRate, _protocolFeeRate);
     }
 
@@ -377,14 +340,6 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     }
 
     /**
-     * @notice Returns the protocol fee receiver
-     * @return The protocol fee receiver
-     */
-    function getProtocolFeeReceiver() public view returns (address) {
-        return _protocolFeeReceiver;
-    }
-
-    /**
      * @notice Sets the protocol fee receiver
      * @param receiver The protocol fee receiver
      */
@@ -392,6 +347,6 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         if (receiver == address(0)) {
             revert ConfigurationAddressZero();
         }
-        _protocolFeeReceiver = receiver;
+        protocolFeeReceiver = receiver;
     }
 }

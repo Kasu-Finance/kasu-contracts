@@ -314,7 +314,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns whether users can only deposit to junior tranches only when having rKSU.
      * @return true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around.
      */
-    function getUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
+    function userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool) {
         return _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU;
     }
 
@@ -391,7 +391,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param index The index of the tranche.
      * @return The default name and symbol for tranche.
      */
-    function getTrancheInfo(uint256 index) external view returns (TrancheInfo memory) {
+    function trancheInfo(uint256 index) external view returns (TrancheInfo memory) {
         return _trancheNameInfo[index];
     }
 
@@ -402,7 +402,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return ecosystemFeeRate The ecosystem fee rate.
      * @return protocolFeeRate The protocol fee rate.
      */
-    function getFeeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
+    function feeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate) {
         return (_ecosystemFeeRate, _protocolFeeRate);
     }
 
@@ -430,7 +430,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Returns the protocol fee receiver.
      * @return The protocol fee receiver.
      */
-    function getProtocolFeeReceiver() public view returns (address) {
+    function protocolFeeReceiver() public view returns (address) {
         return _protocolFeeReceiver;
     }
 
