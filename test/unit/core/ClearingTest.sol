@@ -876,9 +876,10 @@ contract ClearingTest is LendingPoolTestUtils {
         lendingPoolManager.cancelDepositRequest(lpd.lendingPool, aliceDepositId);
 
         // should fail as we requested to draw 50k, but there are only 30k deposits
+        uint256 maxDrawAmouunt = clearingCoordinator.getLendingPoolMaxDrawAmount(lpd.lendingPool);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAcceptedRequestsCalculation.DrawAmountExceedsAvailable.selector, 50_000 * 1e6, 30_000 * 1e6
+                IAcceptedRequestsCalculation.DrawAmountExceedsAvailable.selector, 50_000 * 1e6, maxDrawAmouunt
             )
         );
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0, clearingConfiguration, true);

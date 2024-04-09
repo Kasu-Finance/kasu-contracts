@@ -53,6 +53,10 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         view
         returns (uint256 pendingDepositAmount);
 
+    function getPendingDepositAmountForCurrentEpoch() external view returns (uint256);
+
+    function totalPendingDepositAmount() external view returns (uint256);
+
     // #### USER DEPOSITS #### //
     /**
      * @notice Creates a pending deposit for the user. Transfers asset from user to lending pool
