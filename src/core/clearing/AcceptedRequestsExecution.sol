@@ -22,7 +22,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             revert AcceptedRequestsExecutionAlreadyInitialised(targetEpoch);
         }
 
-        uint256 totalPendingRequests = _clearingData(targetEpoch).totalPendingRequestsToProcess;
+        uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
 
         if (totalPendingRequests == 0) {
             _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
@@ -217,7 +217,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
     function _acceptedPriorityWithdrawalAmounts(uint256 epoch) internal view virtual returns (uint256[] memory);
 
-    function _clearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
+    function _clearingDataStorage(uint256 epoch) internal view virtual returns (ClearingData storage);
 
     function _onlyClearingCoordinator() internal view virtual;
 }

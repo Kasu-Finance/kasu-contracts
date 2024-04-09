@@ -80,7 +80,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endIndex = userRequestId + batchSize_;
 
-        ClearingData storage clearingData = _clearingData(targetEpoch);
+        ClearingData storage clearingData = _clearingDataStorage(targetEpoch);
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
@@ -169,7 +169,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     }
 
     function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        return _clearingData(targetEpoch).totalPendingRequestsToProcess
+        return _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
@@ -186,7 +186,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             uint256 trancheCount = _trancheCount();
             uint256 loyaltyLevelsCount = _loyaltyLevelCount();
 
-            ClearingData storage clearingData = _clearingData(targetEpoch);
+            ClearingData storage clearingData = _clearingDataStorage(targetEpoch);
 
             // initialise pending deposits
             clearingData.pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
@@ -209,7 +209,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             }
         }
 
-        _clearingData(targetEpoch).totalPendingRequestsToProcess = _totalPendingRequests();
+        _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess = _totalPendingRequests();
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
@@ -253,7 +253,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     function _setWithdrawalRequestPriority(uint256 wNftId, uint8 priority) internal virtual;
 
     // Clearing Steps
-    function _clearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
+    function _clearingDataStorage(uint256 epoch) internal view virtual returns (ClearingData storage);
 
     function _onlyClearingCoordinator() internal view virtual;
 }

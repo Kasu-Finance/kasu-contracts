@@ -11,15 +11,15 @@ struct LossDetails {
 
 interface ILendingPoolTrancheLoss {
     function minimumAssetAmountLeftAfterLoss() external view returns (uint256);
-    function getLossDetails(uint256 lossId) external view returns (LossDetails memory);
-    function registerTrancheLoss(uint256 lossId, uint256 lossAmoun, bool doMintLossTokenst)
+    function lossDetails(uint256 lossId) external view returns (LossDetails memory);
+    function registerTrancheLoss(uint256 lossId, uint256 lossAmount, bool doMintLossTokens)
         external
         returns (uint256 lossApplied);
     function batchMintLossTokens(uint256 lossId, uint256 batchSize) external;
     function isLossMintingComplete(uint256 lossId) external view returns (bool);
     function repayLoss(uint256 lossId, uint256 amount) external;
 
-    function getUserClaimableLoss(address user, uint256 lossId) external view returns (uint256 claimableAmount);
+    function userClaimableLoss(address user, uint256 lossId) external view returns (uint256 claimableAmount);
     function claimRepaidLoss(address user, uint256 lossId) external returns (uint256 claimedAmount);
 
     event LossRegistered(uint256 indexed lossId, uint256 lossAmount, uint256 usersCount);

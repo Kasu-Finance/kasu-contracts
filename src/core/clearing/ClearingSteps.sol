@@ -125,7 +125,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @param epoch Epoch number.
      * @return Clearing data storage.
      */
-    function _clearingData(uint256 epoch)
+    function _clearingDataStorage(uint256 epoch)
         internal
         view
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
