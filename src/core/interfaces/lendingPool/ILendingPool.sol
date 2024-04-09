@@ -131,9 +131,9 @@ interface ILendingPool is IERC20 {
 
     event LossReported(uint256 amount);
 
-    event FirstLossCapitalAdded(uint256 amountAdded, uint256 newTotalAmount);
+    event FirstLossCapitalAdded(uint256 amountAdded);
 
-    event FirstLossCapitalWithdrawn(uint256 amountWithdrawn, uint256 newTotalAmount);
+    event FirstLossCapitalWithdrawn(uint256 amountWithdrawn);
 
     event UpdatedTrancheInterestRate(address indexed tranche, uint256 indexed applicableEpoch, uint256 newInterestRate);
 
