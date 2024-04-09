@@ -84,11 +84,11 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
                     uint256 requestAmountLeft = depositNftDetails.assetAmount;
                     for (
-                        uint256 targetTrancheIndex = requestTrancheIndex;
-                        targetTrancheIndex < trancheDepositAcceptedAmounts.length;
-                        ++targetTrancheIndex
+                        uint256 tartrancheIndex = requestTrancheIndex;
+                        tartrancheIndex < trancheDepositAcceptedAmounts.length;
+                        ++tartrancheIndex
                     ) {
-                        uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[targetTrancheIndex];
+                        uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[tartrancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
                         uint256 totalTranchePriorityDepositedAmount = _pendingDeposits(targetEpoch)
@@ -98,7 +98,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
                             // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, targetTrancheIndex), depositNftDetails.assetAmount
+                                userRequestNftId, _tranche(tranches, tartrancheIndex), depositNftDetails.assetAmount
                             );
                             requestAmountLeft = 0;
                             break;
@@ -121,7 +121,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             }
 
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, targetTrancheIndex), userAcceptedDepositAmount
+                                userRequestNftId, _tranche(tranches, tartrancheIndex), userAcceptedDepositAmount
                             );
 
                             requestAmountLeft -= userAcceptedDepositAmount;

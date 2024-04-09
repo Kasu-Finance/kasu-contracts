@@ -29,11 +29,11 @@ struct PoolConfiguration {
  * @notice Interface for the LendingPool contract.
  */
 interface ILendingPool is IERC20 {
-    function getPendingPool() external view returns (address);
+    function pendingPool() external view returns (address);
 
-    function getUserBalance(address user) external view returns (uint256);
+    function userBalance(address user) external view returns (uint256);
 
-    function getlendingPoolInfo() external view returns (LendingPoolInfo memory);
+    function getLendingPoolInfo() external view returns (LendingPoolInfo memory);
 
     function poolConfiguration() external view returns (PoolConfiguration memory);
 
@@ -44,19 +44,19 @@ interface ILendingPool is IERC20 {
 
     function isLendingPoolTranche(address tranche) external view returns (bool);
 
-    function getTrancheIndex(address tranche) external view returns (uint256);
+    function trancheIndex(address tranche) external view returns (uint256);
 
-    function getLendingPoolTranches() external view returns (address[] memory);
+    function lendingPoolTranches() external view returns (address[] memory);
 
-    function getLendingPoolTrancheCount() external view returns (uint256);
+    function lendingPoolTrancheCount() external view returns (uint256);
 
-    function getUserOwedAmount() external view returns (uint256);
+    function userOwedAmount() external view returns (uint256);
 
-    function getFeesOwedAmount() external view returns (uint256);
+    function feesOwedAmount() external view returns (uint256);
 
-    function getAvailableFunds() external view returns (uint256);
+    function availableFunds() external view returns (uint256);
 
-    function getMaximumLossAmount() external view returns (uint256 maximumLossAmount);
+    function maximumLossAmount() external view returns (uint256 maximumLossAmount);
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)

@@ -34,8 +34,8 @@ abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
         return address(lendingPoolManager);
     }
 
-    function _getPendingPool() internal view returns (address) {
-        return _lendingPool.getPendingPool();
+    function _pendingPool() internal view returns (address) {
+        return _lendingPool.pendingPool();
     }
 
     function _onlyOwnLendingPool() internal view {

@@ -180,7 +180,7 @@ contract LendingPoolManager is
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
         userManager.userRequestedDeposit(msg.sender, lendingPool);
-        dNftID = _getPendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
+        dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
 
         if (swapTokens.length > 0 || msg.value > 0) {
             _postSwap(swapTokens, address(underlyingAsset));
@@ -197,7 +197,7 @@ contract LendingPoolManager is
         whenNotPaused
         validLendingPool(lendingPool)
     {
-        _getPendingPool(lendingPool).cancelDepositRequest(msg.sender, dNftID);
+        _pendingPool(lendingPool).cancelDepositRequest(msg.sender, dNftID);
     }
 
     /**
@@ -213,7 +213,7 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
         returns (uint256 wNftID)
     {
-        wNftID = _getPendingPool(lendingPool).requestWithdrawal(msg.sender, tranche, amount);
+        wNftID = _pendingPool(lendingPool).requestWithdrawal(msg.sender, tranche, amount);
     }
 
     /**
@@ -226,7 +226,7 @@ contract LendingPoolManager is
         whenNotPaused
         validLendingPool(lendingPool)
     {
-        _getPendingPool(lendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
+        _pendingPool(lendingPool).cancelWithdrawalRequest(msg.sender, wNftID);
     }
 
     /**
@@ -416,7 +416,7 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
         returns (uint256[] memory wNftIDs)
     {
-        wNftIDs = _getPendingPool(lendingPool).batchForceWithdrawals(input);
+        wNftIDs = _pendingPool(lendingPool).batchForceWithdrawals(input);
     }
 
     /**
@@ -430,7 +430,7 @@ contract LendingPoolManager is
         onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        IPendingPool pendingPool = _getPendingPool(lendingPool);
+        IPendingPool pendingPool = _pendingPool(lendingPool);
         address dNftOwner = pendingPool.ownerOf(dNftID);
         pendingPool.cancelDepositRequest(dNftOwner, dNftID);
     }
@@ -447,7 +447,7 @@ contract LendingPoolManager is
         onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        _getPendingPool(lendingPool).forceCancelWithdrawalRequest(wNftID);
+        _pendingPool(lendingPool).forceCancelWithdrawalRequest(wNftID);
     }
 
     /**
@@ -595,7 +595,7 @@ contract LendingPoolManager is
 
     // #### PRIVATE FUNCTIONS #### //
 
-    function _getPendingPool(address lendingPool) private view returns (IPendingPool) {
+    function _pendingPool(address lendingPool) private view returns (IPendingPool) {
         return IPendingPool(lendingPools[lendingPool].pendingPool);
     }
 

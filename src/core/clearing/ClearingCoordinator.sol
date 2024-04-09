@@ -174,7 +174,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             }
         }
 
-        IClearingSteps _clearingSteps = IClearingSteps(ILendingPool(lendingPool).getPendingPool());
+        IClearingSteps _clearingSteps = IClearingSteps(ILendingPool(lendingPool).pendingPool());
 
         // Step 2 - Calculate pending deposit and withdrawal request priorities
         if (clearingStatus == ClearingStatus.STEP2_PENDING) {
@@ -294,8 +294,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
-        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).getAvailableFunds();
-        uint256 lendingPooluserOwedAmount = ILendingPool(lendingPool).getUserOwedAmount();
+        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
+        uint256 lendingPooluserOwedAmount = ILendingPool(lendingPool).userOwedAmount();
 
         return LendingPoolBalance(lendingPoolAvailableFunds, lendingPooluserOwedAmount);
     }

@@ -31,7 +31,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
-        assertEq(LendingPool(lpd.lendingPool).getUserOwedAmount(), 0);
+        assertEq(LendingPool(lpd.lendingPool).userOwedAmount(), 0);
         assertEq(LendingPool(lpd.lendingPool).balanceOf(lpd.lendingPool), 0);
         assertEq(LendingPool(lpd.lendingPool).totalSupply(), 0);
         assertFalse(LendingPoolTranche(lpd.tranches[0]).isPendingLossMint());
@@ -58,7 +58,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         // assert lending pool
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
         uint256 expectedBalanceLeft = firstLossCapitalAmount + totalUserDeposits - lossAmount;
-        assertEq(LendingPool(lpd.lendingPool).getUserOwedAmount(), expectedBalanceLeft);
+        assertEq(LendingPool(lpd.lendingPool).userOwedAmount(), expectedBalanceLeft);
         assertEq(LendingPool(lpd.lendingPool).balanceOf(lpd.lendingPool), 0);
         assertEq(LendingPool(lpd.lendingPool).balanceOf(lpd.tranches[0]), expectedBalanceLeft);
         assertEq(LendingPool(lpd.lendingPool).totalSupply(), expectedBalanceLeft);
@@ -101,7 +101,7 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertEq(LendingPool(lpd.lendingPool).firstLossCapital(), 0);
         uint256 expectedBalanceLeft =
             firstLossCapitalAmount + trancheDeposits0 + trancheDeposits1 + trancheDeposits2 - lossAmount;
-        assertEq(LendingPool(lpd.lendingPool).getUserOwedAmount(), expectedBalanceLeft);
+        assertEq(LendingPool(lpd.lendingPool).userOwedAmount(), expectedBalanceLeft);
         assertEq(LendingPool(lpd.lendingPool).balanceOf(lpd.lendingPool), 0);
         assertEq(LendingPool(lpd.lendingPool).balanceOf(lpd.tranches[0]), minimumAssetAmountLeftAfterLoss);
         assertEq(LendingPool(lpd.lendingPool).balanceOf(lpd.tranches[1]), minimumAssetAmountLeftAfterLoss);

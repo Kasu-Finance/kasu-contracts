@@ -321,10 +321,10 @@ contract UserManager is IUserManager, Initializable {
         view
         returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
     {
-        activeDepositAmount = ILendingPool(lendingPool).getUserBalance(user);
+        activeDepositAmount = ILendingPool(lendingPool).userBalance(user);
 
         // get user pending deposit amount
-        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).getPendingPool());
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
         pendingDepositAmount = pendingPool.getUserPendingDepositAmount(user, epochId);
     }
 

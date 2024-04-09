@@ -108,7 +108,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
 
         // initialize pending pool
         (string memory pendingPoolName, string memory pendingPoolSymbol) =
-            _getPendingPoolName(createPoolConfig.poolName, createPoolConfig.poolSymbol);
+            _pendingPoolName(createPoolConfig.poolName, createPoolConfig.poolSymbol);
         pendingPool.initialize(pendingPoolName, pendingPoolSymbol, lendingPool);
 
         // set pool admin
@@ -167,7 +167,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         );
     }
 
-    function _getPendingPoolName(string memory poolName, string memory lendingPoolSymbol)
+    function _pendingPoolName(string memory poolName, string memory lendingPoolSymbol)
         internal
         pure
         returns (string memory, string memory)

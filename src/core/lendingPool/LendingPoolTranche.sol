@@ -150,11 +150,11 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @notice Returns the maximum amount of assets that can be reported as a loss.
      * @return maxLossAmount The maximum amount of assets that can be reported as a loss.
      */
-    function getMaximumLossAmount() public view returns (uint256 maxLossAmount) {
-        return _getMaximumLossAmount();
+    function maximumLossAmount() public view returns (uint256 maxLossAmount) {
+        return _maximumLossAmount();
     }
 
-    function _getMaximumLossAmount() internal view override returns (uint256 maxLossAmount) {
+    function _maximumLossAmount() internal view override returns (uint256 maxLossAmount) {
         uint256 totalAssets_ = totalAssets();
 
         if (totalAssets_ > minimumAssetAmountLeftAfterLoss) {
@@ -203,7 +203,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @dev Allows all spending for the lending pool and the pending pool.
      */
     function _spendAllowance(address owner, address spender, uint256 value) internal override {
-        if (spender == _getPendingPool()) return;
+        if (spender == _pendingPool()) return;
         if (spender == address(_getOwnLendingPool())) return;
         super._spendAllowance(owner, spender, value);
     }
@@ -234,7 +234,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     // MODIFIERS
 
     modifier onlyPendingPool() {
-        if (msg.sender != _getPendingPool()) {
+        if (msg.sender != _pendingPool()) {
             revert NonTransferable();
         }
         _;

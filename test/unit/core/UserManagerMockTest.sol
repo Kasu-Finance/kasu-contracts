@@ -301,11 +301,11 @@ contract UserManagerMockTest is BaseTestUtils {
 
     function _mockDefaultLendingPool(address lendingPool, address pendingPool) internal {
         vm.mockCall(
-            address(lendingPool), abi.encodeWithSelector(ILendingPool.getUserBalance.selector), abi.encode(uint256(0))
+            address(lendingPool), abi.encodeWithSelector(ILendingPool.userBalance.selector), abi.encode(uint256(0))
         );
 
         vm.mockCall(
-            address(lendingPool), abi.encodeWithSelector(ILendingPool.getPendingPool.selector), abi.encode(pendingPool)
+            address(lendingPool), abi.encodeWithSelector(ILendingPool.pendingPool.selector), abi.encode(pendingPool)
         );
 
         vm.mockCall(
@@ -322,10 +322,10 @@ contract UserManagerMockTest is BaseTestUtils {
         uint256 pendingDeposit
     ) internal {
         vm.mockCall(
-            address(lendingPool), abi.encodeCall(ILendingPool.getUserBalance, (user)), abi.encode(userAvailableBalance)
+            address(lendingPool), abi.encodeCall(ILendingPool.userBalance, (user)), abi.encode(userAvailableBalance)
         );
 
-        address pendingPool = ILendingPool(lendingPool).getPendingPool();
+        address pendingPool = ILendingPool(lendingPool).pendingPool();
         uint256 epochId = systemVariables.getCurrentEpochNumber() + 1;
 
         vm.mockCall(

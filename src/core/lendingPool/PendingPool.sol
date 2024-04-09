@@ -119,7 +119,7 @@ contract PendingPool is
     }
 
     function _setUpTranches() private {
-        address[] memory trancheAddresses = _getOwnLendingPool().getLendingPoolTranches();
+        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolTranches();
         for (uint256 i; i < trancheAddresses.length; ++i) {
             _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);
             _nextTrancheWithdrawalNFTId[trancheAddresses[i]] =
@@ -592,11 +592,11 @@ contract PendingPool is
     }
 
     function _lendingPoolTranches() internal view override returns (address[] memory) {
-        return _getOwnLendingPool().getLendingPoolTranches();
+        return _getOwnLendingPool().lendingPoolTranches();
     }
 
     function _trancheCount() internal view override returns (uint256) {
-        return _getOwnLendingPool().getLendingPoolTrancheCount();
+        return _getOwnLendingPool().lendingPoolTrancheCount();
     }
 
     function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view override returns (uint8) {
@@ -633,7 +633,7 @@ contract PendingPool is
     }
 
     modifier canUserRequestDeposit(address user, address tranche) {
-        address[] memory trancheAddresses = _getOwnLendingPool().getLendingPoolTranches();
+        address[] memory trancheAddresses = _getOwnLendingPool().lendingPoolTranches();
         if (trancheAddresses.length <= 1) return;
         if (trancheAddresses[0] == tranche && !userManager.canUserDepositInJuniorTranche(user)) {
             revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);

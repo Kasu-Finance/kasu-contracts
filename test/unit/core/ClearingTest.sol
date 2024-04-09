@@ -1044,7 +1044,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // assert alice
         uint256 aliceAccepted = aliceDeposit * drawAmount / (aliceDeposit + bobDeposit);
-        assertApproxEqAbs(lendingPool.getUserBalance(alice), aliceAccepted, 3);
+        assertApproxEqAbs(lendingPool.userBalance(alice), aliceAccepted, 3);
 
         assertApproxEqAbs(
             ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(alice),
@@ -1064,7 +1064,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // assert bob
         uint256 bobAccepted = bobDeposit * drawAmount / (aliceDeposit + bobDeposit);
-        assertApproxEqAbs(lendingPool.getUserBalance(bob), bobAccepted, 3);
+        assertApproxEqAbs(lendingPool.userBalance(bob), bobAccepted, 3);
 
         assertApproxEqAbs(
             ILendingPoolTranche(lpd.tranches[0]).getUserActiveAssets(bob),
