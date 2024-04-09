@@ -170,7 +170,7 @@ contract LendingPoolManager is
         if (swapData.length > 0) {
             SwapDepositBag memory swapBag = abi.decode(swapData, (SwapDepositBag));
             swapTokens = swapBag.inTokens;
-            uint256 swappedAmount = _transferAndSwap(swapBag, address(underlyingAsset));
+            uint256 swappedAmount = _transferAndSwap(swapBag, address(_underlyingAsset));
             amount = Math.min(swappedAmount, maxAmount);
         } else {
             amount = maxAmount;
@@ -183,7 +183,7 @@ contract LendingPoolManager is
         dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
 
         if (swapTokens.length > 0 || msg.value > 0) {
-            _postSwap(swapTokens, address(underlyingAsset));
+            _postSwap(swapTokens, address(_underlyingAsset));
         }
     }
 

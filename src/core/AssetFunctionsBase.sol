@@ -12,7 +12,7 @@ abstract contract AssetFunctionsBase {
     using SafeERC20 for IERC20;
 
     /// @notice Underlying asset of the contract.
-    IERC20 public immutable underlyingAsset;
+    IERC20 internal immutable _underlyingAsset;
 
     /**
      * @notice Constructor.
@@ -20,22 +20,22 @@ abstract contract AssetFunctionsBase {
      */
     constructor(address underlyingAsset_) {
         AddressLib.checkIfZero(underlyingAsset_);
-        underlyingAsset = IERC20(underlyingAsset_);
+        _underlyingAsset = IERC20(underlyingAsset_);
     }
 
     function _transferAssets(address recipient, uint256 amount) internal {
-        underlyingAsset.safeTransfer(recipient, amount);
+        _underlyingAsset.safeTransfer(recipient, amount);
     }
 
     function _transferAssetsFrom(address sender, address recipient, uint256 amount) internal {
-        underlyingAsset.safeTransferFrom(sender, recipient, amount);
+        _underlyingAsset.safeTransferFrom(sender, recipient, amount);
     }
 
     function _approveAsset(address recipient, uint256 amount) internal {
-        underlyingAsset.safeIncreaseAllowance(recipient, amount);
+        _underlyingAsset.safeIncreaseAllowance(recipient, amount);
     }
 
     function _myAssetBalance() internal view returns (uint256) {
-        return underlyingAsset.balanceOf(address(this));
+        return _underlyingAsset.balanceOf(address(this));
     }
 }
