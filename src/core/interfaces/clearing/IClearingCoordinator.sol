@@ -31,6 +31,9 @@ interface IClearingCoordinator {
         external
         view
         returns (ClearingStatus status);
+
+    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256 maxDrawAmount);
+
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending);
 
     function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);

@@ -212,6 +212,39 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertFalse(dNftId1_bob == dNftId2_bob);
     }
 
+    function test_getPendingDepositAmountForCurrentEpoch() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 aliceDeposit1 = 100 * 10 ** 6;
+        uint256 dNftId1_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], aliceDeposit1);
+        uint256 aliceDeposit2 = 50 * 10 ** 6;
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[1], aliceDeposit2);
+
+        _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 250 * 10 ** 6);
+        uint256 dNftId2_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[1], 100 * 10 ** 6);
+
+        _cancelDepositRequest(bob, lpd.lendingPool, dNftId2_bob);
+
+        skip(6 days);
+
+        uint256 aliceAccepted = 40 * 10 ** 6;
+        _acceptDepositRequest(lpd.lendingPool, dNftId1_alice, aliceAccepted);
+
+        uint256 carolDeposit = 301 * 10 ** 6;
+        _requestDeposit(carol, lpd.lendingPool, lpd.tranches[1], carolDeposit);
+
+        // ### ACT ###
+        uint256 pendingDepositAmountForCurrentEpoch =
+            IPendingPool(lpd.pendingPool).getPendingDepositAmountForCurrentEpoch();
+        uint256 totalPendingDepositAmount = IPendingPool(lpd.pendingPool).totalPendingDepositAmount();
+
+        // ### ASSERT ###
+        uint256 currentEpochPending = aliceDeposit1 + aliceDeposit2 - aliceAccepted;
+        assertEq(pendingDepositAmountForCurrentEpoch, currentEpochPending);
+        assertEq(totalPendingDepositAmount, currentEpochPending + carolDeposit);
+    }
+
     function test_requestWithdrawal() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
