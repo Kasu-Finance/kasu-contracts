@@ -579,23 +579,23 @@ contract PendingPool is
 
     // OVERRIDES: ClearingSteps
 
-    function _getTotalPendingRequests() internal view override returns (uint256) {
+    function _totalPendingRequests() internal view override returns (uint256) {
         return totalSupply();
     }
 
-    function _getPendingRequestIdByIndex(uint256 index) internal view override returns (uint256) {
+    function _pendingRequestIdByIndex(uint256 index) internal view override returns (uint256) {
         return tokenByIndex(index);
     }
 
-    function _getPendingRequestOwner(uint256 tokenId) internal view override returns (address) {
+    function _pendingRequestOwner(uint256 tokenId) internal view override returns (address) {
         return ownerOf(tokenId);
     }
 
-    function _getLendingPoolTranches() internal view override returns (address[] memory) {
+    function _lendingPoolTranches() internal view override returns (address[] memory) {
         return _getOwnLendingPool().getLendingPoolTranches();
     }
 
-    function _getTrancheCount() internal view override returns (uint256) {
+    function _trancheCount() internal view override returns (uint256) {
         return _getOwnLendingPool().getLendingPoolTrancheCount();
     }
 

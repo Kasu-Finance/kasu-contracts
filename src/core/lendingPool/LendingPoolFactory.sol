@@ -130,14 +130,14 @@ contract LendingPoolFactory is ILendingPoolFactory {
         LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
 
         (string memory fullTrancheName, string memory fullTrancheSymbol) =
-            _getTrancheName(poolName, poolSymbol, trancheIndex, trancheCount);
+            _trancheName(poolName, poolSymbol, trancheIndex, trancheCount);
 
         lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
 
         return address(lendingPoolTranche);
     }
 
-    function _getTrancheName(
+    function _trancheName(
         string memory lendingPoolName,
         string memory lendingPoolSymbol,
         uint256 trancheIndex,

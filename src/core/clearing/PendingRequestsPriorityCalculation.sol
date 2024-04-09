@@ -80,17 +80,17 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
         uint256 endIndex = userRequestId + batchSize_;
 
-        ClearingData storage clearingData = _getClearingData(targetEpoch);
+        ClearingData storage clearingData = _clearingData(targetEpoch);
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
         uint8 loyaltyLevelCount = _getLoyaltyLevelCount();
 
-        address[] memory tranches = _getLendingPoolTranches();
+        address[] memory tranches = _lendingPoolTranches();
 
         for (; userRequestId < endIndex; ++userRequestId) {
-            uint256 userRequestNftId = _getPendingRequestIdByIndex(userRequestId);
-            address pendingRequestOwner = _getPendingRequestOwner(userRequestNftId);
+            uint256 userRequestNftId = _pendingRequestIdByIndex(userRequestId);
+            address pendingRequestOwner = _pendingRequestOwner(userRequestNftId);
 
             if (UserRequestIds.isDepositNft(userRequestNftId)) {
                 // ### Deposit Requests Processing ###
@@ -99,7 +99,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId > targetEpoch) continue;
 
-                uint256 trancheIndex = _getTrancheIndex(tranches, depositNftDetails.tranche);
+                uint256 trancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
 
                 uint8 ownerLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
 
@@ -129,7 +129,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     withdrawLoyaltyLevel = _getUserLoyaltyLevel(pendingRequestOwner, targetEpoch);
                 }
 
-                uint256 trancheIndex = _getTrancheIndex(tranches, withdrawalNftDetails.tranche);
+                uint256 trancheIndex = _lendingPoolTranches(tranches, withdrawalNftDetails.tranche);
                 tempPriorityTrancheWithdrawalShares[withdrawLoyaltyLevel][trancheIndex] +=
                     withdrawalNftDetails.sharesAmount;
 
@@ -155,7 +155,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
                     ++trancheIndex
                 ) {
-                    withdrawalPriorityAmountSum += ILendingPoolTranche(_getTranche(tranches, trancheIndex))
+                    withdrawalPriorityAmountSum += ILendingPoolTranche(_tranche(tranches, trancheIndex))
                         .convertToAssets(tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]);
                 }
                 clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
@@ -168,7 +168,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     }
 
     function getRemainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        return _getClearingData(targetEpoch).totalPendingRequestsToProcess
+        return _clearingData(targetEpoch).totalPendingRequestsToProcess
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
@@ -182,10 +182,10 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) return;
 
         unchecked {
-            uint256 trancheCount = _getTrancheCount();
+            uint256 trancheCount = _trancheCount();
             uint256 loyaltyLevelsCount = _getLoyaltyLevelCount();
 
-            ClearingData storage clearingData = _getClearingData(targetEpoch);
+            ClearingData storage clearingData = _clearingData(targetEpoch);
 
             // initialise pending deposits
             clearingData.pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
@@ -208,18 +208,18 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             }
         }
 
-        _getClearingData(targetEpoch).totalPendingRequestsToProcess = _getTotalPendingRequests();
+        _clearingData(targetEpoch).totalPendingRequestsToProcess = _totalPendingRequests();
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
     //*** Virtual Methods ***/
 
     // ERC721
-    function _getTotalPendingRequests() internal view virtual returns (uint256);
+    function _totalPendingRequests() internal view virtual returns (uint256);
 
-    function _getPendingRequestIdByIndex(uint256 index) internal view virtual returns (uint256);
+    function _pendingRequestIdByIndex(uint256 index) internal view virtual returns (uint256);
 
-    function _getPendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
+    function _pendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
 
     // Pending Pool
 
@@ -235,13 +235,13 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         virtual
         returns (WithdrawalNftDetails memory withdrawalNftDetails);
 
-    function _getLendingPoolTranches() internal view virtual returns (address[] memory);
+    function _lendingPoolTranches() internal view virtual returns (address[] memory);
 
-    function _getTrancheIndex(address[] memory tranches, address tranche) internal view virtual returns (uint256);
+    function _lendingPoolTranches(address[] memory tranches, address tranche) internal view virtual returns (uint256);
 
-    function _getTrancheCount() internal view virtual returns (uint256);
+    function _trancheCount() internal view virtual returns (uint256);
 
-    function _getTranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
+    function _tranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
     function _getUserLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint8);
 
@@ -252,7 +252,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     function _setWithdrawalRequestPriority(uint256 wNftId, uint8 priority) internal virtual;
 
     // Clearing Steps
-    function _getClearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
+    function _clearingData(uint256 epoch) internal view virtual returns (ClearingData storage);
 
     function _onlyClearingCoordinator() internal view virtual;
 }
