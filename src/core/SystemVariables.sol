@@ -50,13 +50,13 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private _firstEpochStartTimestamp;
 
     /// @notice The length of the clearing period.
-    uint256 private _clearingPeriodLength;
+    uint256 public clearingPeriodLength;
 
     /// @notice The epoch number when the price was last updated.
     uint256 private _priceUpdateEpoch;
 
     /// @notice The price of the KSU token for the epoch.
-    uint256 private _ksuTokenPrice;
+    uint256 public ksuEpochTokenPrice;
 
     /// @notice The performance fee percentage.
     uint256 private _performanceFee;
@@ -127,7 +127,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         }
 
         _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
-        _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
+        clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
         _setPerformanceFee(systemVariablesSetup.performanceFee);
         _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
@@ -209,27 +209,10 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return True if the current epoch is in the clearing period, false otherwise.
      */
     function isClearingTime() public view returns (bool) {
-        return getNextEpochStartTimestamp() - block.timestamp <= _clearingPeriodLength;
-    }
-
-    /**
-     * @notice Returns the length of the clearing period.
-     * @return The length of the clearing period.
-     */
-    function clearingPeriodLength() external view returns (uint256) {
-        return _clearingPeriodLength;
+        return getNextEpochStartTimestamp() - block.timestamp <= clearingPeriodLength;
     }
 
     // TOKEN PRICE
-
-    /**
-     * @notice Returns the price of the KSU token for the epoch.
-     * @dev The price is locked for the duration of the epoch.
-     * @return The epoch price of the KSU token.
-     */
-    function ksuEpochTokenPrice() external view returns (uint256) {
-        return _ksuTokenPrice;
-    }
 
     /**
      * @notice Returns the epoch number when the price was last updated.
@@ -251,9 +234,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     function _updateKsuTokenPrice() internal {
         _priceUpdateEpoch = getCurrentEpochNumber();
-        _ksuTokenPrice = ksuPrice.getKsuTokenPrice();
+        ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
 
-        emit KsuTokenPriceUpdated(_priceUpdateEpoch, _ksuTokenPrice);
+        emit KsuTokenPriceUpdated(_priceUpdateEpoch, ksuEpochTokenPrice);
     }
 
     // performance fee
