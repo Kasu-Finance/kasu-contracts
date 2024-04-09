@@ -204,7 +204,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Returns the epoch number when the price was last updated.
      * @return The epoch number when the price was last updated.
      */
-    function getPriceUpdateEpoch() external view returns (uint256) {
+    function priceUpdateEpoch() external view returns (uint256) {
         return _priceUpdateEpoch;
     }
 

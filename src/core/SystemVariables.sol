@@ -53,13 +53,13 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 public clearingPeriodLength;
 
     /// @notice The epoch number when the price was last updated.
-    uint256 private _priceUpdateEpoch;
+    uint256 public priceUpdateEpoch;
 
     /// @notice The price of the KSU token for the epoch.
     uint256 public ksuEpochTokenPrice;
 
     /// @notice The performance fee percentage.
-    uint256 private _performanceFee;
+    uint256 public performanceFee;
 
     /// @notice The loyalty level threshold percentages.
     uint256[] private _loyaltyThresholds;
@@ -215,28 +215,20 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     // TOKEN PRICE
 
     /**
-     * @notice Returns the epoch number when the price was last updated.
-     * @return The epoch number when the price was last updated.
-     */
-    function getPriceUpdateEpoch() external view returns (uint256) {
-        return _priceUpdateEpoch;
-    }
-
-    /**
      * @notice Updates the price of the KSU token at the start of the epoch.
      * @dev This function should be called at the start of each epoch.
      */
     function updateKsuEpochTokenPrice() external {
-        if (getCurrentEpochNumber() > _priceUpdateEpoch) {
+        if (getCurrentEpochNumber() > priceUpdateEpoch) {
             _updateKsuTokenPrice();
         }
     }
 
     function _updateKsuTokenPrice() internal {
-        _priceUpdateEpoch = getCurrentEpochNumber();
+        priceUpdateEpoch = getCurrentEpochNumber();
         ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
 
-        emit KsuTokenPriceUpdated(_priceUpdateEpoch, ksuEpochTokenPrice);
+        emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }
 
     // performance fee
@@ -255,17 +247,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
             revert InvalidConfiguration();
         }
 
-        _performanceFee = performanceFee_;
+        performanceFee = performanceFee_;
 
         emit PerformanceFeeUpdated(performanceFee_);
-    }
-
-    /**
-     * @notice Returns the performance fee.
-     * @return The performance fee.
-     */
-    function performanceFee() external view returns (uint256) {
-        return _performanceFee;
     }
 
     // LOYALTY THRESHOLDS

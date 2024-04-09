@@ -117,15 +117,15 @@ contract SystemVariablesMockTest is BaseTestUtils {
         assertEq(systemVariables.ksuEpochTokenPrice(), newKsuTokenPrice);
     }
 
-    function test_getPriceUpdateEpoch() public {
+    function test_priceUpdateEpoch() public {
         _initalize();
-        assertEq(systemVariables.getPriceUpdateEpoch(), 0);
+        assertEq(systemVariables.priceUpdateEpoch(), 0);
 
         skip(8 days);
-        assertEq(systemVariables.getPriceUpdateEpoch(), 0);
+        assertEq(systemVariables.priceUpdateEpoch(), 0);
 
         systemVariables.updateKsuEpochTokenPrice();
-        assertEq(systemVariables.getPriceUpdateEpoch(), 1);
+        assertEq(systemVariables.priceUpdateEpoch(), 1);
     }
 
     function test_updateKsuEpochTokenPrice() public {
