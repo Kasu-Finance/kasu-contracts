@@ -30,7 +30,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
     /// @dev Lending pool clearing data per epoch.
-    mapping(uint256 => ClearingData) internal _clearingDataPerEpoch;
+    mapping(uint256 => ClearingData) private _clearingDataPerEpoch;
 
     /**
      * @notice Constructor.
@@ -52,7 +52,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @param epoch Epoch number.
      * @return Pending deposit amounts.
      */
-    function getPendingDeposits(uint256 epoch) external view returns (PendingDeposits memory) {
+    function pendingDeposits(uint256 epoch) external view returns (PendingDeposits memory) {
         return _pendingDeposits(epoch);
     }
 
@@ -61,7 +61,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @param epoch Epoch number.
      * @return Pending withdrawal amounts.
      */
-    function getPendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory) {
+    function pendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory) {
         return _pendingWithdrawals(epoch);
     }
 
