@@ -92,7 +92,7 @@ interface IKSULocking is IERC20 {
     /**
      * @notice Returns USDC user reward amount
      */
-    function getRewards(address user) external view returns (uint256);
+    function rewards(address user) external view returns (uint256);
 
     /**
      * @notice Sets the KSU Bonus Tokens contract address

@@ -15,20 +15,20 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     uint256 private constant REWARDS_PRECISION = 1e24;
 
-    address public ksuBonusTokens;
+    address private _ksuBonusTokens;
 
     // ERC20 tokens
-    ERC20Permit public ksuToken;
-    IERC20 public feeToken;
+    ERC20Permit private _ksuToken;
+    IERC20 private _feeToken;
 
     mapping(address => uint256) public userTotalDeposits;
     mapping(address => UserLock[]) private _userLocks;
     mapping(uint256 => LockPeriodDetails) private _lockDetails;
 
     // Global reward attributes
-    uint256 public accumulatedRewardsPerShare;
-    mapping(address => uint256) public rewards;
-    mapping(address => uint256) public rewardDebt;
+    uint256 private _accumulatedRewardsPerShare;
+    mapping(address => uint256) private _rewards;
+    mapping(address => uint256) private _rewardDebt;
 
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
@@ -37,8 +37,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         AddressLib.checkIfZero(address(feeToken_));
 
         _initializeRKSU();
-        ksuToken = ksuToken_;
-        feeToken = feeToken_;
+        _ksuToken = ksuToken_;
+        _feeToken = feeToken_;
     }
 
     /**
@@ -46,7 +46,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      */
     function setKSULockBonus(address ksuBonusTokens_) external whenNotPaused onlyAdmin {
         AddressLib.checkIfZero(ksuBonusTokens_);
-        ksuBonusTokens = ksuBonusTokens_;
+        _ksuBonusTokens = ksuBonusTokens_;
     }
 
     // ### Public Interface ###
@@ -90,7 +90,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         whenNotPaused
         returns (uint256)
     {
-        IERC20Permit(address(ksuToken)).permit(
+        IERC20Permit(address(_ksuToken)).permit(
             msg.sender, address(this), ksuPermit.value, ksuPermit.deadline, ksuPermit.v, ksuPermit.r, ksuPermit.s
         );
 
@@ -120,7 +120,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @dev See {IKSULocking-emitFees}.
      */
     function emitFees(uint256 amount) external whenNotPaused {
-        feeToken.safeTransferFrom(msg.sender, address(this), amount);
+        _feeToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // update reward details
         _updatePoolRewards(amount);
@@ -135,22 +135,22 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     function claimFees() external whenNotPaused returns (uint256 earned) {
         _updateUserRewards(msg.sender);
 
-        earned = rewards[msg.sender];
+        earned = _rewards[msg.sender];
 
-        rewards[msg.sender] = 0;
+        _rewards[msg.sender] = 0;
 
         _updateUserRewardDebt(msg.sender);
 
-        feeToken.safeTransfer(msg.sender, earned);
+        _feeToken.safeTransfer(msg.sender, earned);
 
         emit FeesClaimed(msg.sender, earned);
     }
 
     /**
-     * @dev See {IKSULocking-getRewards}.
+     * @dev See {IKSULocking-rewards}.
      */
-    function getRewards(address user) external view returns (uint256) {
-        return rewards[user] + _getUserRewards(user);
+    function rewards(address user) external view returns (uint256) {
+        return _rewards[user] + _userRewards(user);
     }
 
     /**
@@ -214,7 +214,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _updateUserRewardDebt(user);
 
         // transfer KSU token to receiver
-        ksuToken.safeTransfer(transferTo, withdrawAmount);
+        _ksuToken.safeTransfer(transferTo, withdrawAmount);
 
         return rKSUBurned;
     }
@@ -229,7 +229,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         }
 
         // transfer KSU token from user
-        ksuToken.safeTransferFrom(msg.sender, address(this), amount);
+        _ksuToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // calculate current user rewards
         _updateUserRewards(msg.sender);
@@ -237,7 +237,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // transfer bonus KSU token to user
         uint256 ksuBonusMultiplier = _lockDetails[lockPeriod].ksuBonusMultiplier;
         uint256 ksuCalculatedBonusAmount = amount * ksuBonusMultiplier / FULL_PERCENT;
-        uint256 ksuBonusAmount = _getBonusKSU(ksuCalculatedBonusAmount);
+        uint256 ksuBonusAmount = _bonusKSU(ksuCalculatedBonusAmount);
         uint256 lockAmount = amount + ksuBonusAmount;
 
         // mint rKSU
@@ -262,26 +262,26 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             return;
         }
 
-        accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / totalSupply();
+        _accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / totalSupply();
     }
 
-    function _getUserRewards(address user) private view returns (uint256) {
-        return balanceOf(user) * accumulatedRewardsPerShare / REWARDS_PRECISION - rewardDebt[user];
+    function _userRewards(address user) private view returns (uint256) {
+        return balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
     }
 
     function _updateUserRewards(address user) private {
-        uint256 earned = _getUserRewards(user);
+        uint256 earned = _userRewards(user);
 
-        rewards[user] += earned;
+        _rewards[user] += earned;
     }
 
     function _updateUserRewardDebt(address user) private {
-        rewardDebt[user] = balanceOf(user) * accumulatedRewardsPerShare / REWARDS_PRECISION;
+        _rewardDebt[user] = balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION;
     }
 
-    function _getBonusKSU(uint256 requestedAmount) private returns (uint256 ksuSentAmount) {
-        uint256 bonusAmount = ksuToken.balanceOf(ksuBonusTokens);
-        uint256 bonusAllowance = ksuToken.allowance(ksuBonusTokens, address(this));
+    function _bonusKSU(uint256 requestedAmount) private returns (uint256 ksuSentAmount) {
+        uint256 bonusAmount = _ksuToken.balanceOf(_ksuBonusTokens);
+        uint256 bonusAllowance = _ksuToken.allowance(_ksuBonusTokens, address(this));
 
         if (bonusAmount > bonusAllowance) {
             bonusAmount = bonusAllowance;
@@ -294,7 +294,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         }
 
         if (ksuSentAmount > 0) {
-            ksuToken.safeTransferFrom(ksuBonusTokens, address(this), ksuSentAmount);
+            _ksuToken.safeTransferFrom(_ksuBonusTokens, address(this), ksuSentAmount);
         }
     }
 }

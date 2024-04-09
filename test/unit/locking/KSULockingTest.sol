@@ -294,7 +294,7 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(_KSULocking.balanceOf(bob), 80 ether * lockMultiplier30 / FULL_PERCENT, 1);
     }
 
-    function test_getRewards() public {
+    function test_rewards() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
@@ -315,10 +315,10 @@ contract KSULockingTest is LockingTestUtils {
 
         // ASSERT
         vm.startPrank(alice);
-        assertApproxEqAbs(_KSULocking.getRewards(alice), 25 * 1e6 + 1875 * 1e4, 1);
+        assertApproxEqAbs(_KSULocking.rewards(alice), 25 * 1e6 + 1875 * 1e4, 1);
         vm.stopPrank();
         vm.startPrank(bob);
-        assertApproxEqAbs(_KSULocking.getRewards(bob), 75 * 1e6 + 3125 * 1e4, 1);
+        assertApproxEqAbs(_KSULocking.rewards(bob), 75 * 1e6 + 3125 * 1e4, 1);
         vm.stopPrank();
     }
 
