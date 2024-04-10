@@ -82,6 +82,7 @@ export async function createLendingPool() {
         poolName: 'test lending pool',
         poolSymbol: 'LP',
         targetExcessLiquidityPercentage: BigInt(10_000),
+        minExcessLiquidityPercentage: 0,
         tranches: [
             juniorTrancheConfig,
             mezzoTrancheConfig,

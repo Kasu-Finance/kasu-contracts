@@ -25,6 +25,7 @@ struct CreatePoolConfig {
     string poolName;
     string poolSymbol;
     uint256 targetExcessLiquidityPercentage;
+    uint256 minExcessLiquidityPercentage;
     CreateTrancheConfig[] tranches;
     address poolAdmin;
     address drawRecipient;

@@ -72,13 +72,19 @@ contract LendingPoolFactory is ILendingPoolFactory {
      */
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
+        onlyLendingPoolManager
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
-        if (msg.sender != _lendingPoolManager) {
-            revert ILendingPoolErrors.OnlyLendingPoolManager();
+        // verify pool configuration
+        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
+
+        if (createPoolConfig.tranches.length < _systemVariables.minTrancheCountPerLendingPool()) {
+            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count less than minimum");
         }
 
-        AddressLib.checkIfZero(createPoolConfig.poolAdmin);
+        if (createPoolConfig.tranches.length > _systemVariables.maxTrancheCountPerLendingPool()) {
+            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count more than maximum");
+        }
 
         // deploy lending pool
         BeaconProxy lendingPoolBeaconProxy = new BeaconProxy(_lendingPoolBeacon, "");
@@ -173,5 +179,12 @@ contract LendingPoolFactory is ILendingPoolFactory {
         returns (string memory, string memory)
     {
         return (string.concat(poolName, " - Request NFT"), string.concat(lendingPoolSymbol, "_RQST"));
+    }
+
+    modifier onlyLendingPoolManager() {
+        if (msg.sender != _lendingPoolManager) {
+            revert ILendingPoolErrors.OnlyLendingPoolManager();
+        }
+        _;
     }
 }
