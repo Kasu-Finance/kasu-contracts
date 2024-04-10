@@ -73,10 +73,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _unpause();
     }
 
-    function renounceLendingPoolRole(address lendingPool, bytes32 role)
-        external
-        onlyAdminOrPoolAdmin(lendingPool, msg.sender)
-    {
+    function renounceLendingPoolRole(address lendingPool, bytes32 role) external {
         renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
         emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
     }
@@ -86,7 +83,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
     function _onlyAdminOrVaultAdmin(address lendingPool, address account) private view {
         bytes32 vaultAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);
         if (!hasRole(ROLE_KASU_ADMIN, account) && !hasRole(vaultAdminRole, account)) {
-            revert MissingRole(vaultAdminRole, account);
+            revert IAccessControl.AccessControlUnauthorizedAccount(account, vaultAdminRole);
         }
     }
 
@@ -96,7 +93,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
 
     function _checkRole(bytes32 role, address account) internal view override {
         if (!hasRole(role, account)) {
-            revert MissingRole(role, account);
+            revert IAccessControl.AccessControlUnauthorizedAccount(account, role);
         }
     }
 
