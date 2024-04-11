@@ -13,8 +13,8 @@ import "../../../src/shared/access/KasuController.sol";
 abstract contract LockingTestUtils is BaseTestUtils {
     ERC20Permit internal _ksu;
 
-    KasuController internal _kasuController;
-    KSULocking internal _KSULocking;
+    IKasuController internal _kasuController;
+    IKSULocking internal _KSULocking;
     KSULockBonus internal _KSULockBonus;
 
     uint256 internal lockPeriod30 = 30 days;
@@ -45,12 +45,13 @@ abstract contract LockingTestUtils is BaseTestUtils {
         _kasuController = KasuController(address(kasuControllerProxy));
 
         startHoax(admin);
-        _kasuController.initialize(admin, address(0x1));
+        KasuController(address(_kasuController)).initialize(admin, address(0x1));
 
         TransparentUpgradeableProxy ksuLockingProxy =
             new TransparentUpgradeableProxy(address(new KSULocking(_kasuController)), address(proxyAdmin), "");
         _KSULocking = KSULocking(address(ksuLockingProxy));
-        _KSULocking.initialize(_ksu, mockUsdc);
+
+        KSULocking(address(_KSULocking)).initialize(_ksu, mockUsdc);
 
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
         _KSULocking.addLockPeriod(lockPeriod180, lockMultiplier180, ksuBonusMultiplier180);

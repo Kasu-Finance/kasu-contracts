@@ -25,12 +25,12 @@ import "../../shared/ArraysUtil.sol";
 import {WETH9} from "../../shared/MockWeth.sol";
 
 abstract contract LendingPoolTestUtils is LockingTestUtils {
-    LendingPoolManager internal lendingPoolManager;
-    KasuController internal kasuController;
+    ILendingPoolManager internal lendingPoolManager;
+    IKasuController internal kasuController;
     MockKsuPrice internal ksuPrice;
-    UserLoyaltyRewards internal userLoyaltyRewards;
-    SystemVariables internal systemVariables;
-    UserManager internal userManager;
+    IUserLoyaltyRewards internal userLoyaltyRewards;
+    ISystemVariables internal systemVariables;
+    IUserManager internal userManager;
     IKasuAllowList internal kasuAllowList;
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
@@ -111,7 +111,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
 
-        userLoyaltyRewards.initialize(address(userManager), true);
+        UserLoyaltyRewards(address(userLoyaltyRewards)).initialize(address(userManager), true);
 
         // lending pool manager
         swapper = new Swapper(kasuController);
@@ -121,7 +121,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         TransparentUpgradeableProxy lendingPoolManagerProxy =
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
-        userManager.initialize(address(lendingPoolManager));
+
+        UserManager(address(userManager)).initialize(address(lendingPoolManager));
 
         // clearing
         AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
@@ -170,8 +171,11 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolFactory = LendingPoolFactory(address(lendingPoolFactoryProxy));
 
         // access control - init
-        kasuController.initialize(admin, address(lendingPoolFactory));
-        lendingPoolManager.initialize(lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator);
+        KasuController(address(kasuController)).initialize(admin, address(lendingPoolFactory));
+
+        LendingPoolManager(address(lendingPoolManager)).initialize(
+            lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator
+        );
 
         vm.startPrank(admin);
         kasuController.grantRole(ROLE_SWAPPER, address(lendingPoolManager));
@@ -239,7 +243,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariablesSetup.protocolFeeRate = 50_00;
         systemVariablesSetup.protocolFeeReceiver = feeReceiverAccount;
 
-        systemVariables.initialize(systemVariablesSetup);
+        SystemVariables(address(systemVariables)).initialize(systemVariablesSetup);
     }
 
     function createLendingPool(CreatePoolConfig memory createPoolConfig)
