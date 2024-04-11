@@ -149,21 +149,9 @@ contract LendingPoolFactory is ILendingPoolFactory {
         uint256 trancheIndex,
         uint256 trancheCount
     ) internal view returns (string memory, string memory) {
-        if (trancheCount < _systemVariables.minTrancheCountPerLendingPool()) {
-            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count less than minimum");
-        }
-
-        if (trancheCount > _systemVariables.maxTrancheCountPerLendingPool()) {
-            revert ILendingPool.PoolConfigurationIsIncorrect("tranche count more than maximum");
-        }
-
         uint256 trancheNameIndex = trancheIndex;
         if (trancheCount == 2) trancheNameIndex = trancheIndex + 1;
         if (trancheCount == 3) trancheNameIndex = trancheIndex + 2;
-
-        if (trancheIndex > 3) {
-            revert InvalidConfiguration();
-        }
 
         TrancheInfo memory trancheNameInfo = _systemVariables.trancheNameInfo(trancheIndex);
 
