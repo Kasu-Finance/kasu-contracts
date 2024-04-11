@@ -115,6 +115,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         // setup pool configuration
         _updateTargetExcessLiquidityPercentage(createPoolConfig.targetExcessLiquidityPercentage);
+        _updateMinimumExcessLiquidityPercentage(createPoolConfig.minExcessLiquidityPercentage);
         _updateDrawRecipient(createPoolConfig.drawRecipient);
         _updateTrancheInterestRateChangeEpochDelay(_systemVariables.defaultTrancheInterestChangeEpochDelay());
         _updateDesiredDrawAmount(createPoolConfig.desiredDrawAmount);
@@ -1040,8 +1041,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             }
         }
     }
-
-    // Helper functions
 
     function _trancheConfigurationStorage(address tranche) internal view returns (TrancheConfig storage) {
         return _poolConfiguration.tranches[_trancheIndexUnverified(tranche)];
