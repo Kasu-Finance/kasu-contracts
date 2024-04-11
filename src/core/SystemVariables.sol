@@ -140,9 +140,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
 
-        _trancheNameInfo.push(TrancheInfo("Junior Tranche", "JR"));
-        _trancheNameInfo.push(TrancheInfo("Mezzanine Tranche", "MZ"));
-        _trancheNameInfo.push(TrancheInfo("Senior Tranche", "SR"));
+        _trancheNameInfo.push(TrancheInfo("Junior Tranche", "jr"));
+        _trancheNameInfo.push(TrancheInfo("Mezzanine Tranche", "mz"));
+        _trancheNameInfo.push(TrancheInfo("Senior Tranche", "sr"));
 
         _setFeeRates(systemVariablesSetup.ecosystemFeeRate, systemVariablesSetup.protocolFeeRate);
 
