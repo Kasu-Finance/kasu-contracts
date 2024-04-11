@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import "../shared/access/KasuAccessControllable.sol";
 import "./interfaces/IKasuAllowList.sol";
-import "../../vendor/nexeraID/TxAuthDataVerifierUpgradeable.sol";
+import "NexeraIDSigGatingContracts/TxAuthDataVerifierUpgradeable.sol";
 import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../shared/AddressLib.sol";
 
