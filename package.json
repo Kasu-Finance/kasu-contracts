@@ -8,6 +8,7 @@
         "deploy:local": "hardhat --network localhost deploy --export-all deployments/localhost/export.json",
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
+        "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info -o report",
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",

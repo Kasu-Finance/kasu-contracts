@@ -46,7 +46,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal poolManagerAccount = address(0xad5);
     address internal poolClearingManagerAccount = address(0xad5);
 
-    address internal feeRecieverAccount = address(0xfee);
+    address internal feeReceiverAccount = address(0xfee);
 
     function test_mock() external pure {}
 
@@ -237,7 +237,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
         systemVariablesSetup.ecosystemFeeRate = 50_00;
         systemVariablesSetup.protocolFeeRate = 50_00;
-        systemVariablesSetup.protocolFeeReceiver = feeRecieverAccount;
+        systemVariablesSetup.protocolFeeReceiver = feeReceiverAccount;
 
         systemVariables.initialize(systemVariablesSetup);
     }
@@ -286,9 +286,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
         kasuController.grantLendingPoolRole(lendingPoolDeployment.lendingPool, ROLE_POOL_MANAGER, poolManagerAccount);
-        kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
-        );
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_CLEARING_MANAGER, poolClearingManagerAccount
         );
