@@ -52,18 +52,6 @@ interface IKasuController is IAccessControl {
         view
         returns (bool hasRole);
 
-    /**
-     * @notice Checks if an account is either Kasu admin or admin for a lending pool.
-     * @dev The function reverts if account is neither.
-     * @param lendingPool Address of the lending pool.
-     * @param account to check.
-     */
-    function checkIsAdminOrVaultAdmin(address lendingPool, address account) external view;
-
-    function paused() external view returns (bool);
-
-    function requirePaused() external view;
-
     function requireNotPaused() external view;
 
     /* ========== MUTATIVE FUNCTIONS ========== */

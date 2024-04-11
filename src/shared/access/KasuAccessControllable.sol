@@ -88,17 +88,6 @@ abstract contract KasuAccessControllable {
     }
 
     /**
-     * @notice Only allows accounts that are Kasu admins or admins of a smart vault.
-     * @dev Reverts when the account fails check.
-     * @param lendingPool Address of the smart vault.
-     * @param account Account to check.
-     */
-    modifier onlyAdminOrVaultAdmin(address lendingPool, address account) {
-        controller.checkIsAdminOrVaultAdmin(lendingPool, account);
-        _;
-    }
-
-    /**
      * @notice Only allows function to be called when system is not paused.
      */
     modifier whenNotPaused() {

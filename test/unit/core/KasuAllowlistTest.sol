@@ -7,7 +7,7 @@ import "forge-std/Test.sol";
 import {BaseTestUtils} from "../_utils/BaseTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
 
-contract KasuAllowlistVerifyKycTest is BaseTestUtils {
+contract KasuAllowlistTest is BaseTestUtils {
     address internal _lendingPoolManager = address(0x11);
     uint256 signerPrivateKey = 0xA11CE;
     address signer = vm.addr(signerPrivateKey);
@@ -65,6 +65,12 @@ contract KasuAllowlistVerifyKycTest is BaseTestUtils {
         bytes32 blankHash;
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPrivateKey, blankHash);
         return abi.encodePacked(r, s, v);
+    }
+
+    function test_block() public {
+        // ARRANGE
+        // ACT
+        // ASSERT
     }
 }
 

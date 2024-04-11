@@ -46,7 +46,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     address internal poolManagerAccount = address(0xad5);
     address internal poolClearingManagerAccount = address(0xad5);
 
-    address internal feeRecieverAccount = address(0xfee);
+    address internal feeReceiverAccount = address(0xfee);
 
     function test_mock() external pure {}
 
@@ -237,7 +237,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         systemVariablesSetup.loyaltyThresholds[1] = 3_00;
         systemVariablesSetup.ecosystemFeeRate = 50_00;
         systemVariablesSetup.protocolFeeRate = 50_00;
-        systemVariablesSetup.protocolFeeReceiver = feeRecieverAccount;
+        systemVariablesSetup.protocolFeeReceiver = feeReceiverAccount;
 
         systemVariables.initialize(systemVariablesSetup);
     }
@@ -262,6 +262,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         uint256 minDepositAmount = 10 * 1e6;
         uint256 maxDepositAmount = 1_000_000 * 1e6;
         uint256 targetExcessLiquidityPercentage = 10_00;
+        uint256 minExcessLiquidityPercentage = 0;
         uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](3);
         createTrancheConfig[0] = CreateTrancheConfig(10_00, 2500000000000000, minDepositAmount, maxDepositAmount);
@@ -271,6 +272,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             "Test Lending Pool",
             "TLP",
             targetExcessLiquidityPercentage,
+            minExcessLiquidityPercentage,
             createTrancheConfig,
             lendingPoolAdminAccount,
             poolFundsManagerAccount,
@@ -284,9 +286,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
         kasuController.grantLendingPoolRole(lendingPoolDeployment.lendingPool, ROLE_POOL_MANAGER, poolManagerAccount);
-        kasuController.grantLendingPoolRole(
-            lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
-        );
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_CLEARING_MANAGER, poolClearingManagerAccount
         );

@@ -839,7 +839,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         wrongRatios[1] = 25_00;
         wrongRatios[2] = 50_00;
         vm.expectRevert(
-            abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "invalid tranche ratio sum")
+            abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "Invalid tranche ratio sum")
         );
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongRatios);
 
@@ -943,13 +943,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.prank(admin);
         kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
 
-        uint256 targetExcessLiquidityPercentage = 50_000 * 1e6;
+        uint256 targetExcessLiquidityPercentage = 10_00;
         uint256 desiredDrawAmount = 600_000 * 1e6;
         CreateTrancheConfig[] memory createTrancheConfig = new CreateTrancheConfig[](0);
         CreatePoolConfig memory createPoolConfig = CreatePoolConfig(
             "Test Lending Pool",
             "TLP",
             targetExcessLiquidityPercentage,
+            0,
             createTrancheConfig,
             lendingPoolAdminAccount,
             poolFundsManagerAccount,
@@ -983,6 +984,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
             "Test Lending Pool",
             "TLP",
             targetExcessLiquidityPercentage,
+            0,
             createTrancheConfig,
             lendingPoolAdminAccount,
             poolFundsManagerAccount,

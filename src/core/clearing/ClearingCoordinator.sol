@@ -20,6 +20,7 @@ import "../../shared/AddressLib.sol";
  * 3. Calculate accepted deposit and withdrawal amounts for each tranche and priority.
  * 4. Process accepted deposit and accepted withdrawal requests.
  * 5. Draw funds.
+ * At the end of the clearing lending pool pays owed fees function is triggered to transfer owed fees if available.
  * Clearing is executed for each lending pool separately.
  * Clearing process for a lending pool is executed by calling doClearing function.
  * Clearing must be executed once per epoch for each lending pool to ensure a seamless process.
@@ -247,6 +248,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         _lendingPoolClearingStatus[lendingPool][targetEpoch] = clearingStatus;
 
         if (clearingStatus == ClearingStatus.ENDED) {
+            // pay owed fees for the lending pool if available
+            ILendingPool(lendingPool).payOwedFees();
+
             nextLendingPoolClearingEpoch[lendingPool] = targetEpoch + 1;
         }
 
