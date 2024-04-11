@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../../src/core/interfaces/ISystemVariables.sol";
 import "../../src/core/interfaces/IKsuPrice.sol";
 import "../../src/shared/access/KasuAccessControllable.sol";
