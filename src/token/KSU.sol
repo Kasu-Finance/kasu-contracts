@@ -20,7 +20,7 @@ contract KSU is ERC20PermitUpgradeable {
     /**
      * @dev Destroys a `value` amount of tokens from the caller.
      */
-    function burn(uint256 value) public virtual {
+    function burn(uint256 value) public {
         _burn(_msgSender(), value);
     }
 
@@ -33,7 +33,7 @@ contract KSU is ERC20PermitUpgradeable {
      * - the caller must have allowance for ``accounts``'s tokens of at least
      * `value`.
      */
-    function burnFrom(address account, uint256 value) public virtual {
+    function burnFrom(address account, uint256 value) public {
         _spendAllowance(account, _msgSender(), value);
         _burn(account, value);
     }
