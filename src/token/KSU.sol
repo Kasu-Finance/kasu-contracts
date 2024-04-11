@@ -17,7 +17,6 @@ contract KSU is ERC20PermitUpgradeable {
         _mint(recipient, TOTAL_SUPPLY);
     }
 
-    // TODO: do we need this function ?
     /**
      * @dev Destroys a `value` amount of tokens from the caller.
      */
@@ -25,7 +24,6 @@ contract KSU is ERC20PermitUpgradeable {
         _burn(_msgSender(), value);
     }
 
-    // TODO: do we need this function ?
     /**
      * @dev Destroys a `value` amount of tokens from `account`, deducting from
      * the caller's allowance.
