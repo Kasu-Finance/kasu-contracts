@@ -272,22 +272,12 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         address lendingPool,
         uint256 targetEpoch,
         ClearingConfiguration calldata clearingConfig
-    ) internal onlyLendingPoolManager {
-        if (nextLendingPoolClearingEpoch[lendingPool] != targetEpoch) {
-            revert InvalidClearingTargetEpochForLendingPool(
-                lendingPool, targetEpoch, nextLendingPoolClearingEpoch[lendingPool]
-            );
-        }
-
-        if (_lendingPoolClearingStatus[lendingPool][targetEpoch] > ClearingStatus.STEP3_PENDING) {
-            revert CannotOverrideClearingConfig(lendingPool, targetEpoch);
-        }
-
+    ) private {
         _setClearingConfig(lendingPool, targetEpoch, clearingConfig, true);
     }
 
     function _setDefaultClearingConfig(address lendingPool, uint256 epoch) private {
-        ClearingConfiguration memory clearingConfiguration = _lendingPoolClearingConfig(lendingPool);
+        ClearingConfiguration memory clearingConfiguration = ILendingPool(lendingPool).getClearingConfig();
         _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
     }
 
@@ -306,10 +296,6 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         appliedConfig.isSet = true;
 
         emit ClearingConfigSet(lendingPool, epoch, clearingConfig);
-    }
-
-    function _lendingPoolClearingConfig(address lendingPool) private view returns (ClearingConfiguration memory) {
-        return ILendingPool(lendingPool).getClearingConfig();
     }
 
     function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
