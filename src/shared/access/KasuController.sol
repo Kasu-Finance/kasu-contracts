@@ -31,18 +31,6 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         return hasRole(_getLendingPoolRole(lendingPool, role), account);
     }
 
-    function checkIsAdminOrVaultAdmin(address lendingPool, address account) external view {
-        _onlyAdminOrVaultAdmin(lendingPool, account);
-    }
-
-    function paused() public view override(IKasuController, PausableUpgradeable) returns (bool) {
-        return super.paused();
-    }
-
-    function requirePaused() external view {
-        _requirePaused();
-    }
-
     function requireNotPaused() external view {
         _requireNotPaused();
     }
@@ -65,11 +53,11 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         emit LendingPoolRoleRevoked(lendingPool, role, account);
     }
 
-    function pause() external whenNotPaused checkRole(ROLE_KASU_ADMIN) {
+    function pause() external whenNotPaused onlyRole(ROLE_KASU_ADMIN) {
         _pause();
     }
 
-    function unpause() external whenPaused checkRole(ROLE_KASU_ADMIN) {
+    function unpause() external whenPaused onlyRole(ROLE_KASU_ADMIN) {
         _unpause();
     }
 
@@ -80,10 +68,10 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
 
     /* ========== INTERNAL FUNCTIONS ========== */
 
-    function _onlyAdminOrVaultAdmin(address lendingPool, address account) private view {
-        bytes32 vaultAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);
-        if (!hasRole(ROLE_KASU_ADMIN, account) && !hasRole(vaultAdminRole, account)) {
-            revert IAccessControl.AccessControlUnauthorizedAccount(account, vaultAdminRole);
+    function _onlyAdminOrPoolAdmin(address lendingPool, address account) private view {
+        bytes32 poolAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);
+        if (!hasRole(ROLE_KASU_ADMIN, account) && !hasRole(poolAdminRole, account)) {
+            revert IAccessControl.AccessControlUnauthorizedAccount(account, ROLE_POOL_ADMIN);
         }
     }
 
@@ -91,16 +79,10 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         return keccak256(abi.encode(lendingPool, role));
     }
 
-    function _checkRole(bytes32 role, address account) internal view override {
-        if (!hasRole(role, account)) {
-            revert IAccessControl.AccessControlUnauthorizedAccount(account, role);
-        }
-    }
-
     /* ========== MODIFIERS ========== */
 
     modifier onlyAdminOrPoolAdmin(address lendingPool, address account) {
-        _onlyAdminOrVaultAdmin(lendingPool, account);
+        _onlyAdminOrPoolAdmin(lendingPool, account);
         _;
     }
 
@@ -109,11 +91,6 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         {
             revert MissingRole(ROLE_POOL_ADMIN, account);
         }
-        _;
-    }
-
-    modifier checkRole(bytes32 role) {
-        _checkRole(role);
         _;
     }
 }
