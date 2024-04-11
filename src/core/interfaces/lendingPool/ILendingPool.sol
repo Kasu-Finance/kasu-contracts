@@ -69,6 +69,8 @@ interface ILendingPool is IERC20 {
 
     function applyInterests(uint256 epoch) external;
 
+    function payOwedFees() external;
+
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
 
     function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig);

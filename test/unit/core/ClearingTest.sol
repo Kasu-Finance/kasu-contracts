@@ -506,10 +506,12 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
 
-        PoolConfiguration memory poolConfiguration = ILendingPool(lpd.lendingPool).poolConfiguration();
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+        PoolConfiguration memory poolConfiguration = lendingPool.poolConfiguration();
 
         uint256[] memory trancheInterestRatesMultiplier = new uint256[](3);
 
+        uint256 feesPaid;
         {
             uint256 performanceFee = systemVariables.performanceFee();
             trancheInterestRatesMultiplier[0] = (
@@ -521,12 +523,19 @@ contract ClearingTest is LendingPoolTestUtils {
             trancheInterestRatesMultiplier[2] = (
                 poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
             ) + INTEREST_RATE_FULL_PERCENT;
+
+            feesPaid += 20_000 * 1e6 * poolConfiguration.tranches[0].interestRate * performanceFee / FULL_PERCENT
+                / INTEREST_RATE_FULL_PERCENT;
+            feesPaid += 30_000 * 1e6 * poolConfiguration.tranches[1].interestRate * performanceFee / FULL_PERCENT
+                / INTEREST_RATE_FULL_PERCENT;
+            feesPaid += 60_000 * 1e6 * poolConfiguration.tranches[2].interestRate * performanceFee / FULL_PERCENT
+                / INTEREST_RATE_FULL_PERCENT;
         }
 
-        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 10_000 * 1e6, 2);
+        // should be the excess amount accepted (10k) minus the paid fees at the end of the clearing
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 10_000 * 1e6 - feesPaid, 2);
 
         // ## Assert tranche balance ##
-        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
         assertApproxEqAbs(
             lendingPool.balanceOf(lpd.tranches[0]),
             20_000 * 1e6 * trancheInterestRatesMultiplier[0] / INTEREST_RATE_FULL_PERCENT,
