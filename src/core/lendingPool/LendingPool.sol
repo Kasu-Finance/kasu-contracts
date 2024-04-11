@@ -498,6 +498,18 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit OwedFundsRepaid(userRepaidAmount, feesPaid);
     }
 
+    /**
+     * @notice Pay the lending pool owed fees from available balance.
+     * @dev Tries to repay fees from the available balance.
+     * Called by the clearing coordinator at the end of the clearing.
+     */
+    function payOwedFees() external onlyClearingCoordinator {
+        uint256 availableAmount = _myAssetBalance();
+
+        // pay up to the owed fees amount
+        _payFees(availableAmount);
+    }
+
     function _payFees(uint256 amount) private returns (uint256 feesPaid) {
         if (amount == 0) return feesPaid;
 
