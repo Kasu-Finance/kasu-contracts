@@ -217,7 +217,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     /**
      * @notice Updates the price of the KSU token at the start of the epoch.
-     * @dev This function should be called at the start of each epoch.
+     * @dev This function should be called at the start of each epoch by anyone.
      */
     function updateKsuEpochTokenPrice() external {
         if (currentEpochNumber() > priceUpdateEpoch) {
