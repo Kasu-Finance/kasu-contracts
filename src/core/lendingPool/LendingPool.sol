@@ -233,6 +233,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _trancheIndexUnverified(tranche);
     }
 
+    /// @notice Returns the tranche index of the lending pool without verifying the tranche.
+    /// @dev Should only be used if the tranche is valid, otherwise it will revert.
     function _trancheIndexUnverified(address tranche) private view returns (uint256) {
         return _trancheIndex[tranche] - 1;
     }
