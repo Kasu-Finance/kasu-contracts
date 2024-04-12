@@ -17,21 +17,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
-    function _initialiseAcceptedRequests(uint256 targetEpoch) private {
-        if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) {
-            revert AcceptedRequestsExecutionAlreadyInitialised(targetEpoch);
-        }
-
-        uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
-
-        if (totalPendingRequests == 0) {
-            _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
-        } else {
-            unchecked {
-                _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
-            }
-            _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
-        }
+    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
+        return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
@@ -63,7 +50,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
         address[] memory tranches = _lendingPoolTranches();
 
-        // internal loop current transaction userRequest
+        // loop from the last index on and process the requests
         uint256 i = nextIndexToProcess;
         while (i >= endingIndexInclusive) {
             uint256 userRequestNftId = _pendingRequestIdByIndex(i);
@@ -169,8 +156,17 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
     }
 
-    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
-        return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
+    function _initialiseAcceptedRequests(uint256 targetEpoch) private {
+        uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
+
+        if (totalPendingRequests == 0) {
+            _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
+        } else {
+            unchecked {
+                _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = totalPendingRequests - 1;
+            }
+            _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.PENDING;
+        }
     }
 
     //*** Virtual Methods ***/

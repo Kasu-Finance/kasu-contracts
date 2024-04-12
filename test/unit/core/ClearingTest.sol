@@ -868,6 +868,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         userManager.batchCalculateUserLoyaltyLevels(3);
 
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 0, clearingConfiguration, false);
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0, clearingConfiguration, false);
         assertEq(
             uint256(clearingCoordinator.lendingPoolClearingStatus(lpd.lendingPool, nextClearingEpoch)),
@@ -892,6 +893,9 @@ contract ClearingTest is LendingPoolTestUtils {
             )
         );
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0, clearingConfiguration, true);
+
+        // should work as batch size is 0 and nothing should be processed
+        _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 0, clearingConfiguration, true);
 
         clearingConfiguration.drawAmount = 30_000 * 1e6;
 
@@ -1019,6 +1023,137 @@ contract ClearingTest is LendingPoolTestUtils {
 
         assertEq(pendingPool.totalSupply(), 0);
         assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 0, 1);
+    }
+
+    function test_doClearing_testOldWithdrawalPriority() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // set interest rates to 0%
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
+
+        vm.startPrank(poolManagerAccount);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 0);
+        lendingPoolManager.updateTargetExcessLiquidityPercentage(lpd.lendingPool, 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[0], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], 0);
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[2], 0);
+        vm.stopPrank();
+
+        uint256 aliceDeposit = 2000_000000;
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], aliceDeposit);
+        uint256 bobDeposit = 700_000000;
+        _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], bobDeposit);
+        uint256 carolDeposit = 300_000000;
+        _requestDeposit(carol, lpd.lendingPool, lpd.tranches[0], carolDeposit);
+
+        uint256 nextClearingEpoch = systemVariables.currentEpochNumber();
+
+        skip(6 days);
+
+        userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
+
+        ClearingConfiguration memory clearingConfiguration;
+        clearingConfiguration.drawAmount = 2500_000000;
+        clearingConfiguration.maxExcessPercentage = 100_00;
+        clearingConfiguration.trancheDesiredRatios = new uint256[](3);
+        clearingConfiguration.trancheDesiredRatios[2] = 100_00;
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            nextClearingEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration,
+            true
+        );
+
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+        uint256 carolWithdrawalId =
+            _requestWithdrawal(carol, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(carol));
+
+        skip(5 weeks);
+
+        uint256 bobWithdrawalId =
+            _requestWithdrawal(bob, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(bob));
+
+        skip(1 weeks);
+
+        uint256 aliceWithdrawalId =
+            _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(alice));
+
+        ClearingConfiguration memory clearingConfiguration1;
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            1,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            false
+        );
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            2,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            false
+        );
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            3,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            false
+        );
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            4,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            false
+        );
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            5,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            false
+        );
+
+        // ### ACT ###
+
+        userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            6,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            false
+        );
+
+        // ### ASSERT ###
+
+        assertEq(ILendingPoolTranche(lpd.tranches[2]).userActiveShares(alice), aliceDeposit * 1e12);
+        assertEq(IPendingPool(lpd.pendingPool).ownerOf(aliceWithdrawalId), alice);
+
+        assertEq(ILendingPoolTranche(lpd.tranches[2]).userActiveShares(bob), (bobDeposit - 200 * 1e6) * 1e12);
+        assertEq(IPendingPool(lpd.pendingPool).ownerOf(bobWithdrawalId), bob);
+
+        assertEq(ILendingPoolTranche(lpd.tranches[2]).userActiveShares(carol), 0);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, carolWithdrawalId));
+        IPendingPool(lpd.pendingPool).ownerOf(carolWithdrawalId);
     }
 
     function test_doClearing_testForRoundingErrorsWhenAcceptingDepositsAndDrawing() public {

@@ -573,8 +573,8 @@ contract PendingPool is
         totalPendingDepositAmount -= amount;
     }
 
-    function _burnRequestNft(uint256 dNftID) internal {
-        _update(address(0), dNftID, address(0));
+    function _burnRequestNft(uint256 nftID) internal {
+        _update(address(0), nftID, address(0));
     }
 
     function _canCancel() private view {
@@ -606,7 +606,7 @@ contract PendingPool is
     }
 
     function _nftExists(uint256 nftId) private view {
-        if (ownerOf(nftId) == address(0)) {
+        if (_ownerOf(nftId) == address(0)) {
             revert IERC721Errors.ERC721NonexistentToken(nftId);
         }
     }
