@@ -19,7 +19,7 @@ import "./LendingPoolHelpers.sol";
  */
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
     /// @dev User active shares. This includes user pending withdrawal shares.
-    mapping(address user => uint256 activeShares) public _userActiveShares;
+    mapping(address user => uint256 activeShares) public userActiveShares;
     /// @dev Index of a user in the _trancheUsers array.
     mapping(address user => uint256 index) private _userArrayIndex;
     /// @dev Array of users with active tranche shares.
@@ -70,12 +70,12 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         shares = super.deposit(assets, receiver);
 
         // if user had not shares before, add to the trancheUsers array
-        if (_userActiveShares[receiver] == 0) {
+        if (userActiveShares[receiver] == 0) {
             _userArrayIndex[receiver] = _trancheUsers.length;
             _trancheUsers.push(receiver);
         }
 
-        _userActiveShares[receiver] += shares;
+        userActiveShares[receiver] += shares;
     }
 
     /**
@@ -109,10 +109,10 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @param shares The amount of shares that were redeemed.
      */
     function removeUserActiveShares(address user, uint256 shares) external onlyOwnLendingPool {
-        _userActiveShares[user] -= shares;
+        userActiveShares[user] -= shares;
 
         // remove user from trancheUsers array if they have no shares
-        if (_userActiveShares[user] == 0) {
+        if (userActiveShares[user] == 0) {
             // get removing and last user
             uint256 removingUserIndex = _userArrayIndex[user];
             uint256 lastUserIndex = _trancheUsers.length - 1;
@@ -135,7 +135,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @return userActiveAssets The active assets of the user.
      */
     function userActiveAssets(address user) external view returns (uint256) {
-        return convertToAssets(_userActiveShares[user]);
+        return convertToAssets(userActiveShares[user]);
     }
 
     function _trancheUsersStorage() internal view override returns (address[] storage) {
@@ -143,7 +143,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     }
 
     function _userActiveTrancheBalance(address user) internal view override returns (uint256) {
-        return _userActiveShares[user];
+        return userActiveShares[user];
     }
 
     /**
