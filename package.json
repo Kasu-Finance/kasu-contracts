@@ -9,7 +9,7 @@
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
         "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info -o report",
-        "test:current": "forge test --mt test_clearing_lendingPoolOneTranche -vv",
+        "test:current": "forge test --mt test_clearing_lendingPoolTwoTranches -vv",
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
