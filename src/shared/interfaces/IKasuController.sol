@@ -76,6 +76,8 @@ interface IKasuController is IAccessControl {
      */
     function revokeLendingPoolRole(address lendingPool, bytes32 role, address account) external;
 
+    function renounceLendingPoolRole(address lendingPool, bytes32 role) external;
+
     function pause() external;
 
     function unpause() external;

@@ -11,13 +11,6 @@ contract KasuControllerTest is LendingPoolTestUtils {
         __lendingPool_setUp();
     }
 
-    function test_access_wrongLendingPoolRole() public {
-        // ARRANGE
-        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
-
-        // ACT / ASSERT
-    }
-
     function test_grantLendingPoolRole_wrongAdminAccount() public {
         // ARRANGE
 
