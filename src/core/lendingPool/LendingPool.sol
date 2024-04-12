@@ -1055,10 +1055,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _poolConfiguration.tranches[_trancheIndexUnverified(tranche)];
     }
 
-    function _trancheConfigurationStorageByIndex(uint256 index) internal view returns (TrancheConfig storage) {
-        return _poolConfiguration.tranches[index];
-    }
-
     function _setTrancheIndex(address tranche, uint256 index) internal {
         _trancheIndex[tranche] = index + 1;
     }
