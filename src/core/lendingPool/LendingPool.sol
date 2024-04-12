@@ -259,17 +259,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Returns the available funds of the lending pool.
      * @return The available funds of the lending pool in the underlying asset.
      */
-    function availableFunds() external view returns (uint256) {
+    function availableFunds() public view returns (uint256) {
         return totalSupply() - userOwedAmount;
-    }
-
-    /**
-     * @notice Returns the balance of the tranche.
-     * @param tranche The tranche address.
-     * @return Balance of the tranche in the underlying asset.
-     */
-    function trancheBalance(address tranche) external view verifyTranche(tranche) returns (uint256) {
-        return balanceOf(tranche);
     }
 
     /**
@@ -455,7 +446,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function _draw(uint256 drawAmount) internal {
         if (drawAmount == 0) return;
 
-        uint256 availableAmount = _myAssetBalance();
+        uint256 availableAmount = availableFunds();
         if (availableAmount < drawAmount) {
             revert DrawAmountCantBeGreaterThanAvailableAmount(drawAmount, availableAmount);
         }
@@ -504,10 +495,14 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * Called by the clearing coordinator at the end of the clearing.
      */
     function payOwedFees() external onlyClearingCoordinator {
-        uint256 availableAmount = _myAssetBalance();
+        uint256 availableAmount = availableFunds();
 
         // pay up to the owed fees amount
-        _payFees(availableAmount);
+        uint256 feesPaid = _payFees(availableAmount);
+
+        userOwedAmount += feesPaid;
+
+        emit PaidFeesFromAvailableFunds(feesPaid);
     }
 
     function _payFees(uint256 amount) private returns (uint256 feesPaid) {

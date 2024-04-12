@@ -1156,6 +1156,89 @@ contract ClearingTest is LendingPoolTestUtils {
         IPendingPool(lpd.pendingPool).ownerOf(carolWithdrawalId);
     }
 
+    function test_doClearing_testPayingFeesAfterClearingPoolBalance() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        vm.startPrank(poolManagerAccount);
+        lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 2500_000000);
+        lendingPoolManager.updateTargetExcessLiquidityPercentage(lpd.lendingPool, 100_00);
+        lendingPoolManager.updateMinimumExcessLiquidityPercentage(lpd.lendingPool, 100_00);
+        vm.stopPrank();
+
+        uint256 aliceDeposit = 3000_000000;
+        _requestDeposit(alice, lpd.lendingPool, lpd.tranches[2], aliceDeposit);
+
+        uint256 nextClearingEpoch = systemVariables.currentEpochNumber();
+
+        skip(6 days);
+
+        userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
+
+        ClearingConfiguration memory clearingConfigurationDefault;
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            nextClearingEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfigurationDefault,
+            false
+        );
+        nextClearingEpoch++;
+
+        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
+
+        skip(1 weeks);
+        skip(1 days);
+
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            nextClearingEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfigurationDefault,
+            false
+        );
+        nextClearingEpoch++;
+
+        uint256 aliceWithdrawalId =
+            _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(alice));
+
+        uint256 owedAmount = lendingPool.userOwedAmount() + lendingPool.feesOwedAmount();
+        _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd.lendingPool, owedAmount);
+
+        _stop(poolManagerAccount, lpd.lendingPool);
+
+        skip(6 days);
+
+        // ### ACT ###
+
+        ClearingConfiguration memory clearingConfiguration;
+        clearingConfiguration.trancheDesiredRatios = new uint256[](3);
+        clearingConfiguration.trancheDesiredRatios[2] = 100_00;
+        userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            nextClearingEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration,
+            true
+        );
+
+        // ### ASSERT ###
+
+        assertApproxEqAbs(mockUsdc.balanceOf(lpd.lendingPool), 0, 1);
+        assertApproxEqAbs(lendingPool.totalSupply(), 0, 1);
+
+        assertEq(ILendingPoolTranche(lpd.tranches[2]).userActiveShares(alice), 0);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, aliceWithdrawalId));
+        IPendingPool(lpd.pendingPool).ownerOf(aliceWithdrawalId);
+    }
+
     function test_doClearing_testForRoundingErrorsWhenAcceptingDepositsAndDrawing() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
