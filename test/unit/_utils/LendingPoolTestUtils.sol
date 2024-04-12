@@ -48,8 +48,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
     address internal feeReceiverAccount = address(0xfee);
 
-    function test_mock() external pure {}
-
     function __lendingPool_setUp() internal {
         // fund accounts
         vm.deal(admin, 1 << 128);
