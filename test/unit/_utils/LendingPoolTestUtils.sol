@@ -434,6 +434,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             isConfigOverridden
         );
     }
+
+    function test_mockLendingPoolTestUtils() public pure {}
 }
 
 contract PendingPoolHarness is PendingPool {
