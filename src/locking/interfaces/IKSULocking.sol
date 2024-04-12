@@ -9,29 +9,29 @@ struct EmergencyWithdrawInput {
     uint256 withdrawAmount;
 }
 
+struct UserLock {
+    uint256 amount;
+    uint256 rKSUAmount;
+    uint256 rKSUMultiplier;
+    uint256 startTime;
+    uint256 lockPeriod;
+}
+
+struct LockPeriodDetails {
+    uint256 rKSUMultiplier;
+    uint256 ksuBonusMultiplier;
+    bool isActive;
+}
+
+struct ERC20PermitPayload {
+    uint256 value;
+    uint256 deadline;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+}
+
 interface IKSULocking is IERC20 {
-    struct UserLock {
-        uint256 amount;
-        uint256 rKSUAmount;
-        uint256 rKSUMultiplier;
-        uint256 startTime;
-        uint256 lockPeriod;
-    }
-
-    struct ERC20PermitPayload {
-        uint256 value;
-        uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
-
-    struct LockPeriodDetails {
-        uint256 rKSUMultiplier;
-        uint256 ksuBonusMultiplier;
-        bool isActive;
-    }
-
     function userTotalDeposits(address) external view returns (uint256);
 
     function userLock(address, uint256) external view returns (UserLock memory);

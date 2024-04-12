@@ -49,6 +49,31 @@ contract KSULockingTest is LockingTestUtils {
         assertEq(mockUsdc.balanceOf(address(_KSULocking)), rewardAmount);
     }
 
+    function test_lockDetails() public {
+        // ACT
+        LockPeriodDetails memory lockPeriodDetails30 = _KSULocking.lockDetails(lockPeriod30);
+        LockPeriodDetails memory lockPeriodDetails180 = _KSULocking.lockDetails(lockPeriod180);
+        LockPeriodDetails memory lockPeriodDetails360 = _KSULocking.lockDetails(lockPeriod360);
+        LockPeriodDetails memory lockPeriodDetails720 = _KSULocking.lockDetails(lockPeriod720);
+
+        // ASSERT
+        assertEq(lockPeriodDetails30.rKSUMultiplier, lockMultiplier30);
+        assertEq(lockPeriodDetails30.ksuBonusMultiplier, ksuBonusMultiplier30);
+        assertEq(lockPeriodDetails30.isActive, true);
+
+        assertEq(lockPeriodDetails180.rKSUMultiplier, lockMultiplier180);
+        assertEq(lockPeriodDetails180.ksuBonusMultiplier, ksuBonusMultiplier180);
+        assertEq(lockPeriodDetails180.isActive, true);
+
+        assertEq(lockPeriodDetails360.rKSUMultiplier, lockMultiplier360);
+        assertEq(lockPeriodDetails360.ksuBonusMultiplier, ksuBonusMultiplier360);
+        assertEq(lockPeriodDetails360.isActive, true);
+
+        assertEq(lockPeriodDetails720.rKSUMultiplier, lockMultiplier720);
+        assertEq(lockPeriodDetails720.ksuBonusMultiplier, ksuBonusMultiplier720);
+        assertEq(lockPeriodDetails720.isActive, true);
+    }
+
     function test_lock() public {
         // ARRANGE
         uint256 aliceLockAmount = 100 ether;
@@ -65,6 +90,23 @@ contract KSULockingTest is LockingTestUtils {
         // ASSERT
         assertEq(_ksu.balanceOf(address(_KSULocking)), aliceLockAmount);
         assertEq(_KSULocking.balanceOf(alice), aliceExpectedRksuAmount);
+    }
+
+    function test_lock_testReverts() public {
+        // ARRANGE
+        uint256 aliceLockAmount = 100 ether;
+
+        startHoax(alice);
+        _ksu.approve(address(_KSULocking), aliceLockAmount);
+        deal(address(_ksu), alice, aliceLockAmount, true);
+
+        // ACT / ASSERT
+
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.LockPeriodNotSupported.selector, lockPeriod30 + 1));
+        _KSULocking.lock(aliceLockAmount, lockPeriod30 + 1);
+
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.LockAmountShouldBeMoreThanZero.selector));
+        _KSULocking.lock(0, lockPeriod30);
     }
 
     function test_lockWithPermit() public {
@@ -91,9 +133,7 @@ contract KSULockingTest is LockingTestUtils {
 
         hoax(user);
         _KSULocking.lockWithPermit(
-            lockAmount,
-            lockPeriod30,
-            IKSULocking.ERC20PermitPayload({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
+            lockAmount, lockPeriod30, ERC20PermitPayload({value: lockAmount, deadline: deadline, v: v, r: r, s: s})
         );
 
         // ASSERT
@@ -239,24 +279,39 @@ contract KSULockingTest is LockingTestUtils {
         assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
     }
 
-    function test_unlock() public {
+    function test_unlock1() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
 
-        _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
+        uint256 lockId = _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
         _emitFees(reward1Amount);
 
         skip(lockPeriod30);
 
         // ACT / ASSERT
-        uint256 aliceUnLockAmount = 80 ether;
-        uint256 aliceExpectedBurnedRksu = 4 ether;
-
         vm.startPrank(alice);
+
+        UserLock memory aliceLock = _KSULocking.userLock(alice, lockId);
+        uint256 aliceRKsu = _KSULocking.balanceOf(alice);
+
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.UnlockAmountShouldBeMoreThanZero.selector));
+        _KSULocking.unlock(0, lockId);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IKSULocking.UserUnlockAmountTooHigh.selector, lockId, aliceLock.amount, aliceLock.amount + 1
+            )
+        );
+        _KSULocking.unlock(aliceLock.amount + 1, lockId);
+
+        // do full unlock
         vm.expectEmit(true, true, false, true, address(_KSULocking));
-        emit IKSULocking.UserUnlocked(address(alice), 0, aliceUnLockAmount, aliceExpectedBurnedRksu);
-        _KSULocking.unlock(aliceUnLockAmount, 0);
+        emit IKSULocking.UserUnlocked(address(alice), lockId, aliceLock.amount, aliceRKsu);
+        _KSULocking.unlock(aliceLock.amount, lockId);
+
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.InvalidUserDeposit.selector, lockId));
+        _KSULocking.unlock(aliceLock.amount, lockId);
         vm.stopPrank();
     }
 
@@ -267,10 +322,10 @@ contract KSULockingTest is LockingTestUtils {
         uint256 lockId = _lock(alice, aliceLockAmountDeposit, lockPeriod30);
 
         // ACT / ASSERT
-        uint256 aliceUnLockAmount = 80 ether;
+        uint256 aliceUnlockAmount = 80 ether;
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(IKSULocking.DepositLocked.selector, lockId));
-        _KSULocking.unlock(aliceUnLockAmount, 0);
+        _KSULocking.unlock(aliceUnlockAmount, 0);
     }
 
     function test_unlockForTwoUsers() public {
