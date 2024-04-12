@@ -244,8 +244,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         SystemVariables(address(systemVariables)).initialize(systemVariablesSetup);
     }
 
-    function createLendingPool(CreatePoolConfig memory createPoolConfig)
-        internal
+    function _createLendingPool(CreatePoolConfig memory createPoolConfig)
+        private
         returns (LendingPoolDeployment memory lendingPoolDeployment)
     {
         lendingPoolDeployment = lendingPoolManager.createPool(createPoolConfig);
@@ -257,9 +257,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     // ###  Helper Functions ###
 
     function _createDefaultLendingPool() internal returns (LendingPoolDeployment memory lendingPoolDeployment) {
-        // access control - grant
-        vm.prank(admin);
-        kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
         // create lending
         uint256 minDepositAmount = 10 * 1e6;
         uint256 maxDepositAmount = 1_000_000 * 1e6;
@@ -280,10 +277,21 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             poolFundsManagerAccount,
             desiredDrawAmount
         );
-        vm.prank(lendingPoolCreatorAccount);
-        lendingPoolDeployment = createLendingPool(createPoolConfig);
+        return _createLendingPoolFromConfig(createPoolConfig);
+    }
+
+    function _createLendingPoolFromConfig(CreatePoolConfig memory createPoolConfig)
+        internal
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
+    {
         // access control - grant
-        vm.startPrank(lendingPoolAdminAccount);
+        vm.prank(admin);
+        kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, lendingPoolCreatorAccount);
+        // create lending pool
+        vm.prank(lendingPoolCreatorAccount);
+        lendingPoolDeployment = _createLendingPool(createPoolConfig);
+        // access control - grant
+        vm.startPrank(createPoolConfig.poolAdmin);
         kasuController.grantLendingPoolRole(
             lendingPoolDeployment.lendingPool, ROLE_POOL_FUNDS_MANAGER, poolFundsManagerAccount
         );
