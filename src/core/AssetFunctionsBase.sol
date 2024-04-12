@@ -34,8 +34,4 @@ abstract contract AssetFunctionsBase {
     function _approveAsset(address recipient, uint256 amount) internal {
         _underlyingAsset.safeIncreaseAllowance(recipient, amount);
     }
-
-    function _myAssetBalance() internal view returns (uint256) {
-        return _underlyingAsset.balanceOf(address(this));
-    }
 }

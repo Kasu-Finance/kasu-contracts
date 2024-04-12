@@ -149,6 +149,8 @@ interface ILendingPool is IERC20 {
 
     event PaidFees(uint256 feesPaid);
 
+    event PaidFeesFromAvailableFunds(uint256 feesPaid);
+
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
 
     event UpdatedDrawRecipient(address indexed drawRecipient);
