@@ -668,9 +668,10 @@ contract PendingPool is
 
     modifier canUserRequestDeposit(address user, address tranche) {
         address[] memory trancheAddresses = _ownLendingPool().lendingPoolTranches();
-        if (trancheAddresses.length <= 1) return;
-        if (trancheAddresses[0] == tranche && !_userManager.canUserDepositInJuniorTranche(user)) {
-            revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
+        if (trancheAddresses.length > 1) {
+            if (trancheAddresses[0] == tranche && !_userManager.canUserDepositInJuniorTranche(user)) {
+                revert IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu(user);
+            }
         }
         _;
     }
