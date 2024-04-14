@@ -14,6 +14,8 @@ abstract contract AssetFunctionsBase {
     /// @notice Underlying asset of the contract.
     IERC20 internal immutable _underlyingAsset;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param underlyingAsset_ Underlying asset address.
@@ -22,6 +24,8 @@ abstract contract AssetFunctionsBase {
         AddressLib.checkIfZero(underlyingAsset_);
         _underlyingAsset = IERC20(underlyingAsset_);
     }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _transferAssets(address recipient, uint256 amount) internal {
         _underlyingAsset.safeTransfer(recipient, amount);
