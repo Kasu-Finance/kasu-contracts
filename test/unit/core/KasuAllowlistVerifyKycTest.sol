@@ -18,12 +18,20 @@ contract KasuAllowlistVerifyKycTest is BaseTestUtils {
     function setUp() public {
         // we don't use controller in the tests
         IKasuController kasuController = IKasuController(address(0xcccc));
-        KasuAllowList kasuAllowListImpl = new KasuAllowList(kasuController);
 
-        TransparentUpgradeableProxy kasuControllerProxy =
+        vm.mockCall(address(kasuController), abi.encodeWithSelector(IAccessControl.hasRole.selector), abi.encode(false));
+
+        vm.mockCall(
+            address(kasuController),
+            abi.encodeWithSelector(IAccessControl.hasRole.selector, ROLE_KASU_ADMIN, admin),
+            abi.encode(true)
+        );
+
+        KasuAllowList kasuAllowListImpl = new KasuAllowList(kasuController);
+        TransparentUpgradeableProxy kasuAllowListProxy =
             new TransparentUpgradeableProxy(address(kasuAllowListImpl), admin, "");
 
-        kasuAllowList = KasuAllowList(address(kasuControllerProxy));
+        kasuAllowList = KasuAllowList(address(kasuAllowListProxy));
 
         kasuAllowList.initialize(_lendingPoolManager, signer);
 
@@ -59,6 +67,18 @@ contract KasuAllowlistVerifyKycTest is BaseTestUtils {
 
         // ASSERT
         assertTrue(isKycd);
+    }
+
+    function test_setSigner() public {
+        // ARRANGE
+        address newSigner = address(0x1234);
+
+        // ACT
+        vm.prank(admin);
+        kasuAllowList.setNexeraIDSigner(newSigner);
+
+        // ASSERT
+        assertEq(newSigner, kasuAllowList.txAuthDataSignerAddress());
     }
 
     function _getFakeSignature() private view returns (bytes memory) {
