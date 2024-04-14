@@ -294,7 +294,13 @@ contract PendingPool is
      * @dev Transfers tranche shares from the pending pool back to the user.
      * @param wNftID The withdrawal id to cancel.
      */
-    function forceCancelWithdrawalRequest(uint256 wNftID) external onlyLendingPoolManager canCancel nftExists(wNftID) verifyWithdrawalNft(wNftID) {
+    function forceCancelWithdrawalRequest(uint256 wNftID)
+        external
+        onlyLendingPoolManager
+        canCancel
+        nftExists(wNftID)
+        verifyWithdrawalNft(wNftID)
+    {
         address user = ownerOf(wNftID);
         _cancelWithdrawalRequest(user, wNftID);
     }
