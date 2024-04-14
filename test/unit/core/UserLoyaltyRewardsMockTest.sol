@@ -148,7 +148,7 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
         _userLoyaltyRewards.emitUserLoyaltyReward(alice, 0, aliceLoyalty, aliceDeposited);
     }
 
-    function test_emitUserLoyaltyRewardBatch() public {
+    function test_emitUserLoyaltyRewardBatch_manualTokenPrice() public {
         // ARRANGE
         LoyaltyEpochRewardRateInput[] memory loyaltyEpochRewardRatesInput = new LoyaltyEpochRewardRateInput[](2);
         loyaltyEpochRewardRatesInput[0] = LoyaltyEpochRewardRateInput(1, 1e15); // 0.1% per epoch
@@ -180,6 +180,58 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
         userRewardInputs[2] = UserRewardInput(carol, 0, carolLoyalty, carolDeposited);
         vm.prank(admin);
         _userLoyaltyRewards.emitUserLoyaltyRewardBatch(userRewardInputs, manualTokenPrice);
+
+        // ASSERT
+
+        // 1000 * 0.1% / 2.0 = 0.5
+        uint256 bobReward = 0.5 * 1e18;
+
+        // 10000 * 0.2% / 2.0 = 10
+        uint256 carolReward = 10 * 1e18;
+
+        assertEq(_userLoyaltyRewards.userRewards(alice), 0);
+        assertEq(_userLoyaltyRewards.userRewards(bob), bobReward);
+        assertEq(_userLoyaltyRewards.userRewards(carol), carolReward);
+        assertEq(_userLoyaltyRewards.totalUnclaimedRewards(), bobReward + carolReward);
+
+        // ACT & ASSERT
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
+        _userLoyaltyRewards.emitUserLoyaltyRewardBatch(userRewardInputs, tokenPrice);
+    }
+
+    function test_emitUserLoyaltyRewardBatch_currentTokenPrice() public {
+        // ARRANGE
+        LoyaltyEpochRewardRateInput[] memory loyaltyEpochRewardRatesInput = new LoyaltyEpochRewardRateInput[](2);
+        loyaltyEpochRewardRatesInput[0] = LoyaltyEpochRewardRateInput(1, 1e15); // 0.1% per epoch
+        loyaltyEpochRewardRatesInput[1] = LoyaltyEpochRewardRateInput(2, 2e15); // 0.2% per epoch
+
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(loyaltyEpochRewardRatesInput);
+
+        uint256 aliceDeposited = 1000 * 1e6;
+        uint256 aliceLoyalty = 0;
+
+        uint256 bobDeposited = 1000 * 1e6;
+        uint256 bobLoyalty = 1;
+
+        uint256 carolDeposited = 10000 * 1e6;
+        uint256 carolLoyalty = 2;
+
+        // contract KSU token price is 1.0 USDC
+        uint256 tokenPrice = 2e18;
+        _mockKsuPrice.setKsuTokenPrice(tokenPrice);
+
+        // ACT
+
+        UserRewardInput[] memory userRewardInputs = new UserRewardInput[](3);
+        userRewardInputs[0] = UserRewardInput(alice, 0, aliceLoyalty, aliceDeposited);
+        userRewardInputs[1] = UserRewardInput(bob, 0, bobLoyalty, bobDeposited);
+        userRewardInputs[2] = UserRewardInput(carol, 0, carolLoyalty, carolDeposited);
+        vm.prank(admin);
+        _userLoyaltyRewards.emitUserLoyaltyRewardBatch(userRewardInputs, 0);
 
         // ASSERT
 
