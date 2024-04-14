@@ -40,13 +40,13 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     /// @notice Maximum number of loyalty levels in addition to the default level.
     uint256 public constant MAX_ADDITIONAL_LOYALTY_LEVELS = 10;
 
-    /// @notice The timestamp of the start of the first epoch.
+    /// @notice The duration of one epoch.
     uint256 private constant EPOCH_DURATION = 1 weeks;
 
     /// @notice The KSU token price contract.
     IKsuPrice public immutable ksuPrice;
 
-    /// @notice The timestamp of the start of the first epoch.
+    /// @notice The timestamp of the start of the initial epoch.
     uint256 private _initialEpochStartTimestamp;
 
     /// @notice The length of the clearing period.
