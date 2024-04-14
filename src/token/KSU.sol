@@ -10,12 +10,16 @@ contract KSU is ERC20PermitUpgradeable {
         _disableInitializers();
     }
 
+    /* ========== INITIALIZER ========== */
+
     function initialize(address recipient) external initializer {
         __ERC20_init("Kasu", "KSU");
         __ERC20Permit_init("Kasu");
 
         _mint(recipient, TOTAL_SUPPLY);
     }
+
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
 
     /**
      * @dev Destroys a `value` amount of tokens from the caller.
