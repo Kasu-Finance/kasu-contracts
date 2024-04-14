@@ -149,11 +149,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         uint256 trancheIndex,
         uint256 trancheCount
     ) internal view returns (string memory, string memory) {
-        uint256 trancheNameIndex = trancheIndex;
-        if (trancheCount == 2) trancheNameIndex = trancheIndex + 1;
-        if (trancheCount == 3) trancheNameIndex = trancheIndex + 2;
-
-        TrancheInfo memory trancheNameInfo = _systemVariables.trancheNameInfo(trancheIndex);
+        TrancheInfo memory trancheNameInfo = _systemVariables.trancheNameInfo(trancheCount, trancheIndex);
 
         return (
             string.concat(lendingPoolName, " - ", trancheNameInfo.trancheName),

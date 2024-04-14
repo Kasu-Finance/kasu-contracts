@@ -92,8 +92,12 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     /// @notice The protocol fee receiver.
     address private _protocolFeeReceiver;
 
-    /// @notice The tranche name information.
-    TrancheInfo[] private _trancheNameInfo;
+    /// @notice Mapping to the tranche name index based on tranche count and tranche index.
+    mapping(uint256 trancheCount => mapping(uint256 trancheIndex => uint256 trancheNameIndex)) private
+        _trancheNameIndexes;
+
+    /// @notice Returns the default names and symbols for tranche.
+    mapping(uint256 trancheNameIndex => TrancheInfo trancheInfo) private _trancheNameInfo;
 
     /**
      * @notice Constructor.
@@ -131,6 +135,9 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
         _setPerformanceFee(systemVariablesSetup.performanceFee);
+        _setFeeRates(systemVariablesSetup.ecosystemFeeRate, systemVariablesSetup.protocolFeeRate);
+        _setProtocolFeeReceiver(systemVariablesSetup.protocolFeeReceiver);
+
         _setLoyaltyThresholds(systemVariablesSetup.loyaltyThresholds);
 
         _updateKsuTokenPrice();
@@ -140,13 +147,16 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _minTrancheCountPerLendingPool = 1;
         _maxTrancheCountPerLendingPool = 3;
 
-        _trancheNameInfo.push(TrancheInfo("Junior Tranche", "jr"));
-        _trancheNameInfo.push(TrancheInfo("Mezzanine Tranche", "mz"));
-        _trancheNameInfo.push(TrancheInfo("Senior Tranche", "sr"));
+        _trancheNameInfo[0] = TrancheInfo("Junior Tranche", "jr");
+        _trancheNameInfo[1] = TrancheInfo("Mezzanine Tranche", "mz");
+        _trancheNameInfo[2] = TrancheInfo("Senior Tranche", "sr");
 
-        _setFeeRates(systemVariablesSetup.ecosystemFeeRate, systemVariablesSetup.protocolFeeRate);
-
-        _setProtocolFeeReceiver(systemVariablesSetup.protocolFeeReceiver);
+        _trancheNameIndexes[1][0] = 2;
+        _trancheNameIndexes[2][0] = 0;
+        _trancheNameIndexes[2][1] = 2;
+        _trancheNameIndexes[3][0] = 0;
+        _trancheNameIndexes[3][1] = 1;
+        _trancheNameIndexes[3][2] = 2;
     }
 
     // EPOCH
@@ -388,12 +398,20 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     }
 
     /**
-     * @notice Returns the default names and symbols for tranche.
-     * @param index The index of the tranche.
-     * @return The default name and symbol for tranche.
+     * @notice Return the default tranche name and symbol based on tranche count and tranche index.
+     * @param trancheCount The tranche count.
+     * @param trancheIndex The tranche index.
+     * @return The default tranche name and symbol.
      */
-    function trancheNameInfo(uint256 index) external view returns (TrancheInfo memory) {
-        return _trancheNameInfo[index];
+    function trancheNameInfo(uint256 trancheCount, uint256 trancheIndex) external view returns (TrancheInfo memory) {
+        if (
+            trancheCount < _minTrancheCountPerLendingPool || trancheCount > _maxTrancheCountPerLendingPool
+                || trancheIndex >= trancheCount
+        ) {
+            revert InvalidConfiguration();
+        }
+
+        return _trancheNameInfo[_trancheNameIndexes[trancheCount][trancheIndex]];
     }
 
     // FEES

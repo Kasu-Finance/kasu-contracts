@@ -46,7 +46,7 @@ interface ISystemVariables {
     function minTrancheCountPerLendingPool() external view returns (uint256);
     function maxTrancheCountPerLendingPool() external view returns (uint256);
 
-    function trancheNameInfo(uint256 index) external view returns (TrancheInfo memory);
+    function trancheNameInfo(uint256 trancheCount, uint256 trancheIndex) external view returns (TrancheInfo memory);
 
     // FEES
     function feeRates() external view returns (uint256 ecosystemFeeRate, uint256 protocolFeeRate);
