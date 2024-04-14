@@ -292,7 +292,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions(deployer, []),
     );
 
-    // initialise
+    // initialize
     const kasuController = KasuController__factory.connect(
         kasuControllerDeployment.address,
         adminSigner,
@@ -317,7 +317,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         adminSigner,
     );
     const systemVariablesSetup: SystemVariablesSetupStruct = {
-        firstEpochStartTimestamp: Math.round(Date.now() / 1000) + 3600 * 24 * 3,
+        initialEpochStartTimestamp: Math.round(Date.now() / 1000) - 3600 * 24 * 4,
         clearingPeriodLength: 60 * 60 * 36,
         performanceFee: 10_00,
         loyaltyThresholds: [10_00, 30_00],

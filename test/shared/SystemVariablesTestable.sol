@@ -9,14 +9,8 @@ import "../../src/shared/CommonErrors.sol";
 import "../../src/core/Constants.sol";
 import "../../src/core/interfaces/ISystemVariables.sol";
 
-/**
- * @notice Kasu system variables contract setup structure.
- * @custom:member firstEpochStartTimestamp The timestamp of the start of the first epoch. Should be in the past.
- * @custom:member clearingPeriodLength The length of the clearing period.
- * @custom:member performanceFee The performance fee.
- */
 struct SystemVariablesSetup {
-    uint256 firstEpochStartTimestamp;
+    uint256 initialEpochStartTimestamp;
     uint256 clearingPeriodLength;
     uint256 performanceFee;
     uint256[] loyaltyThresholds;
@@ -36,7 +30,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     IKsuPrice public immutable ksuPrice;
 
     uint256 private constant _epochDuration = 1 weeks;
-    uint256 private _firstEpochStartTimestamp;
+    uint256 private _initialEpochStartTimestamp;
     uint256 private _clearingPeriodLength;
 
     // @notice The epoch number when the price was last updated.
@@ -84,8 +78,8 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
 
     function initialize(SystemVariablesSetup memory systemVariablesSetup) external initializer {
         if (
-            systemVariablesSetup.firstEpochStartTimestamp < block.timestamp
-                || systemVariablesSetup.firstEpochStartTimestamp >= block.timestamp + _epochDuration
+            systemVariablesSetup.initialEpochStartTimestamp > block.timestamp
+                || systemVariablesSetup.initialEpochStartTimestamp + _epochDuration < block.timestamp
         ) {
             revert InvalidConfiguration();
         }
@@ -97,7 +91,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
             revert InvalidConfiguration();
         }
 
-        _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
+        _initialEpochStartTimestamp = systemVariablesSetup.initialEpochStartTimestamp;
         _clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
         _setPerformanceFee(systemVariablesSetup.performanceFee);
@@ -155,7 +149,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @return The timestamp of the start of the given epoch.
      */
     function epochStartTimestamp(uint256 epoch) external view returns (uint256) {
-        return _firstEpochStartTimestamp + epoch * _epochDuration;
+        return _initialEpochStartTimestamp + epoch * _epochDuration;
     }
 
     // NOTE: invalid
@@ -172,7 +166,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @return The timestamp of the start of the next epoch.
      */
     function nextEpochStartTimestamp() public view returns (uint256) {
-        return _firstEpochStartTimestamp + (currentEpochNumber() + 1) * _epochDuration;
+        return _initialEpochStartTimestamp + (currentEpochNumber() + 1) * _epochDuration;
     }
 
     /**
