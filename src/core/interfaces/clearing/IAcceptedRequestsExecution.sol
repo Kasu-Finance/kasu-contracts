@@ -7,7 +7,7 @@ error AcceptedRequestsExecutionAlreadyInitialized(uint256 epoch);
 error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 
 interface IAcceptedRequestsExecution {
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Returns the status of the accepted requests execution task.
@@ -16,7 +16,7 @@ interface IAcceptedRequestsExecution {
      */
     function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) external view returns (TaskStatus);
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Processes as many userRequests as defined by batchSize. This task accepts user requests, either deposits

@@ -160,7 +160,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
     }
 
-    /* ========== INTERNAL FUNCTIONS ========== */
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _initializeAcceptedRequests(uint256 targetEpoch) private {
         uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;

@@ -32,7 +32,7 @@ struct ERC20PermitPayload {
 }
 
 interface IKSULocking is IERC20 {
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function userTotalDeposits(address) external view returns (uint256);
 
@@ -45,7 +45,7 @@ interface IKSULocking is IERC20 {
      */
     function rewards(address user) external view returns (uint256);
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Add period lock details

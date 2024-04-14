@@ -181,7 +181,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         }
     }
 
-    /* ========== INTERNAL FUNCTIONS ========== */
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _initializePendingRequests(uint256 targetEpoch) private {
         if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALIZED) return;

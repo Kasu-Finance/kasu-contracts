@@ -272,7 +272,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingExecuted(lendingPool, targetEpoch, clearingStatus);
     }
 
-    /* ========== INTERNAL FUNCTIONS ========== */
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
@@ -280,6 +280,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
         return LendingPoolBalance(lendingPoolAvailableFunds, lendingPoolUserOwedAmount);
     }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _overrideClearingConfig(
         address lendingPool,

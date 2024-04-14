@@ -31,7 +31,7 @@ error ReentrantCall();
 error NoReentrantRole();
 
 interface IKasuController is IAccessControl {
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Gets owner of a lending pool.
@@ -54,7 +54,7 @@ interface IKasuController is IAccessControl {
 
     function requireNotPaused() external view;
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Grants role to an account for a lending pool.

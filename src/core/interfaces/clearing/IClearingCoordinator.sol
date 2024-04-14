@@ -27,7 +27,7 @@ struct AppliedClearingConfiguration {
 }
 
 interface IClearingCoordinator {
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
         external
@@ -40,7 +40,7 @@ interface IClearingCoordinator {
 
     function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Initializes the newly created lending pool in the clearing coordinator.

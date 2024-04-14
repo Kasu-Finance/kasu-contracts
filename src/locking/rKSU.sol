@@ -18,7 +18,7 @@ abstract contract rKSU is ERC20Upgradeable {
         __ERC20_init("KSU Rewards Credit", "rKSU");
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function transfer(address, uint256) public pure override returns (bool) {
         revert NonTransferrable();

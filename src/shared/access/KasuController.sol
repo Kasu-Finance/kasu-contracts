@@ -27,7 +27,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _grantRole(ROLE_LENDING_POOL_FACTORY, factory);
     }
 
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function hasLendingPoolRole(address lendingPool, bytes32 role, address account) public view returns (bool) {
         return hasRole(_getLendingPoolRole(lendingPool, role), account);
@@ -37,7 +37,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _requireNotPaused();
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function grantLendingPoolRole(address lendingPool, bytes32 role, address account)
         external
@@ -68,7 +68,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _unpause();
     }
 
-    /* ========== INTERNAL METHODS ========== */
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _onlyAdminOrPoolAdmin(address lendingPool, address account) private view {
         bytes32 poolAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);

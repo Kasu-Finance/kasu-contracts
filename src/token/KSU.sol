@@ -21,7 +21,7 @@ contract KSU is ERC20PermitUpgradeable {
         _mint(recipient, TOTAL_SUPPLY);
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @dev Destroys a `value` amount of tokens from the caller.

@@ -28,7 +28,7 @@ struct LendingPoolBalance {
 }
 
 interface IAcceptedRequestsCalculation {
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function calculateAcceptedRequests(ClearingInput calldata input)
         external

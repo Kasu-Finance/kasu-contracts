@@ -7,7 +7,7 @@ import "./IPendingRequestsPriorityCalculation.sol";
 import "./IClearingStepsData.sol";
 
 interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function pendingDeposits(uint256 epoch) external view returns (PendingDeposits memory);
 
@@ -15,7 +15,7 @@ interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedReques
 
     function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory);
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function calculateAndSaveAcceptedRequests(
         ClearingConfiguration memory config,

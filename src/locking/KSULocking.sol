@@ -45,7 +45,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _feeToken = feeToken_;
     }
 
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function userLock(address user, uint256 userLockId) external view returns (UserLock memory) {
         return _userLocks[user][userLockId];
@@ -62,7 +62,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         return _rewards[user] + _userRewards(user);
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @dev See {IKSULocking-addLockPeriod}.
@@ -176,11 +176,13 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _ksuBonusTokens = ksuBonusTokens_;
     }
 
-    /* ========== INTERNAL METHODS ========== */
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _userRewards(address user) private view returns (uint256) {
         return balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
     }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _emergencyWithdraw(address user, uint256 userLockId, uint256 withdrawAmount, address receiver) internal {
         uint256 rKSUBurned = _withdrawUserLockId(user, userLockId, withdrawAmount, receiver);

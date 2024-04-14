@@ -47,7 +47,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 
-    /* ========== EXTERNAL VIEW FUNCTION ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Get the pending deposit amounts for the epoch.

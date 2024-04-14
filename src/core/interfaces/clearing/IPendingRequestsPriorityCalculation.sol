@@ -6,7 +6,7 @@ import "./IClearingStepsData.sol";
 error PendingRequestsPriorityCalculationIsPending();
 
 interface IPendingRequestsPriorityCalculation {
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Returns the status of the pending requests priority calculation task.
@@ -24,7 +24,7 @@ interface IPendingRequestsPriorityCalculation {
      */
     function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Sets priorities for an amount of pending deposits and withdrawals.
