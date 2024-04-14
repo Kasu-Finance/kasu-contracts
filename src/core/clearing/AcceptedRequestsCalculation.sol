@@ -6,48 +6,6 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../Constants.sol";
 
-struct Step1In {
-    uint256 totalDepositAmount;
-    uint256 totalWithdrawalsAmount;
-    ClearingConfiguration config;
-    LendingPoolBalance lendingPoolBalance;
-}
-
-struct Step1Out {
-    uint256 acceptedDepositAmount;
-    uint256 acceptedWithdrawalAmount;
-    uint256 increasedExcessAmount;
-}
-
-struct Step2In {
-    uint256 acceptedDepositAmount;
-    uint256 increasedExcessAmount;
-    uint256[] trancheDepositsAmounts;
-    uint256[] trancheDesiredRatios;
-}
-
-struct Step2Out {
-    uint256[] acceptedTrancheDepositAmounts;
-}
-
-struct Step3In {
-    uint256[] acceptedTrancheDepositAmounts;
-    uint256[][] tranchePriorityDepositsAmounts;
-}
-
-struct Step3Out {
-    uint256[][][] tranchePriorityDepositsAccepted;
-}
-
-struct Step4In {
-    uint256 acceptedWithdrawalAmount;
-    uint256[] priorityWithdrawalAmounts;
-}
-
-struct Step4Out {
-    uint256[] acceptedPriorityWithdrawalAmounts;
-}
-
 /**
  * @title Accepted requests calculation contract
  * @notice Contract for calculating the accepted deposit and withdrawal amounts.
@@ -72,6 +30,48 @@ struct Step4Out {
  * - 1D array mapping each accepted withdrawal for each priority.
  */
 contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
+    struct Step1In {
+        uint256 totalDepositAmount;
+        uint256 totalWithdrawalsAmount;
+        ClearingConfiguration config;
+        LendingPoolBalance lendingPoolBalance;
+    }
+
+    struct Step1Out {
+        uint256 acceptedDepositAmount;
+        uint256 acceptedWithdrawalAmount;
+        uint256 increasedExcessAmount;
+    }
+
+    struct Step2In {
+        uint256 acceptedDepositAmount;
+        uint256 increasedExcessAmount;
+        uint256[] trancheDepositsAmounts;
+        uint256[] trancheDesiredRatios;
+    }
+
+    struct Step2Out {
+        uint256[] acceptedTrancheDepositAmounts;
+    }
+
+    struct Step3In {
+        uint256[] acceptedTrancheDepositAmounts;
+        uint256[][] tranchePriorityDepositsAmounts;
+    }
+
+    struct Step3Out {
+        uint256[][][] tranchePriorityDepositsAccepted;
+    }
+
+    struct Step4In {
+        uint256 acceptedWithdrawalAmount;
+        uint256[] priorityWithdrawalAmounts;
+    }
+
+    struct Step4Out {
+        uint256[] acceptedPriorityWithdrawalAmounts;
+    }
+
     /* ========== EXTERNAL METHODS ========== */
 
     /**
