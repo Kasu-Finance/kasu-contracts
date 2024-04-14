@@ -848,26 +848,24 @@ contract LendingPoolTest is LendingPoolTestUtils {
         lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, ratios);
         lendingPoolManager.updateDesiredDrawAmount(lpd.lendingPool, 400_000 * 1e6);
 
-        // wrong ratios
-        uint256[] memory wrongRatios = new uint256[](3);
-        wrongRatios[0] = 15_00;
-        wrongRatios[1] = 25_00;
-        wrongRatios[2] = 50_00;
-        vm.expectRevert(
-            abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "Invalid tranche ratio sum")
-        );
-        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, wrongRatios);
+        lendingPoolManager.updateTargetExcessLiquidityPercentage(lpd.lendingPool, 20_00);
+        lendingPoolManager.updateMinimumExcessLiquidityPercentage(lpd.lendingPool, 11_00);
 
-        uint256 updatedTranche1InterestRate = 1000000000000000;
-        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], updatedTranche1InterestRate);
+        vm.startPrank(lendingPoolAdminAccount);
+        lendingPoolManager.updateDrawRecipient(lpd.lendingPool, address(0xddd1));
 
-        vm.stopPrank();
+        vm.startPrank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 2);
 
         // ### ASSERT ###
         ILendingPool lendingPool = ILendingPool(address(lpd.lendingPool));
         PoolConfiguration memory poolConfiguration = lendingPool.poolConfiguration();
 
+        assertEq(poolConfiguration.drawRecipient, address(0xddd1));
         assertEq(poolConfiguration.desiredDrawAmount, 400_000 * 1e6);
+        assertEq(poolConfiguration.trancheInterestChangeEpochDelay, 2);
+        assertEq(poolConfiguration.targetExcessLiquidityPercentage, 20_00);
+        assertEq(poolConfiguration.minimumExcessLiquidityPercentage, 11_00);
 
         assertEq(poolConfiguration.tranches[0].ratio, 15_00);
         assertEq(poolConfiguration.tranches[0].interestRate, 2500000000000000);
@@ -884,17 +882,113 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(poolConfiguration.tranches[2].minDepositAmount, 10 * 1e6);
         assertEq(poolConfiguration.tranches[2].maxDepositAmount, 1_000_000 * 1e6);
 
-        // update interest rate epoch delay
-        uint256 interestRateEpochDelay = systemVariables.defaultTrancheInterestChangeEpochDelay();
-        skip(7 days * (interestRateEpochDelay - 1));
+        // ### ASSERT invalid configuration ###
+
+        vm.startPrank(poolManagerAccount);
+
+        // wrong ratios
+        uint256[] memory badRatios = new uint256[](3);
+        badRatios[0] = 15_00;
+        badRatios[1] = 25_00;
+        badRatios[2] = 50_00;
+        vm.expectRevert(
+            abi.encodeWithSelector(ILendingPool.PoolConfigurationIsIncorrect.selector, "Invalid tranche ratio sum")
+        );
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, badRatios);
+
+        badRatios = new uint256[](2);
+        badRatios[0] = 50_00;
+        badRatios[1] = 50_00;
+        vm.expectRevert(abi.encodeWithSelector(InvalidArrayLength.selector));
+        lendingPoolManager.updateTrancheDesiredRatios(lpd.lendingPool, badRatios);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector,
+                "Maximum deposit shouldn't be less than min deposit amount"
+            )
+        );
+        lendingPoolManager.updateMaximumDepositAmount(lpd.lendingPool, lpd.tranches[0], 1000 * 1e6 - 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector,
+                "Minimum deposit shouldn't be more than max deposit amount"
+            )
+        );
+        lendingPoolManager.updateMinimumDepositAmount(lpd.lendingPool, lpd.tranches[0], 200_000 * 1e6 + 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector,
+                "Target excess liquidity percentage is less than minimum excess liquidity percentage"
+            )
+        );
+        lendingPoolManager.updateTargetExcessLiquidityPercentage(lpd.lendingPool, 10_99);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector,
+                "Minimum excess liquidity percentage is more than target excess liquidity percentage"
+            )
+        );
+        lendingPoolManager.updateMinimumExcessLiquidityPercentage(lpd.lendingPool, 20_01);
+    }
+
+    function test_updateTrancheInterestRate() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // ### ACT ###
+        vm.startPrank(poolManagerAccount);
+
+        uint256 updatedTranche1InterestRate1 = 11;
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], updatedTranche1InterestRate1);
+
+        skip(1 weeks);
+
+        uint256 updatedTranche1InterestRate2 = 22;
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], updatedTranche1InterestRate2);
+
+        skip(1 weeks);
+
+        uint256 updatedTranche1InterestRate3 = 33;
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], updatedTranche1InterestRate3);
+
+        vm.stopPrank();
+
+        vm.prank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 1);
+
+        skip(2 weeks);
+
+        vm.startPrank(poolManagerAccount);
+        uint256 updatedTranche1InterestRate4 = 44;
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], updatedTranche1InterestRate4);
+
+        // ### ASSERT ###
+        ILendingPool lendingPool = ILendingPool(address(lpd.lendingPool));
+        PoolConfiguration memory poolConfiguration = lendingPool.poolConfiguration();
+
+        assertEq(poolConfiguration.tranches[1].interestRate, updatedTranche1InterestRate1);
+
+        skip(1 weeks);
 
         poolConfiguration = lendingPool.poolConfiguration();
-        assertEq(poolConfiguration.tranches[1].interestRate, 2000000000000000);
+        assertEq(poolConfiguration.tranches[1].interestRate, updatedTranche1InterestRate4);
 
-        skip(7 days);
+        skip(1 weeks);
 
         poolConfiguration = lendingPool.poolConfiguration();
-        assertEq(poolConfiguration.tranches[1].interestRate, updatedTranche1InterestRate);
+        assertEq(poolConfiguration.tranches[1].interestRate, updatedTranche1InterestRate4);
+
+        uint256 maxTrancheInterestRate = systemVariables.maxTrancheInterestRate();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ILendingPool.PoolConfigurationIsIncorrect.selector, "Interest rate is more than max allowed"
+            )
+        );
+        lendingPoolManager.updateTrancheInterestRate(lpd.lendingPool, lpd.tranches[1], maxTrancheInterestRate + 1);
     }
 
     function test_forceCancelDepositRequest() external {
