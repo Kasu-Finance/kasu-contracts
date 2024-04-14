@@ -19,6 +19,7 @@ import "../clearing/AcceptedRequestsExecution.sol";
 import "../clearing/ClearingSteps.sol";
 import "./UserRequestIds.sol";
 import "../../shared/AddressLib.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title PendingPool contract.
@@ -254,9 +255,10 @@ contract PendingPool is
      */
     function cancelDepositRequest(address user, uint256 dNftID)
         external
+        onlyLendingPoolManager
         canCancel
         isNftOwner(user, dNftID)
-        onlyLendingPoolManager
+        verifyDepositNft(dNftID)
     {
         _returnDepositRequest(dNftID, user);
 
@@ -292,7 +294,7 @@ contract PendingPool is
      * @dev Transfers tranche shares from the pending pool back to the user.
      * @param wNftID The withdrawal id to cancel.
      */
-    function forceCancelWithdrawalRequest(uint256 wNftID) external onlyLendingPoolManager canCancel nftExists(wNftID) {
+    function forceCancelWithdrawalRequest(uint256 wNftID) external onlyLendingPoolManager canCancel nftExists(wNftID) verifyWithdrawalNft(wNftID) {
         address user = ownerOf(wNftID);
         _cancelWithdrawalRequest(user, wNftID);
     }
@@ -308,10 +310,9 @@ contract PendingPool is
         onlyLendingPoolManager
         canCancel
         isNftOwner(user, wNftID)
+        verifyWithdrawalNft(wNftID)
     {
-        WithdrawalNftDetails storage withdrawalNftDetails = _trancheWithdrawalNftDetails[wNftID];
-
-        if (withdrawalNftDetails.requestedFrom == RequestedFrom.SYSTEM) {
+        if (_trancheWithdrawalNftDetails[wNftID].requestedFrom == RequestedFrom.SYSTEM) {
             revert CannotCancelSystemWithdrawalRequest(user, wNftID);
         }
 
@@ -320,14 +321,18 @@ contract PendingPool is
 
     function _cancelWithdrawalRequest(address user, uint256 wNftID) private {
         uint256 sharesAmount = _trancheWithdrawalNftDetails[wNftID].sharesAmount;
+        console2.log("sharesAmount", sharesAmount);
 
         // Burn the withdrawal NFT
         _burnRequestNft(wNftID);
+        console2.log("burned");
 
         // delete nft storage
         _deleteWNftDetails(user, wNftID);
 
         (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
+        console2.log("PendingPool: _cancelWithdrawalRequest: tranche", tranche);
+
         IERC20(tranche).safeTransfer(user, sharesAmount);
 
         emit WithdrawalRequestCancelled(user, tranche, wNftID);
@@ -493,10 +498,10 @@ contract PendingPool is
 
         _deleteDNftDetails(user, dNftID);
 
+        _decreasePendingDepositAmount(epochId, assetAmount);
+
         // return funds directly to the user
         _transferAssets(user, assetAmount);
-
-        _decreasePendingDepositAmount(epochId, assetAmount);
     }
 
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal override nftExists(wNftID) {
@@ -611,6 +616,18 @@ contract PendingPool is
         }
     }
 
+    function _verifyDepositNft(uint256 nftId) private pure {
+        if (!UserRequestIds.isDepositNft(nftId)) {
+            revert NotDepositNFT(nftId);
+        }
+    }
+
+    function _verifyWithdrawalNft(uint256 nftId) private pure {
+        if (UserRequestIds.isDepositNft(nftId)) {
+            revert NotWithdrawalNFT(nftId);
+        }
+    }
+
     // OVERRIDES: ClearingSteps
 
     function _totalPendingRequests() internal view override returns (uint256) {
@@ -663,6 +680,16 @@ contract PendingPool is
 
     modifier nftExists(uint256 nftId) {
         _nftExists(nftId);
+        _;
+    }
+
+    modifier verifyDepositNft(uint256 nftId) {
+        _verifyDepositNft(nftId);
+        _;
+    }
+
+    modifier verifyWithdrawalNft(uint256 nftId) {
+        _verifyWithdrawalNft(nftId);
         _;
     }
 
