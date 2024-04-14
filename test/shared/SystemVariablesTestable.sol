@@ -64,7 +64,12 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     uint256 private _protocolFeeRate;
     address public protocolFeeReceiver;
 
-    TrancheInfo[] public _trancheInfo;
+    /// @notice Mapping to the tranche name index based on tranche count and tranche index.
+    mapping(uint256 trancheCount => mapping(uint256 trancheIndex => uint256 trancheNameIndex)) private
+        _trancheNameIndexes;
+
+    /// @notice Returns the default names and symbols for tranche.
+    mapping(uint256 trancheNameIndex => TrancheInfo trancheInfo) private _trancheNameInfo;
 
     // FAKE EPOCH
     uint256 private _epochNumber;
@@ -105,9 +110,16 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         minTrancheCountPerLendingPool = 1;
         maxTrancheCountPerLendingPool = 3;
 
-        _trancheInfo.push(TrancheInfo("Junior Tranche", "JR"));
-        _trancheInfo.push(TrancheInfo("Mezzo Tranche", "MZ"));
-        _trancheInfo.push(TrancheInfo("Senior Tranche", "SR"));
+        _trancheNameInfo[0] = TrancheInfo("Junior Tranche", "jr");
+        _trancheNameInfo[1] = TrancheInfo("Mezzanine Tranche", "mz");
+        _trancheNameInfo[2] = TrancheInfo("Senior Tranche", "sr");
+
+        _trancheNameIndexes[1][0] = 2;
+        _trancheNameIndexes[2][0] = 0;
+        _trancheNameIndexes[2][1] = 2;
+        _trancheNameIndexes[3][0] = 0;
+        _trancheNameIndexes[3][1] = 1;
+        _trancheNameIndexes[3][2] = 2;
 
         _ecosystemFeeRate = 50_00;
         _protocolFeeRate = 50_00;
@@ -308,11 +320,20 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     }
 
     /**
-     * @notice Returns the default names and symbols for tranches
-     * @return The default names and symbols for tranches
+     * @notice Return the default tranche name and symbol based on tranche count and tranche index.
+     * @param trancheCount The tranche count.
+     * @param trancheIndex The tranche index.
+     * @return The default tranche name and symbol.
      */
-    function trancheNameInfo(uint256 index) external view returns (TrancheInfo memory) {
-        return _trancheInfo[index];
+    function trancheNameInfo(uint256 trancheCount, uint256 trancheIndex) external view returns (TrancheInfo memory) {
+        if (
+            trancheCount < minTrancheCountPerLendingPool || trancheCount > maxTrancheCountPerLendingPool
+                || trancheIndex >= trancheCount
+        ) {
+            revert InvalidConfiguration();
+        }
+
+        return _trancheNameInfo[_trancheNameIndexes[trancheCount][trancheIndex]];
     }
 
     // FEES
