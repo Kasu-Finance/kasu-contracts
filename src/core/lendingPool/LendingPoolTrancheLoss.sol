@@ -35,15 +35,13 @@ abstract contract LendingPoolTrancheLoss is
     /// @notice User claimed repaid loss amounts for each loss.
     mapping(address user => mapping(uint256 lossId => uint256 claimedAmount)) public userClaimedLosses;
 
+    /* ========== INITIALIZER ========== */
+
     function __LendingPoolTrancheLoss__init() internal onlyInitializing {
         __ERC1155_init("");
     }
 
-    function _trancheUsersStorage() internal view virtual returns (address[] storage);
-
-    function _userActiveTrancheBalance(address user) internal view virtual returns (uint256);
-
-    function _calculateMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Gets the loss details for the id.
@@ -55,12 +53,40 @@ abstract contract LendingPoolTrancheLoss is
     }
 
     /**
+     * @notice Checks if the minting of loss tokens for the id is complete.
+     * @param lossId The id of the loss.
+     * @return True if minting of unrealized loss tokens for the loss id is complete.
+     */
+    function isLossMintingComplete(uint256 lossId) external view returns (bool) {
+        return _isLossMintingComplete(lossId);
+    }
+
+    /**
      * @notice Checks if there is a pending loss mint.
      * @return True if there is a pending loss mint.
      */
     function isPendingLossMint() public view returns (bool) {
         return _pendingMintLossId > 0;
     }
+
+    /**
+     * @notice Gets the claimable loss amount for the user and loss id.
+     * @param user The user to get the claimable loss for.
+     * @param lossId The id of the loss.
+     * @return claimableAmount The claimable loss amount.
+     */
+    function userClaimableLoss(address user, uint256 lossId) public view returns (uint256 claimableAmount) {
+        if (!_isLossMintingComplete(lossId)) {
+            revert LossMintingNotYetComplete(lossId);
+        }
+
+        if (_lossDetails[lossId].totalLossShares > 0) {
+            claimableAmount = _lossDetails[lossId].recoveredAmount * balanceOf(user, lossId)
+                / _lossDetails[lossId].totalLossShares - userClaimedLosses[user][lossId];
+        }
+    }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Registers a loss in the tranche.
@@ -86,23 +112,6 @@ abstract contract LendingPoolTrancheLoss is
         }
     }
 
-    function _registerLoss(uint256 lossId, uint256 lossAmount, uint256 batchSize) internal {
-        address[] storage users = _trancheUsersStorage();
-        uint256 usersCount = users.length;
-
-        _lossDetails[lossId] = LossDetails(lossAmount, usersCount, 0, 0, 0);
-
-        emit LossRegistered(lossId, lossAmount, usersCount);
-
-        if (usersCount > 0) {
-            _pendingMintLossId = lossId;
-
-            if (batchSize > 0) {
-                _batchMintLossTokens(lossId, batchSize);
-            }
-        }
-    }
-
     /**
      * @notice Mints loss tokens to users for the id.
      * @dev
@@ -118,6 +127,108 @@ abstract contract LendingPoolTrancheLoss is
         }
 
         _batchMintLossTokens(lossId, batchSize);
+    }
+
+    /**
+     * @notice Repays a loss for the id.
+     * @param lossId The id of the loss.
+     * @param amount The amount to repay.
+     */
+    function repayLoss(uint256 lossId, uint256 amount) external onlyOwnLendingPool {
+        if (!_isLossMintingComplete(lossId)) {
+            revert LossMintingNotYetComplete(lossId);
+        }
+
+        _lossDetails[lossId].recoveredAmount += amount;
+
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        emit LossReturned(lossId, amount);
+    }
+
+    /**
+     * @notice Claims a loss for the loss id.
+     * @param user The user to claim the loss for.
+     * @param lossId The id of the loss.
+     * @return claimedAmount The loss amount claimed.
+     */
+    function claimRepaidLoss(address user, uint256 lossId)
+        external
+        onlyOwnLendingPool
+        returns (uint256 claimedAmount)
+    {
+        claimedAmount = userClaimableLoss(user, lossId);
+        userClaimedLosses[user][lossId] += claimedAmount;
+
+        _transferAssets(user, claimedAmount);
+
+        emit LossClaimed(user, lossId, claimedAmount);
+    }
+
+    /**
+     * @notice ERC1155 safeTransferFrom is disabled.
+     */
+    function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
+        revert NotSupported();
+    }
+
+    /**
+     * @notice ERC1155 setApprovalForAll is disabled.
+     */
+    function setApprovalForAll(address, bool) public pure override {
+        revert NotSupported();
+    }
+
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
+
+    function _isLossMintingComplete(uint256 lossId) internal view returns (bool) {
+        return _lossDetails[lossId].usersCount == _lossDetails[lossId].usersMintedCount;
+    }
+
+    /**
+     * @dev Creates an array in memory with only one value for each of the elements provided.
+     * Taken from OpenZeppelin's ERC1155.sol
+     */
+    function _asSingletonArrays2(uint256 element1, uint256 element2)
+        private
+        pure
+        returns (uint256[] memory array1, uint256[] memory array2)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Load the free memory pointer
+            array1 := mload(0x40)
+            // Set array length to 1
+            mstore(array1, 1)
+            // Store the single element at the next word after the length (where content starts)
+            mstore(add(array1, 0x20), element1)
+
+            // Repeat for next array locating it right after the first array
+            array2 := add(array1, 0x40)
+            mstore(array2, 1)
+            mstore(add(array2, 0x20), element2)
+
+            // Update the free memory pointer by pointing after the second array
+            mstore(0x40, add(array2, 0x40))
+        }
+    }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _registerLoss(uint256 lossId, uint256 lossAmount, uint256 batchSize) internal {
+        address[] storage users = _trancheUsersStorage();
+        uint256 usersCount = users.length;
+
+        _lossDetails[lossId] = LossDetails(lossAmount, usersCount, 0, 0, 0);
+
+        emit LossRegistered(lossId, lossAmount, usersCount);
+
+        if (usersCount > 0) {
+            _pendingMintLossId = lossId;
+
+            if (batchSize > 0) {
+                _batchMintLossTokens(lossId, batchSize);
+            }
+        }
     }
 
     function _batchMintLossTokens(uint256 lossId, uint256 batchSize) internal {
@@ -159,118 +270,15 @@ abstract contract LendingPoolTrancheLoss is
         _lossDetails[lossId].totalLossShares += userLossShares;
     }
 
-    /**
-     * @notice Repays a loss for the id.
-     * @param lossId The id of the loss.
-     * @param amount The amount to repay.
-     */
-    function repayLoss(uint256 lossId, uint256 amount) external onlyOwnLendingPool {
-        if (!_isLossMintingComplete(lossId)) {
-            revert LossMintingNotYetComplete(lossId);
-        }
+    /* ========== VIRTUAL METHODS ========== */
 
-        _lossDetails[lossId].recoveredAmount += amount;
+    function _trancheUsersStorage() internal view virtual returns (address[] storage);
 
-        _transferAssetsFrom(msg.sender, address(this), amount);
-        emit LossReturned(lossId, amount);
-    }
+    function _userActiveTrancheBalance(address user) internal view virtual returns (uint256);
 
-    // CLAIM LOSS
+    function _calculateMaximumLossAmount() internal view virtual returns (uint256 maxLossAmount);
 
-    /**
-     * @notice Gets the claimable loss amount for the user and loss id.
-     * @param user The user to get the claimable loss for.
-     * @param lossId The id of the loss.
-     * @return claimableAmount The claimable loss amount.
-     */
-    function userClaimableLoss(address user, uint256 lossId) public view returns (uint256 claimableAmount) {
-        if (!_isLossMintingComplete(lossId)) {
-            revert LossMintingNotYetComplete(lossId);
-        }
-
-        if (_lossDetails[lossId].totalLossShares > 0) {
-            claimableAmount = _lossDetails[lossId].recoveredAmount * balanceOf(user, lossId)
-                / _lossDetails[lossId].totalLossShares - userClaimedLosses[user][lossId];
-        }
-    }
-
-    /**
-     * @notice Claims a loss for the loss id.
-     * @param user The user to claim the loss for.
-     * @param lossId The id of the loss.
-     * @return claimedAmount The loss amount claimed.
-     */
-    function claimRepaidLoss(address user, uint256 lossId)
-        external
-        onlyOwnLendingPool
-        returns (uint256 claimedAmount)
-    {
-        claimedAmount = userClaimableLoss(user, lossId);
-        userClaimedLosses[user][lossId] += claimedAmount;
-
-        _transferAssets(user, claimedAmount);
-
-        emit LossClaimed(user, lossId, claimedAmount);
-    }
-
-    // HELPER FUNCTIONS
-
-    /**
-     * @notice Checks if the minting of loss tokens for the id is complete.
-     * @param lossId The id of the loss.
-     * @return True if minting of unrealized loss tokens for the loss id is complete.
-     */
-    function isLossMintingComplete(uint256 lossId) external view returns (bool) {
-        return _isLossMintingComplete(lossId);
-    }
-
-    function _isLossMintingComplete(uint256 lossId) internal view returns (bool) {
-        return _lossDetails[lossId].usersCount == _lossDetails[lossId].usersMintedCount;
-    }
-
-    /**
-     * @dev Creates an array in memory with only one value for each of the elements provided.
-     * Taken from OpenZeppelin's ERC1155.sol
-     */
-    function _asSingletonArrays2(uint256 element1, uint256 element2)
-        private
-        pure
-        returns (uint256[] memory array1, uint256[] memory array2)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Load the free memory pointer
-            array1 := mload(0x40)
-            // Set array length to 1
-            mstore(array1, 1)
-            // Store the single element at the next word after the length (where content starts)
-            mstore(add(array1, 0x20), element1)
-
-            // Repeat for next array locating it right after the first array
-            array2 := add(array1, 0x40)
-            mstore(array2, 1)
-            mstore(add(array2, 0x20), element2)
-
-            // Update the free memory pointer by pointing after the second array
-            mstore(0x40, add(array2, 0x40))
-        }
-    }
-
-    // Disable ERC1155 transfer functions
-
-    /**
-     * @notice ERC1155 safeTransferFrom is disabled.
-     */
-    function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
-        revert NotSupported();
-    }
-
-    /**
-     * @notice ERC1155 setApprovalForAll is disabled.
-     */
-    function setApprovalForAll(address, bool) public pure override {
-        revert NotSupported();
-    }
+    /* ========== MODIFIERS ========== */
 
     modifier notPendingLossMint() {
         if (isPendingLossMint()) {
