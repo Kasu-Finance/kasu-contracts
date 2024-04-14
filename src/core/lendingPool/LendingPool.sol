@@ -349,10 +349,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @param epoch The epoch number for which the interests are applied.
      */
     function applyInterests(uint256 epoch) external onlyClearingCoordinator {
-        _applyInterests(epoch);
-    }
-
-    function _applyInterests(uint256 epoch) internal {
         _updateTrancheInterestRateConfig(epoch);
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
