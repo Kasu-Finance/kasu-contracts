@@ -56,6 +56,8 @@ contract UserManager is IUserManager, Initializable {
         uint256[] loyaltyThresholds;
     }
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param systemVariables_ System variables contract.
@@ -74,6 +76,8 @@ contract UserManager is IUserManager, Initializable {
         _disableInitializers();
     }
 
+    /* ========== INITIALIZER ========== */
+
     /**
      * @notice Initialize the contract.
      * @param lendingPoolManager_ Lending pool manager address.
@@ -82,6 +86,8 @@ contract UserManager is IUserManager, Initializable {
         AddressLib.checkIfZero(lendingPoolManager_);
         _lendingPoolManager = lendingPoolManager_;
     }
+
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Get the calculated user epoch loyalty level.
@@ -182,6 +188,30 @@ contract UserManager is IUserManager, Initializable {
     }
 
     /**
+     * @notice Check if the user loyalty levels are processed for the epoch.
+     * @param epoch The epoch number.
+     * @return True if the user loyalty levels are processed for the epoch.
+     */
+    function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool) {
+        return _epochUserLoyaltyProcessing[epoch].didStart
+            && _epochUserLoyaltyProcessing[epoch].processedUsersCount == _epochUserLoyaltyProcessing[epoch].userCount;
+    }
+
+    /**
+     * @notice Calculate the user loyalty level for the current epoch.
+     * @param user The address of the user.
+     * @return currentEpoch The current epoch number.
+     * @return loyaltyLevel The user's loyalty level.
+     */
+    function userLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel) {
+        LoyaltyGlobalParameters memory params = _loyaltyParameters();
+        currentEpoch = params.currentEpoch;
+        (loyaltyLevel,,) = _userLoyaltyLevel(user, params);
+    }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
+    /**
      * @notice Batch calculate user loyalty levels for the current epoch.
      * @dev
      * This function is used to calculate user loyalty levels in batches.
@@ -236,101 +266,6 @@ contract UserManager is IUserManager, Initializable {
         if (_epochUserLoyaltyProcessing[params.currentEpoch].userCount == endUser) {
             emit UserLoyaltyLevelsForEpochProcessed(params.currentEpoch, endUser);
         }
-    }
-
-    /**
-     * @notice Check if the user loyalty levels are processed for the epoch.
-     * @param epoch The epoch number.
-     * @return True if the user loyalty levels are processed for the epoch.
-     */
-    function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool) {
-        return _epochUserLoyaltyProcessing[epoch].didStart
-            && _epochUserLoyaltyProcessing[epoch].processedUsersCount == _epochUserLoyaltyProcessing[epoch].userCount;
-    }
-
-    function _loyaltyParameters() private view returns (LoyaltyGlobalParameters memory params) {
-        params.currentEpoch = _systemVariables.currentEpochNumber();
-        params.ksuPrice = _systemVariables.ksuEpochTokenPrice();
-        params.loyaltyThresholds = _systemVariables.loyaltyThresholds();
-    }
-
-    /**
-     * @notice Calculate the user loyalty level for the current epoch.
-     * @param user The address of the user.
-     * @return currentEpoch The current epoch number.
-     * @return loyaltyLevel The user's loyalty level.
-     */
-    function userLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel) {
-        LoyaltyGlobalParameters memory params = _loyaltyParameters();
-        currentEpoch = params.currentEpoch;
-        (loyaltyLevel,,) = _userLoyaltyLevel(user, params);
-    }
-
-    function _userLoyaltyLevel(address user, LoyaltyGlobalParameters memory params)
-        private
-        view
-        returns (uint8 loyaltyLevel, uint256 activeDepositAmount, uint256 pendingDepositAmount)
-    {
-        // get user deposit amount for the current epoch
-        (activeDepositAmount, pendingDepositAmount) =
-            _userTotalPendingAndActiveDepositedAmount(user, params.currentEpoch);
-        uint256 userDepositAmount = activeDepositAmount + pendingDepositAmount;
-
-        // get user rKSU balance
-        uint256 userRKSU = _ksuLocking.balanceOf(user);
-
-        // calculate rKSU in asset (USDC)
-        uint256 rKSUInUSDC = _rKSUInUSDC(userRKSU, params.ksuPrice);
-
-        // calculate user rKSU vs user deposit amount
-        uint256 rKSUDepositRatio;
-        if (userDepositAmount > 0) {
-            rKSUDepositRatio = rKSUInUSDC * FULL_PERCENT / userDepositAmount;
-        } else if (userRKSU > 0) {
-            // if user has rKSU and no deposit amount his loyalty level is max
-            rKSUDepositRatio = type(uint256).max;
-        }
-
-        // calculate user loyalty level
-        for (uint256 i; i < params.loyaltyThresholds.length; ++i) {
-            if (rKSUDepositRatio >= params.loyaltyThresholds[i]) {
-                loyaltyLevel++;
-            } else {
-                break;
-            }
-        }
-    }
-
-    function _userTotalPendingAndActiveDepositedAmount(address user, uint256 epochId)
-        private
-        view
-        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
-    {
-        // loop through all user lending pools
-        for (uint256 i; i < _userLendingPools[user].length; ++i) {
-            (uint256 poolActiveDepositAmount, uint256 poolPendingDepositAmount) =
-                _userLendingPoolActiveAndPendingBalance(user, _userLendingPools[user][i], epochId);
-
-            activeDepositAmount += poolActiveDepositAmount;
-            pendingDepositAmount += poolPendingDepositAmount;
-        }
-    }
-
-    function _userLendingPoolActiveAndPendingBalance(address user, address lendingPool, uint256 epochId)
-        private
-        view
-        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
-    {
-        activeDepositAmount = ILendingPool(lendingPool).userBalance(user);
-
-        // get user pending deposit amount
-        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
-        pendingDepositAmount = pendingPool.userPendingDepositAmount(user, epochId);
-    }
-
-    function _rKSUInUSDC(uint256 rKSUAmount, uint256 ksuPrice) internal pure returns (uint256 rKSUInUSDC) {
-        // NOTE: 1e12 is the difference in decimal places between rKSU and USDC
-        rKSUInUSDC = rKSUAmount * ksuPrice / KSU_PRICE_MULTIPLIER / 1e12;
     }
 
     /**
@@ -427,6 +362,81 @@ contract UserManager is IUserManager, Initializable {
                 --toIndex;
             }
         }
+    }
+
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
+
+    function _loyaltyParameters() private view returns (LoyaltyGlobalParameters memory params) {
+        params.currentEpoch = _systemVariables.currentEpochNumber();
+        params.ksuPrice = _systemVariables.ksuEpochTokenPrice();
+        params.loyaltyThresholds = _systemVariables.loyaltyThresholds();
+    }
+
+    function _userLoyaltyLevel(address user, LoyaltyGlobalParameters memory params)
+        private
+        view
+        returns (uint8 loyaltyLevel, uint256 activeDepositAmount, uint256 pendingDepositAmount)
+    {
+        // get user deposit amount for the current epoch
+        (activeDepositAmount, pendingDepositAmount) =
+            _userTotalPendingAndActiveDepositedAmount(user, params.currentEpoch);
+        uint256 userDepositAmount = activeDepositAmount + pendingDepositAmount;
+
+        // get user rKSU balance
+        uint256 userRKSU = _ksuLocking.balanceOf(user);
+
+        // calculate rKSU in asset (USDC)
+        uint256 rKSUInUSDC = _rKSUInUSDC(userRKSU, params.ksuPrice);
+
+        // calculate user rKSU vs user deposit amount
+        uint256 rKSUDepositRatio;
+        if (userDepositAmount > 0) {
+            rKSUDepositRatio = rKSUInUSDC * FULL_PERCENT / userDepositAmount;
+        } else if (userRKSU > 0) {
+            // if user has rKSU and no deposit amount his loyalty level is max
+            rKSUDepositRatio = type(uint256).max;
+        }
+
+        // calculate user loyalty level
+        for (uint256 i; i < params.loyaltyThresholds.length; ++i) {
+            if (rKSUDepositRatio >= params.loyaltyThresholds[i]) {
+                loyaltyLevel++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    function _userTotalPendingAndActiveDepositedAmount(address user, uint256 epochId)
+        private
+        view
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
+    {
+        // loop through all user lending pools
+        for (uint256 i; i < _userLendingPools[user].length; ++i) {
+            (uint256 poolActiveDepositAmount, uint256 poolPendingDepositAmount) =
+                _userLendingPoolActiveAndPendingBalance(user, _userLendingPools[user][i], epochId);
+
+            activeDepositAmount += poolActiveDepositAmount;
+            pendingDepositAmount += poolPendingDepositAmount;
+        }
+    }
+
+    function _userLendingPoolActiveAndPendingBalance(address user, address lendingPool, uint256 epochId)
+        private
+        view
+        returns (uint256 activeDepositAmount, uint256 pendingDepositAmount)
+    {
+        activeDepositAmount = ILendingPool(lendingPool).userBalance(user);
+
+        // get user pending deposit amount
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
+        pendingDepositAmount = pendingPool.userPendingDepositAmount(user, epochId);
+    }
+
+    function _rKSUInUSDC(uint256 rKSUAmount, uint256 ksuPrice) internal pure returns (uint256 rKSUInUSDC) {
+        // NOTE: 1e12 is the difference in decimal places between rKSU and USDC
+        rKSUInUSDC = rKSUAmount * ksuPrice / KSU_PRICE_MULTIPLIER / 1e12;
     }
 
     function _removeLendingPoolFromUser(address user, uint256 userLendingPoolIndex) internal {
