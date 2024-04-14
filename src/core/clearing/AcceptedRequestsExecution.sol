@@ -13,21 +13,49 @@ struct AcceptedRequestsExecutionEpoch {
     TaskStatus status;
 }
 
+/**
+ * @title Accepted Requests Execution contract
+ * @notice Contract for executing accepted deposit and accepted withdrawal requests.
+ * @dev This contract is used in step 4 of the clearing process.
+ * All external functions are called by the clearing coordinator contract.
+ * Clearing step 4 requires looping over user pending requests and processing them.
+ * It uses the results of step 2 and 3 to determine the accepted deposit and withdrawal request amounts.
+ * Deposits can be accepted to multiple tranches. Whatever is not accepted will be rejected and refunded to the user.
+ * Withdrawals can be partially accepted. Whatever is not accepted will remain pending.
+ */
 abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
     /* ========== EXTERNAL VIEW FUNCTION ========== */
 
+    /**
+     * @notice Returns the status of the accepted requests execution task.
+     * @param targetEpoch The epoch of pending user request.
+     * @return The status of the accepted requests execution task.
+     */
     function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
         return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
+    /**
+     * @notice Execute accepted deposit and withdrawal requests in batches.
+     * @dev This is function to process step 4 of the clearing process.
+     * This function can only be called by the clearing coordinator contract.
+     * Requests can be processed in batches to avoid exceeding the block gas limit.
+     * Loops over a batch of pending deposit and withdrawal requests and processes them.
+     * Requests are processed in reverse order as when we fully processing a request, we remove it from the list.
+     * Deposits can be accepted to multiple tranches. Whatever is not accepted will be rejected and refunded to the user.
+     * Withdrawals can be partially accepted. Whatever is not accepted will remain pending.
+     * @param targetEpoch Target epoch number.
+     * @param batchSize Number of requests to process in a batch.
+     */
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
 
+        // initialize the task if it hasn't been initialized yet for the target epoch
         if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALIZED) {
             _initializeAcceptedRequests(targetEpoch);
 
@@ -119,7 +147,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         }
                     }
 
-                    // whatever is not accepted will be rejected, deposit requests are not carried in next epochs
+                    // whatever is not accepted will be rejected, deposit requests are not carried to next epoch
                     if (requestAmountLeft > 0) {
                         _rejectDepositRequest(userRequestNftId);
                     }
@@ -147,6 +175,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 }
             }
 
+            // if we've processed all requests, we can end the task
             if (i == 0) {
                 _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
                 break;
