@@ -143,6 +143,19 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(mockUsdc.balanceOf(bob), 250 * 10 ** 6);
     }
 
+    function test_cancelDeposit_verifyDepositNft() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        uint256 dNftId_alice = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], 100 * 10 ** 6);
+        _acceptDepositRequest(lpd.lendingPool, dNftId_alice, 40 * 10 ** 6);
+
+        uint256 wNftId_alice = _requestWithdrawal(alice, lpd.lendingPool, lpd.tranches[0], 40 * 10 ** 18);
+
+        // ### ACT & ASSERT ###
+        vm.expectRevert(abi.encodeWithSelector(IPendingPool.NotDepositNFT.selector, wNftId_alice));
+        _cancelDepositRequest(alice, lpd.lendingPool, wNftId_alice);
+    }
+
     function test_acceptDeposit() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lendingPoolDeployment = _createDefaultLendingPool();
@@ -340,6 +353,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 wNftId_carol = _batchForceWithdrawals(poolManagerAccount, lpd.lendingPool, input1)[0];
 
         // ### ACT ###
+        vm.expectRevert(abi.encodeWithSelector(IPendingPool.NotWithdrawalNFT.selector, dNftId_alice));
+        _cancelWithdrawalRequest(alice, lpd.lendingPool, dNftId_alice);
+
         // incorrect owner
         vm.expectRevert(abi.encodeWithSelector(IPendingPool.UserIsNotOwnerOfNFT.selector, bob, wNftId_alice));
         _cancelWithdrawalRequest(bob, lpd.lendingPool, wNftId_alice);

@@ -120,6 +120,8 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     // Errors
     error UserIsNotOwnerOfNFT(address user, uint256 dNftID);
+    error NotDepositNFT(uint256 nftID);
+    error NotWithdrawalNFT(uint256 nftID);
     error TooManyAssetsRequested(uint256 dNftID, uint256 availableAmount, uint256 requestedAmount);
     error TooManySharesRequested(uint256 wNftID, uint256 availableShares, uint256 requestedShares);
     error InsufficientSharesBalance(
