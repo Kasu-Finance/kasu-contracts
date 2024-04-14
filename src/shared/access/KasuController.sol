@@ -17,6 +17,8 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _disableInitializers();
     }
 
+    /* ========== INITIALIZER ========== */
+
     function initialize(address admin, address factory) public initializer {
         AddressLib.checkIfZero(admin);
         AddressLib.checkIfZero(factory);
@@ -25,7 +27,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _grantRole(ROLE_LENDING_POOL_FACTORY, factory);
     }
 
-    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+    /* ========== EXTERNAL VIEW METHODS ========== */
 
     function hasLendingPoolRole(address lendingPool, bytes32 role, address account) public view returns (bool) {
         return hasRole(_getLendingPoolRole(lendingPool, role), account);
@@ -35,7 +37,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _requireNotPaused();
     }
 
-    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
 
     function grantLendingPoolRole(address lendingPool, bytes32 role, address account)
         external
@@ -53,6 +55,11 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         emit LendingPoolRoleRevoked(lendingPool, role, account);
     }
 
+    function renounceLendingPoolRole(address lendingPool, bytes32 role) external {
+        renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
+        emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
+    }
+
     function pause() external whenNotPaused onlyRole(ROLE_KASU_ADMIN) {
         _pause();
     }
@@ -61,12 +68,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _unpause();
     }
 
-    function renounceLendingPoolRole(address lendingPool, bytes32 role) external {
-        renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
-        emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
-    }
-
-    /* ========== INTERNAL FUNCTIONS ========== */
+    /* ========== INTERNAL HELPER METHODS ========== */
 
     function _onlyAdminOrPoolAdmin(address lendingPool, address account) private view {
         bytes32 poolAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);

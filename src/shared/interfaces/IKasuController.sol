@@ -31,7 +31,7 @@ error ReentrantCall();
 error NoReentrantRole();
 
 interface IKasuController is IAccessControl {
-    /* ========== VIEW FUNCTIONS ========== */
+    /* ========== EXTERNAL VIEW METHODS ========== */
 
     /**
      * @notice Gets owner of a lending pool.
@@ -54,7 +54,7 @@ interface IKasuController is IAccessControl {
 
     function requireNotPaused() external view;
 
-    /* ========== MUTATIVE FUNCTIONS ========== */
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
 
     /**
      * @notice Grants role to an account for a lending pool.
@@ -96,6 +96,8 @@ interface IKasuController is IAccessControl {
      * @param owner address to which grant ownership to
      */
     // function grantLendingPoolOwnership(address lendingPool, address owner) external;
+
+    /* ========== EVENTS ========== */
 
     /**
      * @notice Emitted when ownership of a lending pool is granted to an address
