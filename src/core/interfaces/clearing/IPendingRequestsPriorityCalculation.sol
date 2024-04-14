@@ -6,6 +6,26 @@ import "./IClearingStepsData.sol";
 error PendingRequestsPriorityCalculationIsPending();
 
 interface IPendingRequestsPriorityCalculation {
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
+    /**
+     * @notice Returns the status of the pending requests priority calculation task.
+     * @param targetEpoch The epoch of pending user request.
+     * @return The status of the pending requests priority calculation task.
+     */
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) external view returns (TaskStatus);
+
+    /**
+     * @notice Returns the amount of pending user requests remaining to complete the task.
+     * @dev
+     * This function can be completed in multiple transactions.
+     * @param targetEpoch The epoch of pending user request.
+     * @return The amount of pending user requests remaining to complete the task.
+     */
+    function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
     /**
      * @notice Sets priorities for an amount of pending deposits and withdrawals.
      * @dev
@@ -19,23 +39,7 @@ interface IPendingRequestsPriorityCalculation {
      */
     function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external;
 
-    /**
-     * @notice Returns the amount of pending user requests remaining to complete the task.
-     * @dev
-     * This function can be completed in multiple transactions.
-     * @param targetEpoch The epoch of pending user request.
-     * @return The amount of pending user requests remaining to complete the task.
-     */
-    function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) external view returns (uint256);
-
-    /**
-     * @notice Returns the status of the pending requests priority calculation task.
-     * @param targetEpoch The epoch of pending user request.
-     * @return The status of the pending requests priority calculation task.
-     */
-    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) external view returns (TaskStatus);
-
-    //*** ERRORS ***//
+    /* ========== ERRORS ========== */
 
     /**
      * @dev Indicates task pending requests priority calculation task has already been processed

@@ -72,6 +72,8 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         uint256[] acceptedPriorityWithdrawalAmounts;
     }
 
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
     /**
      * @notice Calculates the accepted requested deposit and requested withdrawal amount.
      * @dev Draw amount must be less than the maximum available funds otherwise the call will revert.
@@ -126,6 +128,8 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         // verify the result
         _verifyResult(input, outputData1, outputData2, outputData3, outputData4);
     }
+
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Calculates the total accepted pending deposits and withdrawals and draw amount.

@@ -28,7 +28,7 @@ abstract contract KasuAccessControllable {
         controller = controller_;
     }
 
-    /* ========== INTERNAL FUNCTIONS ========== */
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== *
 
     /**
      * @dev Reverts if an account is missing a role.\

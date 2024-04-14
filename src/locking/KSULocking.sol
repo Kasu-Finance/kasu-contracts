@@ -30,7 +30,11 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     mapping(address => uint256) private _rewards;
     mapping(address => uint256) private _rewardDebt;
 
+    /* ========== CONSTRUCTOR ========== */
+
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
+
+    /* ========== INITIALIZER ========== */
 
     function initialize(ERC20Permit ksuToken_, IERC20 feeToken_) external initializer {
         AddressLib.checkIfZero(address(ksuToken_));
@@ -41,15 +45,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _feeToken = feeToken_;
     }
 
-    /**
-     * @dev See {IKSULocking-setKSULockBonus}.
-     */
-    function setKSULockBonus(address ksuBonusTokens_) external whenNotPaused onlyAdmin {
-        AddressLib.checkIfZero(ksuBonusTokens_);
-        _ksuBonusTokens = ksuBonusTokens_;
-    }
-
-    // ### Public Interface ###
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function userLock(address user, uint256 userLockId) external view returns (UserLock memory) {
         return _userLocks[user][userLockId];
@@ -58,6 +54,15 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory) {
         return _lockDetails[lockPeriod];
     }
+
+    /**
+     * @dev See {IKSULocking-rewards}.
+     */
+    function rewards(address user) external view returns (uint256) {
+        return _rewards[user] + _userRewards(user);
+    }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @dev See {IKSULocking-addLockPeriod}.
@@ -147,13 +152,6 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     }
 
     /**
-     * @dev See {IKSULocking-rewards}.
-     */
-    function rewards(address user) external view returns (uint256) {
-        return _rewards[user] + _userRewards(user);
-    }
-
-    /**
      * @dev See {IKSULocking-emergencyWithdraw}.
      */
     function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver)
@@ -170,7 +168,22 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         }
     }
 
-    // ### Private Functions ###
+    /**
+     * @dev See {IKSULocking-setKSULockBonus}.
+     */
+    function setKSULockBonus(address ksuBonusTokens_) external whenNotPaused onlyAdmin {
+        AddressLib.checkIfZero(ksuBonusTokens_);
+        _ksuBonusTokens = ksuBonusTokens_;
+    }
+
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
+
+    function _userRewards(address user) private view returns (uint256) {
+        return balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
+    }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
     function _emergencyWithdraw(address user, uint256 userLockId, uint256 withdrawAmount, address receiver) internal {
         uint256 rKSUBurned = _withdrawUserLockId(user, userLockId, withdrawAmount, receiver);
 
@@ -263,10 +276,6 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         }
 
         _accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / totalSupply();
-    }
-
-    function _userRewards(address user) private view returns (uint256) {
-        return balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
     }
 
     function _updateUserRewards(address user) private {

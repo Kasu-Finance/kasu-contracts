@@ -57,6 +57,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     mapping(address lendingPool => mapping(uint256 epoch => AppliedClearingConfiguration)) private
         _clearingConfigPerLendingPoolAndEpoch;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param systemVariables_ System variables contract.
@@ -73,30 +75,14 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         _userManager = userManager_;
     }
 
-    /**
-     * @notice Initializes the clearing process for the lending pool.
-     * @dev This function must be called after the lending pool is created.
-     */
-    function initializeLendingPool(address lendingPool) external onlyLendingPoolManager {
-        AddressLib.checkIfZero(lendingPool);
+    /* ========== EXTERNAL VIEW FUNCTION ========== */
 
-        // sets the next clearing epoch to the current request epoch (if clearing period is active the next epoch is applied)
-        nextLendingPoolClearingEpoch[lendingPool] = _systemVariables.currentRequestEpoch();
-    }
-
-    /**
-     * @notice Returns the maximum amount that can be drawn from the lending pool for the current epoch.
-     * @dev Can only be drawn if it's the clearing time and the clearing for the current epoch is not yet processed.
-     * @param lendingPool Lending pool address.
-     * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
-     */
-    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
-        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
-
-        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
-        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
-
-        return lendingPoolAvailableFunds + pendingDepositAmount;
+    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
+        external
+        view
+        returns (ClearingStatus status)
+    {
+        return _lendingPoolClearingStatus[lendingPool][epoch];
     }
 
     /**
@@ -120,6 +106,34 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
                 }
             }
         }
+    }
+
+    /**
+     * @notice Returns the maximum amount that can be drawn from the lending pool for the current epoch.
+     * @dev Can only be drawn if it's the clearing time and the clearing for the current epoch is not yet processed.
+     * @param lendingPool Lending pool address.
+     * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
+     */
+    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
+        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
+
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
+        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
+
+        return lendingPoolAvailableFunds + pendingDepositAmount;
+    }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
+    /**
+     * @notice Initializes the clearing process for the lending pool.
+     * @dev This function must be called after the lending pool is created.
+     */
+    function initializeLendingPool(address lendingPool) external onlyLendingPoolManager {
+        AddressLib.checkIfZero(lendingPool);
+
+        // sets the next clearing epoch to the current request epoch (if clearing period is active the next epoch is applied)
+        nextLendingPoolClearingEpoch[lendingPool] = _systemVariables.currentRequestEpoch();
     }
 
     /**
@@ -258,15 +272,16 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingExecuted(lendingPool, targetEpoch, clearingStatus);
     }
 
-    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
-        external
-        view
-        returns (ClearingStatus status)
-    {
-        return _lendingPoolClearingStatus[lendingPool][epoch];
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
+
+    function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
+        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
+        uint256 lendingPoolUserOwedAmount = ILendingPool(lendingPool).userOwedAmount();
+
+        return LendingPoolBalance(lendingPoolAvailableFunds, lendingPoolUserOwedAmount);
     }
 
-    //*** Helper Methods ***/
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _overrideClearingConfig(
         address lendingPool,
@@ -296,12 +311,5 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         appliedConfig.isSet = true;
 
         emit ClearingConfigSet(lendingPool, epoch, clearingConfig);
-    }
-
-    function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
-        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
-        uint256 lendingPoolUserOwedAmount = ILendingPool(lendingPool).userOwedAmount();
-
-        return LendingPoolBalance(lendingPoolAvailableFunds, lendingPoolUserOwedAmount);
     }
 }

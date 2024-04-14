@@ -17,6 +17,8 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _disableInitializers();
     }
 
+    /* ========== INITIALIZER ========== */
+
     function initialize(address admin, address factory) public initializer {
         AddressLib.checkIfZero(admin);
         AddressLib.checkIfZero(factory);
@@ -53,6 +55,11 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         emit LendingPoolRoleRevoked(lendingPool, role, account);
     }
 
+    function renounceLendingPoolRole(address lendingPool, bytes32 role) external {
+        renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
+        emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
+    }
+
     function pause() external whenNotPaused onlyRole(ROLE_KASU_ADMIN) {
         _pause();
     }
@@ -61,12 +68,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _unpause();
     }
 
-    function renounceLendingPoolRole(address lendingPool, bytes32 role) external {
-        renounceRole(_getLendingPoolRole(lendingPool, role), msg.sender);
-        emit LendingPoolRoleRenounced(lendingPool, role, msg.sender);
-    }
-
-    /* ========== INTERNAL FUNCTIONS ========== */
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _onlyAdminOrPoolAdmin(address lendingPool, address account) private view {
         bytes32 poolAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);
