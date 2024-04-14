@@ -11,7 +11,7 @@ import "../shared/AddressLib.sol";
 
 /**
  * @notice Kasu system variables contract setup structure.
- * @custom:member firstEpochStartTimestamp The timestamp of the start of the first epoch. Should be in the past.
+ * @custom:member initialEpochStartTimestamp The timestamp of the start of the initial epoch. Should be in the past.
  * @custom:member clearingPeriodLength The length of the clearing period.
  * @custom:member performanceFee The performance fee.
  * @custom:member loyaltyThresholds The loyalty level threshold percentages.
@@ -20,7 +20,7 @@ import "../shared/AddressLib.sol";
  * @custom:member protocolFeeRate The protocol fee percentage rate.
  */
 struct SystemVariablesSetup {
-    uint256 firstEpochStartTimestamp;
+    uint256 initialEpochStartTimestamp;
     uint256 clearingPeriodLength;
     uint256 performanceFee;
     uint256[] loyaltyThresholds;
@@ -40,14 +40,14 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     /// @notice Maximum number of loyalty levels in addition to the default level.
     uint256 public constant MAX_ADDITIONAL_LOYALTY_LEVELS = 10;
 
-    /// @notice The timestamp of the start of the first epoch.
+    /// @notice The duration of one epoch.
     uint256 private constant EPOCH_DURATION = 1 weeks;
 
     /// @notice The KSU token price contract.
     IKsuPrice public immutable ksuPrice;
 
-    /// @notice The timestamp of the start of the first epoch.
-    uint256 private _firstEpochStartTimestamp;
+    /// @notice The timestamp of the start of the initial epoch.
+    uint256 private _initialEpochStartTimestamp;
 
     /// @notice The length of the clearing period.
     uint256 public clearingPeriodLength;
@@ -118,8 +118,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function initialize(SystemVariablesSetup calldata systemVariablesSetup) external initializer {
         if (
-            systemVariablesSetup.firstEpochStartTimestamp < block.timestamp
-                || systemVariablesSetup.firstEpochStartTimestamp >= block.timestamp + EPOCH_DURATION
+            systemVariablesSetup.initialEpochStartTimestamp > block.timestamp
+                || systemVariablesSetup.initialEpochStartTimestamp + EPOCH_DURATION <= block.timestamp
         ) {
             revert InvalidConfiguration();
         }
@@ -131,7 +131,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
             revert InvalidConfiguration();
         }
 
-        _firstEpochStartTimestamp = systemVariablesSetup.firstEpochStartTimestamp;
+        _initialEpochStartTimestamp = systemVariablesSetup.initialEpochStartTimestamp;
         clearingPeriodLength = systemVariablesSetup.clearingPeriodLength;
 
         _setPerformanceFee(systemVariablesSetup.performanceFee);
@@ -166,13 +166,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The current epoch number.
      */
     function currentEpochNumber() public view returns (uint256) {
-        if (block.timestamp < _firstEpochStartTimestamp) {
-            return 0;
-        }
-
-        unchecked {
-            return (block.timestamp - _firstEpochStartTimestamp) / EPOCH_DURATION;
-        }
+        return (block.timestamp - _initialEpochStartTimestamp) / EPOCH_DURATION;
     }
 
     /**
@@ -181,7 +175,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The timestamp of the start of the given epoch.
      */
     function epochStartTimestamp(uint256 epoch) external view returns (uint256) {
-        return _firstEpochStartTimestamp + epoch * EPOCH_DURATION;
+        return _initialEpochStartTimestamp + epoch * EPOCH_DURATION;
     }
 
     /**
@@ -197,7 +191,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The timestamp of the start of the next epoch.
      */
     function nextEpochStartTimestamp() public view returns (uint256) {
-        return _firstEpochStartTimestamp + (currentEpochNumber() + 1) * EPOCH_DURATION;
+        return _initialEpochStartTimestamp + (currentEpochNumber() + 1) * EPOCH_DURATION;
     }
 
     /**

@@ -829,6 +829,9 @@ contract ClearingTest is LendingPoolTestUtils {
 
         assertFalse(clearingCoordinator.isLendingPoolClearingPending(lpd.lendingPool));
 
+        vm.expectRevert(abi.encodeWithSelector(CanOnlyExecuteDuringClearingTime.selector));
+        userManager.batchCalculateUserLoyaltyLevels(2);
+
         // move to clearing period
         skip(6 days);
 
@@ -866,7 +869,14 @@ contract ClearingTest is LendingPoolTestUtils {
         // request deposit that is going to be processed in the next epoch
         uint256 carolDepositId = _requestDeposit(carol, lpd.lendingPool, lpd.tranches[2], 30_000 * 1e6);
 
-        userManager.batchCalculateUserLoyaltyLevels(3);
+        userManager.batchCalculateUserLoyaltyLevels(1);
+        EpochUserLoyaltyProcessing memory userLoyaltyProcessing =
+            userManager.epochUserLoyaltyProcessing(nextClearingEpoch);
+        assertTrue(userLoyaltyProcessing.didStart);
+        assertEq(userLoyaltyProcessing.userCount, 3);
+        assertEq(userLoyaltyProcessing.processedUsersCount, 1);
+        userManager.batchCalculateUserLoyaltyLevels(1);
+        userManager.batchCalculateUserLoyaltyLevels(1);
 
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 0, 0, clearingConfiguration, false);
         _doClearing(poolClearingManagerAccount, lpd.lendingPool, nextClearingEpoch, 1, 0, clearingConfiguration, false);

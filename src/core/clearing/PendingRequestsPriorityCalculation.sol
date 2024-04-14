@@ -152,10 +152,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
 
-        if (
-            userRequestId >= clearingData.totalPendingRequestsToProcess
-                && _pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.ENDED
-        ) {
+        if (userRequestId >= clearingData.totalPendingRequestsToProcess) {
             // convert pending withdrawal shares to amounts - minimize rounding errors
             for (
                 uint256 withdrawalPriority;

@@ -231,7 +231,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // initialize
         SystemVariablesSetup memory systemVariablesSetup;
-        systemVariablesSetup.firstEpochStartTimestamp = block.timestamp;
+        systemVariablesSetup.initialEpochStartTimestamp = block.timestamp;
         systemVariablesSetup.clearingPeriodLength = 1 days;
         systemVariablesSetup.performanceFee = 10_00;
         systemVariablesSetup.loyaltyThresholds = new uint256[](2);

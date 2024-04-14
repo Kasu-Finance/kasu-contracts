@@ -376,10 +376,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert PoolConfigurationIsIncorrect("minExcessPercentage more than maxExcessPercentage");
         }
 
-        if (clearingConfig.maxExcessPercentage > FULL_PERCENT) {
-            revert PoolConfigurationIsIncorrect("maxExcessPercentage more than 100");
-        }
-
         _verifyTrancheDesiredRatios(clearingConfig.trancheDesiredRatios);
     }
 
@@ -975,10 +971,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             revert PoolConfigurationIsIncorrect(
                 "Target excess liquidity percentage is less than minimum excess liquidity percentage"
             );
-        }
-
-        if (targetExcessLiquidityPercentage > FULL_PERCENT) {
-            revert PoolConfigurationIsIncorrect("Target excess liquidity percentage is more than 100%");
         }
 
         _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;

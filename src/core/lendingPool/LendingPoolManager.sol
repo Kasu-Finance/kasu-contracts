@@ -365,7 +365,12 @@ contract LendingPoolManager is
         uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
         bool isConfigOverridden
-    ) external whenNotPaused onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender) {
+    )
+        external
+        whenNotPaused
+        validLendingPool(lendingPool)
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_CLEARING_MANAGER, msg.sender)
+    {
         _clearingCoordinator.doClearing(
             lendingPool,
             targetEpoch,
