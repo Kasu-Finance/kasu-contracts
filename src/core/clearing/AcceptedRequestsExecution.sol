@@ -23,7 +23,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
-    //*** External Mutation Methods ***/
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
