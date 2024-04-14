@@ -58,6 +58,12 @@ interface ISystemVariables {
     // EVENTS
     event PerformanceFeeUpdated(uint256 performanceFee);
     event KsuTokenPriceUpdated(uint256 indexed epoch, uint256 ksuTokenPrice);
+    event LoyaltyThresholdsUpdated(uint256[] loyaltyThresholds);
+    event UserCanOnlyDepositToJuniorTrancheWhenHeHasRKSUUpdated(bool value);
+    event DefaultTrancheInterestChangeEpochDelayUpdated(uint256 defaultTrancheInterestChangeEpochDelay);
+    event MaxTrancheInterestRateUpdated(uint256 maxTrancheInterestRate);
+    event FeeRatesUpdated(uint256 ecosystemFeeRate, uint256 protocolFeeRate);
+    event ProtocolFeeReceiverUpdated(address receiver);
 
     // ERRORS
     error CannotConfigureDuringClearingPeriod();

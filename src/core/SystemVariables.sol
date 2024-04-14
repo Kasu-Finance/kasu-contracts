@@ -112,7 +112,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Initializes the contract.
      * @param systemVariablesSetup The system variables setup structure.
      */
-    function initialize(SystemVariablesSetup memory systemVariablesSetup) external initializer {
+    function initialize(SystemVariablesSetup calldata systemVariablesSetup) external initializer {
         if (
             systemVariablesSetup.firstEpochStartTimestamp < block.timestamp
                 || systemVariablesSetup.firstEpochStartTimestamp >= block.timestamp + EPOCH_DURATION
@@ -232,7 +232,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }
 
-    // performance fee
+    // PERFORMANCE FEE
 
     /**
      * @notice Sets the performance fee.
@@ -260,7 +260,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @dev
      * The loyalty thresholds are denominated in FULL_PERCENT.
      * Index 0 represents loyalty level 1, and the last index is the highest loyalty level.
-     * Loyalty level 0 is assumed by default and it should have 0% threshold.
+     * Loyalty level 0 is assumed by default, is not part of this array, and it should have 0% threshold.
      * @return The loyalty thresholds.
      */
     function loyaltyThresholds() external view returns (uint256[] memory) {
@@ -283,7 +283,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * If array has no elements then there is only one loyalty level.
      * @param loyaltyThresholds_ The new loyalty thresholds array.
      */
-    function setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) external whenNotPaused onlyAdmin {
+    function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds_) external whenNotPaused onlyAdmin {
         if (isClearingTime()) {
             revert CannotConfigureDuringClearingPeriod();
         }
@@ -291,7 +291,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _setLoyaltyThresholds(loyaltyThresholds_);
     }
 
-    function _setLoyaltyThresholds(uint256[] memory loyaltyThresholds_) internal {
+    function _setLoyaltyThresholds(uint256[] calldata loyaltyThresholds_) internal {
         if (loyaltyThresholds_.length > MAX_ADDITIONAL_LOYALTY_LEVELS) {
             revert InvalidConfiguration();
         }
@@ -306,7 +306,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
         _loyaltyThresholds = loyaltyThresholds_;
 
-        // TODO: emit event
+        emit LoyaltyThresholdsUpdated(loyaltyThresholds_);
     }
 
     // LENDING POOL
@@ -326,7 +326,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external whenNotPaused onlyAdmin {
         _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU = value;
 
-        // TODO: emit event
+        emit UserCanOnlyDepositToJuniorTrancheWhenHeHasRKSUUpdated(value);
     }
 
     // TRANCHE
@@ -350,7 +350,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     {
         _defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
 
-        // TODO: emit event
+        emit DefaultTrancheInterestChangeEpochDelayUpdated(defaultTrancheInterestChangeEpochDelay_);
     }
 
     /**
@@ -368,7 +368,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public whenNotPaused onlyAdmin {
         _maxTrancheInterestRate = maxTrancheInterestRate_;
 
-        // TODO: emit event
+        emit MaxTrancheInterestRateUpdated(maxTrancheInterestRate_);
     }
 
     /**
@@ -424,7 +424,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _ecosystemFeeRate = ecosystemFeeRate;
         _protocolFeeRate = protocolFeeRate;
 
-        // TODO: emit event
+        emit FeeRatesUpdated(ecosystemFeeRate, protocolFeeRate);
     }
 
     /**
@@ -447,6 +447,6 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         AddressLib.checkIfZero(receiver);
         _protocolFeeReceiver = receiver;
 
-        // TODO: emit event
+        emit ProtocolFeeReceiverUpdated(receiver);
     }
 }
