@@ -33,6 +33,8 @@ struct CreatePoolConfig {
 }
 
 interface ILendingPoolFactory {
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
     function createPool(CreatePoolConfig calldata createPoolConfig)
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment);

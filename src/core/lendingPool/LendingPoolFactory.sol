@@ -33,6 +33,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
     /// @notice System variables contract.
     ISystemVariables private immutable _systemVariables;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param pendingPoolBeacon_ Pending pool beacon address.
@@ -64,6 +66,8 @@ contract LendingPoolFactory is ILendingPoolFactory {
         _lendingPoolManager = lendingPoolManager_;
         _systemVariables = systemVariables_;
     }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Creates a lending pool.
@@ -125,23 +129,7 @@ contract LendingPoolFactory is ILendingPoolFactory {
         emit PoolCreated(lendingPoolDeployment.lendingPool, lendingPoolDeployment, poolConfiguration);
     }
 
-    function _deployLendingPoolTranche(
-        string memory poolName,
-        string memory poolSymbol,
-        uint256 trancheIndex,
-        uint256 trancheCount,
-        ILendingPool lendingPool
-    ) internal returns (address) {
-        BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(_lendingPoolTrancheBeacon, "");
-        LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
-
-        (string memory fullTrancheName, string memory fullTrancheSymbol) =
-            _trancheName(poolName, poolSymbol, trancheIndex, trancheCount);
-
-        lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
-
-        return address(lendingPoolTranche);
-    }
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _trancheName(
         string memory lendingPoolName,
@@ -164,6 +152,28 @@ contract LendingPoolFactory is ILendingPoolFactory {
     {
         return (string.concat(poolName, " - Request NFT"), string.concat(lendingPoolSymbol, "_RQST"));
     }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _deployLendingPoolTranche(
+        string memory poolName,
+        string memory poolSymbol,
+        uint256 trancheIndex,
+        uint256 trancheCount,
+        ILendingPool lendingPool
+    ) internal returns (address) {
+        BeaconProxy lendingPoolTrancheBeaconProxy = new BeaconProxy(_lendingPoolTrancheBeacon, "");
+        LendingPoolTranche lendingPoolTranche = LendingPoolTranche(address(lendingPoolTrancheBeaconProxy));
+
+        (string memory fullTrancheName, string memory fullTrancheSymbol) =
+            _trancheName(poolName, poolSymbol, trancheIndex, trancheCount);
+
+        lendingPoolTranche.initialize(fullTrancheName, fullTrancheSymbol, lendingPool);
+
+        return address(lendingPoolTranche);
+    }
+
+    /* ========== MODIFIERS ========== */
 
     modifier onlyLendingPoolManager() {
         if (msg.sender != _lendingPoolManager) {
