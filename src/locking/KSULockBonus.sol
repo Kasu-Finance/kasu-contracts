@@ -11,6 +11,8 @@ contract KSULockBonus is Initializable {
     address private _ksuLocking;
     IERC20 private _ksuToken;
 
+    /* ========== CONSTRUCTOR ========== */
+
     constructor() {
         _disableInitializers();
     }

@@ -57,6 +57,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     mapping(address lendingPool => mapping(uint256 epoch => AppliedClearingConfiguration)) private
         _clearingConfigPerLendingPoolAndEpoch;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param systemVariables_ System variables contract.

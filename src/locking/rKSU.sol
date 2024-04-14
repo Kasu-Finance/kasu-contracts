@@ -6,6 +6,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 abstract contract rKSU is ERC20Upgradeable {
     error NonTransferrable();
 
+    /* ========== CONSTRUCTOR ========== */
+
     constructor() {
         _disableInitializers();
     }

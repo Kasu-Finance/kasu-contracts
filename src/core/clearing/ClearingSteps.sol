@@ -32,6 +32,8 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     /// @dev Lending pool clearing data per epoch.
     mapping(uint256 => ClearingData) private _clearingDataPerEpoch;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param clearingCoordinator_ Clearing coordinator contract.

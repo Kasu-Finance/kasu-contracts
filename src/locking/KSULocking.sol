@@ -30,6 +30,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     mapping(address => uint256) private _rewards;
     mapping(address => uint256) private _rewardDebt;
 
+    /* ========== CONSTRUCTOR ========== */
+
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
     /* ========== INITIALIZER ========== */
