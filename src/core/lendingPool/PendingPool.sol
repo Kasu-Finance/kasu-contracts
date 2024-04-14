@@ -19,7 +19,6 @@ import "../clearing/AcceptedRequestsExecution.sol";
 import "../clearing/ClearingSteps.sol";
 import "./UserRequestIds.sol";
 import "../../shared/AddressLib.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title PendingPool contract.
@@ -327,17 +326,14 @@ contract PendingPool is
 
     function _cancelWithdrawalRequest(address user, uint256 wNftID) private {
         uint256 sharesAmount = _trancheWithdrawalNftDetails[wNftID].sharesAmount;
-        console2.log("sharesAmount", sharesAmount);
 
         // Burn the withdrawal NFT
         _burnRequestNft(wNftID);
-        console2.log("burned");
 
         // delete nft storage
         _deleteWNftDetails(user, wNftID);
 
         (address tranche,) = UserRequestIds.decomposeWithdrawalId(wNftID);
-        console2.log("PendingPool: _cancelWithdrawalRequest: tranche", tranche);
 
         IERC20(tranche).safeTransfer(user, sharesAmount);
 
