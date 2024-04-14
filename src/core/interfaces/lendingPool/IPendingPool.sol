@@ -37,7 +37,10 @@ struct ForceWithdrawalInput {
  * @dev Can only be called by the LendingPoolManager contract.
  */
 interface IPendingPool is IERC721Enumerable, IClearingSteps {
-    // VIEWS
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
+    function totalPendingDepositAmount() external view returns (uint256);
+
     function trancheDepositNftDetails(uint256 dNftId)
         external
         view
@@ -55,9 +58,8 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     function getPendingDepositAmountForCurrentEpoch() external view returns (uint256);
 
-    function totalPendingDepositAmount() external view returns (uint256);
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
-    // #### USER DEPOSITS #### //
     /**
      * @notice Creates a pending deposit for the user. Transfers asset from user to lending pool
      * @dev Must approve asset token before calling this function
@@ -90,7 +92,8 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     function stop() external;
 
-    // Events
+    /* ========== EVENTS ========== */
+
     event DepositRequested(
         address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 epochId, uint256 amount
     );
@@ -118,7 +121,8 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         address indexed user, address indexed tranche, uint256 indexed wNftID, uint256 epochId, uint256 amount
     );
 
-    // Errors
+    /* ========== ERRORS ========== */
+
     error UserIsNotOwnerOfNFT(address user, uint256 dNftID);
     error NotDepositNFT(uint256 nftID);
     error NotWithdrawalNFT(uint256 nftID);
