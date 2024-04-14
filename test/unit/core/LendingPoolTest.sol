@@ -719,7 +719,6 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         _withdrawFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6, lendingPoolAdminAccount);
 
-        // TODO: w
         assertEq(mockUsdc.balanceOf(lendingPoolAdminAccount), 50 * 10 ** 6);
 
         // request deposit after stop - not allowed
