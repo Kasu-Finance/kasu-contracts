@@ -28,6 +28,8 @@ struct LendingPoolBalance {
 }
 
 interface IAcceptedRequestsCalculation {
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+
     function calculateAcceptedRequests(ClearingInput calldata input)
         external
         view
@@ -35,6 +37,8 @@ interface IAcceptedRequestsCalculation {
             uint256[][][] memory tranchePriorityDepositsAccepted,
             uint256[] memory acceptedPriorityWithdrawalAmounts
         );
+
+    /* ========== ERRORS ========== */
 
     error DrawAmountExceedsAvailable(uint256 desiredDrawAmount, uint256 maximumAvailableToDraw);
     error InvalidDepositResult();

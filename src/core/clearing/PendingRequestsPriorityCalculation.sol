@@ -42,13 +42,13 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     /* ========== EXTERNAL VIEW METHODS ========== */
 
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
+        return _pendingRequestsPerEpoch[targetEpoch].status;
+    }
+
     function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
         return _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
-    }
-
-    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
-        return _pendingRequestsPerEpoch[targetEpoch].status;
     }
 
     /* ========== EXTERNAL MUTATIVE METHODS ========== */

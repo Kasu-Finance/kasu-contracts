@@ -7,6 +7,17 @@ error AcceptedRequestsExecutionAlreadyInitialized(uint256 epoch);
 error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 
 interface IAcceptedRequestsExecution {
+    /* ========== EXTERNAL VIEW METHODS ========== */
+
+    /**
+     * @notice Returns the status of the accepted requests execution task.
+     * @param targetEpoch The epoch of pending user request.
+     * @return The status of  the accepted requests execution task.
+     */
+    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) external view returns (TaskStatus);
+
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+
     /**
      * @notice Processes as many userRequests as defined by batchSize. This task accepts user requests, either deposits
      * or withdrawals, by following instructions from previous steps.
@@ -16,11 +27,4 @@ interface IAcceptedRequestsExecution {
      * @param batchSize The amount of userRequests that you want to process in this transaction.
      */
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external;
-
-    /**
-     * @notice Returns the status of the accepted requests execution task.
-     * @param targetEpoch The epoch of pending user request.
-     * @return The status of  the accepted requests execution task.
-     */
-    function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) external view returns (TaskStatus);
 }

@@ -27,16 +27,20 @@ struct AppliedClearingConfiguration {
 }
 
 interface IClearingCoordinator {
+    /* ========== EXTERNAL VIEW METHODS ========== */
+
     function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
         external
         view
         returns (ClearingStatus status);
 
-    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256 maxDrawAmount);
-
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending);
 
+    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256 maxDrawAmount);
+
     function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);
+
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
 
     /**
      * @notice Initializes the newly created lending pool in the clearing coordinator.
@@ -65,6 +69,8 @@ interface IClearingCoordinator {
         ClearingConfiguration calldata clearingConfigOverride,
         bool isConfigOverridden
     ) external;
+
+    /* ========== ERRORS ========== */
 
     event ClearingExecuted(address indexed lendingPool, uint256 indexed epoch, ClearingStatus clearingStatus);
     event ClearingConfigSet(address indexed lendingPool, uint256 indexed epoch, ClearingConfiguration clearingConfig);

@@ -75,19 +75,12 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
 
     /* ========== EXTERNAL VIEW METHODS ========== */
 
-    /**
-     * @notice Returns the maximum amount that can be drawn from the lending pool for the current epoch.
-     * @dev Can only be drawn if it's the clearing time and the clearing for the current epoch is not yet processed.
-     * @param lendingPool Lending pool address.
-     * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
-     */
-    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
-        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
-
-        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
-        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
-
-        return lendingPoolAvailableFunds + pendingDepositAmount;
+    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
+        external
+        view
+        returns (ClearingStatus status)
+    {
+        return _lendingPoolClearingStatus[lendingPool][epoch];
     }
 
     /**
@@ -113,12 +106,19 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         }
     }
 
-    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
-        external
-        view
-        returns (ClearingStatus status)
-    {
-        return _lendingPoolClearingStatus[lendingPool][epoch];
+    /**
+     * @notice Returns the maximum amount that can be drawn from the lending pool for the current epoch.
+     * @dev Can only be drawn if it's the clearing time and the clearing for the current epoch is not yet processed.
+     * @param lendingPool Lending pool address.
+     * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
+     */
+    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
+        uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
+
+        IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
+        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
+
+        return lendingPoolAvailableFunds + pendingDepositAmount;
     }
 
     /* ========== EXTERNAL MUTATIVE METHODS ========== */
