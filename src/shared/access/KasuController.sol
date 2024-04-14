@@ -68,7 +68,7 @@ contract KasuController is AccessControlUpgradeable, PausableUpgradeable, IKasuC
         _unpause();
     }
 
-    /* ========== INTERNAL HELPER METHODS ========== */
+    /* ========== INTERNAL METHODS ========== */
 
     function _onlyAdminOrPoolAdmin(address lendingPool, address account) private view {
         bytes32 poolAdminRole = _getLendingPoolRole(lendingPool, ROLE_POOL_ADMIN);

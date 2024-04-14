@@ -129,7 +129,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         _verifyResult(input, outputData1, outputData2, outputData3, outputData4);
     }
 
-    /* ========== INTERNAL HELPER METHODS ========== */
+    /* ========== INTERNAL METHODS ========== */
 
     /**
      * @notice Calculates the total accepted pending deposits and withdrawals and draw amount.

@@ -272,7 +272,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingExecuted(lendingPool, targetEpoch, clearingStatus);
     }
 
-    /* ========== INTERNAL HELPER METHODS ========== */
+    /* ========== INTERNAL METHODS ========== */
 
     function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();

@@ -176,7 +176,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         _ksuBonusTokens = ksuBonusTokens_;
     }
 
-    /* ========== INTERNAL HELPER METHODS ========== */
+    /* ========== INTERNAL METHODS ========== */
 
     function _userRewards(address user) private view returns (uint256) {
         return balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
