@@ -43,6 +43,8 @@ contract LendingPoolManager is
     /// @notice Lending pool deployment addresses.
     mapping(address => LendingPoolDeployment) public lendingPools;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param underlyingAsset_ Underlying asset contract address.
@@ -57,6 +59,8 @@ contract LendingPoolManager is
     {
         _disableInitializers();
     }
+
+    /* ========== INITIALIZER ========== */
 
     /**
      * @notice Initializes the contract.
@@ -82,27 +86,7 @@ contract LendingPoolManager is
         _clearingCoordinator = clearingCoordinator_;
     }
 
-    // #### CREATE POOL #### //
-
-    /**
-     * @notice Creates a new lending pool.
-     * @param createPoolConfig Configuration for creating a lending pool.
-     * @return lendingPoolDeployment Deployment addresses of the lending pool.
-     */
-    function createPool(CreatePoolConfig calldata createPoolConfig)
-        external
-        whenNotPaused
-        onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
-        returns (LendingPoolDeployment memory lendingPoolDeployment)
-    {
-        lendingPoolDeployment = _lendingPoolFactory.createPool(createPoolConfig);
-        _registerLendingPool(lendingPoolDeployment);
-    }
-
-    function _registerLendingPool(LendingPoolDeployment memory lendingPoolDeployment) internal {
-        lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
-        _clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
-    }
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     // #### USER #### //
 
@@ -159,32 +143,6 @@ contract LendingPoolManager is
         returns (uint256 dNftID)
     {
         return _requestDeposit(lendingPool, tranche, maxAmount, swapData);
-    }
-
-    function _requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
-        internal
-        returns (uint256 dNftID)
-    {
-        uint256 amount;
-        address[] memory swapTokens;
-        if (swapData.length > 0) {
-            SwapDepositBag memory swapBag = abi.decode(swapData, (SwapDepositBag));
-            swapTokens = swapBag.inTokens;
-            uint256 swappedAmount = _transferAndSwap(swapBag, address(_underlyingAsset));
-            amount = Math.min(swappedAmount, maxAmount);
-        } else {
-            amount = maxAmount;
-            _transferAssetsFrom(msg.sender, address(this), amount);
-        }
-
-        _approveAsset(lendingPools[lendingPool].pendingPool, amount);
-        // notify user manager to be able to calculate loyalty levels
-        _userManager.userRequestedDeposit(msg.sender, lendingPool);
-        dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
-
-        if (swapTokens.length > 0 || msg.value > 0) {
-            _postSwap(swapTokens, address(_underlyingAsset));
-        }
     }
 
     /**
@@ -244,6 +202,28 @@ contract LendingPoolManager is
         claimedAmount = ILendingPool(lendingPool).claimRepaidLoss(msg.sender, tranche, lossId);
     }
 
+    // #### LENDING POOL CREATOR #### //
+
+    /**
+     * @notice Creates a new lending pool.
+     * @param createPoolConfig Configuration for creating a lending pool.
+     * @return lendingPoolDeployment Deployment addresses of the lending pool.
+     */
+    function createPool(CreatePoolConfig calldata createPoolConfig)
+        external
+        whenNotPaused
+        onlyRole(ROLE_LENDING_POOL_CREATOR, msg.sender)
+        returns (LendingPoolDeployment memory lendingPoolDeployment)
+    {
+        lendingPoolDeployment = _lendingPoolFactory.createPool(createPoolConfig);
+        _registerLendingPool(lendingPoolDeployment);
+    }
+
+    function _registerLendingPool(LendingPoolDeployment memory lendingPoolDeployment) internal {
+        lendingPools[lendingPoolDeployment.lendingPool] = lendingPoolDeployment;
+        _clearingCoordinator.initializeLendingPool(lendingPoolDeployment.lendingPool);
+    }
+
     // #### POOL ADMIN #### //
 
     /**
@@ -280,38 +260,6 @@ contract LendingPoolManager is
     }
 
     /**
-     * @notice Deposit first loss capital to the lending pool.
-     * @param lendingPool Address of the lending pool.
-     * @param amount Amount to deposit.
-     */
-    function depositFirstLossCapital(address lendingPool, uint256 amount)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        _transferAssetsFrom(msg.sender, address(this), amount);
-        _approveAsset(lendingPool, amount);
-        ILendingPool(lendingPool).depositFirstLossCapital(amount);
-    }
-
-    /**
-     * @notice Withdraw first loss capital from the lending pool.
-     * @dev The pool should be stopped before withdrawing first loss capital.
-     * @param lendingPool Address of the lending pool.
-     * @param withdrawAmount Amount to withdraw.
-     * @param withdrawAddress Address to withdraw assets to.
-     */
-    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
-        external
-        whenNotPaused
-        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
-        validLendingPool(lendingPool)
-    {
-        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
-    }
-
-    /**
      * @notice Repay owed funds to the lending pool.
      * @param lendingPool Address of the lending pool.
      * @param amount Amount to repay.
@@ -344,6 +292,38 @@ contract LendingPoolManager is
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(lendingPool, amount);
         ILendingPool(lendingPool).repayLoss(tranche, lossId, amount);
+    }
+
+    /**
+     * @notice Deposit first loss capital to the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param amount Amount to deposit.
+     */
+    function depositFirstLossCapital(address lendingPool, uint256 amount)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        _transferAssetsFrom(msg.sender, address(this), amount);
+        _approveAsset(lendingPool, amount);
+        ILendingPool(lendingPool).depositFirstLossCapital(amount);
+    }
+
+    /**
+     * @notice Withdraw first loss capital from the lending pool.
+     * @dev The pool should be stopped before withdrawing first loss capital.
+     * @param lendingPool Address of the lending pool.
+     * @param withdrawAmount Amount to withdraw.
+     * @param withdrawAddress Address to withdraw assets to.
+     */
+    function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        ILendingPool(lendingPool).withdrawFirstLossCapital(withdrawAmount, withdrawAddress);
     }
 
     // #### POOL CLEARING MANAGER #### //
@@ -470,7 +450,7 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).stop();
     }
 
-    // config
+    // #### CONFIG #### //
 
     /**
      * @notice Update target excess liquidity percentage.
@@ -581,8 +561,6 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateDesiredDrawAmount(amount);
     }
 
-    // #### KASU ADMIN #### //
-
     /**
      * @notice Update tranche interest rate change epoch delay for the lending pool.
      * @dev Only Kasu admin can call this function.
@@ -598,7 +576,7 @@ contract LendingPoolManager is
         ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
     }
 
-    // #### PRIVATE FUNCTIONS #### //
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _pendingPool(address lendingPool) private view returns (IPendingPool) {
         return IPendingPool(lendingPools[lendingPool].pendingPool);
@@ -610,7 +588,35 @@ contract LendingPoolManager is
         }
     }
 
-    // #### MODIFIERS #### //
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
+        internal
+        returns (uint256 dNftID)
+    {
+        uint256 amount;
+        address[] memory swapTokens;
+        if (swapData.length > 0) {
+            SwapDepositBag memory swapBag = abi.decode(swapData, (SwapDepositBag));
+            swapTokens = swapBag.inTokens;
+            uint256 swappedAmount = _transferAndSwap(swapBag, address(_underlyingAsset));
+            amount = Math.min(swappedAmount, maxAmount);
+        } else {
+            amount = maxAmount;
+            _transferAssetsFrom(msg.sender, address(this), amount);
+        }
+
+        _approveAsset(lendingPools[lendingPool].pendingPool, amount);
+        // notify user manager to be able to calculate loyalty levels
+        _userManager.userRequestedDeposit(msg.sender, lendingPool);
+        dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
+
+        if (swapTokens.length > 0 || msg.value > 0) {
+            _postSwap(swapTokens, address(_underlyingAsset));
+        }
+    }
+
+    /* ========== MODIFIERS ========== */
 
     modifier validLendingPool(address lendingPool) {
         _validLendingPool(lendingPool);
