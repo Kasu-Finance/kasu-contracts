@@ -12,7 +12,7 @@ error InvalidArrayLength();
 error ConfigurationAddressZero();
 
 /**
- * @notice Used when constructor or intializer parameters are invalid.
+ * @notice Used when constructor or initializer parameters are invalid.
  */
 error InvalidConfiguration();
 

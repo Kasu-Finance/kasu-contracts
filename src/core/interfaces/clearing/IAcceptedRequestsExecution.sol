@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import "./IClearingStepsData.sol";
 
-error AcceptedRequestsExecutionAlreadyInitialised(uint256 epoch);
+error AcceptedRequestsExecutionAlreadyInitialized(uint256 epoch);
 error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 
 interface IAcceptedRequestsExecution {

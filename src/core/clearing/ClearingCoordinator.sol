@@ -41,9 +41,9 @@ import "../../shared/AddressLib.sol";
  * If clearing is pending for step 2 and the clearing period is over, clearing will be ended and no user requests will be processed.
  * If clearing is pending for step 4 and the clearing period is over, clearing must be fully processed before proceeding to the next epoch clearing.
  * Some lending pool functions are disabled (cancel deposit, cancel withdrawal, force immediate withdrawal) if clearing for the lending pool is pending.
- * Clearing configuration is taken from the lending pool, but can also be overriden for each lending pool and epoch before execution of step 2.
+ * Clearing configuration is taken from the lending pool, but can also be overridden for each lending pool and epoch before execution of step 2.
  * If the desired draw amount is more than available funds to draw, the clearing transaction will revert in step 3.
- *   In this case the clearing configuration mush be overriden (to set the valid draw amount) to proceed with the clearing and draw funds.
+ *   In this case the clearing configuration mush be overridden (to set the valid draw amount) to proceed with the clearing and draw funds.
  */
 contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     ISystemVariables private immutable _systemVariables;
@@ -147,7 +147,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         }
 
         // check if target epoch for lending pool clearing is valid
-        if (clearingStatus == ClearingStatus.UNINITIALISED) {
+        if (clearingStatus == ClearingStatus.UNINITIALIZED) {
             if (nextLendingPoolClearingEpoch[lendingPool] != targetEpoch) {
                 revert InvalidClearingTargetEpochForLendingPool(
                     lendingPool, targetEpoch, nextLendingPoolClearingEpoch[lendingPool]
@@ -167,7 +167,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         }
 
         // start clearing process for the lending pool
-        if (clearingStatus == ClearingStatus.UNINITIALISED) {
+        if (clearingStatus == ClearingStatus.UNINITIALIZED) {
             clearingStatus = ClearingStatus.STEP1_PENDING;
         }
 

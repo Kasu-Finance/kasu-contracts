@@ -24,8 +24,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
 
-        if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALISED) {
-            _initialiseAcceptedRequests(targetEpoch);
+        if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALIZED) {
+            _initializeAcceptedRequests(targetEpoch);
 
             // if there are no pending requests, we can skip the processing
             if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
@@ -71,11 +71,11 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
                     uint256 requestAmountLeft = depositNftDetails.assetAmount;
                     for (
-                        uint256 tartrancheIndex = requestTrancheIndex;
-                        tartrancheIndex < trancheDepositAcceptedAmounts.length;
-                        ++tartrancheIndex
+                        uint256 trancheIndex = requestTrancheIndex;
+                        trancheIndex < trancheDepositAcceptedAmounts.length;
+                        ++trancheIndex
                     ) {
-                        uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[tartrancheIndex];
+                        uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[trancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
                         uint256 totalTranchePriorityDepositedAmount = _pendingDeposits(targetEpoch)
@@ -85,7 +85,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
                             // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, tartrancheIndex), depositNftDetails.assetAmount
+                                userRequestNftId, _tranche(tranches, trancheIndex), depositNftDetails.assetAmount
                             );
                             requestAmountLeft = 0;
                             break;
@@ -108,7 +108,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             }
 
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, tartrancheIndex), userAcceptedDepositAmount
+                                userRequestNftId, _tranche(tranches, trancheIndex), userAcceptedDepositAmount
                             );
 
                             requestAmountLeft -= userAcceptedDepositAmount;
@@ -156,7 +156,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
     }
 
-    function _initialiseAcceptedRequests(uint256 targetEpoch) private {
+    function _initializeAcceptedRequests(uint256 targetEpoch) private {
         uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
 
         if (totalPendingRequests == 0) {

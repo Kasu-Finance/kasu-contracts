@@ -109,6 +109,6 @@ interface ILendingPoolManager {
     function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
         external;
 
-    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minimumExcessLiquidityPercentage)
         external;
 }

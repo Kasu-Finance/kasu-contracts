@@ -535,9 +535,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         maximumLossAmount = firstLossCapital;
 
         for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
-            uint256 trancheMximumLossAmount =
+            uint256 trancheMaximumLossAmount =
                 ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).calculateMaximumLossAmount();
-            maximumLossAmount += trancheMximumLossAmount;
+            maximumLossAmount += trancheMaximumLossAmount;
         }
 
         if (userOwedAmount < maximumLossAmount) {

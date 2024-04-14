@@ -5,7 +5,7 @@ import "./IAcceptedRequestsCalculation.sol";
 import "./IPendingRequestsPriorityCalculation.sol";
 
 enum ClearingStatus {
-    UNINITIALISED,
+    UNINITIALIZED,
     STEP1_PENDING,
     STEP2_PENDING,
     STEP3_PENDING,

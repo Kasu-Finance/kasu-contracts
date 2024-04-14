@@ -151,7 +151,7 @@ contract KSULockingTest is LockingTestUtils {
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
         _addBonusKSU(1000 ether);
 
-        // ACT / ASSER
+        // ACT / ASSERT
         uint256 aliceLockAmount = 100 ether;
         uint256 expectedAliceBaseKSULockAmount = 100 ether;
         uint256 expectedAliceBonusKSULockAmount = 10 ether;
