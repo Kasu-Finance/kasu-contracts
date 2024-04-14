@@ -24,7 +24,8 @@ struct PendingRequestsEpoch {
 }
 
 /**
- * @notice Pending requests priority calculation contract
+ * @title Pending requests priority calculation contract
+ * @notice Pending requests priority calculation contract.
  * @dev This contract is used for step 2 of the clearing process.
  * It calculates the priority of each pending request.
  * It also partially creates the input for the accepted requests calculation (step 3) by calculating the total deposit and withdrawal amounts.
@@ -42,10 +43,20 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     /* ========== EXTERNAL VIEW FUNCTION ========== */
 
+    /**
+     * @notice Get the status of the pending requests priority calculation for the target epoch.
+     * @param targetEpoch Epoch for which to get the pending requests priority calculation status.
+     * @return Task status.
+     */
     function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
         return _pendingRequestsPerEpoch[targetEpoch].status;
     }
 
+    /**
+     * @notice Get the remaining pending requests to process for the target epoch.
+     * @param targetEpoch Epoch for which to get the remaining pending requests to process.
+     * @return Remaining pending requests to process.
+     */
     function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
         return _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
@@ -55,8 +66,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     /**
      * @notice Calculates the priority of pending requests.
-     * @dev
-     * This is step 2 of the clearing process.
+     * @dev This is function to process step 2 of the clearing process.
      * This function can only be called by the clearing coordinator contract.
      * Requests can be processed in batches to avoid exceeding the block gas limit.
      * Calculate the priority for every pending request in the pending pool for the target epoch or the epoch before the target epoch.
@@ -66,17 +76,20 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
      *   If the withdrawal request is enforced by the system, it gets the highest priority above all other user requests.
      * Deposit requests are grouped and stored in a 2D by requested tranche and loyalty level.
      * Withdrawal requests are grouped and stored in a 1D array by priority.
-     * @param batchSize Number of requests to process in a single batch. If the number is equal or higher than the remaining requests, all the remaining requests are processed.
      * @param targetEpoch Epoch for which to calculate the pending requests priority.
+     * @param batchSize Number of requests to process in a single batch. If the number is equal or higher than the remaining requests, all the remaining requests are processed.
      */
-    function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external {
+    function calculatePendingRequestsPriorityBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
 
         if (_pendingRequestsPerEpoch[targetEpoch].status == TaskStatus.ENDED) {
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
-        _initializePendingRequests(targetEpoch);
+        // initialize pending requests priority calculation if not already initialized
+        if (_pendingRequestsPerEpoch[targetEpoch].status == TaskStatus.UNINITIALIZED) {
+            _initializePendingRequests(targetEpoch);
+        }
 
         uint256 remainingPendingRequests = remainingPendingRequestsPriorityCalculation(targetEpoch);
 
@@ -89,21 +102,21 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             return;
         }
 
-        uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
-        uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
-        uint256 endIndex = userRequestId + batchSize_;
-
+        // prepare variables used in processing
         ClearingData storage clearingData = _clearingDataStorage(targetEpoch);
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
         uint8 loyaltyLevelCount = _loyaltyLevelCount();
-
         address[] memory tranches = _lendingPoolTranches();
+
+        // get the next batch of pending requests to process
+        uint256 userRequestId = _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+        uint256 batchSize_ = remainingPendingRequests < batchSize ? remainingPendingRequests : batchSize;
+        uint256 endIndex = userRequestId + batchSize_;
 
         for (; userRequestId < endIndex; ++userRequestId) {
             uint256 userRequestNftId = _pendingRequestIdByIndex(userRequestId);
-            address pendingRequestOwner = _pendingRequestOwner(userRequestNftId);
 
             if (UserRequestIds.isDepositNft(userRequestNftId)) {
                 // ### Deposit Requests Processing ###
@@ -113,8 +126,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 if (depositNftDetails.epochId > targetEpoch) continue;
 
                 uint256 trancheIndex = _trancheIndex(tranches, depositNftDetails.tranche);
-
-                uint8 ownerLoyaltyLevel = _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
+                uint8 ownerLoyaltyLevel = _pendingRequestOwnerLoyaltyLevel(userRequestNftId, targetEpoch);
 
                 clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
                 clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
@@ -139,7 +151,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     withdrawLoyaltyLevel = loyaltyLevelCount - 1;
                 } else {
                     // we set the user loyalty level as the priority
-                    withdrawLoyaltyLevel = _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
+                    withdrawLoyaltyLevel = _pendingRequestOwnerLoyaltyLevel(userRequestNftId, targetEpoch);
                 }
 
                 uint256 trancheIndex = _trancheIndex(tranches, withdrawalNftDetails.tranche);
@@ -152,14 +164,18 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess = userRequestId;
 
+        // if all pending requests are processed, calculate the total requested withdrawal amounts per priority from the requested withdrawn shares
         if (userRequestId >= clearingData.totalPendingRequestsToProcess) {
-            // convert pending withdrawal shares to amounts - minimize rounding errors
+            // convert pending withdrawal shares to amounts to minimize rounding errors
+            // loop over withdrawal priorities
             for (
                 uint256 withdrawalPriority;
                 withdrawalPriority < tempPriorityTrancheWithdrawalShares.length;
                 ++withdrawalPriority
             ) {
+                // calculate the total withdrawal amount for the priority
                 uint256 withdrawalPriorityAmountSum;
+                // loop over tranches
                 for (
                     uint256 trancheIndex;
                     trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
@@ -169,20 +185,26 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                         tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
                     );
                 }
+
+                // add to total withdrawal amount
                 clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
-                clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] +=
+                // store the total withdrawal amount for the priority
+                clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] =
                     withdrawalPriorityAmountSum;
             }
-            // processing completed
+
+            // mark processing as completed
             _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.ENDED;
         }
     }
 
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
+    /**
+     * @notice Initialize the pending requests for the target epoch.
+     * @param targetEpoch Epoch for which to initialize the pending requests.
+     */
     function _initializePendingRequests(uint256 targetEpoch) private {
-        if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALIZED) return;
-
         unchecked {
             uint256 trancheCount = _trancheCount();
             uint256 loyaltyLevelsCount = _loyaltyLevelCount();
@@ -212,6 +234,15 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
         _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess = _totalPendingRequests();
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
+    }
+
+    function _pendingRequestOwnerLoyaltyLevel(uint256 userRequestNftId, uint256 targetEpoch)
+        internal
+        view
+        returns (uint8)
+    {
+        address pendingRequestOwner = _pendingRequestOwner(userRequestNftId);
+        return _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
     }
 
     /* ========== VIRTUAL METHODS ========== */

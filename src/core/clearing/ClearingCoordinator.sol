@@ -212,7 +212,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             if (isPastClearingTime) {
                 clearingStatus = ClearingStatus.ENDED;
             } else {
-                _clearingSteps.calculatePendingRequestsPriorityBatch(priorityCalculationBatchSize, targetEpoch);
+                _clearingSteps.calculatePendingRequestsPriorityBatch(targetEpoch, priorityCalculationBatchSize);
 
                 if (_clearingSteps.pendingRequestsPriorityCalculationStatus(targetEpoch) == TaskStatus.ENDED) {
                     clearingStatus = ClearingStatus.STEP3_PENDING;

@@ -37,7 +37,7 @@ interface IPendingRequestsPriorityCalculation {
      * @param batchSize The amount of pending user requests that will be processed in one transaction.
      * @param targetEpoch The epoch of pending user request.
      */
-    function calculatePendingRequestsPriorityBatch(uint256 batchSize, uint256 targetEpoch) external;
+    function calculatePendingRequestsPriorityBatch(uint256 targetEpoch, uint256 batchSize) external;
 
     /* ========== ERRORS ========== */
 
