@@ -41,6 +41,8 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     /// @notice Mapping of user to unclaimed reward amount.
     mapping(address user => uint256 rewardAmount) public userRewards;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param ksuPrice_ KSU token price contract.
@@ -59,6 +61,8 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         _disableInitializers();
     }
 
+    /* ========== INITIALIZER ========== */
+
     /**
      * @notice Initializes the contract.
      * @param userManager_ User manager contract.
@@ -71,85 +75,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         _setDoEmitRewards(doEmitRewards_);
     }
 
-    /**
-     * @notice Enables or disables rewards emission.
-     * @param doEmitRewards_ Flag to enable/disable rewards emission.
-     */
-    function setDoEmitRewards(bool doEmitRewards_) external onlyAdmin {
-        _setDoEmitRewards(doEmitRewards_);
-    }
-
-    function _setDoEmitRewards(bool doEmitRewards_) private {
-        if (doEmitRewards == doEmitRewards_) {
-            return;
-        }
-
-        doEmitRewards = doEmitRewards_;
-
-        if (doEmitRewards_) {
-            emit LoyaltyRewardsEnabled();
-        } else {
-            emit LoyaltyRewardsDisabled();
-        }
-    }
-
-    /**
-     * @notice Sets reward rates per loyalty level.
-     * @param loyaltyEpochRewardRatesInput Array of loyalty level and reward rate per epoch.
-     */
-    function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRatesInput)
-        external
-        onlyAdmin
-    {
-        for (uint256 i; i < loyaltyEpochRewardRatesInput.length; ++i) {
-            if (loyaltyEpochRewardRatesInput[i].epochRewardRate > MAX_REWARD_EPOCH_RATE) {
-                revert InvalidConfiguration();
-            }
-
-            loyaltyEpochRewardRates[loyaltyEpochRewardRatesInput[i].loyaltyLevel] =
-                loyaltyEpochRewardRatesInput[i].epochRewardRate;
-
-            emit UpdatedLoyaltyLevelRewardRate(
-                loyaltyEpochRewardRatesInput[i].loyaltyLevel, loyaltyEpochRewardRatesInput[i].epochRewardRate
-            );
-        }
-    }
-
-    /**
-     * @notice Recovers ERC20 tokens.
-     * @dev Only admin can call this function.
-     * @param tokenAddress Token address.
-     * @param tokenAmount Token amount.
-     * @param recipient Recipient address.
-     */
-    function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external onlyAdmin {
-        IERC20(tokenAddress).safeTransfer(recipient, tokenAmount);
-    }
-
-    /**
-     * @notice Emits user loyalty rewards for a batch of users.
-     * @dev Only admin can call this function.
-     * @param userRewardInputs Array of user reward details.
-     * @param ksuTokenPrice KSU token price. Iz zero, the current price will be used.
-     */
-    function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice)
-        external
-        onlyAdmin
-    {
-        if (ksuTokenPrice == 0) {
-            ksuTokenPrice = _ksuPrice.getKsuTokenPrice();
-        }
-
-        for (uint256 i; i < userRewardInputs.length; ++i) {
-            _emitUserLoyaltyReward(
-                userRewardInputs[i].user,
-                userRewardInputs[i].epoch,
-                userRewardInputs[i].userLoyaltyLevel,
-                userRewardInputs[i].amountDeposited,
-                ksuTokenPrice
-            );
-        }
-    }
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Emits user loyalty rewards.
@@ -175,31 +101,59 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         _emitUserLoyaltyReward(user, epoch, userLoyaltyLevel, amountDeposited, ksuTokenPrice);
     }
 
-    function _emitUserLoyaltyReward(
-        address user,
-        uint256 epoch,
-        uint256 userLoyaltyLevel,
-        uint256 amountDeposited,
-        uint256 ksuTokenPrice
-    ) private {
-        if (amountDeposited == 0 || ksuTokenPrice == 0) {
-            return;
+    /**
+     * @notice Enables or disables rewards emission.
+     * @param doEmitRewards_ Flag to enable/disable rewards emission.
+     */
+    function setDoEmitRewards(bool doEmitRewards_) external onlyAdmin {
+        _setDoEmitRewards(doEmitRewards_);
+    }
+
+    /**
+     * @notice Sets reward rates per loyalty level.
+     * @param loyaltyEpochRewardRatesInput Array of loyalty level and reward rate per epoch.
+     */
+    function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRatesInput)
+        external
+        onlyAdmin
+    {
+        for (uint256 i; i < loyaltyEpochRewardRatesInput.length; ++i) {
+            if (loyaltyEpochRewardRatesInput[i].epochRewardRate > MAX_REWARD_EPOCH_RATE) {
+                revert InvalidConfiguration();
+            }
+
+            loyaltyEpochRewardRates[loyaltyEpochRewardRatesInput[i].loyaltyLevel] =
+                loyaltyEpochRewardRatesInput[i].epochRewardRate;
+
+            emit UpdatedLoyaltyLevelRewardRate(
+                loyaltyEpochRewardRatesInput[i].loyaltyLevel, loyaltyEpochRewardRatesInput[i].epochRewardRate
+            );
+        }
+    }
+
+    /**
+     * @notice Emits user loyalty rewards for a batch of users.
+     * @dev Only admin can call this function.
+     * @param userRewardInputs Array of user reward details.
+     * @param ksuTokenPrice KSU token price. Iz zero, the current price will be used.
+     */
+    function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice)
+        external
+        onlyAdmin
+    {
+        if (ksuTokenPrice == 0) {
+            ksuTokenPrice = _ksuPrice.getKsuTokenPrice();
         }
 
-        uint256 epochRewardRate = loyaltyEpochRewardRates[userLoyaltyLevel];
-
-        if (epochRewardRate == 0) {
-            return;
+        for (uint256 i; i < userRewardInputs.length; ++i) {
+            _emitUserLoyaltyReward(
+                userRewardInputs[i].user,
+                userRewardInputs[i].epoch,
+                userRewardInputs[i].userLoyaltyLevel,
+                userRewardInputs[i].amountDeposited,
+                ksuTokenPrice
+            );
         }
-
-        // calculate reward in KSU tokens based on user's active liquidity, epoch reward rate and KSU token price.
-        uint256 ksuReward = (amountDeposited * epochRewardRate * KSU_PRICE_MULTIPLIER * 1e12) / ksuTokenPrice
-            / INTEREST_RATE_FULL_PERCENT;
-
-        userRewards[user] += ksuReward;
-        totalUnclaimedRewards += ksuReward;
-
-        emit UserLoyaltyRewardsEmitted(user, epoch, ksuReward);
     }
 
     /**
@@ -230,5 +184,59 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         _ksuToken.safeTransfer(msg.sender, amount);
 
         emit UserRewardClaimed(msg.sender, amount);
+    }
+
+    /**
+     * @notice Recovers ERC20 tokens.
+     * @dev Only admin can call this function.
+     * @param tokenAddress Token address.
+     * @param tokenAmount Token amount.
+     * @param recipient Recipient address.
+     */
+    function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external onlyAdmin {
+        IERC20(tokenAddress).safeTransfer(recipient, tokenAmount);
+    }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _setDoEmitRewards(bool doEmitRewards_) private {
+        if (doEmitRewards == doEmitRewards_) {
+            return;
+        }
+
+        doEmitRewards = doEmitRewards_;
+
+        if (doEmitRewards_) {
+            emit LoyaltyRewardsEnabled();
+        } else {
+            emit LoyaltyRewardsDisabled();
+        }
+    }
+
+    function _emitUserLoyaltyReward(
+        address user,
+        uint256 epoch,
+        uint256 userLoyaltyLevel,
+        uint256 amountDeposited,
+        uint256 ksuTokenPrice
+    ) private {
+        if (amountDeposited == 0 || ksuTokenPrice == 0) {
+            return;
+        }
+
+        uint256 epochRewardRate = loyaltyEpochRewardRates[userLoyaltyLevel];
+
+        if (epochRewardRate == 0) {
+            return;
+        }
+
+        // calculate reward in KSU tokens based on user's active liquidity, epoch reward rate and KSU token price.
+        uint256 ksuReward = (amountDeposited * epochRewardRate * KSU_PRICE_MULTIPLIER * 1e12) / ksuTokenPrice
+            / INTEREST_RATE_FULL_PERCENT;
+
+        userRewards[user] += ksuReward;
+        totalUnclaimedRewards += ksuReward;
+
+        emit UserLoyaltyRewardsEmitted(user, epoch, ksuReward);
     }
 }
