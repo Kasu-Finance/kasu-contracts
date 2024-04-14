@@ -28,6 +28,17 @@ contract Swapper is ISwapper, KasuAccessControllable {
      */
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
 
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
+    /**
+     * @notice Checks if an exchange is allowed to execute a swap.
+     * @param exchange Exchange to check.
+     * @return Whether the exchange is allowed.
+     */
+    function isExchangeAllowed(address exchange) external view returns (bool) {
+        return exchangeAllowlist[exchange];
+    }
+
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
@@ -109,22 +120,15 @@ contract Swapper is ISwapper, KasuAccessControllable {
         }
     }
 
-    function _approveMax(IERC20 token, address spender) private {
-        token.safeIncreaseAllowance(spender, type(uint256).max);
-    }
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _isContract(address account) private view returns (bool) {
         return account.code.length > 0;
     }
 
-    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
-    /**
-     * @notice Checks if an exchange is allowed to execute a swap.
-     * @param exchange Exchange to check.
-     * @return Whether the exchange is allowed.
-     */
-    function isExchangeAllowed(address exchange) external view returns (bool) {
-        return exchangeAllowlist[exchange];
+    function _approveMax(IERC20 token, address spender) private {
+        token.safeIncreaseAllowance(spender, type(uint256).max);
     }
 }
