@@ -20,7 +20,7 @@ struct ClearingInput {
 /**
  * @notice Lending pool balances.
  * @custom:member excess Lending pool excess balance. Lending pool available assets.
- * @custom:member owed Owed balance.
+ * @custom:member owed Amount owed by the Pool Funds Manager to the lending pool users.
  */
 struct LendingPoolBalance {
     uint256 excess;

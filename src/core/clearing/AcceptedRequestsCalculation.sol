@@ -9,7 +9,7 @@ import "../Constants.sol";
 /**
  * @title Accepted requests calculation contract
  * @notice Contract for calculating the accepted deposit and withdrawal amounts.
- * @dev
+ * @dev This is function to calculate step 3 of the clearing process.
  * The calculation is done in 4 steps:
  * 1. Calculate the total accepted deposit and withdrawal amounts.
  * 2. Calculate the total accepted deposit amount for each tranche.
