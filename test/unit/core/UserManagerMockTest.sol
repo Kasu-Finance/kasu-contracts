@@ -94,6 +94,11 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(lendingPools.length, 2);
         assertEq(lendingPools[0], lendingPool1);
         assertEq(lendingPools[1], lendingPool2);
+
+        // ACT & ASSERT
+        vm.expectRevert(ILendingPoolErrors.OnlyLendingPoolManager.selector);
+        vm.prank(alice);
+        userManager.userRequestedDeposit(alice, lendingPool1);
     }
 
     function test_userLoyaltyLevel_defaultState_shouldReturnZero() public {
@@ -149,6 +154,40 @@ contract UserManagerMockTest is BaseTestUtils {
 
         assertEq(currentEpoch, 0);
         assertEq(loyaltyLevel, 2);
+    }
+
+    function test_userTotalPendingAndActiveDepositedAmount() public {
+        // ARRANGE
+        uint256 aliceAvailableBalance1 = 850 * 1e6;
+        uint256 aliceAvailableBalance2 = 150 * 1e6;
+        uint256 alicePendingDeposit1 = 120 * 1e6;
+        uint256 alicePendingDeposit2 = 10 * 1e6;
+
+        uint256 currentEpoch = systemVariables.currentEpochNumber();
+
+        _mockUserLendingPoolBalanceWithEpoch(
+            alice, lendingPool1, aliceAvailableBalance1, alicePendingDeposit1, currentEpoch + 1
+        );
+        _mockUserLendingPoolBalanceWithEpoch(
+            alice, lendingPool2, aliceAvailableBalance2, alicePendingDeposit2, currentEpoch
+        );
+
+        _userRequestedDeposit(alice, lendingPool1);
+        _userRequestedDeposit(alice, lendingPool2);
+
+        // ACT
+        vm.expectCall(pendingPool1, abi.encodeCall(IPendingPool.userPendingDepositAmount, (alice, currentEpoch + 1)));
+        (uint256 activeDepositAmount, uint256 pendingDepositAmount) =
+            userManager.userTotalPendingAndActiveDepositedAmount(alice);
+        vm.expectCall(pendingPool1, abi.encodeCall(IPendingPool.userPendingDepositAmount, (alice, currentEpoch)));
+        (uint256 activeDepositAmountCurrent, uint256 pendingDepositAmountCurrent) =
+            userManager.userTotalPendingAndActiveDepositedAmountForCurrentEpoch(alice);
+
+        // ASSERT
+        assertEq(activeDepositAmount, aliceAvailableBalance1 + aliceAvailableBalance2);
+        assertEq(pendingDepositAmount, alicePendingDeposit1);
+        assertEq(activeDepositAmountCurrent, aliceAvailableBalance1 + aliceAvailableBalance2);
+        assertEq(pendingDepositAmountCurrent, alicePendingDeposit2);
     }
 
     function test_batchCalculateUserLoyaltyLevels_emitUserLoyaltyReward() public {
@@ -215,7 +254,7 @@ contract UserManagerMockTest is BaseTestUtils {
         assertEq(allUsersBefore.length, 3);
 
         // ACT
-        userManager.updateUserLendingPools(0, 2);
+        userManager.updateUserLendingPools(0, type(uint256).max);
 
         // ASSERT
         address[] memory allUsers = userManager.allUsers();
@@ -315,24 +354,34 @@ contract UserManagerMockTest is BaseTestUtils {
         );
     }
 
-    function _mockUserLendingPoolBalance(
+    function _mockUserLendingPoolBalanceWithEpoch(
         address user,
         address lendingPool,
         uint256 userAvailableBalance,
-        uint256 pendingDeposit
+        uint256 pendingDeposit,
+        uint256 epochId
     ) internal {
         vm.mockCall(
             address(lendingPool), abi.encodeCall(ILendingPool.userBalance, (user)), abi.encode(userAvailableBalance)
         );
 
         address pendingPool = ILendingPool(lendingPool).pendingPool();
-        uint256 epochId = systemVariables.currentEpochNumber() + 1;
 
         vm.mockCall(
             address(pendingPool),
             abi.encodeCall(IPendingPool.userPendingDepositAmount, (user, epochId)),
             abi.encode(pendingDeposit)
         );
+    }
+
+    function _mockUserLendingPoolBalance(
+        address user,
+        address lendingPool,
+        uint256 userAvailableBalance,
+        uint256 pendingDeposit
+    ) internal {
+        uint256 epochId = systemVariables.currentEpochNumber() + 1;
+        _mockUserLendingPoolBalanceWithEpoch(user, lendingPool, userAvailableBalance, pendingDeposit, epochId);
     }
 
     function _mockRKSU(address user, uint256 rKSUBalance) internal {
