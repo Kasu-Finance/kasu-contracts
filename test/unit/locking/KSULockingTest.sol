@@ -409,4 +409,21 @@ contract KSULockingTest is LockingTestUtils {
         assertEq(_KSULocking.userLock(carol, carol_lockId_1).amount, 50 ether);
         assertEq(_KSULocking.userLock(david, david_lockId_1).amount, 0);
     }
+
+    function test_rKSU_NonTransferrable() public {
+        // ARRANGE
+        uint256 aliceLockAmount = 100 ether;
+
+        _lock(alice, aliceLockAmount, lockPeriod30);
+
+        // ACT / ASSERT
+        vm.expectRevert(abi.encodeWithSelector(rKSU.NonTransferrable.selector));
+        _KSULocking.transfer(alice, 1);
+
+        vm.expectRevert(abi.encodeWithSelector(rKSU.NonTransferrable.selector));
+        _KSULocking.approve(alice, 1);
+
+        vm.expectRevert(abi.encodeWithSelector(rKSU.NonTransferrable.selector));
+        _KSULocking.transferFrom(alice, bob, 1);
+    }
 }
