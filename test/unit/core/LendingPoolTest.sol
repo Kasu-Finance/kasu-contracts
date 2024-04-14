@@ -66,6 +66,22 @@ contract LendingPoolTest is LendingPoolTestUtils {
         uint256 dNftId1_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
         uint256 dNftId2_bob = _requestDeposit(bob, lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6);
 
+        // revert if the lending pool is not valid
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.InvalidLendingPool.selector, address(0x12)));
+        lendingPoolManager.requestDeposit(address(0x12), lpd.tranches[0], 125 * 10 ** 6, "");
+        vm.stopPrank();
+
+        // revert if the lending pool tranche is not valid
+        vm.startPrank(bob);
+        deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
+        mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
+        vm.expectRevert(
+            abi.encodeWithSelector(ILendingPoolErrors.InvalidTranche.selector, lpd.lendingPool, address(0x13))
+        );
+        lendingPoolManager.requestDeposit(lpd.lendingPool, address(0x13), 125 * 10 ** 6, "");
+        vm.stopPrank();
+
         // transfer dNFT
         vm.startPrank(bob);
         vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
