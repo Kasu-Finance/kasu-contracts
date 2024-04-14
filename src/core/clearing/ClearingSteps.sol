@@ -47,7 +47,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTION ========== */
 
     /**
      * @notice Get the pending deposit amounts for the epoch.
@@ -77,7 +77,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return (_tranchePriorityDepositsAccepted(epoch), _acceptedPriorityWithdrawalAmounts(epoch));
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Calculate accepted request amounts and save them to the storage.

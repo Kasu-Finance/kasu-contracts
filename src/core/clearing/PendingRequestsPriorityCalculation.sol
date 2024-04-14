@@ -40,7 +40,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     /// @dev Pending requests calculation data.
     mapping(uint256 => PendingRequestsEpoch) private _pendingRequestsPerEpoch;
 
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTION ========== */
 
     function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
         return _pendingRequestsPerEpoch[targetEpoch].status;
@@ -51,7 +51,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Calculates the priority of pending requests.
@@ -181,7 +181,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         }
     }
 
-    /* ========== INTERNAL METHODS ========== */
+    /* ========== INTERNAL FUNCTIONS ========== */
 
     function _initializePendingRequests(uint256 targetEpoch) private {
         if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALIZED) return;

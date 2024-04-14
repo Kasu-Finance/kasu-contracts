@@ -75,7 +75,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         _userManager = userManager_;
     }
 
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTION ========== */
 
     function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
         external
@@ -123,7 +123,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         return lendingPoolAvailableFunds + pendingDepositAmount;
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Initializes the clearing process for the lending pool.
@@ -272,7 +272,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         emit ClearingExecuted(lendingPool, targetEpoch, clearingStatus);
     }
 
-    /* ========== INTERNAL METHODS ========== */
+    /* ========== INTERNAL FUNCTIONS ========== */
 
     function _lendingPoolBalance(address lendingPool) private view returns (LendingPoolBalance memory) {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();

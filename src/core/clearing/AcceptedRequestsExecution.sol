@@ -17,13 +17,13 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
-    /* ========== EXTERNAL VIEW METHODS ========== */
+    /* ========== EXTERNAL VIEW FUNCTION ========== */
 
     function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
         return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
-    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
@@ -160,7 +160,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
     }
 
-    /* ========== INTERNAL METHODS ========== */
+    /* ========== INTERNAL FUNCTIONS ========== */
 
     function _initializeAcceptedRequests(uint256 targetEpoch) private {
         uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
