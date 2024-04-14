@@ -10,13 +10,19 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 abstract contract LendingPoolStoppable {
     bool public isLendingPoolStopped;
 
-    function _stopLendingPool() internal {
-        isLendingPoolStopped = true;
-    }
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _isLendingPoolStopped() internal view returns (bool) {
         return isLendingPoolStopped;
     }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _stopLendingPool() internal {
+        isLendingPoolStopped = true;
+    }
+
+    /* ========== MODIFIERS ========== */
 
     modifier lendingPoolShouldNotBeStopped() {
         if (_isLendingPoolStopped()) {
