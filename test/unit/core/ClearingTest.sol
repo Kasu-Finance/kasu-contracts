@@ -1069,7 +1069,6 @@ contract ClearingTest is LendingPoolTestUtils {
             true
         );
 
-        ILendingPool lendingPool = ILendingPool(lpd.lendingPool);
         uint256 carolWithdrawalId =
             _requestWithdrawal(carol, lpd.lendingPool, lpd.tranches[2], IERC20(lpd.tranches[2]).balanceOf(carol));
 
