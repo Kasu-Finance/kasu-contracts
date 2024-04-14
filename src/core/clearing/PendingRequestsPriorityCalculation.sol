@@ -112,7 +112,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 // only consider deposit requests from current epoch
                 if (depositNftDetails.epochId > targetEpoch) continue;
 
-                uint256 trancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
+                uint256 trancheIndex = _trancheIndex(tranches, depositNftDetails.tranche);
 
                 uint8 ownerLoyaltyLevel = _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
 
@@ -142,7 +142,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     withdrawLoyaltyLevel = _userLoyaltyLevel(pendingRequestOwner, targetEpoch);
                 }
 
-                uint256 trancheIndex = _lendingPoolTranches(tranches, withdrawalNftDetails.tranche);
+                uint256 trancheIndex = _trancheIndex(tranches, withdrawalNftDetails.tranche);
                 tempPriorityTrancheWithdrawalShares[withdrawLoyaltyLevel][trancheIndex] +=
                     withdrawalNftDetails.sharesAmount;
 
@@ -165,7 +165,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                     trancheIndex < tempPriorityTrancheWithdrawalShares[withdrawalPriority].length;
                     ++trancheIndex
                 ) {
-                    withdrawalPriorityAmountSum += ILendingPoolTranche(_tranche(tranches, trancheIndex)).convertToAssets(
+                    withdrawalPriorityAmountSum += ILendingPoolTranche(_trancheAddress(tranches, trancheIndex)).convertToAssets(
                         tempPriorityTrancheWithdrawalShares[withdrawalPriority][trancheIndex]
                     );
                 }
@@ -238,11 +238,11 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     function _lendingPoolTranches() internal view virtual returns (address[] memory);
 
-    function _lendingPoolTranches(address[] memory tranches, address tranche) internal view virtual returns (uint256);
+    function _trancheIndex(address[] memory tranches, address tranche) internal view virtual returns (uint256);
 
     function _trancheCount() internal view virtual returns (uint256);
 
-    function _tranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
+    function _trancheAddress(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
     function _userLoyaltyLevel(address pendingRequestOwner, uint256 epoch) internal view virtual returns (uint8);
 

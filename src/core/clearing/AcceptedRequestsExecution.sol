@@ -66,7 +66,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // only consider deposit requests from current and past epochs
                 if (depositNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request deposit will be accepted in different tranches
-                    uint256 requestTrancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
+                    uint256 requestTrancheIndex = _trancheIndex(tranches, depositNftDetails.tranche);
                     uint256[] memory trancheDepositAcceptedAmounts =
                         _tranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails.priority];
 
@@ -89,7 +89,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
                             // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, trancheIndex), depositNftDetails.assetAmount
+                                userRequestNftId, _trancheAddress(tranches, trancheIndex), depositNftDetails.assetAmount
                             );
                             requestAmountLeft = 0;
                             break;
@@ -112,7 +112,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             }
 
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, trancheIndex), userAcceptedDepositAmount
+                                userRequestNftId, _trancheAddress(tranches, trancheIndex), userAcceptedDepositAmount
                             );
 
                             requestAmountLeft -= userAcceptedDepositAmount;
@@ -199,9 +199,9 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
     function _lendingPoolTranches() internal view virtual returns (address[] memory);
 
-    function _lendingPoolTranches(address[] memory tranches, address tranche) internal view virtual returns (uint256);
+    function _trancheIndex(address[] memory tranches, address tranche) internal view virtual returns (uint256);
 
-    function _tranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
+    function _trancheAddress(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
     function _acceptDepositRequest(uint256 dNftID, address tranche, uint256 acceptedAmount) internal virtual;
 

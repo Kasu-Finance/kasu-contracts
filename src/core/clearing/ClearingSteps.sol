@@ -142,7 +142,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @notice Get the index of the tranche in the lending pool tranches array.
      * @dev To get tranches array, use _lendingPoolTranches() function.
      */
-    function _lendingPoolTranches(address[] memory tranches, address tranche)
+    function _trancheIndex(address[] memory tranches, address tranche)
         internal
         pure
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
@@ -171,7 +171,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
      * @notice Get the tranche address by index.
      * @dev To get tranches array, use _lendingPoolTranches() function.
      */
-    function _tranche(address[] memory tranches, uint256 index)
+    function _trancheAddress(address[] memory tranches, uint256 index)
         internal
         pure
         override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
@@ -180,7 +180,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return tranches[index];
     }
 
-    // Common Virtual Methods
+    /* ========== VIRTUAL METHODS ========== */
 
     // ERC721Enumerable
     function _pendingRequestIdByIndex(uint256 index)
