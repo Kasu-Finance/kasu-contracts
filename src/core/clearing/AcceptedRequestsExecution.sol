@@ -17,9 +17,13 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
+    /* ========== EXTERNAL VIEW METHODS ========== */
+
     function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
         return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
+
+    //*** External Mutation Methods ***/
 
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
@@ -156,6 +160,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess = i;
     }
 
+    /* ========== INTERNAL HELPER METHODS ========== */
+
     function _initializeAcceptedRequests(uint256 targetEpoch) private {
         uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;
 
@@ -169,7 +175,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         }
     }
 
-    //*** Virtual Methods ***/
+    /* ========== VIRTUAL METHODS ========== */
 
     // ERC721
     function _totalPendingRequests() internal view virtual returns (uint256);
@@ -179,7 +185,6 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function _pendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
 
     // Pending Pool
-
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view

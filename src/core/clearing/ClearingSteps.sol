@@ -45,7 +45,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         _acceptedRequestsCalculation = acceptedRequestsCalculation_;
     }
 
-    // Getters
+    /* ========== EXTERNAL VIEW METHODS ========== */
 
     /**
      * @notice Get the pending deposit amounts for the epoch.
@@ -75,6 +75,8 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return (_tranchePriorityDepositsAccepted(epoch), _acceptedPriorityWithdrawalAmounts(epoch));
     }
 
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+
     /**
      * @notice Calculate accepted request amounts and save them to the storage.
      * @dev This function can only be called by the clearing coordinator contract for step 3 of the clearing process.
@@ -102,7 +104,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         ) = _acceptedRequestsCalculation.calculateAcceptedRequests(input);
     }
 
-    //*** Virtual Methods ***/
+    /* ========== VIRTUAL METHODS ========== */
 
     function _pendingDeposits(uint256 epoch) internal view override returns (PendingDeposits memory) {
         return _clearingDataPerEpoch[epoch].pendingDeposits;
@@ -176,7 +178,7 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         return tranches[index];
     }
 
-    //*** Common Virtual Methods ***/
+    // Common Virtual Methods
 
     // ERC721Enumerable
     function _pendingRequestIdByIndex(uint256 index)
@@ -201,7 +203,6 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         returns (address);
 
     // Pending Pool
-
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view

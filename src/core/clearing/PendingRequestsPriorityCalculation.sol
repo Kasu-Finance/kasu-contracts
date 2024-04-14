@@ -40,6 +40,19 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     /// @dev Pending requests calculation data.
     mapping(uint256 => PendingRequestsEpoch) private _pendingRequestsPerEpoch;
 
+    /* ========== EXTERNAL VIEW METHODS ========== */
+
+    function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
+        return _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess
+            - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
+    }
+
+    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
+        return _pendingRequestsPerEpoch[targetEpoch].status;
+    }
+
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
+
     /**
      * @notice Calculates the priority of pending requests.
      * @dev
@@ -168,16 +181,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         }
     }
 
-    function remainingPendingRequestsPriorityCalculation(uint256 targetEpoch) public view returns (uint256) {
-        return _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess
-            - _pendingRequestsPerEpoch[targetEpoch].nextIndexToProcess;
-    }
-
-    function pendingRequestsPriorityCalculationStatus(uint256 targetEpoch) public view returns (TaskStatus) {
-        return _pendingRequestsPerEpoch[targetEpoch].status;
-    }
-
-    //*** Helper Methods ***/
+    /* ========== INTERNAL HELPER METHODS ========== */
 
     function _initializePendingRequests(uint256 targetEpoch) private {
         if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALIZED) return;
@@ -213,7 +217,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         _pendingRequestsPerEpoch[targetEpoch].status = TaskStatus.PENDING;
     }
 
-    //*** Virtual Methods ***/
+    /* ========== VIRTUAL METHODS ========== */
 
     // ERC721
     function _totalPendingRequests() internal view virtual returns (uint256);
@@ -223,7 +227,6 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
     function _pendingRequestOwner(uint256 tokenId) internal view virtual returns (address);
 
     // Pending Pool
-
     function trancheDepositNftDetails(uint256 dNftId)
         public
         view
