@@ -26,6 +26,8 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     /// @notice Total amount of protocol fees pending to be claimed.
     uint256 public totalProtocolFeeAmount;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param underlyingAsset_ Underlying asset address.
@@ -45,6 +47,8 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         _ksuLocking = ksuLocking_;
         _systemVariables = systemVariables_;
     }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Transfers fee amount from the caller and emits them to the FeeManager contract.
