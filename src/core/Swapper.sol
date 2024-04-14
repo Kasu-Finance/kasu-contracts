@@ -73,7 +73,7 @@ contract Swapper is ISwapper, KasuAccessControllable {
             IERC20(tokenOut).safeTransfer(receiver, tokenAmount);
         }
 
-        // Return unswapped tokens.
+        // Return remaining tokens.
         for (uint256 i; i < tokensIn.length; ++i) {
             uint256 tokenInBalance = IERC20(tokensIn[i]).balanceOf(address(this));
             if (tokenInBalance > 0) {

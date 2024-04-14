@@ -51,8 +51,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
      * The withdrawal priority is based on the loyalty level of the user, the age of the request and if it was enforced by the system.
      *   If the withdrawal request is older than 5 epochs, it gets the highest user priority.
      *   If the withdrawal request is enforced by the system, it gets the highest priority above all other user requests.
-     * Deposit requests are groupped and stored in a 2D by requested tranche and loyalty level.
-     * Withdrawal requests are groupped and stored in a 1D array by priority.
+     * Deposit requests are grouped and stored in a 2D by requested tranche and loyalty level.
+     * Withdrawal requests are grouped and stored in a 1D array by priority.
      * @param batchSize Number of requests to process in a single batch. If the number is equal or higher than the remaining requests, all the remaining requests are processed.
      * @param targetEpoch Epoch for which to calculate the pending requests priority.
      */
@@ -63,7 +63,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
             revert PendingRequestsPriorityCalculationAlreadyProcessed(targetEpoch);
         }
 
-        _initialisePendingRequests(targetEpoch);
+        _initializePendingRequests(targetEpoch);
 
         uint256 remainingPendingRequests = remainingPendingRequestsPriorityCalculation(targetEpoch);
 
@@ -179,8 +179,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
     //*** Helper Methods ***/
 
-    function _initialisePendingRequests(uint256 targetEpoch) private {
-        if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALISED) return;
+    function _initializePendingRequests(uint256 targetEpoch) private {
+        if (_pendingRequestsPerEpoch[targetEpoch].status != TaskStatus.UNINITIALIZED) return;
 
         unchecked {
             uint256 trancheCount = _trancheCount();
@@ -188,19 +188,19 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
             ClearingData storage clearingData = _clearingDataStorage(targetEpoch);
 
-            // initialise pending deposits
+            // initialize pending deposits
             clearingData.pendingDeposits.trancheDepositsAmounts = new uint256[](trancheCount);
             clearingData.pendingDeposits.tranchePriorityDepositsAmounts = new uint256[][](trancheCount);
             for (uint256 i; i < trancheCount; ++i) {
                 clearingData.pendingDeposits.tranchePriorityDepositsAmounts[i] = new uint256[](loyaltyLevelsCount);
             }
 
-            // initialise pending withdrawals
+            // initialize pending withdrawals
             // extra priority: forced withdrawals
             uint256 withdrawalPriorityLevels = loyaltyLevelsCount + 1;
             clearingData.pendingWithdrawals.priorityWithdrawalAmounts = new uint256[](withdrawalPriorityLevels);
 
-            // initialise tempPriorityTrancheWithdrawalAmounts
+            // initialize tempPriorityTrancheWithdrawalAmounts
             _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares =
                 new uint256[][](withdrawalPriorityLevels);
             for (uint256 i; i < withdrawalPriorityLevels; ++i) {

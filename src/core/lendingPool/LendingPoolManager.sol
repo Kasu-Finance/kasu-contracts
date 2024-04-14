@@ -263,7 +263,7 @@ contract LendingPoolManager is
     // #### POOL FUNDS MANAGER #### //
 
     /**
-     * @notice Report unrelized loss to the lending pool.
+     * @notice Report unrealized loss to the lending pool.
      * @param lendingPool Address of the lending pool to report loss to.
      * @param amount Reported loss amount.
      * @param doMintLossTokens Whether to mint loss tokens to all the users in this transaction.
@@ -405,7 +405,7 @@ contract LendingPoolManager is
      * @dev
      * Can only be called by the pool manager.
      * Same as normal withdrawal but cannot be canceled by the user.
-     * Forced withdrawal has the higest priority (above highest standard priority) when clearing.
+     * Forced withdrawal has the highest priority (above highest standard priority) when clearing.
      * @param lendingPool Address of the lending pool.
      * @param input Array of force withdrawal details.
      */
@@ -484,19 +484,19 @@ contract LendingPoolManager is
     /**
      * @notice Update minimum excess liquidity percentage.
      * @param lendingPool Address of the lending pool.
-     * @param minumumExcessLiquidityPercentage New minimum excess liquidity percentage. 100% is 10^5.
+     * @param minimumExcessLiquidityPercentage New minimum excess liquidity percentage. 100% is 10^5.
      */
-    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minumumExcessLiquidityPercentage)
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minimumExcessLiquidityPercentage)
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
         validLendingPool(lendingPool)
     {
-        ILendingPool(lendingPool).updateMinimumExcessLiquidityPercentage(minumumExcessLiquidityPercentage);
+        ILendingPool(lendingPool).updateMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
     }
 
     /**
-     * @notice Update minumum deposit amount for the lending pool tranche.
+     * @notice Update minimum deposit amount for the lending pool tranche.
      * @dev Can't be more than the maximum deposit amount.
      * @param lendingPool Address of the lending pool.
      * @param tranche Address of the tranche.

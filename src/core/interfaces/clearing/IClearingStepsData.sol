@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 enum TaskStatus {
-    UNINITIALISED,
+    UNINITIALIZED,
     PENDING,
     ENDED
 }

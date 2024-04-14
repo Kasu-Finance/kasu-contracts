@@ -36,7 +36,7 @@ contract UserManager is IUserManager, Initializable {
     /// @notice Is user part of lending pool.
     mapping(address lendingPool => mapping(address user => bool)) private _isUserPartOfLendingPool;
 
-    /// @notice All active Kaus users array.
+    /// @notice All active Kasu users array.
     /// @dev Users are only removed by manually calling updateUserLendingPools.
     address[] private _allUsers;
 
@@ -85,7 +85,7 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Get the calculated user epoch loyalty level.
-     * @dev If the loylty level is not calculated for the epoch it will return 0.
+     * @dev If the loyalty level is not calculated for the epoch it will return 0.
      * @param user The address of the user.
      * @param epoch The epoch number.
      * @return The calculated user's loyalty level for the epoch.

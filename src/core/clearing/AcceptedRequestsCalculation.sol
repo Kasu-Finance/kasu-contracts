@@ -13,14 +13,14 @@ import "../Constants.sol";
  * The calculation is done in 4 steps:
  * 1. Calculate the total accepted deposit and withdrawal amounts.
  * 2. Calculate the total accepted deposit amount for each tranche.
- * 3. Calculate the accepted deposit to each tranche by the tranche and periority request.
+ * 3. Calculate the accepted deposit to each tranche by the tranche and priority request.
  * 4. Calculate the accepted withdrawal amounts for each priority.
  * The output of the calculation is verified at the end.
  * The calculation is done in a single function call.
  * In step 1 we check if the draw amount is less than the maximum available funds. If not, the call will revert.
  * If the tranche is oversubscribed, the excess is distributed to higher tranches according to priority.
- * Hiher priority will be prioritized when accepted over lower priority.
- * If same deposit priority, when accepting to higher tranche, the higer tranche request will be prioritized.
+ * Higher priority will be prioritized when accepted over lower priority.
+ * If same deposit priority, when accepting to higher tranche, the higher tranche request will be prioritized.
  *   e.g. If senior priority 1 will have priority over junior priority 1 when accepting deposits to the senior tranche.
  * Withdrawals are accepted in the order of priority top down.
  * There are two outputs of this calculation:
@@ -150,7 +150,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         // calculate the new maximum and minimum excess amount
         uint256 newMaxExcessAmount = newOwedAmount * inputData.config.maxExcessPercentage / FULL_PERCENT;
 
-        // withdrawals cannnot go under minumum excess, but drawing funds can
+        // withdrawals cannot go under minimum excess, but drawing funds can
         uint256 newMinExcessAmount = newOwedAmount * inputData.config.minExcessPercentage / FULL_PERCENT;
 
         // calculate accepted withdrawal amount
@@ -213,7 +213,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
                 acceptedDepositAmountToTranches * inputData.trancheDesiredRatios[i] / FULL_PERCENT
             ) + previousTrancheAmountLeft;
 
-            // get depotis for the current tranche plus the deposits left from the previous tranche
+            // get deposits for the current tranche plus the deposits left from the previous tranche
             uint256 trancheDepositsAmounts = inputData.trancheDepositsAmounts[i] + previousTrancheAmountOversubscribed;
 
             // get minimum from requested deposits and maximum accepted amount
@@ -237,7 +237,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
     /**
      * @notice Calculates the accepted deposit to each tranche and priority request.
      * @dev
-     * The accepted deposit amount is distributed to each tranche and priority based on the previus step calculations.
+     * The accepted deposit amount is distributed to each tranche and priority based on the previous step calculations.
      * If lower tranches are oversubscribed, the excess is distributed to higher tranches according to priority.
      * Higher tranche deposit request can never be applied to lower tranches.
      * If lower tranche and higher tranche have the same priority value, higher tranche is prioritized.
@@ -332,7 +332,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
     /**
      * @notice Verifies the result of the clearing calculation.
-     * @dev Verifies the deposit requestes are less than or equal to the accepted deposits, and the withdrawal requests are less than or equal to the accepted withdrawals.
+     * @dev Verifies the deposit requests are less than or equal to the accepted deposits, and the withdrawal requests are less than or equal to the accepted withdrawals.
      * @param input The input data for the clearing.
      * @param outputData1 The output data from step 1.
      * @param outputData2 The output data from step 2.

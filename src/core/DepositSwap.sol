@@ -89,8 +89,8 @@ abstract contract DepositSwap {
     /**
      * @notice Post swap actions.
      * @dev
-     * Transfers unswapped tokens back to the caller.
-     * Transfers unswapped ETH back to the caller.
+     * Transfers remaining tokens back to the caller.
+     * Transfers remaining ETH back to the caller.
      * Transfer unused outToken tokens back to the caller.
      * @param inTokens Swap input tokens array.
      * @param outToken Swap output token.

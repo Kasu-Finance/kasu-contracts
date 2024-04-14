@@ -11,7 +11,7 @@ import "../../shared/CommonErrors.sol";
  * @title Lending Pool Tranche Loss Contract
  * @notice This contract is used to handle the loss of assets in a tranche.
  * @dev
- * When impairment happens, users receive ERC1155 impairment receipt tokens with id of the unrelized loss.
+ * When impairment happens, users receive ERC1155 impairment receipt tokens with id of the unrealized loss.
  * If the loss is repaid, users can claim their share of the loss.
  * Considering the amount of users, the loss tokens can minted in multiple batches.
  * Tranche share updates should be blocked during the loss token minting.
@@ -218,7 +218,7 @@ abstract contract LendingPoolTrancheLoss is
     /**
      * @notice Checks if the minting of loss tokens for the id is complete.
      * @param lossId The id of the loss.
-     * @return True if minting of unrealied loss tokens for the loss id is complete.
+     * @return True if minting of unrealized loss tokens for the loss id is complete.
      */
     function isLossMintingComplete(uint256 lossId) external view returns (bool) {
         return _isLossMintingComplete(lossId);

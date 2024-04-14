@@ -804,7 +804,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
-        // request depoists
+        // request deposits
         uint256 requestDepositAmount_alice0 = 100 * 10 ** 6;
         uint256 requestDepositAmount_alice1 = 200 * 10 ** 6;
         uint256 requestDepositAmount_alice2 = 300 * 10 ** 6;
