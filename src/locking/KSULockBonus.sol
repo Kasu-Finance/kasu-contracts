@@ -15,6 +15,8 @@ contract KSULockBonus is Initializable {
         _disableInitializers();
     }
 
+    /* ========== INITIALIZER ========== */
+
     function initialize(address ksuLocking_, IERC20 ksuToken_) external initializer {
         AddressLib.checkIfZero(ksuLocking_);
         AddressLib.checkIfZero(address(ksuToken_));

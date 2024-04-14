@@ -32,11 +32,20 @@ struct ERC20PermitPayload {
 }
 
 interface IKSULocking is IERC20 {
+    /* ========== EXTERNAL VIEW METHODS ========== */
+
     function userTotalDeposits(address) external view returns (uint256);
 
     function userLock(address, uint256) external view returns (UserLock memory);
 
     function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory);
+
+    /**
+     * @notice Returns USDC user reward amount
+     */
+    function rewards(address user) external view returns (uint256);
+
+    /* ========== EXTERNAL MUTATIVE METHODS ========== */
 
     /**
      * @notice Add period lock details
@@ -90,11 +99,6 @@ interface IKSULocking is IERC20 {
     function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver) external;
 
     /**
-     * @notice Returns USDC user reward amount
-     */
-    function rewards(address user) external view returns (uint256);
-
-    /**
      * @notice Sets the KSU Bonus Tokens contract address
      */
     function setKSULockBonus(address ksuBonusTokens_) external;
@@ -109,7 +113,7 @@ interface IKSULocking is IERC20 {
         uint256 rKSUMinted
     );
 
-    // Events
+    /* ========== EVENTS ========== */
 
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned);
 
@@ -123,7 +127,8 @@ interface IKSULocking is IERC20 {
         address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned, address receiver
     );
 
-    // Errors
+    /* ========== ERRORS ========== */
+
     error LockPeriodAlreadyExists(uint256 lockPeriod);
     error LockPeriodNotSupported(uint256 lockPeriod);
     error DepositLocked(uint256 lockPeriod);
