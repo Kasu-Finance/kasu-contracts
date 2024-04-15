@@ -24,12 +24,16 @@ To run tests execute:
 
 ```text
 forge coverage --report lcov
-genhtml lcov.info --branch-coverage --output-dir coverage
+genhtml lcov.info --branch-coverage -o coverage
 ```
 
 The html report is then available at `./coverage/src/index.html`.
 
 The `genhtml` tool is not available for Windows, but WSL can be used to bypass this limitation.
+
+## Docs
+
+Run `forge doc --build`
 
 ## Deploying
 

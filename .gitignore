@@ -10,7 +10,7 @@ node_modules
 /typechain-types
 
 # solidity-coverage files
-/report
+/coverage
 lcov.info
 
 .idea
