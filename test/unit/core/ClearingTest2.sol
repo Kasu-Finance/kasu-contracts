@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import "../_utils/LendingPoolTestUtils.sol";
 
-contract ClearingTest is LendingPoolTestUtils {
+contract ClearingTest2 is LendingPoolTestUtils {
     function setUp() public {
         __baseTestUtils_setUp();
         __locking_setUp();
