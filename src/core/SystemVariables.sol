@@ -34,6 +34,7 @@ struct SystemVariablesSetup {
  * @notice Kasu system variables contract.
  * @dev This contract is used to store and manage global Kasu system variables.
  * It manages epoch, KSU epoch price and platform fee and other global variables.
+ * Only Kasu Admin can update the system variables.
  * Kasu epoch number always starts from 0.
  */
 contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializable {
@@ -44,7 +45,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private constant EPOCH_DURATION = 1 weeks;
 
     /// @notice The KSU token price contract.
-    IKsuPrice public immutable ksuPrice;
+    IKsuPrice private immutable _ksuPrice;
 
     /// @notice The timestamp of the start of the initial epoch.
     uint256 private _initialEpochStartTimestamp;
@@ -99,6 +100,8 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     /// @notice Returns the default names and symbols for tranche.
     mapping(uint256 trancheNameIndex => TrancheInfo trancheInfo) private _trancheNameInfo;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param ksuPrice_ The KSU token price contract.
@@ -108,9 +111,11 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         AddressLib.checkIfZero(address(ksuPrice_));
         AddressLib.checkIfZero(address(controller_));
 
-        ksuPrice = ksuPrice_;
+        _ksuPrice = ksuPrice_;
         _disableInitializers();
     }
+
+    /* ========== INITIALIZER ========== */
 
     /**
      * @notice Initializes the contract.
@@ -159,7 +164,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         _trancheNameIndexes[3][2] = 2;
     }
 
-    // EPOCH
+    /* ========== EPOCH ========== */
 
     /**
      * @notice Returns the current epoch number.
@@ -207,7 +212,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         }
     }
 
-    // CLEARING PERIOD
+    /* ========== CLEARING PERIOD ========== */
 
     /**
      * @notice Checks if the current epoch is in the clearing period.
@@ -217,7 +222,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         return nextEpochStartTimestamp() - block.timestamp <= clearingPeriodLength;
     }
 
-    // TOKEN PRICE
+    /* ========== TOKEN PRICE ========== */
 
     /**
      * @notice Updates the price of the KSU token at the start of the epoch.
@@ -231,12 +236,12 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     function _updateKsuTokenPrice() internal {
         priceUpdateEpoch = currentEpochNumber();
-        ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
+        ksuEpochTokenPrice = _ksuPrice.getKsuTokenPrice();
 
         emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }
 
-    // PERFORMANCE FEE
+    /* ========== PERFORMANCE FEE ========== */
 
     /**
      * @notice Sets the performance fee.
@@ -257,7 +262,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         emit PerformanceFeeUpdated(performanceFee_);
     }
 
-    // LOYALTY THRESHOLDS
+    /* ========== LOYALTY THRESHOLDS ========== */
 
     /**
      * @notice Returns the loyalty thresholds.
@@ -313,7 +318,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         emit LoyaltyThresholdsUpdated(loyaltyThresholds_);
     }
 
-    // LENDING POOL
+    /* ========== LENDING POOL ========== */
 
     /**
      * @notice Returns whether users can only deposit to junior tranches only when having rKSU.
@@ -333,7 +338,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         emit UserCanOnlyDepositToJuniorTrancheWhenHeHasRKSUUpdated(value);
     }
 
-    // TRANCHE
+    /* ========== TRANCHE ========== */
 
     /**
      * @notice Returns default epoch delay when tranche interest rate is changed.
@@ -408,7 +413,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         return _trancheNameInfo[_trancheNameIndexes[trancheCount][trancheIndex]];
     }
 
-    // FEES
+    /* ========== FEES ========== */
 
     /**
      * @notice Returns the protocol fee rate.
