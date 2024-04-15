@@ -12,8 +12,7 @@ import "../shared/AddressLib.sol";
 /**
  * @title FeeManager contract.
  * @notice Contract for managing and distributing platform fees.
- * @dev
- * The fees collected are split into ecosystem and protocol fees.
+ * @dev The fees collected are split into ecosystem and protocol fees.
  * Ecosystem fees are sent to the KSU Locking contract and distributed to rKSU holders,
  * while protocol fees are stored in the contract until claimed.
  */

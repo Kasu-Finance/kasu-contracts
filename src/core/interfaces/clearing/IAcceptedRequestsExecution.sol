@@ -3,9 +3,6 @@ pragma solidity 0.8.23;
 
 import "./IClearingStepsData.sol";
 
-error AcceptedRequestsExecutionAlreadyInitialized(uint256 epoch);
-error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
-
 interface IAcceptedRequestsExecution {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
@@ -27,4 +24,9 @@ interface IAcceptedRequestsExecution {
      * @param batchSize The amount of userRequests that you want to process in this transaction.
      */
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external;
+
+    /* ========== ERRORS ========== */
+
+    error AcceptedRequestsExecutionAlreadyInitialized(uint256 epoch);
+    error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
 }

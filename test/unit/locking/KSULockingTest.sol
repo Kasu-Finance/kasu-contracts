@@ -417,13 +417,13 @@ contract KSULockingTest is LockingTestUtils {
         _lock(alice, aliceLockAmount, lockPeriod30);
 
         // ACT / ASSERT
-        vm.expectRevert(abi.encodeWithSelector(rKSU.NonTransferrable.selector));
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
         _KSULocking.transfer(alice, 1);
 
-        vm.expectRevert(abi.encodeWithSelector(rKSU.NonTransferrable.selector));
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
         _KSULocking.approve(alice, 1);
 
-        vm.expectRevert(abi.encodeWithSelector(rKSU.NonTransferrable.selector));
+        vm.expectRevert(abi.encodeWithSelector(NonTransferable.selector));
         _KSULocking.transferFrom(alice, bob, 1);
     }
 }

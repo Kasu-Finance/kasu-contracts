@@ -3,12 +3,26 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/**
+ * @notice Emergency withdraw input.
+ * @custom:member user User address.
+ * @custom:member lockId Lock ID.
+ * @custom:member withdrawAmount Amount to withdraw.
+ */
 struct EmergencyWithdrawInput {
     address user;
     uint256 lockId;
     uint256 withdrawAmount;
 }
 
+/**
+ * @notice User lock details.
+ * @custom:member amount Amount of tokens locked.
+ * @custom:member rKSUAmount Amount of rKSU minted.
+ * @custom:member rKSUMultiplier rKSU multiplier used for the lock.
+ * @custom:member startTime Lock start time.
+ * @custom:member lockPeriod Lock duration.
+ */
 struct UserLock {
     uint256 amount;
     uint256 rKSUAmount;
@@ -17,12 +31,26 @@ struct UserLock {
     uint256 lockPeriod;
 }
 
+/**
+ * @notice Lock period details.
+ * @custom:member rKSUMultiplier rKSU multiplier for the lock period.
+ * @custom:member ksuBonusMultiplier KSU bonus multiplier for the lock period.
+ * @custom:member isActive Lock period status.
+ */
 struct LockPeriodDetails {
     uint256 rKSUMultiplier;
     uint256 ksuBonusMultiplier;
     bool isActive;
 }
 
+/**
+ * @notice ERC20 permit payload.
+ * @custom:member value Amount of tokens.
+ * @custom:member deadline Permit deadline.
+ * @custom:member v Signature v.
+ * @custom:member r Signature r.
+ * @custom:member s Signature s.
+ */
 struct ERC20PermitPayload {
     uint256 value;
     uint256 deadline;
@@ -34,74 +62,29 @@ struct ERC20PermitPayload {
 interface IKSULocking is IERC20 {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
-    function userTotalDeposits(address) external view returns (uint256);
-
-    function userLock(address, uint256) external view returns (UserLock memory);
-
     function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory);
 
-    /**
-     * @notice Returns USDC user reward amount
-     */
+    function userTotalDeposits(address) external view returns (uint256);
+    function userLock(address, uint256) external view returns (UserLock memory);
     function rewards(address user) external view returns (uint256);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
-    /**
-     * @notice Add period lock details
-     * @param lockPeriod in seconds
-     * @param rKSUMultiplier rKSU multiplier for the lock period
-     */
+    function setKSULockBonus(address ksuBonusTokens_) external;
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external;
 
-    /**
-     * @notice Lock KSU token for a period of time
-     * @dev User must approve KSU token before calling this function
-     * @param amount KSU token amount to lock
-     * @param lockPeriod in seconds
-     * @return userLockId lock id
-     */
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId);
-
-    /**
-     * @notice Lock KSU token for a period of time
-     * @param amount KSU token amount to lock
-     * @param lockPeriod in seconds
-     * @param ksuPermit KSU token permit
-     * @return userLockId lock id
-     */
     function lockWithPermit(uint256 amount, uint256 lockPeriod, ERC20PermitPayload calldata ksuPermit)
         external
         returns (uint256 userLockId);
-
-    /**
-     * @notice Unlock KSU token. Locking period must over.
-     * @param amount KSU token amount to unlock
-     * @param userLockId lock id
-     */
     function unlock(uint256 amount, uint256 userLockId) external;
-
-    /**
-     * @notice Adding USDC to the locking contracts
-     * @dev Must approve USDC token before calling this function
-     * @param amount amount of fees to add
-     */
-    function emitFees(uint256 amount) external;
-
-    /**
-     * @notice Called by user to get all his USDC fees
-     */
     function claimFees() external returns (uint256 earned);
 
-    /**
-     * @notice Called by admin in case of emergency to get locks KSU from users
-     */
     function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver) external;
 
-    /**
-     * @notice Sets the KSU Bonus Tokens contract address
-     */
-    function setKSULockBonus(address ksuBonusTokens_) external;
+    function emitFees(uint256 amount) external;
+
+    /* ========== EVENTS ========== */
 
     // Events
     event UserLocked(
@@ -112,17 +95,10 @@ interface IKSULocking is IERC20 {
         uint256 ksuBonusAmount,
         uint256 rKSUMinted
     );
-
-    /* ========== EVENTS ========== */
-
     event UserUnlocked(address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned);
-
     event FeesClaimed(address indexed user, uint256 amount);
-
     event FeesEmitted(address indexed user, uint256 amount);
-
     event LockPeriodAdded(uint256 indexed lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier);
-
     event EmergencyWithdraw(
         address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned, address receiver
     );

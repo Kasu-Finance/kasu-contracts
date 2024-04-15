@@ -18,7 +18,7 @@ contract Swapper is ISwapper, KasuAccessControllable {
     /* ========== STATE VARIABLES ========== */
 
     /// @dev Exchanges that are allowed to execute a swap.
-    mapping(address => bool) private exchangeAllowlist;
+    mapping(address => bool) private _exchangeAllowlist;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -31,26 +31,26 @@ contract Swapper is ISwapper, KasuAccessControllable {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
-     * @notice Checks if an exchange is allowed to execute a swap.
+     * @notice Checks if an exchange is allowed to be used in a swap.
      * @param exchange Exchange to check.
-     * @return Whether the exchange is allowed.
+     * @return True if the exchange is allowed to be used in a swap, false otherwise.
      */
     function isExchangeAllowed(address exchange) external view returns (bool) {
-        return exchangeAllowlist[exchange];
+        return _exchangeAllowlist[exchange];
     }
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Swaps tokens using the specified swap targets.
-     * @dev
-     * Only the swapper role can call this function.
+     * @dev Only the swapper role can call the swap function.
      * The tokens that are not swapped are returned to the receiver.
      * swapTarget contracts must be allowed in the exchange allowlist.
+     * Swapper will return remaining tokens to the receiver.
      * @param tokensIn Tokens to swap.
-     * @param swapInfo Swap information.
+     * @param swapInfo Information needed to perform the swap.
      * @param tokenOut Token to receive.
-     * @param receiver Receiver of the swapped tokens.
+     * @param receiver Receiver of the swapped and remaining tokens.
      * @return tokenAmount Amount of the token received.
      */
     function swap(address[] calldata tokensIn, SwapInfo[] calldata swapInfo, address tokenOut, address receiver)
@@ -70,7 +70,7 @@ contract Swapper is ISwapper, KasuAccessControllable {
 
         // Perform the swaps.
         for (uint256 i; i < swapInfo.length; ++i) {
-            if (!exchangeAllowlist[swapInfo[i].swapTarget]) {
+            if (!_exchangeAllowlist[swapInfo[i].swapTarget]) {
                 revert ExchangeNotAllowed(swapInfo[i].swapTarget);
             }
 
@@ -114,7 +114,7 @@ contract Swapper is ISwapper, KasuAccessControllable {
                 revert AddressNotContract(exchanges[i]);
             }
 
-            exchangeAllowlist[exchanges[i]] = allowed[i];
+            _exchangeAllowlist[exchanges[i]] = allowed[i];
 
             emit ExchangeAllowlistUpdated(exchanges[i], allowed[i]);
         }

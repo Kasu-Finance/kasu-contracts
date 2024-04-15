@@ -13,21 +13,49 @@ struct AcceptedRequestsExecutionEpoch {
     TaskStatus status;
 }
 
+/**
+ * @title Accepted Requests Execution contract
+ * @notice Contract for executing accepted deposit and accepted withdrawal requests.
+ * @dev This contract is used in step 4 of the clearing process.
+ * All external functions are called by the clearing coordinator contract.
+ * Clearing step 4 requires looping over user pending requests and processing them.
+ * It uses the results of step 2 and 3 to determine the accepted deposit and withdrawal request amounts.
+ * Deposits can be accepted to multiple tranches. Whatever is not accepted will be rejected and refunded to the user.
+ * Withdrawals can be partially accepted. Whatever is not accepted will remain pending.
+ */
 abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     // epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
     /* ========== EXTERNAL VIEW FUNCTION ========== */
 
+    /**
+     * @notice Returns the status of the accepted requests execution task.
+     * @param targetEpoch The epoch of pending user request.
+     * @return The status of the accepted requests execution task.
+     */
     function acceptedRequestsExecutionPerEpochStatus(uint256 targetEpoch) public view returns (TaskStatus) {
         return _acceptedRequestsExecutionPerEpoch[targetEpoch].status;
     }
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
+    /**
+     * @notice Execute accepted deposit and withdrawal requests in batches.
+     * @dev This is function to process step 4 of the clearing process.
+     * This function can only be called by the clearing coordinator contract.
+     * Requests can be processed in batches to avoid exceeding the block gas limit.
+     * Loops over a batch of pending deposit and withdrawal requests and processes them.
+     * Requests are processed in reverse order as when we fully processing a request, we remove it from the list.
+     * Deposits can be accepted to multiple tranches. Whatever is not accepted will be rejected and refunded to the user.
+     * Withdrawals can be partially accepted. Whatever is not accepted will remain pending.
+     * @param targetEpoch Target epoch number.
+     * @param batchSize Number of requests to process in a batch.
+     */
     function executeAcceptedRequestsBatch(uint256 targetEpoch, uint256 batchSize) external {
         _onlyClearingCoordinator();
 
+        // initialize the task if it hasn't been initialized yet for the target epoch
         if (_acceptedRequestsExecutionPerEpoch[targetEpoch].status == TaskStatus.UNINITIALIZED) {
             _initializeAcceptedRequests(targetEpoch);
 
@@ -66,7 +94,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // only consider deposit requests from current and past epochs
                 if (depositNftDetails.epochId <= targetEpoch) {
                     // instructions of how this request deposit will be accepted in different tranches
-                    uint256 requestTrancheIndex = _lendingPoolTranches(tranches, depositNftDetails.tranche);
+                    uint256 requestTrancheIndex = _trancheIndex(tranches, depositNftDetails.tranche);
                     uint256[] memory trancheDepositAcceptedAmounts =
                         _tranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails.priority];
 
@@ -89,7 +117,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
                             // in case everything is accepted, we can accept the full amount and break as there is nothing left to accept
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, trancheIndex), depositNftDetails.assetAmount
+                                userRequestNftId, _trancheAddress(tranches, trancheIndex), depositNftDetails.assetAmount
                             );
                             requestAmountLeft = 0;
                             break;
@@ -112,14 +140,14 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             }
 
                             _acceptDepositRequest(
-                                userRequestNftId, _tranche(tranches, trancheIndex), userAcceptedDepositAmount
+                                userRequestNftId, _trancheAddress(tranches, trancheIndex), userAcceptedDepositAmount
                             );
 
                             requestAmountLeft -= userAcceptedDepositAmount;
                         }
                     }
 
-                    // whatever is not accepted will be rejected, deposit requests are not carried in next epochs
+                    // whatever is not accepted will be rejected, deposit requests are not carried to next epoch
                     if (requestAmountLeft > 0) {
                         _rejectDepositRequest(userRequestNftId);
                     }
@@ -147,6 +175,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 }
             }
 
+            // if we've processed all requests, we can end the task
             if (i == 0) {
                 _acceptedRequestsExecutionPerEpoch[targetEpoch].status = TaskStatus.ENDED;
                 break;
@@ -199,9 +228,9 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
     function _lendingPoolTranches() internal view virtual returns (address[] memory);
 
-    function _lendingPoolTranches(address[] memory tranches, address tranche) internal view virtual returns (uint256);
+    function _trancheIndex(address[] memory tranches, address tranche) internal view virtual returns (uint256);
 
-    function _tranche(address[] memory tranches, uint256 index) internal view virtual returns (address);
+    function _trancheAddress(address[] memory tranches, uint256 index) internal view virtual returns (address);
 
     function _acceptDepositRequest(uint256 dNftID, address tranche, uint256 acceptedAmount) internal virtual;
 

@@ -4,6 +4,16 @@ pragma solidity 0.8.23;
 import "./IAcceptedRequestsCalculation.sol";
 import "./IPendingRequestsPriorityCalculation.sol";
 
+/**
+ * @notice The clearing status of a lending pool for a specific epoch.
+ * @custom:member UNINITIALIZED The clearing status is uninitialized.
+ * @custom:member STEP1_PENDING The clearing status is pending step 1.
+ * @custom:member STEP2_PENDING The clearing status is pending step 2.
+ * @custom:member STEP3_PENDING The clearing status is pending step 3.
+ * @custom:member STEP4_PENDING The clearing status is pending step 4.
+ * @custom:member STEP5_PENDING The clearing status is pending step 5.
+ * @custom:member ENDED The clearing status has ended.
+ */
 enum ClearingStatus {
     UNINITIALIZED,
     STEP1_PENDING,
@@ -42,25 +52,8 @@ interface IClearingCoordinator {
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
-    /**
-     * @notice Initializes the newly created lending pool in the clearing coordinator.
-     * @param lendingPool The lending pool address.
-     */
     function initializeLendingPool(address lendingPool) external;
 
-    /**
-     * @notice Runs all the tasks required for clearing to succeed. Tasks run in sequence.
-     * @dev
-     * This task can be completed in multiple transactions.
-     * @param lendingPoolAddress The lending pool that clearing config will be registered.
-     * @param targetEpoch The epoch to run clearing against.
-     * @param priorityCalculationBatchSize The amount of user requests that `pending requests priority
-     * calculation` will process in one transaction.
-     * @param acceptRequestsBatchSize The amount of user requests that `accepted requests execution` task
-     * will process in one transaction.
-     * @param clearingConfigOverride The config that will be overridden at step3 if isConfigOverridden is true
-     * @param isConfigOverridden Determines whether the clearingConfigOverride will be applied instead of default one
-     */
     function doClearing(
         address lendingPoolAddress,
         uint256 targetEpoch,
@@ -70,16 +63,15 @@ interface IClearingCoordinator {
         bool isConfigOverridden
     ) external;
 
-    /* ========== ERRORS ========== */
+    /* ========== EVENTS ========== */
 
     event ClearingExecuted(address indexed lendingPool, uint256 indexed epoch, ClearingStatus clearingStatus);
     event ClearingConfigSet(address indexed lendingPool, uint256 indexed epoch, ClearingConfiguration clearingConfig);
 
+    /* ========== ERRORS ========== */
+
     error ClearingAlreadyExecuted(uint256 epoch);
-    error TargetEpochNotStarted(uint256 targetEpoch, uint256 currentEpoch);
     error TargetEpochClearingNotStarted(uint256 targetEpoch);
     error UserLoyaltyLevelsNotYetProcessed(uint256 targetEpoch);
-    error ClearingNotEndedForPreviousEpoch(uint256 previousEpoch);
     error InvalidClearingTargetEpochForLendingPool(address lendingPool, uint256 targetEpoch, uint256 nextEpoch);
-    error CannotOverrideClearingConfig(address lendingPool, uint256 epoch);
 }

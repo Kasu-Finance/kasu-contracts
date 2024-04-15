@@ -7,15 +7,13 @@ import "./Roles.sol";
 import "../AddressLib.sol";
 
 /**
- * @notice Account access role verification middleware
+ * @notice Account access role verification middleware.
  */
 abstract contract KasuAccessControllable {
     /* ========== CONSTANTS ========== */
 
-    /**
-     * @dev Kasu access control manager.
-     */
-    IKasuController internal immutable controller;
+    /// @dev Kasu access control manager.
+    IKasuController internal immutable _controller;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -25,30 +23,30 @@ abstract contract KasuAccessControllable {
     constructor(IKasuController controller_) {
         AddressLib.checkIfZero(address(controller_));
 
-        controller = controller_;
+        _controller = controller_;
     }
 
-    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== *
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @dev Reverts if an account is missing a role.\
+     * @dev Reverts if an account is missing a role.
      * @param role Role to check for.
      * @param account Account to check.
      */
     function _checkRole(bytes32 role, address account) internal view virtual {
-        if (!controller.hasRole(role, account)) {
+        if (!_controller.hasRole(role, account)) {
             revert IAccessControl.AccessControlUnauthorizedAccount(account, role);
         }
     }
 
     /**
-     * @dev Revert if an account is missing a role for a lendingPool.
-     * @param lendingPool Address of the smart vault.
+     * @dev Revert if an account is missing a role for a lending pool.
+     * @param lendingPool Address of the lending pool.
      * @param role Role to check for.
      * @param account Account to check.
      */
     function _checkLendingPoolRole(address lendingPool, bytes32 role, address account) internal view {
-        if (!controller.hasLendingPoolRole(lendingPool, role, account)) {
+        if (!_controller.hasLendingPoolRole(lendingPool, role, account)) {
             revert IAccessControl.AccessControlUnauthorizedAccount(account, role);
         }
     }
@@ -76,9 +74,9 @@ abstract contract KasuAccessControllable {
     }
 
     /**
-     * @notice Only allows accounts with granted role for a smart vault.
+     * @notice Only allows accounts with granted role for a lending pool.
      * @dev Reverts when the account fails check.
-     * @param lendingPool Address of the smart vault.
+     * @param lendingPool Address of the lending pool.
      * @param role Role to check for.
      * @param account Account to check.
      */
@@ -91,7 +89,7 @@ abstract contract KasuAccessControllable {
      * @notice Only allows function to be called when system is not paused.
      */
     modifier whenNotPaused() {
-        controller.requireNotPaused();
+        _controller.requireNotPaused();
         _;
     }
 

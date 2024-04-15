@@ -128,6 +128,15 @@ contract PendingPool is
         _setUpTranches();
     }
 
+    function _setUpTranches() private {
+        address[] memory trancheAddresses = _ownLendingPool().lendingPoolTranches();
+        for (uint256 i; i < trancheAddresses.length; ++i) {
+            _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);
+            _nextTrancheWithdrawalNFTId[trancheAddresses[i]] =
+                UserRequestIds.composeWithdrawalId(trancheAddresses[i], 0);
+        }
+    }
+
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
@@ -193,15 +202,6 @@ contract PendingPool is
     }
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
-
-    function _setUpTranches() private {
-        address[] memory trancheAddresses = _ownLendingPool().lendingPoolTranches();
-        for (uint256 i; i < trancheAddresses.length; ++i) {
-            _nextTrancheDepositNFTId[trancheAddresses[i]] = UserRequestIds.composeDepositId(trancheAddresses[i], 0);
-            _nextTrancheWithdrawalNFTId[trancheAddresses[i]] =
-                UserRequestIds.composeWithdrawalId(trancheAddresses[i], 0);
-        }
-    }
 
     // DEPOSIT/WITHDRAWAL REQUESTS
 

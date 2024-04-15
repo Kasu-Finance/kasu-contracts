@@ -6,11 +6,23 @@ import "../clearing/IPendingRequestsPriorityCalculation.sol";
 import {IAcceptedRequestsExecution} from "../clearing/IAcceptedRequestsExecution.sol";
 import {IClearingSteps} from "../clearing/IClearingSteps.sol";
 
+/**
+ * @notice Enum where the withdrawal request came from.
+ * @custom:member USER Withdrawal request came from the user.
+ * @custom:member SYSTEM Withdrawal request came from the system.
+ */
 enum RequestedFrom {
     USER,
     SYSTEM
 }
 
+/**
+ * @notice Struct containing the details of a deposit NFT.
+ * @custom:member assetAmount The amount of asset requested to be deposited.
+ * @custom:member tranche The tranche the deposit is requested for.
+ * @custom:member epochId The epoch the deposit was requested for.
+ * @custom:member priority The priority of the deposit request.
+ */
 struct DepositNftDetails {
     uint256 assetAmount;
     address tranche;
@@ -18,6 +30,14 @@ struct DepositNftDetails {
     uint8 priority;
 }
 
+/**
+ * @notice Struct containing the details of a withdrawal NFT.
+ * @custom:member sharesAmount The amount of tranche shares requested to be withdrawn.
+ * @custom:member tranche The tranche the withdrawal is requested for.
+ * @custom:member epochId The epoch the withdrawal was requested for.
+ * @custom:member priority The priority of the withdrawal request.
+ * @custom:member requestedFrom The source of the withdrawal request.
+ */
 struct WithdrawalNftDetails {
     uint256 sharesAmount;
     address tranche;
@@ -26,16 +46,18 @@ struct WithdrawalNftDetails {
     RequestedFrom requestedFrom;
 }
 
+/**
+ * @notice Struct containing the input for the batch force withdrawal function.
+ * @custom:member tranche The tranche the withdrawal is requested for.
+ * @custom:member user The user the withdrawal is requested for.
+ * @custom:member sharesToWithdraw The amount of tranche shares requested to be withdrawn.
+ */
 struct ForceWithdrawalInput {
     address tranche;
     address user;
     uint256 sharesToWithdraw;
 }
 
-/**
- * @notice Interface for the LendingPool contract.
- * @dev Can only be called by the LendingPoolManager contract.
- */
 interface IPendingPool is IERC721Enumerable, IClearingSteps {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
@@ -60,36 +82,15 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
-    /**
-     * @notice Creates a pending deposit for the user. Transfers asset from user to lending pool
-     * @dev Must approve asset token before calling this function
-     * @param user The user making the pending deposit
-     * @param tranche The user's desired tranche for the pending deposit
-     * @param amount The amount that will be transferred to the pending deposit
-     * @return dNftID The deposit NFT id that acts as a receipt for the pending deposit
-     */
     function requestDeposit(address user, address tranche, uint256 amount) external returns (uint256 dNftID);
-
     function cancelDepositRequest(address user, uint256 dNftID) external;
-
-    // #### USER WITHDRAWS #### //
-    /**
-     * @notice Creates a pending withdrawal for the user.
-     * @param user The user making the pending withdraw
-     * @param tranche The pending withdrawal tranche
-     * @param trancheShares the amount of shares that will added in the pending withdrawal
-     * @return wNftID the withdrawal NFT id that acts as a receipt for the pending withdrawal
-     */
     function requestWithdrawal(address user, address tranche, uint256 trancheShares)
         external
         returns (uint256 wNftID);
-
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
 
     function forceCancelWithdrawalRequest(uint256 wNftID) external;
-
     function batchForceWithdrawals(ForceWithdrawalInput[] calldata input) external returns (uint256[] memory wNftIDs);
-
     function stop() external;
 
     /* ========== EVENTS ========== */

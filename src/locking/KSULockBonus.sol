@@ -5,11 +5,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../shared/AddressLib.sol";
 
+/**
+ * @title KSULockBonus contract
+ * @notice Contract to distribute KSU lock bonuses.
+ * @dev Send KSU bonus tokens to this contract to distribute them to the KSU lockers
+ * when requested by the KSU locking contract.
+ */
 contract KSULockBonus is Initializable {
     using SafeERC20 for IERC20;
-
-    address private _ksuLocking;
-    IERC20 private _ksuToken;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -19,13 +22,16 @@ contract KSULockBonus is Initializable {
 
     /* ========== INITIALIZER ========== */
 
-    function initialize(address ksuLocking_, IERC20 ksuToken_) external initializer {
-        AddressLib.checkIfZero(ksuLocking_);
-        AddressLib.checkIfZero(address(ksuToken_));
+    /**
+     * @notice Initializes the KSULockBonus contract.
+     * @dev Allows KSU locking contract to spend KSU bonus tokens.
+     * @param ksuLocking Address of the KSU locking contract.
+     * @param ksuToken Address of the KSU token.
+     */
+    function initialize(address ksuLocking, IERC20 ksuToken) external initializer {
+        AddressLib.checkIfZero(ksuLocking);
+        AddressLib.checkIfZero(address(ksuToken));
 
-        _ksuLocking = ksuLocking_;
-        _ksuToken = ksuToken_;
-
-        _ksuToken.safeIncreaseAllowance(_ksuLocking, type(uint256).max);
+        ksuToken.safeIncreaseAllowance(ksuLocking, type(uint256).max);
     }
 }
