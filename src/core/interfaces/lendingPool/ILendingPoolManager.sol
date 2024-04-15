@@ -5,17 +5,6 @@ import "./IPendingPool.sol";
 import "./ILendingPool.sol";
 import "./ILendingPoolFactory.sol";
 
-struct ForceWithdrawalDetails {
-    address user;
-    address tranche;
-    uint256 amount;
-}
-
-struct ForceWithdrawalResult {
-    address user;
-    uint256 wNftID;
-}
-
 interface ILendingPoolManager {
     // #### USER #### //
     function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)

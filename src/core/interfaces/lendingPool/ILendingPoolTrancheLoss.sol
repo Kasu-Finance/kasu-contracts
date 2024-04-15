@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+/**
+ * @notice Tranche loss details for a specific loss event.
+ * @custom:member lossAmount Total loss amount.
+ * @custom:member usersCount Total number of users affected by the loss.
+ * @custom:member usersMintedCount Number of users that have been minted loss tokens.
+ * @custom:member recoveredAmount Total amount recovered from the loss.
+ * @custom:member totalLossShares Total loss shares. Sum of all users' loss shares.
+ */
 struct LossDetails {
     uint256 lossAmount;
     uint256 usersCount;

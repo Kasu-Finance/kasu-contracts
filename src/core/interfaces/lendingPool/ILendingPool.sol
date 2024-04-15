@@ -4,18 +4,25 @@ pragma solidity 0.8.23;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ILendingPoolFactory.sol";
 
+/**
+ * @notice Lending pool address information.
+ * @custom:member trancheAddresses Tranche addresses.
+ * @custom:member pendingPool Pending pool address.   
+ */
 struct LendingPoolInfo {
     address[] trancheAddresses;
     address pendingPool;
 }
 
-struct TrancheConfig {
-    uint256 ratio;
-    uint256 interestRate;
-    uint256 minDepositAmount;
-    uint256 maxDepositAmount;
-}
-
+/**
+ * @notice Lending pool configuration.
+ * @custom:member tranches Tranche configurations.
+ * @custom:member drawRecipient Address to receive the funds drawn from the pool.
+ * @custom:member desiredDrawAmount Desired draw amount at the next clearing.
+ * @custom:member trancheInterestChangeEpochDelay Delay in epochs for tranche interest rate changes.
+ * @custom:member targetExcessLiquidityPercentage Target excess liquidity percentage.
+ * @custom:member minimumExcessLiquidityPercentage Minimum excess liquidity percentage. Used for calculating maximum accepted withdrawal amount when clearing.
+ */
 struct PoolConfiguration {
     TrancheConfig[] tranches;
     address drawRecipient;
@@ -26,8 +33,19 @@ struct PoolConfiguration {
 }
 
 /**
- * @notice Interface for the LendingPool contract.
+ * @notice Lending pool tranche configuration.
+ * @custom:member ratio Tranche ratio. 100% is 1e5. All tranche ratios should sum up to 100%.
+ * @custom:member interestRate Tranche interest rate. 100% is 1e18.
+ * @custom:member minDepositAmount Minimum tranche deposit request amount.
+ * @custom:member maxDepositAmount Maximum tranche deposit request amount.
  */
+struct TrancheConfig {
+    uint256 ratio;
+    uint256 interestRate;
+    uint256 minDepositAmount;
+    uint256 maxDepositAmount;
+}
+
 interface ILendingPool is IERC20 {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
