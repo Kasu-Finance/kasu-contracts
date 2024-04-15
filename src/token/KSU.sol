@@ -14,6 +14,10 @@ contract KSU is ERC20PermitUpgradeable {
 
     /* ========== INITIALIZER ========== */
 
+    /**
+     * @notice Initializes the Kasu token contract.
+     * @param recipient Address to receive the initial supply.
+     */
     function initialize(address recipient) external initializer {
         __ERC20_init("Kasu", "KSU");
         __ERC20Permit_init("Kasu");

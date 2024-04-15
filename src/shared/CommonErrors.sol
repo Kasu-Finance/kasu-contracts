@@ -12,7 +12,7 @@ error InvalidArrayLength();
 error ConfigurationAddressZero();
 
 /**
- * @notice Used when constructor or initializer parameters are invalid.
+ * @notice Used when configuration parameters are invalid.
  */
 error InvalidConfiguration();
 
@@ -27,12 +27,22 @@ error AddressNotContract(address address_);
  */
 error NotSupported();
 
+/**
+ * @notice Used when the amount should be greater than zero.
+ */
 error AmountShouldBeGreaterThanZero();
 
+/**
+ * @notice Used when the token is non-transferable.
+ */
 error NonTransferable();
 
+/**
+ * @notice Used when an action cannot be executed during clearing time.
+ */
 error CannotExecuteDuringClearingTime();
 
+/**
+ * @notice Used when an action can only be executed during clearing time.
+ */
 error CanOnlyExecuteDuringClearingTime();
-
-error BatchSizeShouldNotBeZero();
