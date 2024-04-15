@@ -52,7 +52,7 @@ struct ClearingData {
 }
 
 /**
- * @notice Lending pool clearing configuration for the target epoch. 
+ * @notice Lending pool clearing configuration for the target epoch.
  * @custom:member drawAmount Desired draw amount for the current clearing.
  * @custom:member trancheDesiredRatios Lending pool tranche desired ratios in percentages.
  * @custom:member maxExcessPercentage Maximum excess balance percentage.

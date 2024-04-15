@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 /**
  * @notice Tranche name and token symbol.
  * @custom:member trancheName Tranche name.
- * @custom:member tokenSymbol Token symbol.   
+ * @custom:member tokenSymbol Token symbol.
  */
 struct TrancheInfo {
     string trancheName;
@@ -42,7 +42,7 @@ interface ISystemVariables {
     function userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU() external view returns (bool);
     function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external;
 
-    /* ========== TRANCHE ========== */ 
+    /* ========== TRANCHE ========== */
 
     function defaultTrancheInterestChangeEpochDelay() external view returns (uint256);
     function setDefaultTrancheInterestChangeEpochDelay(uint256 defaultTrancheInterestChangeEpochDelay_) external;

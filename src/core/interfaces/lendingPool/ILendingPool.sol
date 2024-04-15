@@ -7,7 +7,7 @@ import "./ILendingPoolFactory.sol";
 /**
  * @notice Lending pool address information.
  * @custom:member trancheAddresses Tranche addresses.
- * @custom:member pendingPool Pending pool address.   
+ * @custom:member pendingPool Pending pool address.
  */
 struct LendingPoolInfo {
     address[] trancheAddresses;
