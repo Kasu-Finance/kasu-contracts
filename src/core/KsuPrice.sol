@@ -15,6 +15,8 @@ contract KsuPrice is IKsuPrice {
     /// @notice Address of the oracle sender.
     address public immutable oracleSender;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param oracle_ Chainsight oracle contract.
@@ -27,6 +29,8 @@ contract KsuPrice is IKsuPrice {
         oracle = oracle_;
         oracleSender = oracleSender_;
     }
+
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
      * @notice Get the current price of the KSU token.

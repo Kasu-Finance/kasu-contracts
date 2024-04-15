@@ -29,6 +29,12 @@ struct PoolConfiguration {
  * @notice Interface for the LendingPool contract.
  */
 interface ILendingPool is IERC20 {
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
+    function userOwedAmount() external view returns (uint256);
+
+    function feesOwedAmount() external view returns (uint256);
+
     function pendingPool() external view returns (address);
 
     function userBalance(address user) external view returns (uint256);
@@ -50,13 +56,15 @@ interface ILendingPool is IERC20 {
 
     function lendingPoolTrancheCount() external view returns (uint256);
 
-    function userOwedAmount() external view returns (uint256);
-
-    function feesOwedAmount() external view returns (uint256);
-
     function availableFunds() external view returns (uint256);
 
+    function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig);
+
+    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
+
     function calculateMaximumLossAmount() external view returns (uint256 maximumLossAmount);
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     // #### CLEARING #### //
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
@@ -70,10 +78,6 @@ interface ILendingPool is IERC20 {
     function applyInterests(uint256 epoch) external;
 
     function payOwedFees() external;
-
-    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
-
-    function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig);
 
     // #### POOL DELEGATE #### //
     function drawFunds(uint256 amount) external;
@@ -118,7 +122,8 @@ interface ILendingPool is IERC20 {
 
     function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) external;
 
-    // Events
+    /* ========== EVENTS ========== */
+
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
 
     event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares, uint256 assetAmount);
@@ -169,7 +174,7 @@ interface ILendingPool is IERC20 {
 
     event UpdatedMinimumExcessLiquidityPercentage(uint256 percentage);
 
-    // Errors
+    /* ========== ERRORS ========== */
 
     error DrawAmountCantBeGreaterThanAvailableAmount(uint256 drawAmount, uint256 availableAmount);
     error RepayAmountCantBeGreaterThanOwedAmount(uint256 repayAmount, uint256 owedAmount);

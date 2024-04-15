@@ -31,18 +31,14 @@ error InvalidSwapData();
 /* ========== INTERFACES ========== */
 
 interface ISwapper {
-    /* ========== EVENTS ========== */
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
-     * @notice Emitted when the exchange allowlist is updated.
-     * @param exchange Exchange that was updated.
-     * @param isAllowed Whether the exchange is allowed to be used in a swap or not after the update.
+     * @notice Checks if an exchange is allowed to be used in a swap.
+     * @param exchange Exchange to check.
+     * @return isAllowed True if the exchange is allowed to be used in a swap, false otherwise.
      */
-    event ExchangeAllowlistUpdated(address indexed exchange, bool isAllowed);
-
-    event Swapped(
-        address indexed receiver, address[] tokensIn, address tokenOut, uint256[] amountsIn, uint256 amountOut
-    );
+    function isExchangeAllowed(address exchange) external view returns (bool isAllowed);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
@@ -71,12 +67,16 @@ interface ISwapper {
      */
     function updateExchangeAllowlist(address[] calldata exchanges, bool[] calldata allowed) external;
 
-    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+    /* ========== EVENTS ========== */
 
     /**
-     * @notice Checks if an exchange is allowed to be used in a swap.
-     * @param exchange Exchange to check.
-     * @return isAllowed True if the exchange is allowed to be used in a swap, false otherwise.
+     * @notice Emitted when the exchange allowlist is updated.
+     * @param exchange Exchange that was updated.
+     * @param isAllowed Whether the exchange is allowed to be used in a swap or not after the update.
      */
-    function isExchangeAllowed(address exchange) external view returns (bool isAllowed);
+    event ExchangeAllowlistUpdated(address indexed exchange, bool isAllowed);
+
+    event Swapped(
+        address indexed receiver, address[] tokensIn, address tokenOut, uint256[] amountsIn, uint256 amountOut
+    );
 }

@@ -69,6 +69,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     /// @notice The id of the next reported loss.
     uint256 public nextLossId;
 
+    /* ========== CONSTRUCTOR ========== */
+
     /**
      * @notice Constructor.
      * @param systemVariables_ System variables contract.
@@ -96,6 +98,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
         _disableInitializers();
     }
+
+    /* ========== INITIALIZER ========== */
 
     /**
      * @notice Initializes the lending pool.
@@ -159,12 +163,36 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         return _poolConfiguration;
     }
 
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
     /**
      * @notice Decimals of the lending pool token.
      * @return Decimals of the lending pool token.
      */
     function decimals() public pure override returns (uint8) {
         return 6;
+    }
+
+    /**
+     * @notice Returns the pending pool address corresponding to the lending pool.
+     * @return The pending pool address.
+     */
+    function pendingPool() public view returns (address) {
+        return _lendingPoolInfo.pendingPool;
+    }
+
+    /**
+     * @notice Returns the total user balance of the lending pool.
+     * @dev Users' balance form all tranches.
+     * @param user The user address.
+     * @return userPoolBalance Total balance of the lending pool in the underlying asset.
+     */
+    function userBalance(address user) external view returns (uint256 userPoolBalance) {
+        uint256 trancheCount = _lendingPoolInfo.trancheAddresses.length;
+        for (uint256 i; i < trancheCount; ++i) {
+            ILendingPoolTranche tranche = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]);
+            userPoolBalance += tranche.userActiveAssets(user);
+        }
     }
 
     /**
@@ -205,14 +233,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _poolConfiguration.tranches[_trancheIndexUnverified(tranche)].minDepositAmount,
             _poolConfiguration.tranches[_trancheIndexUnverified(tranche)].maxDepositAmount
         );
-    }
-
-    /**
-     * @notice Returns the pending pool address corresponding to the lending pool.
-     * @return The pending pool address.
-     */
-    function pendingPool() public view returns (address) {
-        return _lendingPoolInfo.pendingPool;
     }
 
     /**
@@ -264,18 +284,72 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     /**
-     * @notice Returns the total user balance of the lending pool.
-     * @dev Users' balance form all tranches.
-     * @param user The user address.
-     * @return userPoolBalance Total balance of the lending pool in the underlying asset.
+     * @notice Returns the clearing configuration of the lending pool.
+     * @return The clearing configuration of the lending pool.
      */
-    function userBalance(address user) external view returns (uint256 userPoolBalance) {
-        uint256 trancheCount = _lendingPoolInfo.trancheAddresses.length;
-        for (uint256 i; i < trancheCount; ++i) {
-            ILendingPoolTranche tranche = ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]);
-            userPoolBalance += tranche.userActiveAssets(user);
+    function getClearingConfig() external view returns (ClearingConfiguration memory) {
+        uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
+        for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
+            trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
+        }
+
+        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+            _poolConfiguration.desiredDrawAmount,
+            trancheRatios,
+            _poolConfiguration.targetExcessLiquidityPercentage,
+            _poolConfiguration.minimumExcessLiquidityPercentage
+        );
+
+        return clearingConfiguration;
+    }
+
+    /**
+     * @notice Verifies the clearing configuration for the lending pool.
+     * @dev
+     * Verifies the clearing configuration.
+     * @param clearingConfig The clearing configuration to verify.
+     */
+    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
+        if (isLendingPoolStopped) {
+            if (
+                clearingConfig.drawAmount != 0 || clearingConfig.maxExcessPercentage != 0
+                    || clearingConfig.minExcessPercentage != 0
+            ) {
+                revert PoolConfigurationIsIncorrect("Clearing values must be 0 if the pool is stopped");
+            }
+        }
+
+        if (clearingConfig.minExcessPercentage > clearingConfig.maxExcessPercentage) {
+            revert PoolConfigurationIsIncorrect("minExcessPercentage more than maxExcessPercentage");
+        }
+
+        _verifyTrancheDesiredRatios(clearingConfig.trancheDesiredRatios);
+    }
+
+    /**
+     * @notice Returns the maximum loss amount of the lending pool that can be reported.
+     * @dev
+     * Returns the first loss capita amount plus the sum of the maximum loss amount of each tranche.
+     * The loss amount can't be greater than the user owed amount. If it is, returns the user owed amount.
+     * @return maximumLossAmount The maximum loss amount of the lending pool that can be reported.
+     */
+    function calculateMaximumLossAmount() public view returns (uint256 maximumLossAmount) {
+        maximumLossAmount = firstLossCapital;
+
+        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
+            uint256 trancheMaximumLossAmount =
+                ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).calculateMaximumLossAmount();
+            maximumLossAmount += trancheMaximumLossAmount;
+        }
+
+        if (userOwedAmount < maximumLossAmount) {
+            maximumLossAmount = userOwedAmount;
         }
     }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
+    // #### CLEARING #### //
 
     /**
      * @notice Accepts the deposit of the user.
@@ -357,71 +431,22 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     /**
-     * @notice Verifies the clearing configuration for the lending pool.
-     * @dev
-     * Verifies the clearing configuration.
-     * @param clearingConfig The clearing configuration to verify.
+     * @notice Pay the lending pool owed fees from available balance.
+     * @dev Tries to repay fees from the available balance.
+     * Called by the clearing coordinator at the end of the clearing.
      */
-    function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
-        if (isLendingPoolStopped) {
-            if (
-                clearingConfig.drawAmount != 0 || clearingConfig.maxExcessPercentage != 0
-                    || clearingConfig.minExcessPercentage != 0
-            ) {
-                revert PoolConfigurationIsIncorrect("Clearing values must be 0 if the pool is stopped");
-            }
-        }
+    function payOwedFees() external onlyClearingCoordinator {
+        uint256 availableAmount = availableFunds();
 
-        if (clearingConfig.minExcessPercentage > clearingConfig.maxExcessPercentage) {
-            revert PoolConfigurationIsIncorrect("minExcessPercentage more than maxExcessPercentage");
-        }
+        // pay up to the owed fees amount
+        uint256 feesPaid = _payFees(availableAmount);
 
-        _verifyTrancheDesiredRatios(clearingConfig.trancheDesiredRatios);
+        userOwedAmount += feesPaid;
+
+        emit PaidFeesFromAvailableFunds(feesPaid);
     }
 
-    /**
-     * @notice Returns the clearing configuration of the lending pool.
-     * @return The clearing configuration of the lending pool.
-     */
-    function getClearingConfig() external view returns (ClearingConfiguration memory) {
-        uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
-        for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
-            trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
-        }
-
-        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
-            _poolConfiguration.desiredDrawAmount,
-            trancheRatios,
-            _poolConfiguration.targetExcessLiquidityPercentage,
-            _poolConfiguration.minimumExcessLiquidityPercentage
-        );
-
-        return clearingConfiguration;
-    }
-
-    function _applyTrancheInterest(address tranche, uint256 epoch) internal {
-        uint256 trancheAssetBalance = balanceOf(tranche);
-        if (trancheAssetBalance == 0) return;
-
-        uint256 interestAmount =
-            trancheAssetBalance * _trancheConfigurationStorage(tranche).interestRate / INTEREST_RATE_FULL_PERCENT;
-
-        // calculate fees
-        uint256 feesAmount = interestAmount * _systemVariables.performanceFee() / FULL_PERCENT;
-
-        // decrease by the fee percentage
-        uint256 userInterestAmount = interestAmount - feesAmount;
-
-        // increase owed amount
-        feesOwedAmount += feesAmount;
-        userOwedAmount += userInterestAmount;
-
-        // mint the lending pool tokens to the lending pool tranche
-        _mint(tranche, userInterestAmount);
-
-        emit InterestApplied(tranche, epoch, userInterestAmount);
-        emit FeesOwedIncreased(epoch, feesAmount);
-    }
+    // #### POOL DELEGATE #### //
 
     /**
      * @notice Draw assets from the lending pool to the draw recipient address.
@@ -433,27 +458,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function drawFunds(uint256 drawAmount) external onlyClearingCoordinator lendingPoolShouldNotBeStopped {
         _draw(drawAmount);
         emit FundsDrawn(drawAmount);
-    }
-
-    function _draw(uint256 drawAmount) internal {
-        if (drawAmount == 0) return;
-
-        uint256 availableAmount = availableFunds();
-        if (availableAmount < drawAmount) {
-            revert DrawAmountCantBeGreaterThanAvailableAmount(drawAmount, availableAmount);
-        }
-
-        userOwedAmount += drawAmount;
-
-        if (_poolConfiguration.desiredDrawAmount > drawAmount) {
-            unchecked {
-                _updateDesiredDrawAmount(_poolConfiguration.desiredDrawAmount - drawAmount);
-            }
-        } else {
-            _updateDesiredDrawAmount(0);
-        }
-
-        _transferAssets(_poolConfiguration.drawRecipient, drawAmount);
     }
 
     /**
@@ -479,62 +483,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         userOwedAmount -= userRepaidAmount;
 
         emit OwedFundsRepaid(userRepaidAmount, feesPaid);
-    }
-
-    /**
-     * @notice Pay the lending pool owed fees from available balance.
-     * @dev Tries to repay fees from the available balance.
-     * Called by the clearing coordinator at the end of the clearing.
-     */
-    function payOwedFees() external onlyClearingCoordinator {
-        uint256 availableAmount = availableFunds();
-
-        // pay up to the owed fees amount
-        uint256 feesPaid = _payFees(availableAmount);
-
-        userOwedAmount += feesPaid;
-
-        emit PaidFeesFromAvailableFunds(feesPaid);
-    }
-
-    function _payFees(uint256 amount) private returns (uint256 feesPaid) {
-        if (amount == 0) return feesPaid;
-
-        if (amount > feesOwedAmount) {
-            feesPaid = feesOwedAmount;
-            feesOwedAmount = 0;
-        } else {
-            feesPaid = amount;
-            unchecked {
-                feesOwedAmount -= amount;
-            }
-        }
-
-        _approveAsset(address(_feeManager), feesPaid);
-        _feeManager.emitFees(feesPaid);
-
-        emit PaidFees(feesPaid);
-    }
-
-    /**
-     * @notice Returns the maximum loss amount of the lending pool that can be reported.
-     * @dev
-     * Returns the first loss capita amount plus the sum of the maximum loss amount of each tranche.
-     * The loss amount can't be greater than the user owed amount. If it is, returns the user owed amount.
-     * @return maximumLossAmount The maximum loss amount of the lending pool that can be reported.
-     */
-    function calculateMaximumLossAmount() public view returns (uint256 maximumLossAmount) {
-        maximumLossAmount = firstLossCapital;
-
-        for (uint256 i; i < _lendingPoolInfo.trancheAddresses.length; ++i) {
-            uint256 trancheMaximumLossAmount =
-                ILendingPoolTranche(_lendingPoolInfo.trancheAddresses[i]).calculateMaximumLossAmount();
-            maximumLossAmount += trancheMaximumLossAmount;
-        }
-
-        if (userOwedAmount < maximumLossAmount) {
-            maximumLossAmount = userOwedAmount;
-        }
     }
 
     /**
@@ -627,23 +575,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _transferAssetsFrom(msg.sender, address(this), amount);
         _approveAsset(tranche, amount);
         ILendingPoolTranche(tranche).repayLoss(lossId, amount);
-    }
-
-    /**
-     * @notice Claims the repaid loss of the lending pool tranche for the loss id.
-     * @param user Claiming user address.
-     * @param tranche The tranche address.
-     * @param lossId The id of the loss.
-     * @return claimedAmount The amount of the loss that is claimed.
-     */
-    function claimRepaidLoss(address user, address tranche, uint256 lossId)
-        external
-        onlyLendingPoolManager
-        verifyTranche(tranche)
-        verifyLossId(lossId)
-        returns (uint256 claimedAmount)
-    {
-        claimedAmount = ILendingPoolTranche(tranche).claimRepaidLoss(user, lossId);
     }
 
     /**
@@ -773,7 +704,26 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit LendingPoolStopped();
     }
 
-    // config
+    // #### USER #### //
+
+    /**
+     * @notice Claims the repaid loss of the lending pool tranche for the loss id.
+     * @param user Claiming user address.
+     * @param tranche The tranche address.
+     * @param lossId The id of the loss.
+     * @return claimedAmount The amount of the loss that is claimed.
+     */
+    function claimRepaidLoss(address user, address tranche, uint256 lossId)
+        external
+        onlyLendingPoolManager
+        verifyTranche(tranche)
+        verifyLossId(lossId)
+        returns (uint256 claimedAmount)
+    {
+        claimedAmount = ILendingPoolTranche(tranche).claimRepaidLoss(user, lossId);
+    }
+
+    // #### CONFIG #### //
 
     /**
      * @notice Updates the draw recipient address.
@@ -781,13 +731,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      */
     function updateDrawRecipient(address drawRecipient) external onlyLendingPoolManager {
         _updateDrawRecipient(drawRecipient);
-    }
-
-    function _updateDrawRecipient(address drawRecipient) private {
-        AddressLib.checkIfZero(drawRecipient);
-        _poolConfiguration.drawRecipient = drawRecipient;
-
-        emit UpdatedDrawRecipient(drawRecipient);
     }
 
     /**
@@ -803,16 +746,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _updateMinimumTrancheDepositAmount(tranche, minimumDepositAmount);
     }
 
-    function _updateMinimumTrancheDepositAmount(address tranche, uint256 minimumDepositAmount) private {
-        if (minimumDepositAmount > _poolConfiguration.tranches[_trancheIndexUnverified(tranche)].maxDepositAmount) {
-            revert PoolConfigurationIsIncorrect("Minimum deposit shouldn't be more than max deposit amount");
-        }
-
-        _trancheConfigurationStorage(tranche).minDepositAmount = minimumDepositAmount;
-
-        emit UpdatedMinimumDepositAmount(tranche, minimumDepositAmount);
-    }
-
     /**
      * @notice Updates the maximum deposit amount of the tranche.
      * @param tranche The tranche address.
@@ -824,16 +757,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         verifyTranche(tranche)
     {
         _updateMaximumTrancheDepositAmount(tranche, maximumDepositAmount);
-    }
-
-    function _updateMaximumTrancheDepositAmount(address tranche, uint256 maximumDepositAmount) private {
-        if (maximumDepositAmount < _poolConfiguration.tranches[_trancheIndexUnverified(tranche)].minDepositAmount) {
-            revert PoolConfigurationIsIncorrect("Maximum deposit shouldn't be less than min deposit amount");
-        }
-
-        _trancheConfigurationStorage(tranche).maxDepositAmount = maximumDepositAmount;
-
-        emit UpdatedMaximumDepositAmount(tranche, maximumDepositAmount);
     }
 
     /**
@@ -877,12 +800,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit UpdatedTrancheInterestRate(tranche, applicableEpoch, interestRate);
     }
 
-    function _verifyTrancheInterestRate(uint256 interestRate) private view {
-        if (interestRate > _systemVariables.maxTrancheInterestRate()) {
-            revert PoolConfigurationIsIncorrect("Interest rate is more than max allowed");
-        }
-    }
-
     /**
      * @notice Updates the tranche desired ratios.
      * @dev The sum of the ratios should be 100%.
@@ -896,14 +813,63 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         _updateTrancheDesiredRatios(ratios);
     }
 
-    function _updateTrancheDesiredRatios(uint256[] memory ratios) private {
-        _verifyTrancheDesiredRatios(ratios);
+    /**
+     * @notice Updates the tranche interest rate change epoch delay.
+     * @param epochDelay The epoch delay for the interest rate change.
+     */
+    function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external onlyLendingPoolManager {
+        _updateTrancheInterestRateChangeEpochDelay(epochDelay);
+    }
 
-        for (uint256 i; i < ratios.length; ++i) {
-            _poolConfiguration.tranches[i].ratio = ratios[i];
+    /**
+     * @notice Updates the desired draw amount.
+     * @param desiredDrawAmount The desired draw amount.
+     */
+    function updateDesiredDrawAmount(uint256 desiredDrawAmount)
+        external
+        onlyLendingPoolManager
+        lendingPoolShouldNotBeStopped
+        verifyClearingNotPending
+    {
+        _updateDesiredDrawAmount(desiredDrawAmount);
+    }
+
+    /**
+     * @notice Updates the target excess liquidity percentage. Used to calculate how much excess liquidity should be accepted based on the user owed amount.
+     * @param targetExcessLiquidityPercentage The target excess liquidity percentage.
+     */
+    function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
+        external
+        onlyLendingPoolManager
+        lendingPoolShouldNotBeStopped
+        verifyClearingNotPending
+    {
+        _updateTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
+    }
+
+    /**
+     * @notice Updates the minimum excess liquidity percentage. Used to calculate how much excess liquidity should stay in the lending pool if there are more withdrawals.
+     * @param minimumExcessLiquidityPercentage The minimum excess liquidity percentage.
+     */
+    function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage)
+        external
+        onlyLendingPoolManager
+        lendingPoolShouldNotBeStopped
+        verifyClearingNotPending
+    {
+        _updateMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
+    }
+
+    /* ========== INTERNAL VIEW FUNCTIONS ========== */
+
+    function _trancheConfigurationStorage(address tranche) internal view returns (TrancheConfig storage) {
+        return _poolConfiguration.tranches[_trancheIndexUnverified(tranche)];
+    }
+
+    function _verifyTrancheInterestRate(uint256 interestRate) private view {
+        if (interestRate > _systemVariables.maxTrancheInterestRate()) {
+            revert PoolConfigurationIsIncorrect("Interest rate is more than max allowed");
         }
-
-        emit UpdatedTrancheDesiredRatios(ratios);
     }
 
     function _verifyTrancheDesiredRatios(uint256[] memory ratios) private view {
@@ -921,90 +887,6 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    /**
-     * @notice Updates the tranche interest rate change epoch delay.
-     * @param epochDelay The epoch delay for the interest rate change.
-     */
-    function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external onlyLendingPoolManager {
-        _updateTrancheInterestRateChangeEpochDelay(epochDelay);
-    }
-
-    function _updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) private {
-        _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
-
-        emit UpdatedTrancheInterestRateChangeEpochDelay(epochDelay);
-    }
-
-    /**
-     * @notice Updates the desired draw amount.
-     * @param desiredDrawAmount The desired draw amount.
-     */
-    function updateDesiredDrawAmount(uint256 desiredDrawAmount)
-        external
-        onlyLendingPoolManager
-        lendingPoolShouldNotBeStopped
-        verifyClearingNotPending
-    {
-        _updateDesiredDrawAmount(desiredDrawAmount);
-    }
-
-    function _updateDesiredDrawAmount(uint256 desiredDrawAmount) private {
-        _poolConfiguration.desiredDrawAmount = desiredDrawAmount;
-        emit UpdatedDesiredDrawAmount(desiredDrawAmount);
-    }
-
-    /**
-     * @notice Updates the target excess liquidity percentage. Used to calculate how much excess liquidity should be accepted based on the user owed amount.
-     * @param targetExcessLiquidityPercentage The target excess liquidity percentage.
-     */
-    function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage)
-        external
-        onlyLendingPoolManager
-        lendingPoolShouldNotBeStopped
-        verifyClearingNotPending
-    {
-        _updateTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
-    }
-
-    function _updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) private {
-        if (targetExcessLiquidityPercentage < _poolConfiguration.minimumExcessLiquidityPercentage) {
-            revert PoolConfigurationIsIncorrect(
-                "Target excess liquidity percentage is less than minimum excess liquidity percentage"
-            );
-        }
-
-        _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
-
-        emit UpdatedTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
-    }
-
-    /**
-     * @notice Updates the minimum excess liquidity percentage. Used to calculate how much excess liquidity should stay in the lending pool if there are more withdrawals.
-     * @param minimumExcessLiquidityPercentage The minimum excess liquidity percentage.
-     */
-    function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage)
-        external
-        onlyLendingPoolManager
-        lendingPoolShouldNotBeStopped
-        verifyClearingNotPending
-    {
-        _updateMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
-    }
-
-    function _updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) private {
-        if (minimumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
-            revert PoolConfigurationIsIncorrect(
-                "Minimum excess liquidity percentage is more than target excess liquidity percentage"
-            );
-        }
-
-        _poolConfiguration.minimumExcessLiquidityPercentage = minimumExcessLiquidityPercentage;
-
-        emit UpdatedMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
-    }
-
-    // functions to handle the delay of interest rates
-
     function _trancheInterestRateIndex(address tranche, uint256 epoch) private view returns (uint256 index) {
         index = _trancheInterestIndex[tranche];
 
@@ -1020,6 +902,144 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     function _trancheInterestRate(address tranche, uint256 epoch) private view returns (uint256 interestRate) {
         uint256 index = _trancheInterestRateIndex(tranche, epoch);
         interestRate = _futureTrancheInterests[tranche][index].interestRate;
+    }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _applyTrancheInterest(address tranche, uint256 epoch) internal {
+        uint256 trancheAssetBalance = balanceOf(tranche);
+        if (trancheAssetBalance == 0) return;
+
+        uint256 interestAmount =
+            trancheAssetBalance * _trancheConfigurationStorage(tranche).interestRate / INTEREST_RATE_FULL_PERCENT;
+
+        // calculate fees
+        uint256 feesAmount = interestAmount * _systemVariables.performanceFee() / FULL_PERCENT;
+
+        // decrease by the fee percentage
+        uint256 userInterestAmount = interestAmount - feesAmount;
+
+        // increase owed amount
+        feesOwedAmount += feesAmount;
+        userOwedAmount += userInterestAmount;
+
+        // mint the lending pool tokens to the lending pool tranche
+        _mint(tranche, userInterestAmount);
+
+        emit InterestApplied(tranche, epoch, userInterestAmount);
+        emit FeesOwedIncreased(epoch, feesAmount);
+    }
+
+    function _draw(uint256 drawAmount) private {
+        if (drawAmount == 0) return;
+
+        uint256 availableAmount = availableFunds();
+        if (availableAmount < drawAmount) {
+            revert DrawAmountCantBeGreaterThanAvailableAmount(drawAmount, availableAmount);
+        }
+
+        userOwedAmount += drawAmount;
+
+        if (_poolConfiguration.desiredDrawAmount > drawAmount) {
+            unchecked {
+                _updateDesiredDrawAmount(_poolConfiguration.desiredDrawAmount - drawAmount);
+            }
+        } else {
+            _updateDesiredDrawAmount(0);
+        }
+
+        _transferAssets(_poolConfiguration.drawRecipient, drawAmount);
+    }
+
+    function _payFees(uint256 amount) private returns (uint256 feesPaid) {
+        if (amount == 0) return feesPaid;
+
+        if (amount > feesOwedAmount) {
+            feesPaid = feesOwedAmount;
+            feesOwedAmount = 0;
+        } else {
+            feesPaid = amount;
+            unchecked {
+                feesOwedAmount -= amount;
+            }
+        }
+
+        _approveAsset(address(_feeManager), feesPaid);
+        _feeManager.emitFees(feesPaid);
+
+        emit PaidFees(feesPaid);
+    }
+
+    function _updateDrawRecipient(address drawRecipient) private {
+        AddressLib.checkIfZero(drawRecipient);
+        _poolConfiguration.drawRecipient = drawRecipient;
+
+        emit UpdatedDrawRecipient(drawRecipient);
+    }
+
+    function _updateMinimumTrancheDepositAmount(address tranche, uint256 minimumDepositAmount) private {
+        if (minimumDepositAmount > _poolConfiguration.tranches[_trancheIndexUnverified(tranche)].maxDepositAmount) {
+            revert PoolConfigurationIsIncorrect("Minimum deposit shouldn't be more than max deposit amount");
+        }
+
+        _trancheConfigurationStorage(tranche).minDepositAmount = minimumDepositAmount;
+
+        emit UpdatedMinimumDepositAmount(tranche, minimumDepositAmount);
+    }
+
+    function _updateMaximumTrancheDepositAmount(address tranche, uint256 maximumDepositAmount) private {
+        if (maximumDepositAmount < _poolConfiguration.tranches[_trancheIndexUnverified(tranche)].minDepositAmount) {
+            revert PoolConfigurationIsIncorrect("Maximum deposit shouldn't be less than min deposit amount");
+        }
+
+        _trancheConfigurationStorage(tranche).maxDepositAmount = maximumDepositAmount;
+
+        emit UpdatedMaximumDepositAmount(tranche, maximumDepositAmount);
+    }
+
+    function _updateTrancheDesiredRatios(uint256[] memory ratios) private {
+        _verifyTrancheDesiredRatios(ratios);
+
+        for (uint256 i; i < ratios.length; ++i) {
+            _poolConfiguration.tranches[i].ratio = ratios[i];
+        }
+
+        emit UpdatedTrancheDesiredRatios(ratios);
+    }
+
+    function _updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) private {
+        _poolConfiguration.trancheInterestChangeEpochDelay = epochDelay;
+
+        emit UpdatedTrancheInterestRateChangeEpochDelay(epochDelay);
+    }
+
+    function _updateDesiredDrawAmount(uint256 desiredDrawAmount) private {
+        _poolConfiguration.desiredDrawAmount = desiredDrawAmount;
+        emit UpdatedDesiredDrawAmount(desiredDrawAmount);
+    }
+
+    function _updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) private {
+        if (targetExcessLiquidityPercentage < _poolConfiguration.minimumExcessLiquidityPercentage) {
+            revert PoolConfigurationIsIncorrect(
+                "Target excess liquidity percentage is less than minimum excess liquidity percentage"
+            );
+        }
+
+        _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
+
+        emit UpdatedTargetExcessLiquidityPercentage(targetExcessLiquidityPercentage);
+    }
+
+    function _updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) private {
+        if (minimumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
+            revert PoolConfigurationIsIncorrect(
+                "Minimum excess liquidity percentage is more than target excess liquidity percentage"
+            );
+        }
+
+        _poolConfiguration.minimumExcessLiquidityPercentage = minimumExcessLiquidityPercentage;
+
+        emit UpdatedMinimumExcessLiquidityPercentage(minimumExcessLiquidityPercentage);
     }
 
     function _updateTrancheInterestRateConfig(uint256 epoch) private {
@@ -1039,15 +1059,9 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    function _trancheConfigurationStorage(address tranche) internal view returns (TrancheConfig storage) {
-        return _poolConfiguration.tranches[_trancheIndexUnverified(tranche)];
-    }
-
     function _setTrancheIndex(address tranche, uint256 index) internal {
         _trancheIndex[tranche] = index + 1;
     }
-
-    // Modifier helpers
 
     function _onlyPendingPool() private view {
         if (msg.sender != pendingPool()) {
@@ -1073,7 +1087,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    function _isLossIdValid(uint256 lossId) internal view {
+    function _isLossIdValid(uint256 lossId) private view {
         if (lossId >= nextLossId || lossId == 0) {
             revert LossIdNotValid(lossId);
         }
@@ -1085,7 +1099,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         }
     }
 
-    // Modifiers
+    /* ========== MODIFIERS ========== */
 
     modifier onlyPendingPool() {
         _onlyPendingPool();

@@ -2,6 +2,8 @@
 pragma solidity 0.8.23;
 
 interface IFeeManager {
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
+
     /**
      * @notice Splits fees received to ecosystem and protocol based on system configuration. Transfers part the fees
      * received to KSU locking pool. Stores protocol fess until claimed.
@@ -16,7 +18,7 @@ interface IFeeManager {
      */
     function claimProtocolFees() external;
 
-    // EVENTS
+    /* ========== EVENTS ========== */
 
     event FeesEmitted(address indexed lendingPoolAddress, uint256 ecosystemFeeAmount, uint256 protocolFeeAmount);
 

@@ -30,6 +30,8 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     /// @dev If a user is in the block list, it will be blocked even if it is in the allow list or KYCd.
     mapping(address => bool) public blockList;
 
+    /* ========== INITIALIZER ========== */
+
     /**
      * @notice Initialize the contract.
      * @param lendingPoolManager_ Lending Pool Manager address.
@@ -42,6 +44,8 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
         _lendingPoolManager = lendingPoolManager_;
         __TxAuthDataVerifierUpgradeable_init(signer_);
     }
+
+    /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Sets the Nexera ID signer address.

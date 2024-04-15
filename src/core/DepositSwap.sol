@@ -50,7 +50,7 @@ abstract contract DepositSwap {
         _swapper = swapper_;
     }
 
-    /* ========== SWAP HELPER FUNCTIONS ========== */
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Swaps tokens using the specified swap information.

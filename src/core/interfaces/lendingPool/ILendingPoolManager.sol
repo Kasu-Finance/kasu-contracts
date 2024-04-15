@@ -55,15 +55,15 @@ interface ILendingPoolManager {
 
     // #### POOL FUNDS MANAGER #### //
 
+    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens) external returns (uint256 lossId);
+
     function repayOwedFunds(address lendingPool, uint256 amount, address repaymentAddress) external;
+
+    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
 
     function depositFirstLossCapital(address lendingPool, uint256 amount) external;
 
     function withdrawFirstLossCapital(address lendingPool, uint256 withdrawAmount, address withdrawAddress) external;
-
-    function reportLoss(address lendingPool, uint256 amount, bool doMintLossTokens) external returns (uint256 lossId);
-
-    function repayLoss(address lendingPool, address tranche, uint256 lossId, uint256 amount) external;
 
     // #### POOL CLEARING MANAGER #### //
 
@@ -86,13 +86,19 @@ interface ILendingPoolManager {
         external
         returns (uint256[] memory);
 
-    function stopLendingPool(address lendingPool) external;
-
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID) external;
 
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
 
-    // config
+    function stopLendingPool(address lendingPool) external;
+
+    // #### CONFIG #### //
+
+    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
+        external;
+
+    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minimumExcessLiquidityPercentage)
+        external;
 
     function updateMinimumDepositAmount(address lendingPool, address tranche, uint256 minimumDepositAmount) external;
 
@@ -100,15 +106,9 @@ interface ILendingPoolManager {
 
     function updateTrancheInterestRate(address lendingPool, address tranche, uint256 interestRate) external;
 
+    function updateDesiredDrawAmount(address lendingPool, uint256 amount) external;
+
     function updateTrancheDesiredRatios(address lendingPool, uint256[] calldata ratios) external;
 
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay) external;
-
-    function updateDesiredDrawAmount(address lendingPool, uint256 amount) external;
-
-    function updateTargetExcessLiquidityPercentage(address lendingPool, uint256 targetExcessLiquidityPercentage)
-        external;
-
-    function updateMinimumExcessLiquidityPercentage(address lendingPool, uint256 minimumExcessLiquidityPercentage)
-        external;
 }
