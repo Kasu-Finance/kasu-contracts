@@ -172,7 +172,7 @@ ERC20 Kasu (KSU) token implementation. Implements permit and burn functions.
 
 ## Licensing
 
-The primary license for Spool is the Business Source License 1.1 (`BUSL-1.1`), see [`LICENSE`](./LICENSE).
+The primary license for Kasu contracts is the Business Source License 1.1 (`BUSL-1.1`), see [`LICENSE`](./LICENSE).
 
 ### Exceptions
 
