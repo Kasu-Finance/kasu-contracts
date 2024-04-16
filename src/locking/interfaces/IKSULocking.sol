@@ -85,7 +85,6 @@ interface IKSULocking is IERC20 {
 
     /* ========== EVENTS ========== */
 
-    // Events
     event UserLocked(
         address indexed user,
         uint256 indexed lockId,
