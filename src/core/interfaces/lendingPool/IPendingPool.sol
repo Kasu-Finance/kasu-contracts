@@ -78,7 +78,7 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         view
         returns (uint256 pendingDepositAmount);
 
-    function getPendingDepositAmountForCurrentEpoch() external view returns (uint256);
+    function pendingDepositAmountForCurrentEpoch() external view returns (uint256);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 

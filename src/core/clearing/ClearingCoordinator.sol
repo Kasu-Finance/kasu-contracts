@@ -120,7 +120,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
 
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
-        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
+        uint256 pendingDepositAmount = pendingPool.pendingDepositAmountForCurrentEpoch();
 
         return lendingPoolAvailableFunds + pendingDepositAmount;
     }
@@ -294,7 +294,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function _setDefaultClearingConfig(address lendingPool, uint256 epoch) private {
-        ClearingConfiguration memory clearingConfiguration = ILendingPool(lendingPool).getClearingConfig();
+        ClearingConfiguration memory clearingConfiguration = ILendingPool(lendingPool).clearingConfiguration();
         _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
     }
 

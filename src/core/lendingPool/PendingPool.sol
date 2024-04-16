@@ -196,7 +196,7 @@ contract PendingPool is
      * @dev Exclude the next epoch's pending deposit amount from total pending deposit amount.
      * @return The total pending deposit amount for the current epoch.
      */
-    function getPendingDepositAmountForCurrentEpoch() external view returns (uint256) {
+    function pendingDepositAmountForCurrentEpoch() external view returns (uint256) {
         uint256 currentEpoch = _systemVariables.currentEpochNumber();
         return totalPendingDepositAmount - _totalEpochPendingDepositAmount[currentEpoch + 1];
     }

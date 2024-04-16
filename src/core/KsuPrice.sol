@@ -36,7 +36,7 @@ contract KsuPrice is IKsuPrice {
      * @notice Get the current price of the KSU token.
      * @return Price of the KSU token.
      */
-    function getKsuTokenPrice() external view returns (uint256) {
+    function ksuTokenPrice() external view returns (uint256) {
         return oracle.readAsUint256(oracleSender);
     }
 }

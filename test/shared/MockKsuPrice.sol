@@ -8,7 +8,7 @@ contract MockKsuPrice is IKsuPrice {
 
     function test_mock() external pure {}
 
-    function getKsuTokenPrice() external view returns (uint256) {
+    function ksuTokenPrice() external view returns (uint256) {
         return _ksuTokenPrice;
     }
 

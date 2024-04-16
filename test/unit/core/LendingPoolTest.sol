@@ -241,7 +241,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertFalse(dNftId1_bob == dNftId2_bob);
     }
 
-    function test_getPendingDepositAmountForCurrentEpoch() public {
+    function test_pendingDepositAmountForCurrentEpoch() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -273,7 +273,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 pendingDepositAmountForCurrentEpoch =
-            IPendingPool(lpd.pendingPool).getPendingDepositAmountForCurrentEpoch();
+            IPendingPool(lpd.pendingPool).pendingDepositAmountForCurrentEpoch();
         uint256 totalPendingDepositAmount = IPendingPool(lpd.pendingPool).totalPendingDepositAmount();
 
         // ### ASSERT ###

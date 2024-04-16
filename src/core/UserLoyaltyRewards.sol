@@ -96,7 +96,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
             revert OnlyUserManager();
         }
 
-        uint256 ksuTokenPrice = _ksuPrice.getKsuTokenPrice();
+        uint256 ksuTokenPrice = _ksuPrice.ksuTokenPrice();
 
         _emitUserLoyaltyReward(user, epoch, userLoyaltyLevel, amountDeposited, ksuTokenPrice);
     }
@@ -142,7 +142,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         onlyAdmin
     {
         if (ksuTokenPrice == 0) {
-            ksuTokenPrice = _ksuPrice.getKsuTokenPrice();
+            ksuTokenPrice = _ksuPrice.ksuTokenPrice();
         }
 
         for (uint256 i; i < userRewardInputs.length; ++i) {

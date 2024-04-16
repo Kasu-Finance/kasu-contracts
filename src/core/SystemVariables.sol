@@ -236,7 +236,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     function _updateKsuTokenPrice() internal {
         priceUpdateEpoch = currentEpochNumber();
-        ksuEpochTokenPrice = _ksuPrice.getKsuTokenPrice();
+        ksuEpochTokenPrice = _ksuPrice.ksuTokenPrice();
 
         emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }

@@ -4,5 +4,5 @@ pragma solidity 0.8.23;
 interface IKsuPrice {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
-    function getKsuTokenPrice() external view returns (uint256);
+    function ksuTokenPrice() external view returns (uint256);
 }

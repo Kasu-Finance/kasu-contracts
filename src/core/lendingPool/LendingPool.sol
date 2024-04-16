@@ -104,18 +104,18 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     /**
      * @notice Initializes the lending pool.
      * @param createPoolConfig Create lending pool configuration.
-     * @param lendingPoolInfo Lending pool info containing other addresses and configuration.
+     * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
      */
-    function initialize(CreatePoolConfig calldata createPoolConfig, LendingPoolInfo calldata lendingPoolInfo)
+    function initialize(CreatePoolConfig calldata createPoolConfig, LendingPoolInfo calldata lendingPoolInfo_)
         public
         initializer
         returns (PoolConfiguration memory)
     {
-        AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
+        AddressLib.checkIfZero(lendingPoolInfo_.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
 
-        _lendingPoolInfo = lendingPoolInfo;
+        _lendingPoolInfo = lendingPoolInfo_;
 
         // setup pool configuration
         _updateTargetExcessLiquidityPercentage(createPoolConfig.targetExcessLiquidityPercentage);
@@ -128,13 +128,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             TrancheConfig memory trancheConfig;
             _poolConfiguration.tranches.push(trancheConfig);
 
-            _setTrancheIndex(lendingPoolInfo.trancheAddresses[i], i);
+            _setTrancheIndex(lendingPoolInfo_.trancheAddresses[i], i);
 
             _updateMaximumTrancheDepositAmount(
-                lendingPoolInfo.trancheAddresses[i], createPoolConfig.tranches[i].maxDepositAmount
+                lendingPoolInfo_.trancheAddresses[i], createPoolConfig.tranches[i].maxDepositAmount
             );
             _updateMinimumTrancheDepositAmount(
-                lendingPoolInfo.trancheAddresses[i], createPoolConfig.tranches[i].minDepositAmount
+                lendingPoolInfo_.trancheAddresses[i], createPoolConfig.tranches[i].minDepositAmount
             );
 
             // set tranche interest rate
@@ -142,12 +142,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _poolConfiguration.tranches[i].interestRate = createPoolConfig.tranches[i].interestRate;
 
             // initialize future tranche interest rates array
-            _futureTrancheInterests[lendingPoolInfo.trancheAddresses[i]].push(
+            _futureTrancheInterests[lendingPoolInfo_.trancheAddresses[i]].push(
                 FutureTrancheInterestRates({epoch: 0, interestRate: createPoolConfig.tranches[i].interestRate})
             );
 
             // allow tranches to spend the lending pool tokens
-            _approve(address(this), lendingPoolInfo.trancheAddresses[i], type(uint256).max);
+            _approve(address(this), lendingPoolInfo_.trancheAddresses[i], type(uint256).max);
         }
 
         // set tranche ratios
@@ -199,7 +199,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Returns the lending pool address info.
      * @return Lending pool address info.
      */
-    function getLendingPoolInfo() external view returns (LendingPoolInfo memory) {
+    function lendingPoolInfo() external view returns (LendingPoolInfo memory) {
         return _lendingPoolInfo;
     }
 
@@ -287,20 +287,18 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Returns the clearing configuration of the lending pool.
      * @return The clearing configuration of the lending pool.
      */
-    function getClearingConfig() external view returns (ClearingConfiguration memory) {
+    function clearingConfiguration() external view returns (ClearingConfiguration memory) {
         uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
         for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
             trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
         }
 
-        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+        return ClearingConfiguration(
             _poolConfiguration.desiredDrawAmount,
             trancheRatios,
             _poolConfiguration.targetExcessLiquidityPercentage,
             _poolConfiguration.minimumExcessLiquidityPercentage
         );
-
-        return clearingConfiguration;
     }
 
     /**
