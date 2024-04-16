@@ -24,7 +24,7 @@ struct AcceptedRequestsExecutionEpoch {
  * Withdrawals can be partially accepted. Whatever is not accepted will remain pending.
  */
 abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
-    // epochId => AcceptedRequestsExecutionEpoch
+    /// @dev epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
     /* ========== EXTERNAL VIEW FUNCTION ========== */
@@ -71,19 +71,22 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
             return;
         }
 
-        uint256 nextIndexToProcess = _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
+        address[] memory tranches = _lendingPoolTranches();
+        ClearingData memory clearingData = _clearingDataMemory(targetEpoch);
 
         uint256 endingIndexInclusive;
-        if (batchSize <= nextIndexToProcess) {
-            unchecked {
-                endingIndexInclusive = nextIndexToProcess - (batchSize - 1);
+        uint256 i;
+        {
+            uint256 nextIndexToProcess = _acceptedRequestsExecutionPerEpoch[targetEpoch].nextIndexToProcess;
+            if (batchSize <= nextIndexToProcess) {
+                unchecked {
+                    endingIndexInclusive = nextIndexToProcess - (batchSize - 1);
+                }
             }
+            i = nextIndexToProcess;
         }
 
-        address[] memory tranches = _lendingPoolTranches();
-
         // loop from the last index on and process the requests
-        uint256 i = nextIndexToProcess;
         while (i >= endingIndexInclusive) {
             uint256 userRequestNftId = _pendingRequestIdByIndex(i);
 
@@ -96,7 +99,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                     // instructions of how this request deposit will be accepted in different tranches
                     uint256 requestTrancheIndex = _trancheIndex(tranches, depositNftDetails.tranche);
                     uint256[] memory trancheDepositAcceptedAmounts =
-                        _tranchePriorityDepositsAccepted(targetEpoch)[requestTrancheIndex][depositNftDetails.priority];
+                        clearingData.tranchePriorityDepositsAccepted[requestTrancheIndex][depositNftDetails.priority];
 
                     // loop through the target tranches that the deposit request will accepted
                     // accepted tranche index is always same or greater than the request tranche index
@@ -110,7 +113,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[trancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
-                        uint256 totalTranchePriorityDepositedAmount = _pendingDeposits(targetEpoch)
+                        uint256 totalTranchePriorityDepositedAmount = clearingData
+                            .pendingDeposits
                             .tranchePriorityDepositsAmounts[requestTrancheIndex][depositNftDetails.priority];
 
                         // calculate the amount that will be accepted in this tranche
@@ -122,15 +126,18 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             requestAmountLeft = 0;
                             break;
                         } else if (totalTranchePriorityDepositedAmount > 0) {
-                            uint256 userAcceptedDepositAmountMultiplied =
-                                totalAcceptedAmount * depositNftDetails.assetAmount;
-                            uint256 userAcceptedDepositAmount =
-                                userAcceptedDepositAmountMultiplied / totalTranchePriorityDepositedAmount;
+                            uint256 userAcceptedDepositAmount = totalAcceptedAmount * depositNftDetails.assetAmount
+                                / totalTranchePriorityDepositedAmount;
 
                             // round up the amount if there is a remainder, so that we're sure we're accepting at least the total accepted amount
                             if (userAcceptedDepositAmount < requestAmountLeft) {
-                                if (userAcceptedDepositAmountMultiplied % totalTranchePriorityDepositedAmount > 0) {
-                                    unchecked {
+                                unchecked {
+                                    // "totalAcceptedAmount * depositNftDetails.assetAmount" can be unchecked as we do same operation checked just above
+                                    if (
+                                        totalAcceptedAmount * depositNftDetails.assetAmount
+                                            % totalTranchePriorityDepositedAmount > 0
+                                    ) {
+                                        // can be unchecked as "if (userAcceptedDepositAmount < requestAmountLeft)" is true, so userAcceptedDepositAmount less than max uint256
                                         userAcceptedDepositAmount++;
                                     }
                                 }
@@ -159,10 +166,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                 // only consider withdrawals from current and past epochs
                 if (withdrawalNftDetails.epochId <= targetEpoch) {
                     uint256 totalAcceptedAmount =
-                        _acceptedPriorityWithdrawalAmounts(targetEpoch)[withdrawalNftDetails.priority];
+                        clearingData.acceptedPriorityWithdrawalAmounts[withdrawalNftDetails.priority];
                     if (totalAcceptedAmount > 0) {
                         uint256 totalWithdrawalAmount =
-                            _pendingWithdrawals(targetEpoch).priorityWithdrawalAmounts[withdrawalNftDetails.priority];
+                            clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalNftDetails.priority];
 
                         // calculate the amount withdrawn that will be accepted in this tranche
                         if (totalWithdrawalAmount > 0) {
@@ -239,15 +246,9 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     function _acceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) internal virtual;
 
     // Clearing Steps
-    function _pendingDeposits(uint256 epoch) internal view virtual returns (PendingDeposits memory);
-
-    function _pendingWithdrawals(uint256 epoch) internal view virtual returns (PendingWithdrawals memory);
-
-    function _tranchePriorityDepositsAccepted(uint256 epoch) internal view virtual returns (uint256[][][] memory);
-
-    function _acceptedPriorityWithdrawalAmounts(uint256 epoch) internal view virtual returns (uint256[] memory);
-
     function _clearingDataStorage(uint256 epoch) internal view virtual returns (ClearingData storage);
+
+    function _clearingDataMemory(uint256 epoch) internal view virtual returns (ClearingData memory);
 
     function _onlyClearingCoordinator() internal view virtual;
 }
