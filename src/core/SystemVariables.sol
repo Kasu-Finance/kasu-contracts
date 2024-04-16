@@ -266,8 +266,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     /**
      * @notice Returns the loyalty thresholds.
-     * @dev
-     * The loyalty thresholds are denominated in FULL_PERCENT.
+     * @dev The loyalty thresholds are denominated in FULL_PERCENT.
      * Index 0 represents loyalty level 1, and the last index is the highest loyalty level.
      * Loyalty level 0 is assumed by default, is not part of this array, and it should have 0% threshold.
      * @return The loyalty thresholds.
@@ -286,8 +285,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
 
     /**
      * @notice Sets the loyalty thresholds percentages.
-     * @dev
-     * The loyalty thresholds are denominated in FULL_PERCENT and values must be in ascending order.
+     * @dev The loyalty thresholds are denominated in FULL_PERCENT and values must be in ascending order.
      * Index 0 represents loyalty level 1, and the last index is the highest loyalty level.
      * If array has no elements then there is only one loyalty level.
      * @param loyaltyThresholds_ The new loyalty thresholds array.

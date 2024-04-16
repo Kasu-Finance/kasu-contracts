@@ -87,8 +87,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
 
     /**
      * @notice Block a user from interacting with the protocol.
-     * @dev
-     * If blocked, the user will not be able to interact with the protocol even if it is in the allow list or KYCd.
+     * @dev If blocked, the user will not be able to interact with the protocol even if it is in the allow list or KYCd.
      * Can only be called by the admin.
      * @param user The user's address.
      */

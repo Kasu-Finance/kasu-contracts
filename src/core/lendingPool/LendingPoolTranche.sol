@@ -82,8 +82,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
 
     /**
      * @notice Remove user active shares after redeem was called.
-     * @dev
-     * Lending pool should call this function right after redeem.
+     * @dev Lending pool should call this function right after redeem.
      * If user has no shares left, they are removed from the trancheUsers array.
      * @param user The address of the user.
      * @param shares The amount of shares that were redeemed.
@@ -110,8 +109,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
 
     /**
      * @notice Deposits assets to the lending pool tranche.
-     * @dev
-     * Overrides the ERC4626 deposit function.
+     * @dev Overrides the ERC4626 deposit function.
      * Only the lending pool can call this function.
      * The user receives tranche shares.
      * If the user had no shares before, they are added to the trancheUsers array.
@@ -139,8 +137,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
 
     /**
      * @notice Redeems assets from the lending pool tranche.
-     * @dev
-     * Overrides the ERC4626 redeem function.
+     * @dev Overrides the ERC4626 redeem function.
      * Only the lending pool can call this function.
      * The user receives assets.
      * function removeUserActiveShares with the user address should be called right after redeem.

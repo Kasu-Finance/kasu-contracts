@@ -192,8 +192,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
     /**
      * @notice Calculates the total accepted deposit amount for each tranche.
-     * @dev
-     * The accepted deposit amount is distributed to each tranche based on the desired ratio.
+     * @dev The accepted deposit amount is distributed to each tranche based on the desired ratio.
      * If previous tranche was undersubscribed, the next tranche maximum deposit is increased.
      * @param inputData The input data.
      * @return outputData Total amounts accepted for each tranche.
@@ -240,8 +239,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
     /**
      * @notice Calculates the accepted deposit to each tranche and priority request.
-     * @dev
-     * The accepted deposit amount is distributed to each tranche and priority based on the previous step calculations.
+     * @dev The accepted deposit amount is distributed to each tranche and priority based on the previous step calculations.
      * If lower tranches are oversubscribed, the excess is distributed to higher tranches according to priority.
      * Higher tranche deposit request can never be applied to lower tranches.
      * If lower tranche and higher tranche have the same priority value, higher tranche is prioritized.

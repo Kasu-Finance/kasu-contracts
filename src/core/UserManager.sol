@@ -173,8 +173,7 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Check if the user can deposit in the junior tranche.
-     * @dev
-     * If the system variable is set to true, the user can only deposit in the junior tranche if he has any rKSU balance.
+     * @dev If the system variable is set to true, the user can only deposit in the junior tranche if he has any rKSU balance.
      * If the system variable is set to false, the user can always deposit in the junior tranche.
      * @param user The address of the user.
      * @return True if the user can deposit in the junior tranche.
@@ -213,8 +212,7 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Batch calculate user loyalty levels for the current epoch.
-     * @dev
-     * This function is used to calculate user loyalty levels in batches.
+     * @dev This function is used to calculate user loyalty levels in batches.
      * The function will calculate the loyalty level for the user and update the user's loyalty level for the current epoch.
      * Can only be called during the clearing time.
      * @param batchSize The size of the batch.
@@ -270,8 +268,7 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Notices the user manager contract of a user requesting a deposit.
-     * @dev
-     * This function is used to add user to the all users array and user lending pools array.
+     * @dev This function is used to add user to the all users array and user lending pools array.
      * Can only be called by the lending pool manager.
      * @param user The address of the user.
      * @param lendingPool The address of the lending pool.
@@ -296,8 +293,7 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Update users and user lending pools arrays. Removes user from all users if it has no balance in lending pools left.
-     * @dev
-     * This function is used to remove users and its lending pools and from arrays if balance is 0.
+     * @dev This function is used to remove users and its lending pools and from arrays if balance is 0.
      * Processing of users and user lending pools is done in reverse order. From `toIndex` to `fromIndex`.
      * `fromIndex` is strictly less or equal to `toIndex`.
      * @param fromIndex The starting index to process of the all users array.

@@ -113,8 +113,7 @@ abstract contract LendingPoolTrancheLoss is
 
     /**
      * @notice Mints loss tokens to users for the id.
-     * @dev
-     * Anyone can call this function to mint loss tokens to users.
+     * @dev Anyone can call this function to mint loss tokens to users.
      * Tranche share operations should be blocked when there is a pending loss mint.
      * Can only be called when there is a pending loss mint for the id.
      * @param lossId The id of the loss.

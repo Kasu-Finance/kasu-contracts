@@ -23,8 +23,7 @@ import "../../shared/AddressLib.sol";
 /**
  * @title PendingPool contract.
  * @notice Contract for managing pending deposits and withdrawal requests.
- * @dev
- * When depositing, user receives ERC721 deposit NFT (dNFT) in exchange for the deposited asset.
+ * @dev When depositing, user receives ERC721 deposit NFT (dNFT) in exchange for the deposited asset.
  * When withdrawing, user receives ERC721 withdrawal NFT (wNFT) in exchange for the tranche shares.
  * Deposit and withdrawal request ids are composed of the tranche address and a unique sequential id.
  * When deposit is fully accepted or rejected, user's NFT is burned and the asset is transferred to the lending pool.
@@ -207,8 +206,7 @@ contract PendingPool is
 
     /**
      * @notice Creates a pending deposit for the user.
-     * @dev
-     * Transfers asset from lending pool manager to the pending pool.
+     * @dev Transfers asset from lending pool manager to the pending pool.
      * If the deposit is done during the clearing period the deposit is set for the next epoch.
      * If user already deposited in the current epoch, and tranche the same deposit NFT is reused and requested asset amount increased.
      * @param user The user requesting the deposit.
@@ -275,8 +273,7 @@ contract PendingPool is
 
     /**
      * @notice Cancels a pending deposit for the user.
-     * @dev
-     * Transfers asset from the pending pool back to the user.
+     * @dev Transfers asset from the pending pool back to the user.
      * Burns the deposit NFT.
      * Can only cancel if the lending pool is not pending clearing.
      * @param user The user cancelling the deposit.
@@ -356,8 +353,7 @@ contract PendingPool is
 
     /**
      * @notice Request a withdrawal by the system for multiple users.
-     * @dev
-     * These withdrawal requests are forced and cannot be cancelled.
+     * @dev These withdrawal requests are forced and cannot be cancelled.
      * Forced withdrawal has the highest priority (above highest standard priority) when clearing.
      * @param input The input data for the forced withdrawals.
      * @return wNftIDs The withdrawal NFT ids that were created.
