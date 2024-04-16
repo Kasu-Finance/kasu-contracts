@@ -50,36 +50,22 @@ interface ILendingPool is IERC20 {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function userOwedAmount() external view returns (uint256);
-
     function feesOwedAmount() external view returns (uint256);
-
     function pendingPool() external view returns (address);
-
     function userBalance(address user) external view returns (uint256);
-
     function getLendingPoolInfo() external view returns (LendingPoolInfo memory);
-
     function poolConfiguration() external view returns (PoolConfiguration memory);
-
     function trancheConfigurationDepositLimits(address tranche)
         external
         view
         returns (uint256 minDepositAmount, uint256 maxDepositAmount);
-
     function isLendingPoolTranche(address tranche) external view returns (bool);
-
     function trancheIndex(address tranche) external view returns (uint256);
-
     function lendingPoolTranches() external view returns (address[] memory);
-
     function lendingPoolTrancheCount() external view returns (uint256);
-
     function availableFunds() external view returns (uint256);
-
     function getClearingConfig() external view returns (ClearingConfiguration memory clearingConfig);
-
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view;
-
     function calculateMaximumLossAmount() external view returns (uint256 maximumLossAmount);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
@@ -88,108 +74,67 @@ interface ILendingPool is IERC20 {
     function acceptDeposit(address tranche, address user, uint256 acceptedAmount)
         external
         returns (uint256 trancheShares);
-
     function acceptWithdrawal(address tranche, address user, uint256 acceptedShares)
         external
         returns (uint256 assetAmount);
-
     function applyInterests(uint256 epoch) external;
-
     function payOwedFees() external;
-
-    // #### POOL DELEGATE #### //
-    function drawFunds(uint256 amount) external;
-
-    function repayOwedFunds(uint256 amount) external;
-
-    function reportLoss(uint256 lossAmount, bool doMintLossTokens) external returns (uint256 appliedLoss);
-
-    function repayLoss(address tranche, uint256 lossId, uint256 amount) external;
-
-    function depositFirstLossCapital(uint256 amount) external;
-
-    function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) external;
-
-    function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
-        external
-        returns (uint256 assetAmount);
-
-    function stop() external;
 
     // #### USER #### //
 
     function claimRepaidLoss(address user, address tranche, uint256 lossId) external returns (uint256 claimedAmount);
 
-    // #### CONFIG #### //
+    // #### POOL MANAGEMENT #### //
+    function drawFunds(uint256 amount) external;
+    function repayOwedFunds(uint256 amount) external;
+    function reportLoss(uint256 lossAmount, bool doMintLossTokens) external returns (uint256 appliedLoss);
+    function repayLoss(address tranche, uint256 lossId, uint256 amount) external;
+    function depositFirstLossCapital(uint256 amount) external;
+    function withdrawFirstLossCapital(uint256 withdrawAmount, address withdrawAddress) external;
+    function forceImmediateWithdrawal(address tranche, address user, uint256 sharesToWithdraw)
+        external
+        returns (uint256 assetAmount);
+    function stop() external;
+
+    // #### POOL CONFIG #### //
 
     function updateDrawRecipient(address drawRecipient) external;
-
     function updateMinimumDepositAmount(address tranche, uint256 minimumDepositAmount) external;
-
     function updateMaximumDepositAmount(address tranche, uint256 maximumDepositAmount) external;
-
     function updateTrancheInterestRate(address tranche, uint256 interestRate) external;
-
     function updateTrancheDesiredRatios(uint256[] calldata ratios) external;
-
     function updateTrancheInterestRateChangeEpochDelay(uint256 epochDelay) external;
-
     function updateDesiredDrawAmount(uint256 desiredDrawAmount) external;
-
     function updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) external;
-
     function updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) external;
 
     /* ========== EVENTS ========== */
 
     event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
-
     event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares, uint256 assetAmount);
-
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
-
     event FundsDrawn(uint256 amount);
-
     event OwedFundsRepaid(uint256 amountForUsers, uint256 amountForFees);
-
     event FirstLossCapitalLossReported(uint256 indexed lossId, uint256 amount);
-
     event LossReported(uint256 amount);
-
     event FirstLossCapitalAdded(uint256 amountAdded);
-
     event FirstLossCapitalWithdrawn(uint256 amountWithdrawn);
-
     event UpdatedTrancheInterestRate(address indexed tranche, uint256 indexed applicableEpoch, uint256 newInterestRate);
-
     event RemovedTrancheInterestRateUpdate(
         address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex
     );
-
     event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
-
     event FeesOwedIncreased(uint256 indexed epoch, uint256 feesIncreasedAmount);
-
     event PaidFees(uint256 feesPaid);
-
     event PaidFeesFromAvailableFunds(uint256 feesPaid);
-
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
-
     event UpdatedDrawRecipient(address indexed drawRecipient);
-
     event UpdatedTrancheInterestRateChangeEpochDelay(uint256 epochDelay);
-
     event LendingPoolStopped();
-
     event UpdatedMinimumDepositAmount(address indexed tranche, uint256 amount);
-
     event UpdatedMaximumDepositAmount(address indexed tranche, uint256 amount);
-
     event UpdatedTrancheDesiredRatios(uint256[] ratios);
-
     event UpdatedTargetExcessLiquidityPercentage(uint256 percentage);
-
     event UpdatedMinimumExcessLiquidityPercentage(uint256 percentage);
 
     /* ========== ERRORS ========== */

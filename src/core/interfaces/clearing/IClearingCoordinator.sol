@@ -43,11 +43,8 @@ interface IClearingCoordinator {
         external
         view
         returns (ClearingStatus status);
-
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending);
-
-    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256 maxDrawAmount);
-
+    function lendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256 maxDrawAmount);
     function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */

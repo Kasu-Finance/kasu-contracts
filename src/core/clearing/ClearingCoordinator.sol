@@ -46,7 +46,9 @@ import "../../shared/AddressLib.sol";
  *   In this case the clearing configuration mush be overridden (to set the valid draw amount) to proceed with the clearing and draw funds.
  */
 contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
+    /// @dev System variables contract.
     ISystemVariables private immutable _systemVariables;
+    /// @dev User manager contract.
     IUserManager private immutable _userManager;
 
     /// @notice Returns the next clearing epoch that needs to be processed for the lending pool.
@@ -114,7 +116,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      * @param lendingPool Lending pool address.
      * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
      */
-    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
+    function lendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
 
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());

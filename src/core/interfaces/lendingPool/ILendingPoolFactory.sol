@@ -59,6 +59,8 @@ interface ILendingPoolFactory {
         external
         returns (LendingPoolDeployment memory lendingPoolDeployment);
 
+    /* ========== EVENTS ========== */
+
     event PoolCreated(
         address indexed lendingPool, LendingPoolDeployment lendingPoolDeployment, PoolConfiguration poolConfiguration
     );
