@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/ISwapper.sol";
-import "./interfaces/IWETH9.sol";
+import "../../vendor/weth/IWETH9.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/AddressLib.sol";
 
@@ -54,8 +54,7 @@ abstract contract DepositSwap {
 
     /**
      * @notice Swaps tokens using the specified swap information.
-     * @dev
-     * Tokens are transferred from the caller to the swapper.
+     * @dev Tokens are transferred from the caller to the swapper.
      * swapper should swap tokens and return the swapped tokens to this contract.
      * @param swapDepositBag Swap and deposit information.
      * @param outToken Expected token to receive.
@@ -88,8 +87,7 @@ abstract contract DepositSwap {
 
     /**
      * @notice Post swap actions.
-     * @dev
-     * Transfers remaining tokens back to the caller.
+     * @dev Transfers remaining tokens back to the caller.
      * Transfers remaining ETH back to the caller.
      * Transfer unused outToken tokens back to the caller.
      * @param inTokens Swap input tokens array.

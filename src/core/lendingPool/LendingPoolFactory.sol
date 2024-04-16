@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "../../shared/interfaces/IKasuController.sol";
-import "../../shared/access/Roles.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import "../interfaces/ISystemVariables.sol";
 import "./LendingPool.sol";
-import "./LendingPoolManager.sol";
 import "./PendingPool.sol";
 import "./LendingPoolTranche.sol";
-import "../SystemVariables.sol";
+import "../../shared/access/Roles.sol";
 import "../../shared/AddressLib.sol";
 
 /**

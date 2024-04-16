@@ -8,4 +8,6 @@ interface ILendingPoolErrors {
     error OnlyOwnPendingPool(address sender, address ownPendingPool);
     error OnlyLendingPoolManager();
     error OnlyClearingCoordinator();
+    error LendingPoolIsStopped();
+    error LendingPoolIsNotStopped();
 }

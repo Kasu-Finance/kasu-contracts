@@ -18,6 +18,7 @@ import "../../../src/core/UserLoyaltyRewards.sol";
 import "./LockingTestUtils.sol";
 import "../../../src/core/KasuAllowList.sol";
 import "../../../src/core/clearing/AcceptedRequestsCalculation.sol";
+import "../../../src/core/clearing/ClearingCoordinator.sol";
 import "../../../src/core/FeeManager.sol";
 import "../../../src/core/Swapper.sol";
 import "../../shared/MockExchange.sol";

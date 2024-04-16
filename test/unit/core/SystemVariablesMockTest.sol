@@ -135,7 +135,7 @@ contract SystemVariablesMockTest is BaseTestUtils {
     function test_ksuEpochTokenPrice() public {
         _initialize();
 
-        assertEq(systemVariables.ksuEpochTokenPrice(), ksuPrice.getKsuTokenPrice());
+        assertEq(systemVariables.ksuEpochTokenPrice(), ksuPrice.ksuTokenPrice());
 
         uint256 newKsuTokenPrice = 3e18;
         ksuPrice.setKsuTokenPrice(newKsuTokenPrice);
@@ -160,7 +160,7 @@ contract SystemVariablesMockTest is BaseTestUtils {
     function test_updateKsuEpochTokenPrice() public {
         _initialize();
 
-        uint256 initialKsuPrice = ksuPrice.getKsuTokenPrice();
+        uint256 initialKsuPrice = ksuPrice.ksuTokenPrice();
         assertEq(systemVariables.ksuEpochTokenPrice(), initialKsuPrice);
 
         uint256 newKsuTokenPrice = 3e18;

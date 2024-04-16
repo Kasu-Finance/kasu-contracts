@@ -18,8 +18,7 @@ interface IAcceptedRequestsExecution {
     /**
      * @notice Processes as many userRequests as defined by batchSize. This task accepts user requests, either deposits
      * or withdrawals, by following instructions from previous steps.
-     * @dev
-     * Can be run in multiple transactions.
+     * @dev Can be run in multiple transactions.
      * @param targetEpoch The epoch to run the task against
      * @param batchSize The amount of userRequests that you want to process in this transaction.
      */

@@ -30,6 +30,13 @@ import "../Constants.sol";
  * - 1D array mapping each accepted withdrawal for each priority.
  */
 contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
+    /**
+     * @notice Step 1 input data for the clearing calculation.
+     * @custom:member totalDepositAmount Total requested deposit amount.
+     * @custom:member totalWithdrawalsAmount Total requested withdrawal amount.
+     * @custom:member config Lending pool clearing configuration.
+     * @custom:member lendingPoolBalance Lending pool excess and owed balance.
+     */
     struct Step1In {
         uint256 totalDepositAmount;
         uint256 totalWithdrawalsAmount;
@@ -37,12 +44,25 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         LendingPoolBalance lendingPoolBalance;
     }
 
+    /**
+     * @notice Step 1 output data for the clearing calculation.
+     * @custom:member acceptedDepositAmount Total accepted deposit amount.
+     * @custom:member acceptedWithdrawalAmount Total accepted withdrawal amount.
+     * @custom:member increasedExcessAmount Amount by which the excess is increased after the clearing.
+     */
     struct Step1Out {
         uint256 acceptedDepositAmount;
         uint256 acceptedWithdrawalAmount;
         uint256 increasedExcessAmount;
     }
 
+    /**
+     * @notice Step 2 input data for the clearing calculation.
+     * @custom:member acceptedDepositAmount Total accepted deposit amount.
+     * @custom:member increasedExcessAmount Amount by which the excess is increased after the clearing.
+     * @custom:member trancheDepositsAmounts Requested deposit amounts per tranche.
+     * @custom:member trancheDesiredRatios Desired lending pool ratios per tranche.
+     */
     struct Step2In {
         uint256 acceptedDepositAmount;
         uint256 increasedExcessAmount;
@@ -50,24 +70,46 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         uint256[] trancheDesiredRatios;
     }
 
+    /**
+     * @notice Step 2 output data for the clearing calculation.
+     * @custom:member acceptedTrancheDepositAmounts Calculated total accepted deposit amount per tranche.
+     */
     struct Step2Out {
         uint256[] acceptedTrancheDepositAmounts;
     }
 
+    /**
+     * @notice Step 3 input data for the clearing calculation.
+     * @custom:member acceptedTrancheDepositAmounts Total accepted deposit amount per tranche.
+     * @custom:member tranchePriorityDepositsAmounts Requested deposit amounts per tranche and priority.
+     */
     struct Step3In {
         uint256[] acceptedTrancheDepositAmounts;
         uint256[][] tranchePriorityDepositsAmounts;
     }
 
+    /**
+     * @notice Step 3 output data for the clearing calculation.
+     * @custom:member tranchePriorityDepositsAccepted Calculated accepted deposit amounts to each tranche per requested tranche and priority.
+     */
     struct Step3Out {
         uint256[][][] tranchePriorityDepositsAccepted;
     }
 
+    /**
+     * @notice Step 4 input data for the clearing calculation.
+     * @custom:member acceptedWithdrawalAmount Total accepted withdrawal amount.
+     * @custom:member priorityWithdrawalAmounts Requested withdrawal amounts per priority.
+     */
     struct Step4In {
         uint256 acceptedWithdrawalAmount;
         uint256[] priorityWithdrawalAmounts;
     }
 
+    /**
+     * @notice Step 4 output data for the clearing calculation.
+     * @custom:member acceptedPriorityWithdrawalAmounts Calculated accepted withdrawal amounts per priority.
+     */
     struct Step4Out {
         uint256[] acceptedPriorityWithdrawalAmounts;
     }
@@ -192,8 +234,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
     /**
      * @notice Calculates the total accepted deposit amount for each tranche.
-     * @dev
-     * The accepted deposit amount is distributed to each tranche based on the desired ratio.
+     * @dev The accepted deposit amount is distributed to each tranche based on the desired ratio.
      * If previous tranche was undersubscribed, the next tranche maximum deposit is increased.
      * @param inputData The input data.
      * @return outputData Total amounts accepted for each tranche.
@@ -240,8 +281,7 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
 
     /**
      * @notice Calculates the accepted deposit to each tranche and priority request.
-     * @dev
-     * The accepted deposit amount is distributed to each tranche and priority based on the previous step calculations.
+     * @dev The accepted deposit amount is distributed to each tranche and priority based on the previous step calculations.
      * If lower tranches are oversubscribed, the excess is distributed to higher tranches according to priority.
      * Higher tranche deposit request can never be applied to lower tranches.
      * If lower tranche and higher tranche have the same priority value, higher tranche is prioritized.

@@ -241,7 +241,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertFalse(dNftId1_bob == dNftId2_bob);
     }
 
-    function test_getPendingDepositAmountForCurrentEpoch() public {
+    function test_pendingDepositAmountForCurrentEpoch() public {
         // ### ARRANGE ###
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
@@ -273,7 +273,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // ### ACT ###
         uint256 pendingDepositAmountForCurrentEpoch =
-            IPendingPool(lpd.pendingPool).getPendingDepositAmountForCurrentEpoch();
+            IPendingPool(lpd.pendingPool).pendingDepositAmountForCurrentEpoch();
         uint256 totalPendingDepositAmount = IPendingPool(lpd.pendingPool).totalPendingDepositAmount();
 
         // ### ASSERT ###
@@ -485,7 +485,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 50 * 10 ** 6);
         _depositFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6);
 
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsNotStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.LendingPoolIsNotStopped.selector));
         _withdrawFirstLossCapital(poolFundsManagerAccount, lpd.lendingPool, 20 * 10 ** 6, poolFundsManagerAccount);
 
         _stop(poolManagerAccount, lpd.lendingPool);
@@ -757,7 +757,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(bob);
         deal(address(mockUsdc), bob, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.LendingPoolIsStopped.selector));
         lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6, "");
         vm.stopPrank();
 
@@ -765,16 +765,16 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(poolFundsManagerAccount);
         deal(address(mockUsdc), poolFundsManagerAccount, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.LendingPoolIsStopped.selector));
         lendingPoolManager.depositFirstLossCapital(lpd.lendingPool, 10 * 10 ** 6);
         vm.stopPrank();
 
         // draw funds after stop - even though balance is zero not allowed
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.LendingPoolIsStopped.selector));
         _drawFunds(lpd.lendingPool, 10 * 10 ** 6);
 
         // accept deposit after stop - not allowed
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.LendingPoolIsStopped.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.LendingPoolIsStopped.selector));
         _acceptDepositRequest(lpd.lendingPool, dNftId_carol, 10 * 10 ** 6);
 
         // check tranches interest rate is zero

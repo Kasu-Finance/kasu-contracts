@@ -215,7 +215,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
     function _updateKsuTokenPrice() internal {
         priceUpdateEpoch = currentEpochNumber();
 
-        ksuEpochTokenPrice = ksuPrice.getKsuTokenPrice();
+        ksuEpochTokenPrice = ksuPrice.ksuTokenPrice();
 
         emit KsuTokenPriceUpdated(priceUpdateEpoch, ksuEpochTokenPrice);
     }

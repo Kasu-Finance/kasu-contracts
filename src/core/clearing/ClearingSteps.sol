@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "./PendingRequestsPriorityCalculation.sol";
-import "./AcceptedRequestsCalculation.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
-import {AcceptedRequestsExecution} from "./AcceptedRequestsExecution.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import "./PendingRequestsPriorityCalculation.sol";
+import "./AcceptedRequestsCalculation.sol";
+import {AcceptedRequestsExecution} from "./AcceptedRequestsExecution.sol";
 import "../../shared/AddressLib.sol";
 
 /**
  * @title Clearing steps contract
  * @notice Contract for lending pool clearing storage and execution.
- * @dev
- * All external functions are called by the clearing coordinator contract.
+ * @dev All external functions are called by the clearing coordinator contract.
  * Clearing steps 2, 3 and 4 are executed via this contract.
  * Step 2 uses the PendingRequestsPriorityCalculation contract to calculate the priority of each pending requests.
  * Step 3 uses the AcceptedRequestsCalculation contract to calculate the accepted deposit and withdrawal request amounts.

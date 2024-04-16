@@ -6,16 +6,21 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
-import "../interfaces/ISystemVariables.sol";
-import "../interfaces/clearing/IClearingCoordinator.sol";
-import "../interfaces/IFeeManager.sol";
-import "../AssetFunctionsBase.sol";
-import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
+import "../interfaces/ISystemVariables.sol";
+import "../interfaces/IFeeManager.sol";
 import "./LendingPoolStoppable.sol";
+import "../AssetFunctionsBase.sol";
 import "../Constants.sol";
 import "../../shared/AddressLib.sol";
+import "../../shared/CommonErrors.sol";
 
+/**
+ * @notice Contains tranche interest rate information for the future epochs.
+ * @custom:member epoch The epoch number for which the interest rate is set.
+ * @custom:member interestRate The interest rate for the epoch.
+ */
 struct FutureTrancheInterestRates {
     uint256 epoch;
     uint256 interestRate;
@@ -24,8 +29,7 @@ struct FutureTrancheInterestRates {
 /**
  * @title LendingPool contract
  * @notice This contract is the ledger of the lending pool balances.
- * @dev
- * The lending pool is also a ERC20 token. This token always represents
+ * @dev The lending pool is also a ERC20 token. This token always represents
  * the total balance of the lending pool against the underlying asset.
  * These ERC20 tokens represent an IOU for the asset.
  * Tokens should only be held by the lending pool tranches and the lending pool itself.
@@ -104,18 +108,18 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     /**
      * @notice Initializes the lending pool.
      * @param createPoolConfig Create lending pool configuration.
-     * @param lendingPoolInfo Lending pool info containing other addresses and configuration.
+     * @param lendingPoolInfo_ Lending pool info containing other addresses and configuration.
      */
-    function initialize(CreatePoolConfig calldata createPoolConfig, LendingPoolInfo calldata lendingPoolInfo)
+    function initialize(CreatePoolConfig calldata createPoolConfig, LendingPoolInfo calldata lendingPoolInfo_)
         public
         initializer
         returns (PoolConfiguration memory)
     {
-        AddressLib.checkIfZero(lendingPoolInfo.pendingPool);
+        AddressLib.checkIfZero(lendingPoolInfo_.pendingPool);
 
         __ERC20_init(createPoolConfig.poolName, createPoolConfig.poolSymbol);
 
-        _lendingPoolInfo = lendingPoolInfo;
+        _lendingPoolInfo = lendingPoolInfo_;
 
         // setup pool configuration
         _updateTargetExcessLiquidityPercentage(createPoolConfig.targetExcessLiquidityPercentage);
@@ -128,13 +132,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             TrancheConfig memory trancheConfig;
             _poolConfiguration.tranches.push(trancheConfig);
 
-            _setTrancheIndex(lendingPoolInfo.trancheAddresses[i], i);
+            _setTrancheIndex(lendingPoolInfo_.trancheAddresses[i], i);
 
             _updateMaximumTrancheDepositAmount(
-                lendingPoolInfo.trancheAddresses[i], createPoolConfig.tranches[i].maxDepositAmount
+                lendingPoolInfo_.trancheAddresses[i], createPoolConfig.tranches[i].maxDepositAmount
             );
             _updateMinimumTrancheDepositAmount(
-                lendingPoolInfo.trancheAddresses[i], createPoolConfig.tranches[i].minDepositAmount
+                lendingPoolInfo_.trancheAddresses[i], createPoolConfig.tranches[i].minDepositAmount
             );
 
             // set tranche interest rate
@@ -142,12 +146,12 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             _poolConfiguration.tranches[i].interestRate = createPoolConfig.tranches[i].interestRate;
 
             // initialize future tranche interest rates array
-            _futureTrancheInterests[lendingPoolInfo.trancheAddresses[i]].push(
+            _futureTrancheInterests[lendingPoolInfo_.trancheAddresses[i]].push(
                 FutureTrancheInterestRates({epoch: 0, interestRate: createPoolConfig.tranches[i].interestRate})
             );
 
             // allow tranches to spend the lending pool tokens
-            _approve(address(this), lendingPoolInfo.trancheAddresses[i], type(uint256).max);
+            _approve(address(this), lendingPoolInfo_.trancheAddresses[i], type(uint256).max);
         }
 
         // set tranche ratios
@@ -199,7 +203,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Returns the lending pool address info.
      * @return Lending pool address info.
      */
-    function getLendingPoolInfo() external view returns (LendingPoolInfo memory) {
+    function lendingPoolInfo() external view returns (LendingPoolInfo memory) {
         return _lendingPoolInfo;
     }
 
@@ -287,26 +291,23 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @notice Returns the clearing configuration of the lending pool.
      * @return The clearing configuration of the lending pool.
      */
-    function getClearingConfig() external view returns (ClearingConfiguration memory) {
+    function clearingConfiguration() external view returns (ClearingConfiguration memory) {
         uint256[] memory trancheRatios = new uint256[](_poolConfiguration.tranches.length);
         for (uint256 i; i < _poolConfiguration.tranches.length; ++i) {
             trancheRatios[i] = _poolConfiguration.tranches[i].ratio;
         }
 
-        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(
+        return ClearingConfiguration(
             _poolConfiguration.desiredDrawAmount,
             trancheRatios,
             _poolConfiguration.targetExcessLiquidityPercentage,
             _poolConfiguration.minimumExcessLiquidityPercentage
         );
-
-        return clearingConfiguration;
     }
 
     /**
      * @notice Verifies the clearing configuration for the lending pool.
-     * @dev
-     * Verifies the clearing configuration.
+     * @dev Verifies the clearing configuration.
      * @param clearingConfig The clearing configuration to verify.
      */
     function verifyClearingConfig(ClearingConfiguration calldata clearingConfig) external view {
@@ -328,8 +329,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Returns the maximum loss amount of the lending pool that can be reported.
-     * @dev
-     * Returns the first loss capita amount plus the sum of the maximum loss amount of each tranche.
+     * @dev Returns the first loss capita amount plus the sum of the maximum loss amount of each tranche.
      * The loss amount can't be greater than the user owed amount. If it is, returns the user owed amount.
      * @return maximumLossAmount The maximum loss amount of the lending pool that can be reported.
      */
@@ -353,8 +353,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Accepts the deposit of the user.
-     * @dev
-     * This function is called by the pending pool.
+     * @dev This function is called by the pending pool.
      * Transfers the assets from the pending pool to the lending pool.
      * Mints the lending pool token.
      * Mints tranche shares to the user.
@@ -383,8 +382,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Accepts the withdrawal of the user from a tranche.
-     * @dev
-     * This function is called by the pending pool.
+     * @dev This function is called by the pending pool.
      * Burns tranche shares from the user.
      * Burns the lending pool token.
      * Transfers the assets from the tranche to the user.
@@ -415,8 +413,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Applies the interests to the lending pool and the tranches.
-     * @dev
-     * This function is called by the clearing coordinator.
+     * @dev This function is called by the clearing coordinator.
      * Applies the interests to the lending pool tranches.
      * Mints the lending pool tokens to the tranches.
      * Increases the owed amount by the interest amount.
@@ -450,8 +447,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Draw assets from the lending pool to the draw recipient address.
-     * @dev
-     * Decrease the desired draw amount by the draw amount.
+     * @dev Decrease the desired draw amount by the draw amount.
      * Called by the clearing coordinator.
      * @param drawAmount The desired draw amount.
      */
@@ -487,8 +483,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Reports the loss of the lending pool.
-     * @dev
-     * Applies the loss first to the first loss capital.
+     * @dev Applies the loss first to the first loss capital.
      * If there is no more first loss capital,
      * the loss is applied to the tranches in order from the junior to the senior.
      * Burns tranche shares if needed.
@@ -579,8 +574,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Deposits the first loss capital to the lending pool.
-     * @dev
-     * Transfers the assets to the lending pool.
+     * @dev Transfers the assets to the lending pool.
      * Mints the lending pool token to itself.
      * @param amount The amount of the first loss capital to deposit.
      */
@@ -600,8 +594,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Withdraws the first loss capital from the lending pool.
-     * @dev
-     * Can only be called once lending pool is stopped.
+     * @dev Can only be called once lending pool is stopped.
      * Transfers the assets to the first loss capital receiver.
      * Burns the lending pool token.
      * @param withdrawAmount The amount of the first loss capital to withdraw.
@@ -633,8 +626,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Forces the immediate withdrawal of the user from the tranche.
-     * @dev
-     * Burns tranche shares from the user.
+     * @dev Burns tranche shares from the user.
      * Burns the lending pool token.
      * Transfers the assets from the tranche to the user.
      * @param tranche The tranche address.
@@ -663,8 +655,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     /**
      * @notice Stops the lending pool.
-     * @dev
-     * Stops the lending pool.
+     * @dev Stops the lending pool.
      * Can only be stopped if all owed amounts are repaid.
      * After stopping the lending pool, the lending pool can't accept new deposits.
      * The pool can't be resumed after stopping.

@@ -2,20 +2,19 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
-import "../AssetFunctionsBase.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../interfaces/IKasuAllowList.sol";
 import "../interfaces/IUserManager.sol";
-import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
+import "../../shared/interfaces/IKasuController.sol";
 import "../../shared/access/KasuAccessControllable.sol";
 import "../../shared/access/Roles.sol";
-import "../../shared/interfaces/IKasuController.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../AssetFunctionsBase.sol";
 import "../DepositSwap.sol";
 import "../../shared/AddressLib.sol";
 
@@ -92,8 +91,7 @@ contract LendingPoolManager is
 
     /**
      * @notice Request deposit to the lending pool tranche.
-     * @dev
-     * User should not be blocked to deposit.
+     * @dev User should not be blocked to deposit.
      * User should be on the allowlist to deposit.
      * @param lendingPool Address of the lending pool to deposit to.
      * @param tranche Address of the tranche to deposit to.
@@ -115,8 +113,7 @@ contract LendingPoolManager is
 
     /**
      * @notice Request deposit to the lending pool tranche with user KYC.
-     * @dev
-     * User should not be blocked to deposit.
+     * @dev User should not be blocked to deposit.
      * User should be KYC'd to deposit.
      * @param lendingPool Address of the lending pool to deposit to.
      * @param tranche Address of the tranche to deposit to.
@@ -365,8 +362,7 @@ contract LendingPoolManager is
 
     /**
      * @notice Force immediate withdrawal for user from the lending pool tranche by the pool manager.
-     * @dev
-     * Can only be called by the pool manager.
+     * @dev Can only be called by the pool manager.
      * User tranche shares are immediately withdrawn and assets are transferred to the user.
      * Will fail if the lending pool doesn't have enough assets to return.
      * @param lendingPool Address of the lending pool.
@@ -387,8 +383,7 @@ contract LendingPoolManager is
 
     /**
      * @notice Force withdrawals for multiple users from the lending pool by the pool manager.
-     * @dev
-     * Can only be called by the pool manager.
+     * @dev Can only be called by the pool manager.
      * Same as normal withdrawal but cannot be canceled by the user.
      * Forced withdrawal has the highest priority (above highest standard priority) when clearing.
      * @param lendingPool Address of the lending pool.
@@ -437,8 +432,7 @@ contract LendingPoolManager is
 
     /**
      * @notice Stop lending pool.
-     * @dev
-     * Pool Funds Manager must first repay all owed funds before the pool can be stopped.
+     * @dev Pool Funds Manager must first repay all owed funds before the pool can be stopped.
      * @param lendingPool Address of the lending pool.
      */
     function stopLendingPool(address lendingPool)
@@ -530,8 +524,7 @@ contract LendingPoolManager is
 
     /**
      * @notice Update tranche desired ratios for the lending pool.
-     * @dev
-     * Desired ratios are in the same order as the tranches.
+     * @dev Desired ratios are in the same order as the tranches.
      * The length of the desired ratios array must be equal to the number of tranches.
      * The sum of the desired ratios must be 100%.
      * @param lendingPool Address of the lending pool.

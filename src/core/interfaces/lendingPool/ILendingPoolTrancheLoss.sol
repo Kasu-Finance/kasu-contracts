@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
 /**
  * @notice Tranche loss details for a specific loss event.
  * @custom:member lossAmount Total loss amount.
@@ -17,19 +19,14 @@ struct LossDetails {
     uint256 totalLossShares;
 }
 
-interface ILendingPoolTrancheLoss {
+interface ILendingPoolTrancheLoss is IERC1155 {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function minimumAssetAmountLeftAfterLoss() external view returns (uint256);
-
     function userClaimedLosses(address user, uint256 lossId) external view returns (uint256 claimedAmount);
-
     function lossDetails(uint256 lossId) external view returns (LossDetails memory);
-
     function isLossMintingComplete(uint256 lossId) external view returns (bool);
-
     function isPendingLossMint() external view returns (bool);
-
     function userClaimableLoss(address user, uint256 lossId) external view returns (uint256 claimableAmount);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
@@ -37,11 +34,8 @@ interface ILendingPoolTrancheLoss {
     function registerTrancheLoss(uint256 lossId, uint256 lossAmount, bool doMintLossTokens)
         external
         returns (uint256 lossApplied);
-
     function batchMintLossTokens(uint256 lossId, uint256 batchSize) external;
-
     function repayLoss(uint256 lossId, uint256 amount) external;
-
     function claimRepaidLoss(address user, uint256 lossId) external returns (uint256 claimedAmount);
 
     /* ========== EVENTS ========== */

@@ -7,8 +7,8 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../interfaces/IUserManager.sol";
-import "../lendingPool/LendingPoolHelpers.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
+import "../lendingPool/LendingPoolHelpers.sol";
 import "../../shared/AddressLib.sol";
 
 /**
@@ -46,7 +46,9 @@ import "../../shared/AddressLib.sol";
  *   In this case the clearing configuration mush be overridden (to set the valid draw amount) to proceed with the clearing and draw funds.
  */
 contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
+    /// @dev System variables contract.
     ISystemVariables private immutable _systemVariables;
+    /// @dev User manager contract.
     IUserManager private immutable _userManager;
 
     /// @notice Returns the next clearing epoch that needs to be processed for the lending pool.
@@ -114,11 +116,11 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      * @param lendingPool Lending pool address.
      * @return maxDrawAmount Maximum amount that can be drawn from the lending pool.
      */
-    function getLendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
+    function lendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256) {
         uint256 lendingPoolAvailableFunds = ILendingPool(lendingPool).availableFunds();
 
         IPendingPool pendingPool = IPendingPool(ILendingPool(lendingPool).pendingPool());
-        uint256 pendingDepositAmount = pendingPool.getPendingDepositAmountForCurrentEpoch();
+        uint256 pendingDepositAmount = pendingPool.pendingDepositAmountForCurrentEpoch();
 
         return lendingPoolAvailableFunds + pendingDepositAmount;
     }
@@ -292,7 +294,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     }
 
     function _setDefaultClearingConfig(address lendingPool, uint256 epoch) private {
-        ClearingConfiguration memory clearingConfiguration = ILendingPool(lendingPool).getClearingConfig();
+        ClearingConfiguration memory clearingConfiguration = ILendingPool(lendingPool).clearingConfiguration();
         _setClearingConfig(lendingPool, epoch, clearingConfiguration, false);
     }
 
