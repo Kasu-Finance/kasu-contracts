@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/ISwapper.sol";
-import "./interfaces/IWETH9.sol";
+import "../../vendor/weth/IWETH9.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/AddressLib.sol";
 
