@@ -146,8 +146,6 @@ interface ILendingPool is IERC20 {
     error LossAmountShouldBeGreaterThanZero(uint256 reportedLossAmount);
     error UserOwedAmountIsGreaterThanZero(uint256 userOwedAmount);
     error FeesOwedAmountIsGreaterThanZero(uint256 feesOwedAmount);
-    error LendingPoolIsStopped();
-    error LendingPoolIsNotStopped();
     error PoolConfigurationIsIncorrect(string reason);
     error LossIdNotValid(uint256 lossId);
     error ClearingIsPending();

@@ -8,6 +8,11 @@ import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../lendingPool/UserRequestIds.sol";
 import "../../shared/CommonErrors.sol";
 
+/**
+ * @notice Accepted request execution status for the epoch.
+ * @custom:member nextIndexToProcess The next request index to process.
+ * @custom:member status The status of the accepted requests execution task.
+ */
 struct AcceptedRequestsExecutionEpoch {
     uint256 nextIndexToProcess;
     TaskStatus status;

@@ -16,6 +16,11 @@ import "../Constants.sol";
 import "../../shared/AddressLib.sol";
 import "../../shared/CommonErrors.sol";
 
+/**
+ * @notice Contains tranche interest rate information for the future epochs.
+ * @custom:member epoch The epoch number for which the interest rate is set.
+ * @custom:member interestRate The interest rate for the epoch.
+ */
 struct FutureTrancheInterestRates {
     uint256 epoch;
     uint256 interestRate;

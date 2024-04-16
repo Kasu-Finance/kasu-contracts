@@ -9,10 +9,10 @@ import "../lendingPool/UserRequestIds.sol";
 import "../../shared/CommonErrors.sol";
 
 /**
- * @notice Pending requests calculation helper struct
+ * @notice Pending requests calculation helper per epoch.
  * @custom:member tempPriorityTrancheWithdrawalShares Temporary storage for withdrawal shares per priority and tranche.
  * @custom:member nextIndexToProcess Next index to process in the pending requests array for the clearing epoch.
- * @custom:member status Task status.
+ * @custom:member status Stat of the pending requests calculation.
  */
 struct PendingRequestsEpoch {
     // array by priority and trancheIndex
