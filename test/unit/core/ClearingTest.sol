@@ -83,7 +83,7 @@ contract ClearingTest is LendingPoolTestUtils {
 
         // ### ASSERT ###
         IPendingPool pendingPool = IPendingPool(lpd.pendingPool);
-        PendingDeposits memory pendingDeposits = pendingPool.pendingDeposits(currentEpoch);
+        PendingDeposits memory pendingDeposits = pendingPool.clearingData(currentEpoch).pendingDeposits;
         assertEq(pendingDeposits.totalDepositAmount, 1070 * 1e6);
 
         assertEq(pendingDeposits.trancheDepositsAmounts.length, 3);
@@ -103,7 +103,7 @@ contract ClearingTest is LendingPoolTestUtils {
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][1], 0);
         assertEq(pendingDeposits.tranchePriorityDepositsAmounts[2][2], 0);
 
-        PendingWithdrawals memory pendingWithdrawals = pendingPool.pendingWithdrawals(currentEpoch);
+        PendingWithdrawals memory pendingWithdrawals = pendingPool.clearingData(currentEpoch).pendingWithdrawals;
         assertEq(pendingWithdrawals.totalWithdrawalsAmount, 270 * 1e6);
 
         assertEq(pendingWithdrawals.priorityWithdrawalAmounts[0], 220 * 1e6);

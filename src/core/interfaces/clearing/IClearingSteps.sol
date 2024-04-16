@@ -9,11 +9,7 @@ import "./IClearingStepsData.sol";
 interface IClearingSteps is IPendingRequestsPriorityCalculation, IAcceptedRequestsExecution {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
-    function pendingDeposits(uint256 epoch) external view returns (PendingDeposits memory);
-
-    function pendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory);
-
-    function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory);
+    function clearingData(uint256 epoch) external view returns (ClearingData memory);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 

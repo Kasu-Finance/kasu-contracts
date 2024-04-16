@@ -50,31 +50,12 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     /**
-     * @notice Get the pending deposit amounts for the epoch.
+     * @notice Return the clearing data for the epoch.
      * @param epoch Epoch number.
-     * @return Pending deposit amounts.
+     * @return Clearing data.
      */
-    function pendingDeposits(uint256 epoch) external view returns (PendingDeposits memory) {
-        return _pendingDeposits(epoch);
-    }
-
-    /**
-     * @notice Get the pending withdrawal amounts for the epoch.
-     * @param epoch Epoch number.
-     * @return Pending withdrawal amounts.
-     */
-    function pendingWithdrawals(uint256 epoch) external view returns (PendingWithdrawals memory) {
-        return _pendingWithdrawals(epoch);
-    }
-
-    /**
-     * @notice Get the accepted deposit and withdrawal amounts for the epoch.
-     * @param epoch Epoch number.
-     * @return Accepted deposit amounts.
-     * @return Accepted withdrawal amounts.
-     */
-    function getClearingAcceptedAmounts(uint256 epoch) external view returns (uint256[][][] memory, uint256[] memory) {
-        return (_tranchePriorityDepositsAccepted(epoch), _acceptedPriorityWithdrawalAmounts(epoch));
+    function clearingData(uint256 epoch) external view returns (ClearingData memory) {
+        return _clearingDataMemory(epoch);
     }
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
@@ -93,35 +74,23 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
     ) external {
         _onlyClearingCoordinator();
 
-        ClearingInput memory input = ClearingInput({
-            config: config,
-            balance: balance,
-            pendingDeposits: _pendingDeposits(targetEpoch),
-            pendingWithdrawals: _pendingWithdrawals(targetEpoch)
-        });
-
         (
             _clearingDataPerEpoch[targetEpoch].tranchePriorityDepositsAccepted,
             _clearingDataPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts
-        ) = _acceptedRequestsCalculation.calculateAcceptedRequests(input);
+        ) = _acceptedRequestsCalculation.calculateAcceptedRequests(
+            ClearingInput({
+                config: config,
+                balance: balance,
+                pendingDeposits: _clearingDataPerEpoch[targetEpoch].pendingDeposits,
+                pendingWithdrawals: _clearingDataPerEpoch[targetEpoch].pendingWithdrawals
+            })
+        );
     }
 
     /* ========== VIRTUAL METHODS ========== */
 
-    function _pendingDeposits(uint256 epoch) internal view override returns (PendingDeposits memory) {
-        return _clearingDataPerEpoch[epoch].pendingDeposits;
-    }
-
-    function _pendingWithdrawals(uint256 epoch) internal view override returns (PendingWithdrawals memory) {
-        return _clearingDataPerEpoch[epoch].pendingWithdrawals;
-    }
-
-    function _tranchePriorityDepositsAccepted(uint256 epoch) internal view override returns (uint256[][][] memory) {
-        return _clearingDataPerEpoch[epoch].tranchePriorityDepositsAccepted;
-    }
-
-    function _acceptedPriorityWithdrawalAmounts(uint256 epoch) internal view override returns (uint256[] memory) {
-        return _clearingDataPerEpoch[epoch].acceptedPriorityWithdrawalAmounts;
+    function _clearingDataMemory(uint256 epoch) internal view override returns (ClearingData memory) {
+        return _clearingDataPerEpoch[epoch];
     }
 
     /**
@@ -157,16 +126,6 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         revert CannotFindTranche(tranche);
     }
 
-    function _onlyClearingCoordinator()
-        internal
-        view
-        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
-    {
-        if (msg.sender != address(_clearingCoordinator)) {
-            revert ILendingPoolErrors.OnlyClearingCoordinator();
-        }
-    }
-
     /**
      * @notice Get the tranche address by index.
      * @dev To get tranches array, use _lendingPoolTranches() function.
@@ -178,6 +137,16 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         returns (address)
     {
         return tranches[index];
+    }
+
+    function _onlyClearingCoordinator()
+        internal
+        view
+        override(PendingRequestsPriorityCalculation, AcceptedRequestsExecution)
+    {
+        if (msg.sender != address(_clearingCoordinator)) {
+            revert ILendingPoolErrors.OnlyClearingCoordinator();
+        }
     }
 
     /* ========== VIRTUAL METHODS ========== */
