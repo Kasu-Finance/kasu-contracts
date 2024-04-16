@@ -2,10 +2,9 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "./ILendingPoolTrancheLoss.sol";
 
-interface ILendingPoolTranche is ILendingPoolTrancheLoss, IERC4626, IERC1155 {
+interface ILendingPoolTranche is ILendingPoolTrancheLoss, IERC4626 {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function userActiveShares(address user) external view returns (uint256);

@@ -10,8 +10,7 @@ import "../../shared/CommonErrors.sol";
 /**
  * @title Lending Pool Tranche Loss Contract
  * @notice This contract is used to handle the loss of assets in a tranche.
- * @dev
- * When impairment happens, users receive ERC1155 impairment receipt tokens with id of the unrealized loss.
+ * @dev When impairment happens, users receive ERC1155 loss receipt tokens with id of the unrealized loss.
  * If the loss is repaid, users can claim their share of the loss.
  * Considering the amount of users, the loss tokens can minted in multiple batches.
  * Tranche share updates should be blocked during the loss token minting.
@@ -165,17 +164,21 @@ abstract contract LendingPoolTrancheLoss is
     }
 
     /**
-     * @notice ERC1155 safeTransferFrom is disabled.
+     * @notice ERC1155 Unrealized loss token is non-transferable.
      */
-    function safeTransferFrom(address, address, uint256, uint256, bytes memory) public pure override {
-        revert NotSupported();
+    function safeTransferFrom(address, address, uint256, uint256, bytes memory)
+        public
+        pure
+        override(ERC1155Upgradeable, IERC1155)
+    {
+        revert NonTransferable();
     }
 
     /**
-     * @notice ERC1155 setApprovalForAll is disabled.
+     * @notice ERC1155 Unrealized loss token is non-transferable.
      */
-    function setApprovalForAll(address, bool) public pure override {
-        revert NotSupported();
+    function setApprovalForAll(address, bool) public pure override(ERC1155Upgradeable, IERC1155) {
+        revert NonTransferable();
     }
 
     /* ========== INTERNAL VIEW FUNCTIONS ========== */

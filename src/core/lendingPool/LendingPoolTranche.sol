@@ -12,10 +12,15 @@ import "./LendingPoolHelpers.sol";
 
 /**
  * @title Lending Pool Tranche Contract
- * @dev
- * - when deposits are cleared, users receive ERC20 receipt tranche tokens
- * - when withdrawals are cleared, assets are sent to the lending pool
- * - when impairment happens, users receive ERC1155 impairment receipt tokens
+ * @notice Lending pool tranche tracks users' position in the tranche.
+ * @dev This contract implements ERC4626 and ERC1155.
+ * ERC4626 is used to track user tranche shares.
+ * Asset of ERC4626 is the lending pool token.
+ * ERC1155 is used to track unrealized loss receipt tokens.
+ * When deposits are cleared and accepted, users receive ERC20 receipt tranche tokens.
+ * When withdrawals are cleared and accepted, assets are sent to the lending pool.
+ * When a loss is reported, users receive new ERC1155 unrealized loss receipt tokens.
+ * None of the tokens can be transferred by anyone except the lending pool and the pending pool.
  */
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
     /// @dev User active shares. This includes user pending withdrawal shares.
@@ -155,7 +160,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     }
 
     /**
-     * @notice Transfers the given amount to the given address. Can only be called by the pending pool.
+     * @notice Transfers the given amount to the given address.
+     * @dev Only the pending pool can call this function.
      * @param to The address of the receiver.
      * @param value The amount to transfer.
      * @return success Whether the transfer was successful.
@@ -170,7 +176,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     }
 
     /**
-     * @notice Transfers the given amount from the given address to the given address. Can only be called by the pending pool.
+     * @notice Transfers the given amount from the given address to the given address.
+     * @dev Only the pending pool can call this function.
      * @param from The address of the sender.
      * @param to The address of the receiver.
      * @param value The amount to transfer.
