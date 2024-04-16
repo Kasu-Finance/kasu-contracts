@@ -457,7 +457,7 @@ contract PendingPool is
         uint256 sharesAmount = _trancheWithdrawalNftDetails[wNftID].sharesAmount;
 
         // Burn the withdrawal NFT
-        _burnRequestNft(wNftID);
+        _burn(wNftID);
 
         // delete nft storage
         _deleteWNftDetails(user, wNftID);
@@ -530,7 +530,7 @@ contract PendingPool is
         uint256 epochId = depositNftDetails.epochId;
 
         if (depositNftDetails.assetAmount == 0) {
-            _burnRequestNft(dNftID);
+            _burn(dNftID);
 
             _deleteDNftDetails(user, dNftID);
         }
@@ -558,7 +558,7 @@ contract PendingPool is
         uint256 assetAmount = _trancheDepositNftDetails[dNftID].assetAmount;
         uint256 epochId = _trancheDepositNftDetails[dNftID].epochId;
 
-        _burnRequestNft(dNftID);
+        _burn(dNftID);
 
         _deleteDNftDetails(user, dNftID);
 
@@ -583,7 +583,7 @@ contract PendingPool is
 
         if (withdrawalNftDetails.sharesAmount == 0) {
             // Burn the deposit NFT
-            _burnRequestNft(wNftID);
+            _burn(wNftID);
 
             _deleteWNftDetails(user, wNftID);
         }
@@ -616,10 +616,6 @@ contract PendingPool is
     function _decreasePendingDepositAmount(uint256 epoch, uint256 amount) internal {
         _totalEpochPendingDepositAmount[epoch] -= amount;
         totalPendingDepositAmount -= amount;
-    }
-
-    function _burnRequestNft(uint256 nftID) internal {
-        _update(address(0), nftID, address(0));
     }
 
     function _incrementDepositRequestId(uint256 id) private pure returns (uint256 incrementedId) {
