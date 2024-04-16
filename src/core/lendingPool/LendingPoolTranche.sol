@@ -6,9 +6,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
-import "../../shared/CommonErrors.sol";
 import "./LendingPoolTrancheLoss.sol";
 import "./LendingPoolHelpers.sol";
+import "../../shared/CommonErrors.sol";
 
 /**
  * @title Lending Pool Tranche Contract

@@ -6,8 +6,8 @@ import "./interfaces/ISystemVariables.sol";
 import "./interfaces/IKsuPrice.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
-import "./Constants.sol";
 import "../shared/AddressLib.sol";
+import "./Constants.sol";
 
 /**
  * @notice Kasu system variables contract setup structure.

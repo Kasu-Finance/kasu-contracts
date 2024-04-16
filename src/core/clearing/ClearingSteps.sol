@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "./PendingRequestsPriorityCalculation.sol";
-import "./AcceptedRequestsCalculation.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
-import {AcceptedRequestsExecution} from "./AcceptedRequestsExecution.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
+import "./PendingRequestsPriorityCalculation.sol";
+import "./AcceptedRequestsCalculation.sol";
+import {AcceptedRequestsExecution} from "./AcceptedRequestsExecution.sol";
 import "../../shared/AddressLib.sol";
 
 /**

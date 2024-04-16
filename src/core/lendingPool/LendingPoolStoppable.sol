@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 
 /**
  * @title LendingPoolStoppable abstract contract.
@@ -26,14 +26,14 @@ abstract contract LendingPoolStoppable {
 
     modifier lendingPoolShouldNotBeStopped() {
         if (_isLendingPoolStopped()) {
-            revert ILendingPool.LendingPoolIsStopped();
+            revert ILendingPoolErrors.LendingPoolIsStopped();
         }
         _;
     }
 
     modifier lendingPoolShouldBeStopped() {
         if (!_isLendingPoolStopped()) {
-            revert ILendingPool.LendingPoolIsNotStopped();
+            revert ILendingPoolErrors.LendingPoolIsNotStopped();
         }
         _;
     }

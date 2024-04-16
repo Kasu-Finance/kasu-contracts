@@ -7,8 +7,8 @@ import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../interfaces/IUserManager.sol";
-import "../lendingPool/LendingPoolHelpers.sol";
 import "../interfaces/clearing/IClearingSteps.sol";
+import "../lendingPool/LendingPoolHelpers.sol";
 import "../../shared/AddressLib.sol";
 
 /**

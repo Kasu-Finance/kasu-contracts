@@ -2,13 +2,11 @@
 pragma solidity 0.8.23;
 
 import "../interfaces/clearing/IPendingRequestsPriorityCalculation.sol";
-import "../interfaces/lendingPool/IPendingPool.sol";
-import "../interfaces/IUserManager.sol";
-import "../interfaces/lendingPool/ILendingPoolTranche.sol";
-import "../interfaces/ISystemVariables.sol";
-import "../../shared/CommonErrors.sol";
 import "../interfaces/clearing/IClearingStepsData.sol";
+import "../interfaces/lendingPool/IPendingPool.sol";
+import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../lendingPool/UserRequestIds.sol";
+import "../../shared/CommonErrors.sol";
 
 /**
  * @notice Pending requests calculation helper struct

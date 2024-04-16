@@ -6,15 +6,15 @@ import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
-import "../interfaces/ISystemVariables.sol";
-import "../interfaces/clearing/IClearingCoordinator.sol";
-import "../interfaces/IFeeManager.sol";
-import "../AssetFunctionsBase.sol";
-import "../../shared/CommonErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../interfaces/clearing/IClearingCoordinator.sol";
+import "../interfaces/ISystemVariables.sol";
+import "../interfaces/IFeeManager.sol";
 import "./LendingPoolStoppable.sol";
+import "../AssetFunctionsBase.sol";
 import "../Constants.sol";
 import "../../shared/AddressLib.sol";
+import "../../shared/CommonErrors.sol";
 
 struct FutureTrancheInterestRates {
     uint256 epoch;

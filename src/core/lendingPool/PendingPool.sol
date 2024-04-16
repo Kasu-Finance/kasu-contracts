@@ -6,18 +6,15 @@ import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.s
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
+import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/ISystemVariables.sol";
+import "../interfaces/IUserManager.sol";
+import "../clearing/ClearingSteps.sol";
 import "../AssetFunctionsBase.sol";
 import "./LendingPoolHelpers.sol";
 import "./LendingPoolStoppable.sol";
-import "../interfaces/IUserManager.sol";
-import "../../shared/CommonErrors.sol";
-import "../interfaces/lendingPool/ILendingPoolErrors.sol";
-import "../clearing/PendingRequestsPriorityCalculation.sol";
-import "../clearing/ClearingCoordinator.sol";
-import "../clearing/AcceptedRequestsExecution.sol";
-import "../clearing/ClearingSteps.sol";
 import "./UserRequestIds.sol";
+import "../../shared/CommonErrors.sol";
 import "../../shared/AddressLib.sol";
 
 /**

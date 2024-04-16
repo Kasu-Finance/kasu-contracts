@@ -2,12 +2,12 @@
 pragma solidity 0.8.23;
 
 import "./interfaces/IFeeManager.sol";
-import "../locking/interfaces/IKSULocking.sol";
-import "./AssetFunctionsBase.sol";
 import "./interfaces/ISystemVariables.sol";
-import "./Constants.sol";
+import "../locking/interfaces/IKSULocking.sol";
 import "../shared/access/KasuAccessControllable.sol";
+import "./AssetFunctionsBase.sol";
 import "../shared/AddressLib.sol";
+import "./Constants.sol";
 
 /**
  * @title FeeManager contract.

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "./interfaces/IKsuPrice.sol";
 import "../../vendor/chainsight/IOracle.sol";
+import "./interfaces/IKsuPrice.sol";
 import "../shared/AddressLib.sol";
 
 /**

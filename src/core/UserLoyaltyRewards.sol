@@ -3,9 +3,9 @@ pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../shared/access/KasuAccessControllable.sol";
 import "./interfaces/IUserLoyaltyRewards.sol";
 import "./interfaces/IKsuPrice.sol";
+import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/AddressLib.sol";
 import "./Constants.sol";

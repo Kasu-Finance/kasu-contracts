@@ -10,8 +10,8 @@ import "./interfaces/lendingPool/IPendingPool.sol";
 import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../locking/interfaces/IKSULocking.sol";
 import "../shared/CommonErrors.sol";
-import "./Constants.sol";
 import "../shared/AddressLib.sol";
+import "./Constants.sol";
 
 /**
  * @title User Manager Contract
