@@ -22,3 +22,6 @@ cache_hardhat
 
 deployments/hardhat
 deployments/localhost
+
+lcov.info
+report
