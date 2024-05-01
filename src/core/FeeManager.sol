@@ -20,8 +20,10 @@ import "./Constants.sol";
  */
 contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     /// @notice KSU Locking contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKSULocking private immutable _ksuLocking;
     /// @notice System variables contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISystemVariables private immutable _systemVariables;
     /// @notice Lending pool manager contract.
     ILendingPoolManager private immutable _lendingPoolManager;

@@ -4,8 +4,7 @@
     "description": "kasu smart contracts",
     "main": "index.js",
     "scripts": {
-        "node:local": "hardhat node --no-deploy --hostname 0.0.0.0",
-        "deploy:local": "hardhat --network localhost deploy --export-all deployments/localhost/export.json",
+        "node:local": "hardhat node --hostname 0.0.0.0",
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
         "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info -o report",
@@ -13,8 +12,10 @@
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
+        "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
-        "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts"
+        "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",
+        "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts"
     },
     "repository": {
         "type": "git",
@@ -28,13 +29,13 @@
     },
     "homepage": "https://github.com/solidant/kasu-contracts#readme",
     "devDependencies": {
+        "@nomicfoundation/hardhat-ethers": "^3.0.5",
         "@nomicfoundation/hardhat-foundry": "^1.1.1",
         "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+        "@openzeppelin/hardhat-upgrades": "^3.1.0",
         "@types/node": "^20.11.0",
-        "ethers": "^6.9.2",
-        "hardhat": "^2.19.4",
-        "hardhat-deploy": "^0.11.45",
-        "hardhat-deploy-ethers": "^0.4.1",
-        "dotenv": "^16.3.1"
+        "dotenv": "^16.3.1",
+        "ethers": "^6.12.0",
+        "hardhat": "^2.19.4"
     }
 }

@@ -1,18 +1,16 @@
 import path from 'path';
 import fs from 'fs';
 import {
-    KasuAllowList__factory,
     KasuController__factory,
     LendingPoolFactory__factory,
     LendingPoolManager__factory,
-    MockUSDC__factory,
 } from '../../typechain-types';
 import * as hre from 'hardhat';
 import {
     CreatePoolConfigStruct,
     CreateTrancheConfigStruct,
 } from '../../typechain-types/src/core/lendingPool/LendingPool';
-import { ContractTransactionResponse, Signer } from 'ethers';
+import { ContractTransactionResponse } from 'ethers';
 
 export async function createLendingPool() {
     let tx: ContractTransactionResponse;
@@ -25,16 +23,14 @@ export async function createLendingPool() {
     );
 
     // signers
-    const namedSigners = await hre.ethers.getNamedSigners();
-    const adminAccount = namedSigners['admin'];
-    const aliceAccount = namedSigners['alice'];
-    const bobAccount = namedSigners['bob'];
-    const clearingManagerAccount = namedSigners['carol'];
-
-    const unNamedSigners = await hre.ethers.getUnnamedSigners();
-    const poolCreatorAccount = unNamedSigners[0];
-    const poolAdminAccount = unNamedSigners[1];
-    const drawRecipientAccount = unNamedSigners[2];
+    const signers = await hre.ethers.getSigners();
+    const adminAccount = signers[0];
+    const aliceAccount = signers[1];
+    const bobAccount = signers[2];
+    const clearingManagerAccount = signers[3];
+    const poolCreatorAccount = signers[4];
+    const poolAdminAccount = signers[5];
+    const drawRecipientAccount = signers[6];
 
     // access control
     console.info('Granting ROLE_LENDING_POOL_CREATOR role');

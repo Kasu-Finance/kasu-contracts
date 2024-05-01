@@ -28,9 +28,9 @@ export async function runClearing(
     );
 
     // signers
-    const namedSigners = await hre.ethers.getNamedSigners();
-    const admin = namedSigners['admin'];
-    const clearingManager = namedSigners['carol'];
+    const signers = await hre.ethers.getSigners();
+    const admin = signers[0];
+    const clearingManager = signers[3];
 
     // contracts
     const userManager = UserManager__factory.connect(

@@ -19,18 +19,22 @@ async function main() {
     const lp1_mezzo = lpd.createdTrancheAddresses[1];
     const lp1_senior = lpd.createdTrancheAddresses[1];
 
-    const namedSigners = await hre.ethers.getNamedSigners();
+    const signers = await hre.ethers.getSigners();
+    const alice = signers[1];
+    const bob = signers[2];
+    const carol = signers[3];
+    const david = signers[4];
 
     // request deposits
     const requestDepositsInput1: RequestDepositInput[] = [
         {
-            user: namedSigners['alice'],
+            user: alice,
             lendingPoolAddress: lp1,
             trancheAddress: lp1_junior,
             amount: BigInt(1_000_000_000),
         },
         {
-            user: namedSigners['bob'],
+            user: bob,
             lendingPoolAddress: lp1,
             trancheAddress: lp1_junior,
             amount: BigInt(2_000_000_000),
@@ -44,13 +48,13 @@ async function main() {
     // request deposits
     const requestDepositsInput2: RequestDepositInput[] = [
         {
-            user: namedSigners['carol'],
+            user: carol,
             lendingPoolAddress: lp1,
             trancheAddress: lp1_junior,
             amount: BigInt(1_000_000_000),
         },
         {
-            user: namedSigners['david'],
+            user: david,
             lendingPoolAddress: lp1,
             trancheAddress: lp1_junior,
             amount: BigInt(2_000_000_000),
@@ -61,13 +65,13 @@ async function main() {
     // request withdrawals
     const requestWithdrawalsInput1: RequestWithdrawInput[] = [
         {
-            user: namedSigners['alice'],
+            user: alice,
             lendingPoolAddress: lp1,
             trancheAddress: lp1_junior,
             shares: BigInt(200_000_000),
         },
         {
-            user: namedSigners['bob'],
+            user: bob,
             lendingPoolAddress: lp1,
             trancheAddress: lp1_junior,
             shares: BigInt(8000_000_000),

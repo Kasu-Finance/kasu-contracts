@@ -12,6 +12,7 @@ abstract contract KasuAccessControllable {
     /* ========== CONSTANTS ========== */
 
     /// @dev Kasu access control manager.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKasuController internal immutable _controller;
 
     /* ========== CONSTRUCTOR ========== */

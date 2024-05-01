@@ -19,16 +19,22 @@ import "../../shared/AddressLib.sol";
  */
 contract LendingPoolFactory is ILendingPoolFactory {
     /// @notice Pending pool beacon address.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address private immutable _pendingPoolBeacon;
     /// @notice Lending pool beacon address.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address private immutable _lendingPoolBeacon;
     /// @notice Lending pool tranche beacon address.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address private immutable _lendingPoolTrancheBeacon;
     /// @notice Kasu controller contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKasuController private immutable _kasuController;
     /// @notice Lending pool manager contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address private immutable _lendingPoolManager;
     /// @notice System variables contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISystemVariables private immutable _systemVariables;
 
     /* ========== CONSTRUCTOR ========== */

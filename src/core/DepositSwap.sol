@@ -40,8 +40,10 @@ abstract contract DepositSwap {
     /* ========== STATE VARIABLES ========== */
 
     /// @dev WETH contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IWETH9 private immutable _weth;
     /// @dev Swapper contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISwapper private immutable _swapper;
 
     /* ========== CONSTRUCTOR ========== */

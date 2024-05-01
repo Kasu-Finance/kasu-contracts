@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ClearingConfiguration} from "../clearing/IClearingStepsData.sol";
 import "./ILendingPoolFactory.sol";
+import "../clearing/IClearingStepsData.sol";
 
 /**
  * @notice Lending pool address information.

@@ -39,8 +39,10 @@ contract PendingPool is
     using SafeERC20 for IERC20;
 
     /// @notice System variables contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISystemVariables private immutable _systemVariables;
     /// @notice User manager contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IUserManager private immutable _userManager;
 
     /// @dev tranche address => next deposit NFT id

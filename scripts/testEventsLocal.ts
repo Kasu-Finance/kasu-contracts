@@ -6,7 +6,7 @@ import {
 } from '../typechain-types';
 import * as hre from 'hardhat';
 import { parseUnits } from 'ethers';
-import { lockPeriod180, lockPeriod30 } from '../deploy/deploy';
+import { lockPeriod180, lockPeriod30 } from './deploy';
 
 async function main() {
     // contract addresses
@@ -15,10 +15,10 @@ async function main() {
     const ksuAddress = deployment['31337'][0]['contracts']['KSU'].address;
     const usdcAddress = deployment['31337'][0]['contracts']['MockUSDC'].address;
     // signers
-    const namedSigners = await hre.ethers.getNamedSigners();
-    const admin = namedSigners['admin'];
-    const alice = namedSigners['alice'];
-    const bob = namedSigners['bob'];
+    const signers = await hre.ethers.getSigners();
+    const admin = signers[0];
+    const alice = signers[1];
+    const bob = signers[2];
     // contracts
     const ksuAdminContract = KSU__factory.connect(ksuAddress, admin);
     const ksuAliceContract = KSU__factory.connect(ksuAddress, alice);

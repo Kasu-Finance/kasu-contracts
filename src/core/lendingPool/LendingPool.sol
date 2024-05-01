@@ -42,12 +42,16 @@ struct FutureTrancheInterestRates {
  */
 contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILendingPoolErrors, LendingPoolStoppable {
     /// @notice System variables contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISystemVariables private immutable _systemVariables;
     /// @notice Lending pool manager address.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address private immutable _lendingPoolManager;
     /// @notice Clearing coordinator contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IClearingCoordinator private immutable _clearingCoordinator;
     /// @notice Fee manager contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IFeeManager private immutable _feeManager;
 
     /// @notice Lending pool info contains pending pool and tranche addresses.

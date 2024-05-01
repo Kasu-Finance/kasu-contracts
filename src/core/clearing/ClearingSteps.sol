@@ -23,9 +23,11 @@ import "../../shared/AddressLib.sol";
  */
 abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalculation, AcceptedRequestsExecution {
     /// @notice Clearing coordinator contract.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IClearingCoordinator internal immutable _clearingCoordinator;
     /// @notice Accepted requests calculation contract.
     /// @dev This contract is used for step 3 of the clearing process.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAcceptedRequestsCalculation private immutable _acceptedRequestsCalculation;
 
     /// @dev Lending pool clearing data per epoch.

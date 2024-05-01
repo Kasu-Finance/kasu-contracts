@@ -27,6 +27,7 @@ struct SystemVariablesSetup {
  * Kasu epoch number always starts from 0.
  */
 contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, Initializable {
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKsuPrice public immutable ksuPrice;
 
     uint256 private constant _epochDuration = 1 weeks;

@@ -28,8 +28,8 @@ export async function requestDeposits(
     );
 
     // signers
-    const namedSigners = await hre.ethers.getNamedSigners();
-    const adminAccount = namedSigners['admin'];
+    const signers = await hre.ethers.getSigners();
+    const adminAccount = signers[0];
 
     // fund accounts
     console.info('Funding accounts with USDC');

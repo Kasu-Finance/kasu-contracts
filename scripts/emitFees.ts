@@ -1,28 +1,37 @@
 import path from 'path';
 import fs from 'fs';
 
-import {
-    ERC20__factory,
-    KSULocking__factory
-} from '../typechain-types';
+import { ERC20__factory, KSULocking__factory } from '../typechain-types';
 import * as hre from 'hardhat';
 
 async function main() {
-    const deploymentAddressesPath = path.join(`./deployments/${hre.network.name}/addresses-${hre.network.name}.json`);
-    const deploymentAddresses = JSON.parse((fs.readFileSync(deploymentAddressesPath)).toString());
+    const deploymentAddressesPath = path.join(
+        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
+    );
+    const deploymentAddresses = JSON.parse(
+        fs.readFileSync(deploymentAddressesPath).toString(),
+    );
 
     // signers
-    const namedSigners = await hre.ethers.getNamedSigners();
-    const admin = namedSigners['admin'];
+    const signers = await hre.ethers.getSigners();
+    const admin = signers[0];
     // contracts
-    const usdcContract = ERC20__factory.connect(deploymentAddresses.USDC.address, admin);    
-    const ksuLockingContract = KSULocking__factory.connect(deploymentAddresses.KSULocking.address, admin);
+    const usdcContract = ERC20__factory.connect(
+        deploymentAddresses.USDC.address,
+        admin,
+    );
+    const ksuLockingContract = KSULocking__factory.connect(
+        deploymentAddresses.KSULocking.address,
+        admin,
+    );
 
-
-    const feesAmount = hre.ethers.parseUnits("10000", 6);
-    let tx = await usdcContract.approve(await ksuLockingContract.getAddress(), feesAmount);
+    const feesAmount = hre.ethers.parseUnits('10000', 6);
+    let tx = await usdcContract.approve(
+        await ksuLockingContract.getAddress(),
+        feesAmount,
+    );
     await tx.wait();
-    
+
     tx = await ksuLockingContract.emitFees(feesAmount);
     await tx.wait();
 }
