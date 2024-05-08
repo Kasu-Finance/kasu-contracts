@@ -661,7 +661,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * The pool can't be resumed after stopping.
      * Sets the interest rates of the tranches to zero.
      */
-    function stop() external onlyLendingPoolManager verifyClearingNotPending {
+    function stop() external onlyLendingPoolManager verifyClearingNotPending lendingPoolShouldNotBeStopped {
         if (userOwedAmount > 0) {
             revert UserOwedAmountIsGreaterThanZero(userOwedAmount);
         }
