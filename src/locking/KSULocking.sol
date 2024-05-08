@@ -112,7 +112,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @notice Sets the KSU Bonus Tokens contract address.
      * @param ksuBonusTokens_ KSU Bonus Tokens contract address.
      */
-    function setKSULockBonus(address ksuBonusTokens_) external whenNotPaused onlyAdmin {
+    function setKSULockBonus(address ksuBonusTokens_) external onlyAdmin {
         AddressLib.checkIfZero(ksuBonusTokens_);
         _ksuBonusTokens = ksuBonusTokens_;
     }
@@ -122,11 +122,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
      * @param lockPeriod Lock period in seconds.
      * @param rKSUMultiplier rKSU multiplier for the lock period.
      */
-    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier)
-        external
-        whenNotPaused
-        onlyAdmin
-    {
+    function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external onlyAdmin {
         if (_lockDetails[lockPeriod].isActive) {
             revert LockPeriodAlreadyExists(lockPeriod);
         }

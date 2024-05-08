@@ -358,7 +358,7 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
      * @notice Sets the protocol fee receiver
      * @param receiver The protocol fee receiver
      */
-    function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
+    function setProtocolFeeReceiver(address receiver) public onlyAdmin {
         if (receiver == address(0)) {
             revert ConfigurationAddressZero();
         }

@@ -52,7 +52,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
      * @dev Can only be called by the admin.
      * @param signer_ The address of the user KYC data signer.
      */
-    function setNexeraIDSigner(address signer_) external whenNotPaused onlyAdmin {
+    function setNexeraIDSigner(address signer_) external onlyAdmin {
         AddressLib.checkIfZero(signer_);
         _setSigner(signer_);
     }
@@ -62,7 +62,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
      * @dev Can only be called by the admin.
      * @param user The user's address.
      */
-    function allowUser(address user) external whenNotPaused onlyAdmin {
+    function allowUser(address user) external onlyAdmin {
         AddressLib.checkIfZero(user);
 
         if (!allowList[user]) {
@@ -76,7 +76,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
      * @dev Can only be called by the admin.
      * @param user The user's address.
      */
-    function disallowUser(address user) external whenNotPaused onlyAdmin {
+    function disallowUser(address user) external onlyAdmin {
         AddressLib.checkIfZero(user);
 
         if (allowList[user]) {
@@ -91,7 +91,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
      * Can only be called by the admin.
      * @param user The user's address.
      */
-    function blockUser(address user) external whenNotPaused onlyAdmin {
+    function blockUser(address user) external onlyAdmin {
         AddressLib.checkIfZero(user);
 
         if (!blockList[user]) {
@@ -105,7 +105,7 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
      * @dev Can only be called by the admin.
      * @param user The user's address.
      */
-    function unblockUser(address user) external whenNotPaused onlyAdmin {
+    function unblockUser(address user) external onlyAdmin {
         AddressLib.checkIfZero(user);
 
         if (blockList[user]) {
