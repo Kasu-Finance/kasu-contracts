@@ -293,7 +293,7 @@ contract PendingPool is
     /**
      * @notice Creates a pending withdrawal for the user.
      * @dev Transfers tranche shares from the user to the pending pool.
-     * If the deposit is done during the clearing period the deposit is set for the next epoch.
+     * If the withdrawal is done during the clearing period the deposit is set for the next epoch.
      * If user already withdrew in the current epoch, and tranche the same withdrawal NFT is reused and requested share amount increased.
      * @param user The user making withdrawal request.
      * @param tranche The tranche user is withdrawing from.
