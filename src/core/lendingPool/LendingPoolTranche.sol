@@ -2,9 +2,7 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
-import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "./LendingPoolTrancheLoss.sol";
 import "./LendingPoolHelpers.sol";

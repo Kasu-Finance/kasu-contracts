@@ -2,7 +2,6 @@
 pragma solidity 0.8.23;
 
 import "../interfaces/IKasuController.sol";
-import "../CommonErrors.sol";
 import "./Roles.sol";
 import "../AddressLib.sol";
 

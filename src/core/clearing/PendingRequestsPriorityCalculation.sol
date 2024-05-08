@@ -6,7 +6,6 @@ import "../interfaces/clearing/IClearingStepsData.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../lendingPool/UserRequestIds.sol";
-import "../../shared/CommonErrors.sol";
 
 /**
  * @notice Pending requests calculation helper per epoch.

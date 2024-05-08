@@ -5,8 +5,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
-import "../interfaces/lendingPool/ILendingPoolTranche.sol";
-import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../interfaces/IUserManager.sol";
 import "../clearing/ClearingSteps.sol";

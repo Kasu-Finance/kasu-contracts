@@ -3,10 +3,7 @@ pragma solidity 0.8.23;
 
 import "../interfaces/clearing/IAcceptedRequestsExecution.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
-import "../interfaces/lendingPool/ILendingPoolTranche.sol";
-import "../interfaces/lendingPool/ILendingPoolManager.sol";
 import "../lendingPool/UserRequestIds.sol";
-import "../../shared/CommonErrors.sol";
 
 /**
  * @notice Accepted request execution status for the epoch.
