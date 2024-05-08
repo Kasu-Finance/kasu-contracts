@@ -135,7 +135,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
      * @notice Emits user loyalty rewards for a batch of users.
      * @dev Only admin can call this function.
      * @param userRewardInputs Array of user reward details.
-     * @param ksuTokenPrice KSU token price. Iz zero, the current price will be used.
+     * @param ksuTokenPrice KSU token price. If zero, the current price will be used.
      */
     function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice)
         external

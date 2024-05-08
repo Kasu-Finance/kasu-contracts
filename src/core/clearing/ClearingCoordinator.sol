@@ -228,7 +228,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
                 // override clearing configuration details
                 _overrideClearingConfig(lendingPool, targetEpoch, clearingConfig);
             } else {
-                // set the cleating configuration details from the lending pool
+                // set the clearing configuration details from the lending pool
                 _setDefaultClearingConfig(lendingPool, targetEpoch);
             }
 
