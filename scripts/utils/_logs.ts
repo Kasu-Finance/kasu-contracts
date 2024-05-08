@@ -17,7 +17,8 @@ export function addressFileFactory(
         writeAddressProxy: (
             name: string,
             proxy: string,
-            implementation: string | undefined = undefined,
+            implementation: string,
+            proxyType: string,
         ) =>
             writeAddressProxy(
                 deploymentPath,
@@ -25,6 +26,7 @@ export function addressFileFactory(
                 name,
                 proxy,
                 implementation,
+                proxyType
             ),
     };
 }
@@ -35,8 +37,9 @@ function writeAddressProxy(
     name: string,
     proxy: string,
     implementation: string,
+    proxyType: string
 ) {
-    _writeAddress(deploymentPath, blockNumber, name, implementation, proxy);
+    _writeAddress(deploymentPath, blockNumber, name, implementation, proxy, proxyType);
 }
 
 function _writeAddress(
@@ -44,7 +47,8 @@ function _writeAddress(
     blockNumber: number,
     name: string,
     implementation: string,
-    proxy: string | undefined = undefined,
+    proxy: string,
+    proxyType: string
 ) {
     const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
 
@@ -58,6 +62,7 @@ function _writeAddress(
             address: proxy,
             implementation: implementation,
             startBlock: blockNumber,
+            proxyType: proxyType,
         };
     }
 

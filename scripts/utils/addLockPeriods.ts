@@ -1,19 +1,23 @@
-import {
-    ksuBonusMultiplier180,
-    ksuBonusMultiplier30,
-    ksuBonusMultiplier360,
-    ksuBonusMultiplier720,
-    lockMultiplier180,
-    lockMultiplier30,
-    lockMultiplier360,
-    lockMultiplier720,
-    lockPeriod180,
-    lockPeriod30,
-    lockPeriod360,
-    lockPeriod720,
-} from '../deploy';
 import { KSULocking } from '../../typechain-types';
 import { ContractTransactionResponse } from 'ethers';
+
+export const SECONDS_IN_DAY = 86400n;
+
+export const lockPeriod30 = 30n * SECONDS_IN_DAY;
+export const lockMultiplier30 = 5_00;
+export const ksuBonusMultiplier30 = 0;
+
+export const lockPeriod180 = 180n * SECONDS_IN_DAY;
+export const lockMultiplier180 = 25_00;
+export const ksuBonusMultiplier180 = 10_00;
+
+export const lockPeriod360 = 360n * SECONDS_IN_DAY;
+export const lockMultiplier360 = 50_00;
+export const ksuBonusMultiplier360 = 25_00;
+
+export const lockPeriod720 = 720n * SECONDS_IN_DAY;
+export const lockMultiplier720 = 100_00;
+export const ksuBonusMultiplier720 = 70_00;
 
 export async function addLockPeriods(
     ksuLocking: KSULocking,
