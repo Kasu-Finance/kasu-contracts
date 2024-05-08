@@ -17,10 +17,10 @@ interface IKasuAllowList {
 
     /* ========== EVENTS ========== */
 
-    event UserAddedInAllowList(address user);
-    event UserRemovedFromAllowList(address user);
-    event UserBlockedFromAllowList(address user);
-    event UserUnblockedFromAllowList(address user);
+    event UserAddedInAllowList(address indexed user);
+    event UserRemovedFromAllowList(address indexed user);
+    event UserBlockedFromAllowList(address indexed user);
+    event UserUnblockedFromAllowList(address indexed user);
 
     /* ========== ERRORS ========== */
 

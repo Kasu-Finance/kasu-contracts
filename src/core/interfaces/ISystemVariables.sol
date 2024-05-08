@@ -75,7 +75,7 @@ interface ISystemVariables {
     event DefaultTrancheInterestChangeEpochDelayUpdated(uint256 defaultTrancheInterestChangeEpochDelay);
     event MaxTrancheInterestRateUpdated(uint256 maxTrancheInterestRate);
     event FeeRatesUpdated(uint256 ecosystemFeeRate, uint256 protocolFeeRate);
-    event ProtocolFeeReceiverUpdated(address receiver);
+    event ProtocolFeeReceiverUpdated(address indexed receiver);
 
     /* ========== ERRORS ========== */
 
