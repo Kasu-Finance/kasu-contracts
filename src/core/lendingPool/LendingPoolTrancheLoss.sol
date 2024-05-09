@@ -180,6 +180,16 @@ abstract contract LendingPoolTrancheLoss is
         revert NonTransferable();
     }
 
+    /**
+     * @notice ERC1155 Unrealized loss token is non-transferable.
+     */
+    function safeBatchTransferFrom(address, address, uint256[] memory, uint256[] memory, bytes memory)
+        public
+        override(ERC1155Upgradeable, IERC1155)
+    {
+        revert NonTransferable();
+    }
+
     /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _isLossMintingComplete(uint256 lossId) internal view returns (bool) {
