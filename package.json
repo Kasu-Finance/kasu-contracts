@@ -12,7 +12,8 @@
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
-        "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
+        "scripts:deploy:local": "hardhat run --network localhost ./scripts/deploy.ts",
+        "scripts:deploy:local:debug": "DEBUG=@openzeppelin:* hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
         "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",
         "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts"

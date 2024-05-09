@@ -38,17 +38,14 @@ export async function deployFactory(
                 await proxy.waitForDeployment();
 
                 proxyAddress = await proxy.getAddress();
-                console.log(`Deployed ${name} contract in address ${proxyAddress}}`);
             }
 
             if(!isNewDeployment) {
-                console.log(`Updating ${name} contract`)
+                console.log(`Checking to update ${name} contract`)
                 proxyAddress = addressFile.getContractAddress(exportName);
 
                 const proxy = await upgrades.upgradeProxy(proxyAddress, implementation, options);
                 await proxy.waitForDeployment();
-
-                console.log(`Updated ${name} contract in address ${proxyAddress}`);
             }
 
             addressFile.writeAddressProxy(exportName, proxyAddress, '', "TransparentProxy");
@@ -66,18 +63,17 @@ export async function deployFactory(
 
             let beaconAddress = '';
 
-
             if(isNewDeployment) {
+                console.log(`Deploying ${name} contract`);
                 const beacon = await upgrades.deployBeacon(implementation, options);
                 await beacon.waitForDeployment();
 
                 beaconAddress = await beacon.getAddress();
-                console.log(`Deployed ${name} in address ${beaconAddress}}`);
             }
 
             if(!isNewDeployment) {
+                console.log(`Checking to update ${name} contract`)
                 beaconAddress = addressFile.getContractAddress(name);
-                console.log(`Updated ${name} in address ${beaconAddress}}`);
 
                 const proxy = await upgrades.upgradeBeacon(beaconAddress, implementation, options);
                 beaconAddress = await proxy.getAddress();
