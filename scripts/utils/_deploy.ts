@@ -11,6 +11,7 @@ export function deployOptions(
         initialOwner: deployer,
         constructorArgs: constructorArgs,
         redeployImplementation: 'onchange',
+        verifySourceCode: false,
         kind: 'transparent',
         unsafeAllow: ['constructor'],
     };
