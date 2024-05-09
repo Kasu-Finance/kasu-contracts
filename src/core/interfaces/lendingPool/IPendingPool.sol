@@ -2,9 +2,7 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-import "../clearing/IPendingRequestsPriorityCalculation.sol";
-import {IAcceptedRequestsExecution} from "../clearing/IAcceptedRequestsExecution.sol";
-import {IClearingSteps} from "../clearing/IClearingSteps.sol";
+import "../clearing/IClearingSteps.sol";
 
 /**
  * @notice Enum where the withdrawal request came from.

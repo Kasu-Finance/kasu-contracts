@@ -2,7 +2,6 @@
 pragma solidity 0.8.23;
 
 import "./IAcceptedRequestsCalculation.sol";
-import "./IPendingRequestsPriorityCalculation.sol";
 
 /**
  * @notice The clearing status of a lending pool for a specific epoch.
