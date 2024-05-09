@@ -183,13 +183,10 @@ abstract contract LendingPoolTrancheLoss is
     /**
      * @notice ERC1155 Unrealized loss token is non-transferable.
      */
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory values,
-        bytes memory data
-    ) public override(ERC1155Upgradeable, IERC1155) {
+    function safeBatchTransferFrom(address, address, uint256[] memory, uint256[] memory, bytes memory)
+        public
+        override(ERC1155Upgradeable, IERC1155)
+    {
         revert NonTransferable();
     }
 
