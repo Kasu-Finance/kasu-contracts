@@ -9,7 +9,7 @@ import {
     SystemVariables__factory,
     UserManager__factory,
 } from '../typechain-types';
-import { ContractTransactionResponse, parseEther } from 'ethers';
+import { ContractTransactionResponse, parseEther, Signer } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
 import { addressFileFactory } from './utils/_logs';
 import { deployFactory, deployOptions } from './utils/_deploy';
@@ -21,11 +21,12 @@ export const wEthAddress = '0x4200000000000000000000000000000000000006';
 const NEXERA_ID_SIGNER = '0x0BAd9DaD98143b2E946e8A40E4f27537be2f55E2';
 let PROTOCOL_FEE_RECEIVER = '';
 
-const isLocalDeployment = () => {
+function isLocalDeployment() {
     return (
         hre.network.name === 'localhost' || hre.network.name === 'hardhat'
     );
-};
+}
+
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -37,17 +38,22 @@ async function main() {
     const isNewDeployment = !addressFile.didFileInitiallyExist;
     console.log(`Is new deployment: ${isNewDeployment}`);
 
+    // get signers
     const signers = await hre.ethers.getSigners();
-    const deployer = signers[0].address;
-    const admin = signers[0].address;
+
+    const deployerSigner = signers[0];
+    const deployerAddress = await deployerSigner.getAddress();
+
+    const adminSigner = signers[0];
+    const adminAddress = await adminSigner.getAddress();
 
     if (PROTOCOL_FEE_RECEIVER === '') {
-        PROTOCOL_FEE_RECEIVER = admin;
+        PROTOCOL_FEE_RECEIVER = adminAddress;
     }
 
     console.log();
-    console.log('deployer account: ', deployer);
-    console.log('admin account: ', admin);
+    console.log('deployer account: ', deployerAddress);
+    console.log('admin account: ', adminAddress);
     console.log();
 
     const { deployTransparentProxy, deployBeacon } = await deployFactory(
@@ -55,22 +61,18 @@ async function main() {
         isNewDeployment
     );
 
-    // get signer
-    const singers = await hre.ethers.getSigners();
-    const adminSigner = singers[0];
-
     // deploy
     let tx: ContractTransactionResponse;
     const ksuDeploymentAddress = await deployTransparentProxy(
         'KSU',
-        deployOptions(deployer, []),
+        deployOptions(deployerAddress, []),
     );
     const ksu = KSU__factory.connect(ksuDeploymentAddress, adminSigner);
 
 
     const mockUsdcDeploymentAddress = await deployTransparentProxy(
         'MockUSDC',
-        deployOptions(deployer, []),
+        deployOptions(deployerAddress, []),
         'USDC',
     );
     const mockUsdc = MockUSDC__factory.connect(
@@ -81,12 +83,12 @@ async function main() {
 
     const kasuControllerDeploymentAddress = await deployTransparentProxy(
         'KasuController',
-        deployOptions(deployer, []),
+        deployOptions(deployerAddress, []),
     );
 
     const ksuLockingDeploymentAddress = await deployTransparentProxy(
         'KSULocking',
-        deployOptions(deployer, [kasuControllerDeploymentAddress]),
+        deployOptions(deployerAddress, [kasuControllerDeploymentAddress]),
     );
     const ksuLocking = KSULocking__factory.connect(
         ksuLockingDeploymentAddress,
@@ -96,7 +98,7 @@ async function main() {
 
     const mockKsuPriceDeploymentAddress = await deployTransparentProxy(
         'MockKsuPrice',
-        deployOptions(admin, []),
+        deployOptions(adminAddress, []),
         'KsuPrice',
     );
     const mockKsuPriceAddress = MockKsuPrice__factory.connect(
@@ -109,7 +111,7 @@ async function main() {
     const systemVariablesDeploymentAddress = isLocalDeployment()
         ? await deployTransparentProxy(
               'SystemVariablesTestable',
-              deployOptions(deployer, [
+              deployOptions(deployerAddress, [
                   mockKsuPriceDeploymentAddress,
                   kasuControllerDeploymentAddress,
               ]),
@@ -117,7 +119,7 @@ async function main() {
           )
         : await deployTransparentProxy(
               'SystemVariables',
-              deployOptions(deployer, [
+              deployOptions(deployerAddress, [
                   mockKsuPriceDeploymentAddress,
                   kasuControllerDeploymentAddress,
               ]),
@@ -125,7 +127,7 @@ async function main() {
 
     const feeManagerDeploymentAddress = await deployTransparentProxy(
         'FeeManager',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             mockUsdcDeploymentAddress,
             systemVariablesDeploymentAddress,
             kasuControllerDeploymentAddress,
@@ -135,7 +137,7 @@ async function main() {
 
     const userLoyaltyRewardsDeployment = await deployTransparentProxy(
         'UserLoyaltyRewards',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             mockKsuPriceDeploymentAddress,
             ksuDeploymentAddress,
             kasuControllerDeploymentAddress,
@@ -144,7 +146,7 @@ async function main() {
 
     const userManagerDeploymentAddress = await deployTransparentProxy(
         'UserManager',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             systemVariablesDeploymentAddress,
             ksuLockingDeploymentAddress,
             userLoyaltyRewardsDeployment,
@@ -157,12 +159,12 @@ async function main() {
 
     const swapperProxyAddress = await deployTransparentProxy(
         'Swapper',
-        deployOptions(deployer, [kasuControllerDeploymentAddress]),
+        deployOptions(deployerAddress, [kasuControllerDeploymentAddress]),
     );
 
     const lendingPoolManagerDeploymentAddress = await deployTransparentProxy(
         'LendingPoolManager',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             mockUsdcDeploymentAddress,
             kasuControllerDeploymentAddress,
             wEthAddress,
@@ -172,7 +174,7 @@ async function main() {
 
     const kasuAllowListDeploymentAddress = await deployTransparentProxy(
         'KasuAllowList',
-        deployOptions(deployer, [kasuControllerDeploymentAddress]),
+        deployOptions(deployerAddress, [kasuControllerDeploymentAddress]),
     );
     const kasuAllowList = KasuAllowList__factory.connect(
         kasuAllowListDeploymentAddress,
@@ -183,7 +185,7 @@ async function main() {
     // clearing
     const clearingCoordinatorDeploymentAddress = await deployTransparentProxy(
         'ClearingCoordinator',
-        deployOptions(admin, [
+        deployOptions(adminAddress, [
             systemVariablesDeploymentAddress,
             userManagerDeploymentAddress,
             lendingPoolManagerDeploymentAddress,
@@ -192,14 +194,14 @@ async function main() {
 
     const acceptedRequestsCalculationDeployment = await deployTransparentProxy(
         'AcceptedRequestsCalculation',
-        deployOptions(admin, []),
+        deployOptions(adminAddress, []),
     );
 
     // beacons
 
     const lendingPoolBeaconAddress = await deployBeacon(
         'LendingPool',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             systemVariablesDeploymentAddress,
             lendingPoolManagerDeploymentAddress,
             clearingCoordinatorDeploymentAddress,
@@ -210,7 +212,7 @@ async function main() {
 
     const pendingPoolBeaconAddress = await deployBeacon(
         'PendingPool',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             systemVariablesDeploymentAddress,
             mockUsdcDeploymentAddress,
             lendingPoolManagerDeploymentAddress,
@@ -222,7 +224,7 @@ async function main() {
 
     const lendingPoolTrancheBeaconAddress = await deployBeacon(
         'LendingPoolTranche',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             lendingPoolManagerDeploymentAddress,
             mockUsdcDeploymentAddress,
         ]),
@@ -230,7 +232,7 @@ async function main() {
 
     const lendingPoolFactoryAddress = await deployTransparentProxy(
         'LendingPoolFactory',
-        deployOptions(deployer, [
+        deployOptions(deployerAddress, [
             pendingPoolBeaconAddress,
             lendingPoolBeaconAddress,
             lendingPoolTrancheBeaconAddress,
@@ -242,12 +244,12 @@ async function main() {
 
     const ksuLockBonusDeploymentAddress = await deployTransparentProxy(
         'KSULockBonus',
-        deployOptions(deployer, []),
+        deployOptions(deployerAddress, []),
     );
 
     // initialize
     if(isNewDeployment) {
-        tx = await ksu.initialize(admin);
+        tx = await ksu.initialize(adminAddress);
         await tx.wait(1);
 
         tx = await mockUsdc.initialize();
@@ -272,7 +274,7 @@ async function main() {
             kasuControllerDeploymentAddress,
             adminSigner,
         );
-        tx = await kasuController.initialize(admin, lendingPoolFactoryAddress);
+        tx = await kasuController.initialize(adminAddress, lendingPoolFactoryAddress);
         await tx.wait(1);
 
         const lendingPoolManager = LendingPoolManager__factory.connect(

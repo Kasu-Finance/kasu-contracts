@@ -1,4 +1,4 @@
-import * as deployment from '../deployments/localhost/addresses-localhost.json';
+import * as deployment from '../.openzeppelin/localhost-addresses.json';
 import {
     KSU__factory,
     KSULocking__factory,

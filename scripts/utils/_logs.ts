@@ -6,19 +6,15 @@ export function addressFileFactory(
     blockNumber: number,
     networkName: string,
 ) {
-    const folderPath = path.join(__dirname, '..', '..', 'deployments', networkName);
+    const folderPath = path.join(__dirname, '..', '..', '.openzeppelin');
     const filePath = path.join(
         folderPath,
-        `addresses-${hre.network.name}.json`,
+        `${hre.network.name}-addresses.json`,
     );
 
     const didFileInitiallyExist = fileExists(filePath);
 
-    if (!fs.existsSync(folderPath)) {
-        fs.mkdirSync(folderPath, {
-            recursive: true,
-        });
-
+    if (!didFileInitiallyExist) {
         fs.writeFileSync(
             filePath,
             JSON.stringify({
@@ -27,7 +23,6 @@ export function addressFileFactory(
             }),
         );
     }
-
 
 
     return {

@@ -12,6 +12,7 @@
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
+        "scripts:deploy:base-sepolia": "DEPLOYER_KEY= ADMIN_KEY= hardhat run --network base-sepolia ./scripts/deploy.ts",
         "scripts:deploy:local": "hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:deploy:local:debug": "DEBUG=@openzeppelin:* hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
