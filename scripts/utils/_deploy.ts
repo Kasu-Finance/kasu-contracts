@@ -31,6 +31,7 @@ export async function deployFactory(
             exportName = exportName ? exportName : name;
 
             let proxyAddress = '';
+            let implementationAddress = '';
 
             if(isNewDeployment) {
                 console.log(`Deploying ${name} contract`);
@@ -38,6 +39,10 @@ export async function deployFactory(
                 await proxy.waitForDeployment();
 
                 proxyAddress = await proxy.getAddress();
+
+                implementationAddress = await upgrades.erc1967.getImplementationAddress(
+                    proxyAddress
+                );
             }
 
             if(!isNewDeployment) {
@@ -46,9 +51,13 @@ export async function deployFactory(
 
                 const proxy = await upgrades.upgradeProxy(proxyAddress, implementation, options);
                 await proxy.waitForDeployment();
+
+                implementationAddress = await upgrades.erc1967.getImplementationAddress(
+                    proxyAddress
+                );
             }
 
-            addressFile.writeAddressProxy(exportName, proxyAddress, '', "TransparentProxy");
+            addressFile.writeAddressProxy(exportName, proxyAddress, implementationAddress, "TransparentProxy");
 
             return proxyAddress;
         },
@@ -62,6 +71,7 @@ export async function deployFactory(
             exportName = exportName ? exportName : name;
 
             let beaconAddress = '';
+            let implementationAddress = '';
 
             if(isNewDeployment) {
                 console.log(`Deploying ${name} contract`);
@@ -69,6 +79,10 @@ export async function deployFactory(
                 await beacon.waitForDeployment();
 
                 beaconAddress = await beacon.getAddress();
+
+                implementationAddress = await upgrades.beacon.getImplementationAddress(
+                    beaconAddress
+                );
             }
 
             if(!isNewDeployment) {
@@ -77,12 +91,16 @@ export async function deployFactory(
 
                 const proxy = await upgrades.upgradeBeacon(beaconAddress, implementation, options);
                 beaconAddress = await proxy.getAddress();
+
+                implementationAddress = await upgrades.beacon.getImplementationAddress(
+                    beaconAddress
+                );
             }
 
             addressFile.writeAddressProxy(
                 exportName,
                 beaconAddress,
-                '',
+                implementationAddress,
                 "BeaconProxy"
             );
             return beaconAddress;
