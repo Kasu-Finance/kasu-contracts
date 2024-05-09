@@ -1,17 +1,34 @@
 import fs from 'fs';
+import path from 'path';
+import hre from 'hardhat';
 
 export function addressFileFactory(
-    deploymentPath: string,
     blockNumber: number,
     networkName: string,
 ) {
-    fs.writeFileSync(
-        deploymentPath,
-        JSON.stringify({
-            network: networkName,
-            startBlock: blockNumber,
-        }),
+    const folderPath = path.join(__dirname, '..', '..', 'deployments', networkName);
+    const filePath = path.join(
+        folderPath,
+        `addresses-${hre.network.name}.json`,
     );
+
+    const didFileInitiallyExist = fileExists(filePath);
+
+    if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, {
+            recursive: true,
+        });
+
+        fs.writeFileSync(
+            filePath,
+            JSON.stringify({
+                network: networkName,
+                startBlock: blockNumber,
+            }),
+        );
+    }
+
+
 
     return {
         writeAddressProxy: (
@@ -21,13 +38,15 @@ export function addressFileFactory(
             proxyType: string,
         ) =>
             writeAddressProxy(
-                deploymentPath,
+                filePath,
                 blockNumber,
                 name,
                 proxy,
                 implementation,
                 proxyType
             ),
+        didFileInitiallyExist: didFileInitiallyExist,
+        getContractAddress: (contractName: string) => getContractAddress(filePath, contractName)
     };
 }
 
@@ -39,32 +58,31 @@ function writeAddressProxy(
     implementation: string,
     proxyType: string
 ) {
-    _writeAddress(deploymentPath, blockNumber, name, implementation, proxy, proxyType);
+    const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
+    addresses[name] = {
+        address: proxy,
+        implementation: implementation,
+        startBlock: blockNumber,
+        proxyType: proxyType,
+    };
+    fs.writeFileSync(deploymentPath, JSON.stringify(addresses, null, 4));
 }
 
-function _writeAddress(
-    deploymentPath: string,
-    blockNumber: number,
-    name: string,
-    implementation: string,
-    proxy: string,
-    proxyType: string
-) {
-    const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
-
-    if (!proxy) {
-        addresses[name] = {
-            address: implementation,
-            startBlock: blockNumber,
-        };
-    } else {
-        addresses[name] = {
-            address: proxy,
-            implementation: implementation,
-            startBlock: blockNumber,
-            proxyType: proxyType,
-        };
+function fileExists(filePath: string): boolean {
+    try {
+        fs.accessSync(filePath);
+        return true;
+    } catch (error) {
+        return false;
     }
+}
 
-    fs.writeFileSync(deploymentPath, JSON.stringify(addresses, null, 4));
+function getContractAddress(deploymentPath: string, contractName: string): string {
+    const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
+    const address = addresses[contractName].address;
+    if(address == undefined || address == "") {
+        console.error("Could not find address for deployment", deploymentPath, contractName);
+        throw new Error()
+    }
+    return address;
 }
