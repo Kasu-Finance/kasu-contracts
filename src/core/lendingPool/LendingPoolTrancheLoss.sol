@@ -185,6 +185,7 @@ abstract contract LendingPoolTrancheLoss is
      */
     function safeBatchTransferFrom(address, address, uint256[] memory, uint256[] memory, bytes memory)
         public
+        pure
         override(ERC1155Upgradeable, IERC1155)
     {
         revert NonTransferable();
