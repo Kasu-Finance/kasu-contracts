@@ -207,6 +207,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         loyaltyEpochRewardRatesInput[0] = LoyaltyEpochRewardRateInput(1, 38329912069265);
         loyaltyEpochRewardRatesInput[1] = LoyaltyEpochRewardRateInput(2, 19164956034632);
         userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(loyaltyEpochRewardRatesInput);
+
+        _KSULocking.setCanEmitFees(address(feeManager), true);
         vm.stopPrank();
     }
 
