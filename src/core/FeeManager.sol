@@ -3,6 +3,8 @@ pragma solidity 0.8.23;
 
 import "./interfaces/IFeeManager.sol";
 import "./interfaces/ISystemVariables.sol";
+import "./interfaces/lendingPool/ILendingPoolManager.sol";
+import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../locking/interfaces/IKSULocking.sol";
 import "../shared/access/KasuAccessControllable.sol";
 import "./AssetFunctionsBase.sol";
@@ -21,6 +23,8 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     IKSULocking private immutable _ksuLocking;
     /// @notice System variables contract.
     ISystemVariables private immutable _systemVariables;
+    /// @notice Lending pool manager contract.
+    ILendingPoolManager private immutable _lendingPoolManager;
 
     /// @notice Total amount of protocol fees pending to be claimed.
     uint256 public totalProtocolFeeAmount;
@@ -38,25 +42,33 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         address underlyingAsset_,
         ISystemVariables systemVariables_,
         IKasuController controller_,
-        IKSULocking ksuLocking_
+        IKSULocking ksuLocking_,
+        ILendingPoolManager lendingPoolManager_
     ) AssetFunctionsBase(underlyingAsset_) KasuAccessControllable(controller_) {
         AddressLib.checkIfZero(address(ksuLocking_));
         AddressLib.checkIfZero(address(systemVariables_));
 
         _ksuLocking = ksuLocking_;
         _systemVariables = systemVariables_;
+        _lendingPoolManager = lendingPoolManager_;
     }
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
      * @notice Transfers fee amount from the caller and emits them to the FeeManager contract.
-     * @dev The fees are split into ecosystem and protocol fees.
+     * @dev
+     * Only the valid lending pool can call this function.
+     * The fees are split into ecosystem and protocol fees.
      * Ecosystem fees are sent to the KSU Locking contract and distributed to rKSU holders,
      * while protocol fees are stored in the contract until claimed.
      * @param amount Amount of fees to emit.
      */
     function emitFees(uint256 amount) external whenNotPaused {
+        if (!_lendingPoolManager.isLendingPool(msg.sender)) {
+            revert ILendingPoolErrors.InvalidLendingPool(msg.sender);
+        }
+
         _transferAssetsFrom(msg.sender, address(this), amount);
 
         (uint256 ecosystemFeeRate,) = _systemVariables.feeRates();

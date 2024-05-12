@@ -6,6 +6,8 @@ import "./ILendingPool.sol";
 import "./ILendingPoolFactory.sol";
 
 interface ILendingPoolManager {
+    function isLendingPool(address lendingPool) external view returns (bool);
+
     // #### USER #### //
     function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
         external

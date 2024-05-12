@@ -57,6 +57,8 @@ abstract contract LockingTestUtils is BaseTestUtils {
         _KSULocking.addLockPeriod(lockPeriod360, lockMultiplier360, ksuBonusMultiplier360);
         _KSULocking.addLockPeriod(lockPeriod720, lockMultiplier720, ksuBonusMultiplier720);
 
+        _KSULocking.setCanEmitFees(admin, true);
+
         vm.stopPrank();
     }
 

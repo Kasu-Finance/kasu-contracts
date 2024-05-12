@@ -248,7 +248,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @dev The performance fee is denominated in FULL_PERCENT and cannot exceed it.
      * @param performanceFee_ The new performance fee.
      */
-    function setPerformanceFee(uint256 performanceFee_) external whenNotPaused onlyAdmin {
+    function setPerformanceFee(uint256 performanceFee_) external onlyAdmin {
         _setPerformanceFee(performanceFee_);
     }
 
@@ -290,7 +290,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * If array has no elements then there is only one loyalty level.
      * @param loyaltyThresholds_ The new loyalty thresholds array.
      */
-    function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds_) external whenNotPaused onlyAdmin {
+    function setLoyaltyThresholds(uint256[] calldata loyaltyThresholds_) external onlyAdmin {
         if (isClearingTime()) {
             revert CannotConfigureDuringClearingPeriod();
         }
@@ -330,7 +330,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Sets whether users are allowed to deposit to junior tranche only when the own rKSU.
      * @param value Set to true if they are only allowed to deposit to junior tranche when they have rKSU, false the other way around.
      */
-    function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external whenNotPaused onlyAdmin {
+    function setUserCanOnlyDepositToJuniorTrancheWhenHeHasRKSU(bool value) external onlyAdmin {
         _userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU = value;
 
         emit UserCanOnlyDepositToJuniorTrancheWhenHeHasRKSUUpdated(value);
@@ -352,7 +352,6 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      */
     function setDefaultTrancheInterestChangeEpochDelay(uint256 defaultTrancheInterestChangeEpochDelay_)
         public
-        whenNotPaused
         onlyAdmin
     {
         _defaultTrancheInterestChangeEpochDelay = defaultTrancheInterestChangeEpochDelay_;
@@ -372,7 +371,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Sets the maximum allowed interest rate per tranche.
      * @param maxTrancheInterestRate_ maximum allowed interest rate per tranche.
      */
-    function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public whenNotPaused onlyAdmin {
+    function setMaxTrancheInterestRate(uint256 maxTrancheInterestRate_) public onlyAdmin {
         _maxTrancheInterestRate = maxTrancheInterestRate_;
 
         emit MaxTrancheInterestRateUpdated(maxTrancheInterestRate_);
@@ -428,7 +427,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @param ecosystemFeeRate The ecosystem fee rate.
      * @param protocolFeeRate The protocol fee rate.
      */
-    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external whenNotPaused onlyAdmin {
+    function setFeeRates(uint256 ecosystemFeeRate, uint256 protocolFeeRate) external onlyAdmin {
         _setFeeRates(ecosystemFeeRate, protocolFeeRate);
     }
 
@@ -454,7 +453,7 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @notice Sets the protocol fee receiver.
      * @param receiver The protocol fee receiver.
      */
-    function setProtocolFeeReceiver(address receiver) public whenNotPaused onlyAdmin {
+    function setProtocolFeeReceiver(address receiver) public onlyAdmin {
         _setProtocolFeeReceiver(receiver);
     }
 

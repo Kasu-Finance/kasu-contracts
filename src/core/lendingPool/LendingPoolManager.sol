@@ -85,6 +85,17 @@ contract LendingPoolManager is
         _clearingCoordinator = clearingCoordinator_;
     }
 
+    /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
+    /**
+     * @notice Checks if an address is the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @return Whether the address is the lending pool.
+     */
+    function isLendingPool(address lendingPool) external view returns (bool) {
+        return lendingPools[lendingPool].lendingPool != address(0);
+    }
+
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
     // #### USER #### //

@@ -14,12 +14,21 @@ import "../shared/AddressLib.sol";
  * @custom:member inTokens Input tokens to be swapped.
  * @custom:member inAmounts Maximal amount of input tokens to be swapped.
  * @custom:member swapInfo Information needed to perform the swap.
+ * @custom:member minAmountOut Minimal amount of output tokens expected to receive.
  */
 struct SwapDepositBag {
     address[] inTokens;
     uint256[] inAmounts;
     SwapInfo[] swapInfo;
+    uint256 minAmountOut;
 }
+
+/**
+ * @notice Insufficient output amount error.
+ * @param amountOut Amount of the token received.
+ * @param minAmountOut Minimal amount of output tokens expected to receive.
+ */
+error InsufficientOutputAmount(uint256 amountOut, uint256 minAmountOut);
 
 /**
  * @title DepositSwap abstract contract.
@@ -58,9 +67,12 @@ abstract contract DepositSwap {
      * swapper should swap tokens and return the swapped tokens to this contract.
      * @param swapDepositBag Swap and deposit information.
      * @param outToken Expected token to receive.
-     * @return tokenAmount Amount of the token received.
+     * @return outTokenAmount Amount of the token received.
      */
-    function _transferAndSwap(SwapDepositBag memory swapDepositBag, address outToken) internal returns (uint256) {
+    function _transferAndSwap(SwapDepositBag memory swapDepositBag, address outToken)
+        internal
+        returns (uint256 outTokenAmount)
+    {
         if (swapDepositBag.inTokens.length != swapDepositBag.inAmounts.length) revert InvalidArrayLength();
         uint256 msgValue = msg.value;
 
@@ -82,7 +94,11 @@ abstract contract DepositSwap {
 
         _swapper.swap(swapDepositBag.inTokens, swapDepositBag.swapInfo, outToken, address(this));
 
-        return IERC20(outToken).balanceOf(address(this));
+        outTokenAmount = IERC20(outToken).balanceOf(address(this));
+
+        if (outTokenAmount < swapDepositBag.minAmountOut) {
+            revert InsufficientOutputAmount(outTokenAmount, swapDepositBag.minAmountOut);
+        }
     }
 
     /**
