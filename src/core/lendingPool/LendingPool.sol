@@ -770,7 +770,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         uint256 applicableEpoch = currentEpoch + epochDelay;
 
         for (uint256 i = _futureTrancheInterests[tranche].length - 1; i > 0; --i) {
-            if (_futureTrancheInterests[tranche][i].epoch >= applicableEpoch) {
+            if (_futureTrancheInterests[tranche][i].epoch > applicableEpoch) {
                 FutureTrancheInterestRates memory futureTrancheInterest = _futureTrancheInterests[tranche][i];
                 _futureTrancheInterests[tranche].pop();
 
