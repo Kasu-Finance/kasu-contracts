@@ -77,6 +77,8 @@ contract Swapper is ISwapper, KasuAccessControllable {
             _approveMax(IERC20(swapInfo[i].token), swapInfo[i].swapTarget);
 
             swapInfo[i].swapTarget.functionCall(swapInfo[i].swapCallData);
+
+            _resetApproval(IERC20(swapInfo[i].token), swapInfo[i].swapTarget);
         }
 
         tokenAmount = IERC20(tokenOut).balanceOf(address(this));
@@ -130,5 +132,11 @@ contract Swapper is ISwapper, KasuAccessControllable {
 
     function _approveMax(IERC20 token, address spender) private {
         token.safeIncreaseAllowance(spender, type(uint256).max);
+    }
+
+    function _resetApproval(IERC20 token, address spender) private {
+        if (token.allowance(address(this), spender) > 0) {
+            token.forceApprove(spender, 0);
+        }
     }
 }
