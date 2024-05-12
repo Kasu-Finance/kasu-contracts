@@ -92,12 +92,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // system variables
         _deploySystemVariables();
 
-        // fee manager
-        FeeManager feeManagerImpl = new FeeManager(address(mockUsdc), systemVariables, kasuController, _KSULocking);
-        TransparentUpgradeableProxy feeManagerProxy =
-            new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
-        feeManager = IFeeManager(address(feeManagerProxy));
-
         // user loyalty rewards
         UserLoyaltyRewards userLoyaltyRewardsImpl = new UserLoyaltyRewards(ksuPrice, _ksu, kasuController);
         TransparentUpgradeableProxy userLoyaltyRewardsProxy =
@@ -122,6 +116,13 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
 
         UserManager(address(userManager)).initialize(address(lendingPoolManager));
+
+        // fee manager
+        FeeManager feeManagerImpl =
+            new FeeManager(address(mockUsdc), systemVariables, kasuController, _KSULocking, lendingPoolManager);
+        TransparentUpgradeableProxy feeManagerProxy =
+            new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
+        feeManager = IFeeManager(address(feeManagerProxy));
 
         // clearing
         AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
