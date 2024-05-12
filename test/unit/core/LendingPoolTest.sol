@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "../_utils/LendingPoolTestUtils.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
 import "../../../src/core/lendingPool/LendingPoolStoppable.sol";
 import "../../../src/shared/CommonErrors.sol";
@@ -115,6 +116,57 @@ contract LendingPoolTest is LendingPoolTestUtils {
         DepositNftDetails memory depositNftDetails_bob = pendingPool.trancheDepositNftDetails(dNftId1_bob);
         assertEq(depositNftDetails_bob.assetAmount, 250 * 10 ** 6);
         assertEq(depositNftDetails_bob.tranche, lpd.tranches[0]);
+    }
+
+    function test_requestDepositWithKyc() public {
+        // ARRANGE
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 blockExpiration = block.number + 1;
+        bytes memory argsWithSelector = abi.encodeCall(kasuAllowList.verifyUserKyc, (alice));
+
+        BaseTxAuthDataVerifier.TxAuthData memory txAuthData = BaseTxAuthDataVerifier.TxAuthData({
+            functionCallData: argsWithSelector,
+            contractAddress: address(kasuAllowList),
+            userAddress: alice,
+            chainID: block.chainid,
+            nonce: KasuAllowList(address(kasuAllowList)).nonces(alice),
+            blockExpiration: blockExpiration
+        });
+
+        bytes32 messageHash = KasuAllowList(address(kasuAllowList)).getMessageHash(txAuthData);
+        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(kycSignerPrivateKey, ethSignedMessageHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        deal(address(mockUsdc), alice, 10000 * 10 ** 6, true);
+        deal(address(mockUsdc), bob, 10000 * 10 ** 6, true);
+
+        // ACT
+
+        // assert bob cannot deposit with alice KYC signature
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(BaseTxAuthDataVerifier.InvalidSignature.selector));
+        lendingPoolManager.requestDepositWithKyc(
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", blockExpiration, signature
+        );
+
+        // Alice deposits with KYC signature
+        vm.startPrank(alice);
+        mockUsdc.approve(address(lendingPoolManager), type(uint256).max);
+        uint256 dNftId1_alice = lendingPoolManager.requestDepositWithKyc(
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", blockExpiration, signature
+        );
+
+        // ASSERT
+        assertEq(KasuAllowList(address(kasuAllowList)).nonces(alice), 1);
+        PendingPool pendingPool = PendingPool(lpd.pendingPool);
+        assertEq(pendingPool.ownerOf(dNftId1_alice), alice);
+
+        vm.expectRevert(abi.encodeWithSelector(BaseTxAuthDataVerifier.InvalidSignature.selector));
+        lendingPoolManager.requestDepositWithKyc(
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", blockExpiration, signature
+        );
     }
 
     function test_cancelDeposit() public {

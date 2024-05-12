@@ -642,8 +642,16 @@ contract LendingPoolManager is
     }
 
     modifier isUserKycd(address user, uint256 blockExpiration, bytes calldata signature) {
-        if (!_kasuAllowList.verifyUserKyc(user, blockExpiration, signature)) {
-            revert IKasuAllowList.UserNotKycd(user);
+        {
+            bytes memory callData = bytes.concat(
+                abi.encodeCall(_kasuAllowList.verifyUserKyc, (user)), abi.encodePacked(blockExpiration, signature)
+            );
+            bytes memory response = Address.functionCall(address(_kasuAllowList), callData);
+            (bool isKycd) = abi.decode(response, (bool));
+
+            if (!isKycd) {
+                revert IKasuAllowList.UserNotKycd(user);
+            }
         }
         _;
     }

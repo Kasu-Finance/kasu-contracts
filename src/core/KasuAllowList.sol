@@ -117,16 +117,16 @@ contract KasuAllowList is IKasuAllowList, KasuAccessControllable, TxAuthDataVeri
     /**
      * @notice Verifies the user's KYC status via Nexera ID.
      * @dev Can only be called by the Lending Pool Manager as verifying increments the nonce of the user.
+     * The calldata must contain the block expiration number and the signature of the KYC data.
+     * KYC data is not part of the function parameters, but it's extracted from the end of the calldata when verifying the KYC.
      * @param user The user's address.
-     * @param blockExpiration The block number after which the kyc signature is considered expired.
-     * @param signature The signature of the user's KYC status.
      * @return A boolean indicating whether the user KYC is verified.
      */
-    function verifyUserKyc(address user, uint256 blockExpiration, bytes calldata signature) external returns (bool) {
+    function verifyUserKyc(address user) external returns (bool) {
         if (msg.sender != _lendingPoolManager) {
             revert ILendingPoolErrors.OnlyLendingPoolManager();
         }
 
-        return _verifyTxAuthData(_msgData(), user, blockExpiration, signature);
+        return _verifyTxAuthData(_msgData(), user);
     }
 }

@@ -39,6 +39,9 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     ISwapper internal swapper;
     WETH9 internal weth;
 
+    uint256 internal kycSignerPrivateKey = 0xA11CE;
+    address internal kycSigner = vm.addr(kycSignerPrivateKey);
+
     mapping(address => PendingPoolHarness) internal pendingPools;
 
     address internal poolFundsManagerAccount = address(0xad2);
@@ -80,12 +83,6 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             new TransparentUpgradeableProxy(address(kasuControllerImpl), address(proxyAdmin), "");
         kasuController = KasuController(address(kasuControllerProxy));
 
-        // allow list
-        KasuAllowList KasuAllowListImpl = new KasuAllowList(kasuController);
-        TransparentUpgradeableProxy KasuAllowListProxy =
-            new TransparentUpgradeableProxy(address(KasuAllowListImpl), address(proxyAdmin), "");
-        kasuAllowList = IKasuAllowList(address(KasuAllowListProxy));
-
         // ksu price
         _deployKsuPrice();
 
@@ -123,6 +120,14 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         TransparentUpgradeableProxy feeManagerProxy =
             new TransparentUpgradeableProxy(address(feeManagerImpl), address(proxyAdmin), "");
         feeManager = IFeeManager(address(feeManagerProxy));
+
+        // allow list
+        KasuAllowList KasuAllowListImpl = new KasuAllowList(kasuController);
+        TransparentUpgradeableProxy KasuAllowListProxy =
+            new TransparentUpgradeableProxy(address(KasuAllowListImpl), address(proxyAdmin), "");
+        kasuAllowList = IKasuAllowList(address(KasuAllowListProxy));
+
+        KasuAllowList(address(kasuAllowList)).initialize(address(lendingPoolManager), kycSigner);
 
         // clearing
         AcceptedRequestsCalculation acceptedRequestsCalculationImpl = new AcceptedRequestsCalculation();
