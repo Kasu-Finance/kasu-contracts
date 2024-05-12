@@ -1324,7 +1324,8 @@ contract LendingPoolTest is LendingPoolTestUtils {
         SwapDepositBag memory bag = SwapDepositBag({
             inTokens: ArraysUtil.toArray(inToken),
             inAmounts: ArraysUtil.toArray(13_000 ether),
-            swapInfo: swapInfo
+            swapInfo: swapInfo,
+            minAmountOut: usdcDepositAmount
         });
 
         vm.startPrank(admin);
@@ -1348,5 +1349,48 @@ contract LendingPoolTest is LendingPoolTestUtils {
         assertEq(IERC20(inToken).balanceOf(alice), 1000 ether); // 500 remained on the wallet and 500 was returned
         assertEq(depositNFT.assetAmount, usdcDepositAmount); // deposited
         assertEq(IERC20(mockUsdc).balanceOf(alice), 500 * 0.003 * 1e6); // swapped, but not deposited
+    }
+
+    function test_requestDeposit_InsufficientOutputAmount() public {
+        // ARRANGE
+        uint256 rate = 30; // 0.003 * 100_00
+        (address exchange, address inToken) = _createMockExchange(rate);
+        uint256 usdcSwapAmount = 12_500 * 1e6 * rate / FULL_PERCENT;
+
+        deal(address(inToken), alice, 13_500 ether);
+
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // Alice has 13_500, sends 13_000, 12_500 gets swapped, 12_000 deposited
+        // 500 should be returned in inToken
+        // 500 (* 0.003 * 1e6) should be returned in USDC
+        SwapInfo[] memory swapInfo = new SwapInfo[](1);
+        swapInfo[0] = SwapInfo(
+            exchange,
+            inToken,
+            abi.encodeWithSelector(MockExchange(exchange).swap.selector, 12_500 ether, address(lendingPoolManager))
+        );
+
+        SwapDepositBag memory bag = SwapDepositBag({
+            inTokens: ArraysUtil.toArray(inToken),
+            inAmounts: ArraysUtil.toArray(13_000 ether),
+            swapInfo: swapInfo,
+            minAmountOut: usdcSwapAmount + 1
+        });
+
+        vm.startPrank(admin);
+        swapper.updateExchangeAllowlist(ArraysUtil.toArray(exchange), ArraysUtil.toArray(true));
+        vm.stopPrank();
+
+        // ACT
+        vm.startPrank(alice);
+        IERC20(inToken).approve(address(lendingPoolManager), 13_000 ether);
+
+        // 12 WETH should be returned
+        vm.expectRevert(abi.encodeWithSelector(InsufficientOutputAmount.selector, usdcSwapAmount, usdcSwapAmount + 1));
+        uint256 depositId =
+            lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], usdcSwapAmount, abi.encode(bag));
+
+        console2.log("depositId: ", depositId, "usdcSwapAmount: ", usdcSwapAmount);
     }
 }
