@@ -47,6 +47,11 @@ contract KSULockingTest is LockingTestUtils {
 
         // ASSERT
         assertEq(mockUsdc.balanceOf(address(_KSULocking)), rewardAmount);
+
+        vm.startPrank(alice);
+        deal(address(mockUsdc), alice, rewardAmount, true);
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.AddressCannotEmitFees.selector, alice));
+        _KSULocking.emitFees(rewardAmount);
     }
 
     function test_lockDetails() public {

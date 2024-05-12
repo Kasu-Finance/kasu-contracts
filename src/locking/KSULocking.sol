@@ -35,6 +35,9 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /// @dev Ksu bonus tokens address.
     address private _ksuBonusTokens;
 
+    /// @notice Can address emit fees.
+    mapping(address feeEmitter => bool canEmitFees) public canAddressEmitFees;
+
     /// @notice User total KSU locked amount.
     mapping(address user => uint256 totalKsuLocked) public userTotalDeposits;
 
@@ -55,7 +58,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /* ========== CONSTRUCTOR ========== */
 
     /**
-     * @notice Constructor
+     * @notice Constructor.
      * @param controller_ Kasu controller address.
      */
     constructor(IKasuController controller_) KasuAccessControllable(controller_) {}
@@ -115,6 +118,18 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     function setKSULockBonus(address ksuBonusTokens_) external onlyAdmin {
         AddressLib.checkIfZero(ksuBonusTokens_);
         _ksuBonusTokens = ksuBonusTokens_;
+    }
+
+    /**
+     * @notice Allow or disallow an address to emit fees.
+     * @param feeEmitter Address to set.
+     * @param canEmit Boolean True if address can emit fees, False otherwise.
+     */
+    function setCanEmitFees(address feeEmitter, bool canEmit) external onlyAdmin {
+        AddressLib.checkIfZero(feeEmitter);
+        canAddressEmitFees[feeEmitter] = canEmit;
+
+        emit CanEmitFessSet(feeEmitter, canEmit);
     }
 
     /**
@@ -222,11 +237,15 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     /**
      * @notice Emitting USDC fees to the locking contracts.
-     * @dev Anyone can call this function.
+     * @dev Only fee emitter can call this function.
      * Caller must approve USDC token before calling this function.
      * @param amount amount of fees to emit.
      */
     function emitFees(uint256 amount) external whenNotPaused {
+        if (!canAddressEmitFees[msg.sender]) {
+            revert AddressCannotEmitFees(msg.sender);
+        }
+
         _feeToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // update reward details
