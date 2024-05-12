@@ -13,7 +13,7 @@ interface IKasuAllowList {
     function disallowUser(address user) external;
     function blockUser(address user) external;
     function unblockUser(address user) external;
-    function verifyUserKyc(address user, uint256 blockExpiration, bytes calldata signature) external returns (bool);
+    function verifyUserKyc(address user) external returns (bool);
 
     /* ========== EVENTS ========== */
 
