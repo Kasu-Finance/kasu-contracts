@@ -28,17 +28,24 @@ export async function createLendingPool(
     // signers
     const signers = await hre.ethers.getSigners();
 
-    const adminAccount = signers[0];
-    const aliceAccount = signers[1];
-    const bobAccount = signers[2];
+    const deployerAccount = signers[0];
+    const adminAccount = signers[1];
 
-    const clearingManagerAccount = signers[3];
-    const poolCreatorAccount = signers[4];
-    const poolAdminAccount = signers[5];
-    const drawRecipientAccount = signers[6];
+    const clearingManagerAccount = signers[1];
+    const poolCreatorAccount = signers[1];
+    const poolAdminAccount = signers[1];
+    const drawRecipientAccount = signers[1];
+
+    console.info('adminAccount', adminAccount.address);
+    console.info('clearingManagerAccount', clearingManagerAccount.address);
+    console.info('poolCreatorAccount', poolCreatorAccount.address);
+    console.info('poolAdminAccount', poolAdminAccount.address);
+    console.info('drawRecipientAccount', poolAdminAccount.address);
 
     // access control
-    console.info(`Granting ROLE_LENDING_POOL_CREATOR role to ${adminAccount}`);
+    console.info(
+        `Granting ROLE_LENDING_POOL_CREATOR role to ${adminAccount.address}`,
+    );
     const kasuControllerAdmin = KasuController__factory.connect(
         deploymentAddresses['KasuController'].address,
         adminAccount,

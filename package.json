@@ -18,7 +18,8 @@
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
         "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",
         "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts",
-        "scripts:createTestLendingPools": "hardhat run --network localhost ./scripts/createTestLendingPools.ts"
+        "scripts:createTestLendingPools": "hardhat run --network localhost ./scripts/createTestLendingPools.ts",
+        "scripts:createTestLendingPools:base:sepolia": "ADMIN_KEY=789de6ae8f1ea34d17aebc2a81dabfb8575ef88128404e91c87ccfc29be66821 hardhat run --network base-sepolia ./scripts/createTestLendingPools.ts"
     },
     "repository": {
         "type": "git",
