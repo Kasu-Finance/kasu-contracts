@@ -299,7 +299,7 @@ async function main() {
                 Math.round(Date.now() / 1000) - 3600 * 24 * 4,
             clearingPeriodLength: 60 * 60 * 36,
             performanceFee: 10_00,
-            loyaltyThresholds: [10_00, 30_00],
+            loyaltyThresholds: [1_00, 5_00],
             defaultTrancheInterestChangeEpochDelay: 1,
             ecosystemFeeRate: 50_00,
             protocolFeeRate: 50_00,
