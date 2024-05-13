@@ -12,7 +12,7 @@ const clearing2DrawAmount = hre.ethers.parseUnits('1000', 6); // 1000 USDC
 
 async function main() {
     // create lending pool
-    const lpd = await createLendingPool();
+    const lpd = await createLendingPool('test lending pool', 'LP', 3);
 
     const lp1 = lpd.createdLendingPoolAddress;
     const lp1_junior = lpd.createdTrancheAddresses[0];

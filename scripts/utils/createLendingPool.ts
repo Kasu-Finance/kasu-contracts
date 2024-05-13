@@ -11,29 +11,34 @@ import {
     CreateTrancheConfigStruct,
 } from '../../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse } from 'ethers';
+import { getLogFilePath } from './_logs';
 
-export async function createLendingPool() {
+export async function createLendingPool(
+    poolName: string,
+    poolSymbol: string,
+    numberOfTranches: number,
+) {
     let tx: ContractTransactionResponse;
 
-    const deploymentAddressesPath = path.join(
-        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
-    );
+    const { filePath } = getLogFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
-        fs.readFileSync(deploymentAddressesPath).toString(),
+        fs.readFileSync(filePath).toString(),
     );
 
     // signers
     const signers = await hre.ethers.getSigners();
+
     const adminAccount = signers[0];
     const aliceAccount = signers[1];
     const bobAccount = signers[2];
+
     const clearingManagerAccount = signers[3];
     const poolCreatorAccount = signers[4];
     const poolAdminAccount = signers[5];
     const drawRecipientAccount = signers[6];
 
     // access control
-    console.info('Granting ROLE_LENDING_POOL_CREATOR role');
+    console.info(`Granting ROLE_LENDING_POOL_CREATOR role to ${adminAccount}`);
     const kasuControllerAdmin = KasuController__factory.connect(
         deploymentAddresses['KasuController'].address,
         adminAccount,
@@ -49,41 +54,56 @@ export async function createLendingPool() {
     await tx.wait(1);
 
     // create lending pool
-    console.info('Creating Lending Pool');
+    console.info(`Creating Lending Pool`);
+    console.info(`lending pool name: ${poolName}`);
+    console.info(`lending pool symbol: ${poolSymbol}`);
+    console.info(`number of tranches: ${numberOfTranches}`);
 
     const lendingPoolManagerAdmin = LendingPoolManager__factory.connect(
         deploymentAddresses['LendingPoolManager'].address,
         poolCreatorAccount,
     );
 
-    const juniorTrancheConfig: CreateTrancheConfigStruct = {
-        ratio: 20_00, // 20%
-        interestRate: 2500000000000000, // 10%
-        minDepositAmount: 500_000_000, // 500 USDC
-        maxDepositAmount: 3000_000_000, // 3000 USDC
-    };
-    const mezzoTrancheConfig: CreateTrancheConfigStruct = {
-        ratio: 30_00,
-        interestRate: 2000000000000000,
-        minDepositAmount: 100_000_000,
-        maxDepositAmount: 10_000_000_000,
-    };
-    const seniorTrancheConfig: CreateTrancheConfigStruct = {
-        ratio: 50_00,
-        interestRate: 1500000000000000,
-        minDepositAmount: 10_000_000,
-        maxDepositAmount: 100_000_000_000,
-    };
+    const createTranchesConfig: CreateTrancheConfigStruct[] = [];
+
+    const ratios = [[100_00], [30_00, 70_00], [15_00, 35_00, 50_00]];
+
+    if (numberOfTranches >= 1) {
+        const juniorTrancheConfig: CreateTrancheConfigStruct = {
+            ratio: ratios[numberOfTranches - 1][0],
+            interestRate: 2500000000000000, //
+            minDepositAmount: 50_000_000, // 50 USDC
+            maxDepositAmount: 10_000_000_000, // 100K USDC
+        };
+        createTranchesConfig.push(juniorTrancheConfig);
+    }
+
+    if (numberOfTranches >= 2) {
+        const mezzoTrancheConfig: CreateTrancheConfigStruct = {
+            ratio: ratios[numberOfTranches - 1][1],
+            interestRate: 2000000000000000,
+            minDepositAmount: 50_000_000,
+            maxDepositAmount: 10_000_000_000,
+        };
+        createTranchesConfig.push(mezzoTrancheConfig);
+    }
+
+    if (numberOfTranches >= 3) {
+        const seniorTrancheConfig: CreateTrancheConfigStruct = {
+            ratio: ratios[numberOfTranches - 1][2],
+            interestRate: 1500000000000000,
+            minDepositAmount: 50_000_000,
+            maxDepositAmount: 100_000_000_000,
+        };
+        createTranchesConfig.push(seniorTrancheConfig);
+    }
+
     const createPoolConfig: CreatePoolConfigStruct = {
-        poolName: 'test lending pool',
-        poolSymbol: 'LP',
+        poolName: poolName,
+        poolSymbol: poolSymbol,
         targetExcessLiquidityPercentage: BigInt(10_000),
         minExcessLiquidityPercentage: 0,
-        tranches: [
-            juniorTrancheConfig,
-            mezzoTrancheConfig,
-            seniorTrancheConfig,
-        ],
+        tranches: createTranchesConfig,
         poolAdmin: poolAdminAccount.address,
         drawRecipient: drawRecipientAccount.address,
         desiredDrawAmount: BigInt(0),
@@ -93,8 +113,6 @@ export async function createLendingPool() {
     const txReceipt = await tx.wait(1);
 
     // get new lending pool address
-    console.info('Get new lending pool address');
-
     const lendingPoolFactory = LendingPoolFactory__factory.connect(
         deploymentAddresses['LendingPoolFactory'].address,
         adminAccount,

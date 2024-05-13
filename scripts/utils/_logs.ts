@@ -2,15 +2,21 @@ import fs from 'fs';
 import path from 'path';
 import hre from 'hardhat';
 
+export function getLogFilePath(networkName: string) {
+    const folderPath = path.join(__dirname, '..', '..', '.openzeppelin');
+    const filePath = path.join(
+        folderPath,
+        `${networkName}-addresses.json`,
+    );
+
+    return {folderPath, filePath}
+}
+
 export function addressFileFactory(
     blockNumber: number,
     networkName: string,
 ) {
-    const folderPath = path.join(__dirname, '..', '..', '.openzeppelin');
-    const filePath = path.join(
-        folderPath,
-        `${hre.network.name}-addresses.json`,
-    );
+    const {filePath} = getLogFilePath(hre.network.name);
 
     const didFileInitiallyExist = fileExists(filePath);
 
@@ -23,7 +29,6 @@ export function addressFileFactory(
             }),
         );
     }
-
 
     return {
         writeAddressProxy: (

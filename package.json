@@ -17,7 +17,8 @@
         "scripts:deploy:local:debug": "DEBUG=@openzeppelin:* hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
         "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",
-        "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts"
+        "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts",
+        "scripts:createTestLendingPools": "hardhat run --network localhost ./scripts/createTestLendingPools.ts"
     },
     "repository": {
         "type": "git",
