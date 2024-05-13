@@ -125,16 +125,6 @@ async function main() {
               ]),
           );
 
-    const feeManagerDeploymentAddress = await deployTransparentProxy(
-        'FeeManager',
-        deployOptions(deployerAddress, [
-            mockUsdcDeploymentAddress,
-            systemVariablesDeploymentAddress,
-            kasuControllerDeploymentAddress,
-            ksuLockingDeploymentAddress,
-        ]),
-    );
-
     const userLoyaltyRewardsDeployment = await deployTransparentProxy(
         'UserLoyaltyRewards',
         deployOptions(deployerAddress, [
@@ -169,6 +159,17 @@ async function main() {
             kasuControllerDeploymentAddress,
             wEthAddress,
             swapperProxyAddress,
+        ]),
+    );
+
+    const feeManagerDeploymentAddress = await deployTransparentProxy(
+        'FeeManager',
+        deployOptions(deployerAddress, [
+            mockUsdcDeploymentAddress,
+            systemVariablesDeploymentAddress,
+            kasuControllerDeploymentAddress,
+            ksuLockingDeploymentAddress,
+            lendingPoolManagerDeploymentAddress,
         ]),
     );
 
@@ -313,6 +314,9 @@ async function main() {
 
     // add lock periods
     if(isNewDeployment) {
+        let tx = await ksuLocking.setCanEmitFees(feeManagerDeploymentAddress, true);
+        await tx.wait(1);
+
         await addLockPeriods(ksuLocking, ksuLockBonusDeploymentAddress);
     }
 }

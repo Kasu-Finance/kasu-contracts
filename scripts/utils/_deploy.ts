@@ -13,7 +13,7 @@ export function deployOptions(
         redeployImplementation: 'onchange',
         verifySourceCode: false,
         kind: 'transparent',
-        unsafeAllow: ['constructor'],
+        unsafeAllow: ['constructor', 'state-variable-immutable'],
     };
 }
 
