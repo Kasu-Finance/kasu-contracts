@@ -2,90 +2,90 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
-      "address": "0xa5a5E3f165B210DdC7097Ae52b4FC739338782Ba",
-      "txHash": "0x80d663fb231ea4972f369b62d29c923dea87d57f5f6cb9bba3501638957102c6",
+      "address": "0xBc4963953e3074003585Ca930D883373A81b1d64",
+      "txHash": "0x89fe03428292473842df2670e75910d41b200b96139709568e183d57f6a75f2b",
       "kind": "transparent"
     },
     {
-      "address": "0xdA5Bc4309B173Ebfb79F3F8d266d6BbE765C925c",
-      "txHash": "0x12803270fb02020c93168a983cea9983357ee147863c2d0bab16c78baa66d59f",
+      "address": "0x15B22C46A37e2fFc1135d143fd3d47d889ad13Ff",
+      "txHash": "0x906e51e578f677f65773d72803825cd1b6767df783d52bf2a977bb242f263182",
       "kind": "transparent"
     },
     {
-      "address": "0x4634d8004f78454020fa04170f21B539D5Fb888A",
-      "txHash": "0xbb0c8090a6ef63b46e7d8692c1b1e61525f1abae1a120c46d76c8ea6fba41e53",
+      "address": "0x5cc38970C6c8697627CC5B0E81FB11C06FbdD3cC",
+      "txHash": "0x3bd5b7255468adb3701bbde90fb4b5438c7b44514bb6ca4865d16dd710cb8d90",
       "kind": "transparent"
     },
     {
-      "address": "0xBEeA1F8F1698505732257559cD773373a24c7463",
-      "txHash": "0x8335e1fdcca845c7419aaaaba636a7af8f535052f09cd550671f579d03773e7d",
+      "address": "0xbA38bA64433B876A1C2E987C05712236eC7324A4",
+      "txHash": "0x084c20340f01b095c31ee07e0bddc1c386fdee83650d40362804178196c2b051",
       "kind": "transparent"
     },
     {
-      "address": "0x8a3A12C25c0E71F023cc0eC06E996F5C3cC3e56F",
-      "txHash": "0xa9bf3e6f7d4e7fff93e715c0b7cb7732bc6f3b129bfa8ea403d65ff2787067b5",
+      "address": "0xDE68b02102aB05814FC7bf5B201D5e01Aa1db341",
+      "txHash": "0x58daca2d8f7529987525515a130e97e7f41c0174d4eee954016fea5a789e9015",
       "kind": "transparent"
     },
     {
-      "address": "0x4Cd7A042f737DD8c6540A978529fe5fCeC952378",
-      "txHash": "0x08bffd64a1682aa71cc921ce5cb4cd1a1f3a54e2c1e319c02212ba715c8583ff",
+      "address": "0xcbBDa280E2850e526277b62af7Afe9d16c151f39",
+      "txHash": "0xe025412047eb0cf483167437ac521c89ad266ca5ebeff500cda39ba63d66d1ad",
       "kind": "transparent"
     },
     {
-      "address": "0xDE07096dF85614716D612F5454A578EFD119Bd4A",
-      "txHash": "0xfb6275accc2a65146985cb1ad65cd31fd4d984af84ce0f0022647462b84abec4",
+      "address": "0x4826269893E4004A3D218E866023f7D438f2041b",
+      "txHash": "0x4b26930c64d7e8ce6a9aa652253a01f50269acd2406129a2c9539c44b2b01738",
       "kind": "transparent"
     },
     {
-      "address": "0xe4b813964c2A875962bF4735367ac768959bF8e9",
-      "txHash": "0x011e27be2d435e6c48b77baf792aa6e19aabdf085eca5cd25868bac721697635",
+      "address": "0xaA930b03A39e48e586d1e814Bec2606D016Ec520",
+      "txHash": "0xd70d3dcc48bf1c71e79e0234c2033aad5b5c3010273d3884f7a255c9e16513b5",
       "kind": "transparent"
     },
     {
-      "address": "0xA3fF1b0f12957230e491446fE417F2d3e5642F44",
-      "txHash": "0x2e6586b0b34229d8f611ce0cdb1baa9b4954e79cd0536437c49cb489799ea95e",
+      "address": "0xccEad902D3c27926d8E9cF106F219cbf871Af26a",
+      "txHash": "0xfddbc3981755e1e1dd453a10459e770f37b81fcdf86ac9e461ed140c3335116c",
       "kind": "transparent"
     },
     {
-      "address": "0xE7Fa31FEa589228A3aa56ADcf2747A498b99F343",
-      "txHash": "0x26bcc4eedeacba2c5279ad3590ad5b42f3525f90c43398aec4655925bb72adcc",
+      "address": "0x267e7e8C6064302847db7fcE447e5C3443e558c4",
+      "txHash": "0x15cfd9f4ae197301fb9c44181fecb62d31290e6bb2ff6f253e2fdd7e72f4cf4d",
       "kind": "transparent"
     },
     {
-      "address": "0x9c2b148519AF99C2464191Dbb18005eE5dd34f00",
-      "txHash": "0x14938db970559e1c35705f4c02b22769abc045a37ae15d3c68d04b8cd70fffe8",
+      "address": "0x61365cC3e3c7947B7C9a1eb454D48bFc4A9EEC5E",
+      "txHash": "0xf00a080cef1b9b159564a11b4a9c86754d72b70c5e3b67512e26dca2defea7bb",
       "kind": "transparent"
     },
     {
-      "address": "0xA46DD398659fD7049757D9dD4D8B49d331619566",
-      "txHash": "0x3c959d32863eba618d267f6c9e65681101a1c5c28ee54253bfb107686b9d73d1",
+      "address": "0x00e21fEBc702664510860934E589333e4ECe7a15",
+      "txHash": "0x02da74fe3c7600926bee693ce0fe7455bc01e207ac12c6007d9051a88f08f171",
       "kind": "transparent"
     },
     {
-      "address": "0xC5C65bF89133e7606E7465B6870189600b2b5cc9",
-      "txHash": "0xa74600f55917d049660116c700aef950f005d707b384813efa4f91f42ba8910a",
+      "address": "0x643F9f44ECC101242a5E466aA789d7aFb0081070",
+      "txHash": "0x0b10b989738975a4033b1ffa76b11207755e2e3641b8f868cd0f1afde776c453",
       "kind": "transparent"
     },
     {
-      "address": "0xa1d5d4dB6a8656B594098260573914f77c9E8984",
-      "txHash": "0x8b1c32b92ad5b555a246f4b3d8c9c7f39532d93f69b08ad1b2f0ea313d55577b",
+      "address": "0x06C75A4498d4C5C2912Da807134195DF4D97020E",
+      "txHash": "0xf973ef840c1a03696e359f98aad41cd6eef0881a6950a40bfea5c477e6a5298e",
       "kind": "transparent"
     },
     {
-      "address": "0x9Bb863bBefECF483e888E0da3da8a0201921af16",
-      "txHash": "0x494d6439b6e67caa35f57fffae42c4e5a7d68af614ad1a587325d2199022717b",
+      "address": "0xbf4fB8854860538AAf346C39d23CFcDBef1bBBd0",
+      "txHash": "0x4d8c8eb55b8d0480923fa75e7929c006fce074b27cffa0841ce7ae20b49183d2",
       "kind": "transparent"
     },
     {
-      "address": "0xAC9bAe3F90C085Ff3f2Fa09e2fda243FA17BC257",
-      "txHash": "0xcdad632f88407db416b04a3437bea17e305c8e383734da40e5a26c34dfe384a1",
+      "address": "0xF3358cC2Add28C620B95CAcd816a96CEe775EfF8",
+      "txHash": "0x53eefbf2c027a10751c99039be02a46fe98cf9d9947822b350ad331e0fa69568",
       "kind": "transparent"
     }
   ],
   "impls": {
     "1fcb8af77c502ea5bc7a171b36d5ea065c3ce118e2967cb197b49a01695a9ac9": {
-      "address": "0x45A0b1395ef0eF799702e8f9056F20C730f5F6ee",
-      "txHash": "0x1365f625db3f786b48d90a4df8cd52407fdd1f27186fdfc7e5dc5d73636c970e",
+      "address": "0x72fB58207cc83b90a34CC18B528FA0dE40272174",
+      "txHash": "0xa82c38e834398d481cf8a575d8f1551bee6623f260e7db40a1838199b1ba8ad2",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [],
@@ -328,8 +328,8 @@
       }
     },
     "65f8d8954afdda4ad12050cf401c800e5aa2914c10bfbdfc9ca07f08839868e8": {
-      "address": "0x4d56f493f94857a276Bbc1D947c72ef5Fd3eFB2E",
-      "txHash": "0x553188bfe4dfc429c699633c7b9b196a33afa9fd1cbde9506b83992549c6a6dc",
+      "address": "0x2a98C1098eEaCfed00fa49d7E6b00E02fD59F786",
+      "txHash": "0x5b42c6f301fe379f9e39b7e665578f70bbf1653648a894d3944e53a5c87d23a5",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [],
@@ -572,8 +572,8 @@
       }
     },
     "d0a1a811d22b17126706c75d004cecf38f51b3f53125720d8b7247a0ec9718f1": {
-      "address": "0xF9918Ae57C50a8f2103a64453321Ec15108AEfb1",
-      "txHash": "0x8a240d9123063a45bd7a402c5dc43f840b644991872007f162e96ee278462e33",
+      "address": "0x5541405b10f0Ea85E1f488270982325d887Ea02A",
+      "txHash": "0xea76489b4e0550637d1dc0d47194c665b2b2804302e29b4d178fef2a9e1abb4f",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [],
@@ -705,9 +705,9 @@
         }
       }
     },
-    "e24b0f11eba2f9cc2826b89fcd5cf9a5084adc373002da01264592fb5e5e763c": {
-      "address": "0x6138723d4C3846E3752068B44f81D1b08cd49Bd7",
-      "txHash": "0xab8652bc2088d3b25b923bc71d98b95ff6fcc36e14f2097c614a1aa60ef1fcaa",
+    "ad975d3e2590899fe8f5fbc988f5b0325f7bc98e8e31361ff95e46ac8fddba49": {
+      "address": "0xa5b03bD8616178CC2545d5E064914e232Af9FB19",
+      "txHash": "0x2033d88a367d823fea1197520bcdd97cd29b184e3afdfa31d2bd441b5cb60b94",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -717,13 +717,13 @@
             "slot": "0",
             "type": "t_array(t_uint256)50_storage",
             "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
           },
           {
             "label": "_ksuToken",
             "offset": 0,
             "slot": "50",
-            "type": "t_contract(ERC20Permit)1922",
+            "type": "t_contract(ERC20Permit)6232",
             "contract": "KSULocking",
             "src": "src/locking/KSULocking.sol:30"
           },
@@ -731,7 +731,7 @@
             "label": "_feeToken",
             "offset": 0,
             "slot": "51",
-            "type": "t_contract(IERC20)1768",
+            "type": "t_contract(IERC20)6078",
             "contract": "KSULocking",
             "src": "src/locking/KSULocking.sol:33"
           },
@@ -744,52 +744,60 @@
             "src": "src/locking/KSULocking.sol:36"
           },
           {
-            "label": "userTotalDeposits",
+            "label": "canAddressEmitFees",
             "offset": 0,
             "slot": "53",
-            "type": "t_mapping(t_address,t_uint256)",
+            "type": "t_mapping(t_address,t_bool)",
             "contract": "KSULocking",
             "src": "src/locking/KSULocking.sol:39"
           },
           {
-            "label": "_userLocks",
+            "label": "userTotalDeposits",
             "offset": 0,
             "slot": "54",
-            "type": "t_mapping(t_address,t_array(t_struct(UserLock)12387_storage)dyn_storage)",
+            "type": "t_mapping(t_address,t_uint256)",
             "contract": "KSULocking",
             "src": "src/locking/KSULocking.sol:42"
           },
           {
-            "label": "_lockDetails",
+            "label": "_userLocks",
             "offset": 0,
             "slot": "55",
-            "type": "t_mapping(t_uint256,t_struct(LockPeriodDetails)12395_storage)",
+            "type": "t_mapping(t_address,t_array(t_struct(UserLock)27848_storage)dyn_storage)",
             "contract": "KSULocking",
             "src": "src/locking/KSULocking.sol:45"
           },
           {
-            "label": "_accumulatedRewardsPerShare",
+            "label": "_lockDetails",
             "offset": 0,
             "slot": "56",
+            "type": "t_mapping(t_uint256,t_struct(LockPeriodDetails)27856_storage)",
+            "contract": "KSULocking",
+            "src": "src/locking/KSULocking.sol:48"
+          },
+          {
+            "label": "_accumulatedRewardsPerShare",
+            "offset": 0,
+            "slot": "57",
             "type": "t_uint256",
             "contract": "KSULocking",
-            "src": "src/locking/KSULocking.sol:49"
+            "src": "src/locking/KSULocking.sol:52"
           },
           {
             "label": "_rewards",
             "offset": 0,
-            "slot": "57",
+            "slot": "58",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "KSULocking",
-            "src": "src/locking/KSULocking.sol:51"
+            "src": "src/locking/KSULocking.sol:54"
           },
           {
             "label": "_rewardDebt",
             "offset": 0,
-            "slot": "58",
+            "slot": "59",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "KSULocking",
-            "src": "src/locking/KSULocking.sol:53"
+            "src": "src/locking/KSULocking.sol:56"
           }
         ],
         "types": {
@@ -813,7 +821,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(ERC20Storage)91_storage": {
+          "t_struct(ERC20Storage)221_storage": {
             "label": "struct ERC20Upgradeable.ERC20Storage",
             "members": [
               {
@@ -875,7 +883,7 @@
             "label": "uint64",
             "numberOfBytes": "8"
           },
-          "t_array(t_struct(UserLock)12387_storage)dyn_storage": {
+          "t_array(t_struct(UserLock)27848_storage)dyn_storage": {
             "label": "struct UserLock[]",
             "numberOfBytes": "32"
           },
@@ -883,23 +891,27 @@
             "label": "uint256[50]",
             "numberOfBytes": "1600"
           },
-          "t_contract(ERC20Permit)1922": {
+          "t_contract(ERC20Permit)6232": {
             "label": "contract ERC20Permit",
             "numberOfBytes": "20"
           },
-          "t_contract(IERC20)1768": {
+          "t_contract(IERC20)6078": {
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
-          "t_mapping(t_address,t_array(t_struct(UserLock)12387_storage)dyn_storage)": {
+          "t_mapping(t_address,t_array(t_struct(UserLock)27848_storage)dyn_storage)": {
             "label": "mapping(address => struct UserLock[])",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(LockPeriodDetails)12395_storage)": {
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(LockPeriodDetails)27856_storage)": {
             "label": "mapping(uint256 => struct LockPeriodDetails)",
             "numberOfBytes": "32"
           },
-          "t_struct(LockPeriodDetails)12395_storage": {
+          "t_struct(LockPeriodDetails)27856_storage": {
             "label": "struct LockPeriodDetails",
             "members": [
               {
@@ -923,7 +935,7 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(UserLock)12387_storage": {
+          "t_struct(UserLock)27848_storage": {
             "label": "struct UserLock",
             "members": [
               {
@@ -1025,8 +1037,8 @@
       }
     },
     "71a8ed5f353f905f6c93b68f557959cc9e05af95349f6f0bae7f79c68638b2b9": {
-      "address": "0xe767dd9eFe563778680667671f9A1523878f6048",
-      "txHash": "0xd63b44a9fa08696b3c2032af7c590a228f6bdab1571eb76299c66517f27281a3",
+      "address": "0x6cC6c6067047D8f657334e85a0425764a341a2D8",
+      "txHash": "0xc277e0764774b9d1a0a20e1b8873a9bdf949e4b26404d84f6e54f573ce6407ba",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1048,9 +1060,9 @@
         "namespaces": {}
       }
     },
-    "8b7ec442e8dc7e42e3eca78f4769760dae256a286cd278084e11331fcb31cce5": {
-      "address": "0xd8Bb44fFFA7fF5D81fB58B4e88407e95bd8c45f7",
-      "txHash": "0xae6637cb471ff30bc3757d141cdd6ebd71ae9421fb03e36cdc962e09fa88fbc0",
+    "f3f74923c392a7b49159fe141900f3abb52713240d6d5151bfee82f1ad2b1632": {
+      "address": "0x376c43c582B036ce66871DB54c002D3513f7d6CB",
+      "txHash": "0xd80cb46f03311030fe9e12dde4451d8b964c952696a3e05364aaba60aa88a8cc",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1060,7 +1072,7 @@
             "slot": "0",
             "type": "t_array(t_uint256)50_storage",
             "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
           },
           {
             "label": "_initialEpochStartTimestamp",
@@ -1068,7 +1080,7 @@
             "slot": "50",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:52"
+            "src": "src/core/SystemVariables.sol:51"
           },
           {
             "label": "clearingPeriodLength",
@@ -1076,7 +1088,7 @@
             "slot": "51",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:55"
+            "src": "src/core/SystemVariables.sol:54"
           },
           {
             "label": "priceUpdateEpoch",
@@ -1084,7 +1096,7 @@
             "slot": "52",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:58"
+            "src": "src/core/SystemVariables.sol:57"
           },
           {
             "label": "ksuEpochTokenPrice",
@@ -1092,7 +1104,7 @@
             "slot": "53",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:62"
+            "src": "src/core/SystemVariables.sol:61"
           },
           {
             "label": "performanceFee",
@@ -1100,7 +1112,7 @@
             "slot": "54",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:65"
+            "src": "src/core/SystemVariables.sol:64"
           },
           {
             "label": "_loyaltyThresholds",
@@ -1108,7 +1120,7 @@
             "slot": "55",
             "type": "t_array(t_uint256)dyn_storage",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:68"
+            "src": "src/core/SystemVariables.sol:67"
           },
           {
             "label": "_userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU",
@@ -1116,7 +1128,7 @@
             "slot": "56",
             "type": "t_bool",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:71"
+            "src": "src/core/SystemVariables.sol:70"
           },
           {
             "label": "_defaultTrancheInterestChangeEpochDelay",
@@ -1124,7 +1136,7 @@
             "slot": "57",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:74"
+            "src": "src/core/SystemVariables.sol:73"
           },
           {
             "label": "_maxTrancheInterestRate",
@@ -1132,7 +1144,7 @@
             "slot": "58",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:78"
+            "src": "src/core/SystemVariables.sol:77"
           },
           {
             "label": "_minTrancheCountPerLendingPool",
@@ -1140,7 +1152,7 @@
             "slot": "59",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:81"
+            "src": "src/core/SystemVariables.sol:80"
           },
           {
             "label": "_maxTrancheCountPerLendingPool",
@@ -1148,7 +1160,7 @@
             "slot": "60",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:84"
+            "src": "src/core/SystemVariables.sol:83"
           },
           {
             "label": "_ecosystemFeeRate",
@@ -1156,7 +1168,7 @@
             "slot": "61",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:88"
+            "src": "src/core/SystemVariables.sol:87"
           },
           {
             "label": "_protocolFeeRate",
@@ -1164,7 +1176,7 @@
             "slot": "62",
             "type": "t_uint256",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:92"
+            "src": "src/core/SystemVariables.sol:91"
           },
           {
             "label": "_protocolFeeReceiver",
@@ -1172,7 +1184,7 @@
             "slot": "63",
             "type": "t_address",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:95"
+            "src": "src/core/SystemVariables.sol:94"
           },
           {
             "label": "_trancheNameIndexes",
@@ -1180,15 +1192,15 @@
             "slot": "64",
             "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:98"
+            "src": "src/core/SystemVariables.sol:97"
           },
           {
             "label": "_trancheNameInfo",
             "offset": 0,
             "slot": "65",
-            "type": "t_mapping(t_uint256,t_struct(TrancheInfo)1190_storage)",
+            "type": "t_mapping(t_uint256,t_struct(TrancheInfo)17264_storage)",
             "contract": "SystemVariables",
-            "src": "src/core/SystemVariables.sol:102"
+            "src": "src/core/SystemVariables.sol:101"
           }
         ],
         "types": {
@@ -1234,7 +1246,7 @@
             "label": "mapping(uint256 => mapping(uint256 => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(TrancheInfo)1190_storage)": {
+          "t_mapping(t_uint256,t_struct(TrancheInfo)17264_storage)": {
             "label": "mapping(uint256 => struct TrancheInfo)",
             "numberOfBytes": "32"
           },
@@ -1246,7 +1258,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(TrancheInfo)1190_storage": {
+          "t_struct(TrancheInfo)17264_storage": {
             "label": "struct TrancheInfo",
             "members": [
               {
@@ -1291,9 +1303,9 @@
         }
       }
     },
-    "f5721ee7233ef483c3a5766ee97ee31d56d81a368718dc9be10ae9e385ec7239": {
-      "address": "0xFA62bfa1D1D195fB2b50321a4E590Fe00442A8D1",
-      "txHash": "0x21377142e00e93790e2db8efb092cab7c1b9aa7062802af18bccb3a5528f667c",
+    "cbd8d71fd3cf62a64f59bf24b7db8d8aa47bb2b431ff34b4480025373fd1c0fb": {
+      "address": "0x4b8d0862493D7C55AC0bF10009DaeA67c817B67c",
+      "txHash": "0xd2d0bddd9c3d261c9cc70cc0e7aa52a37caa4b65695a0f12718ac51719b4ccbf",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1303,43 +1315,7 @@
             "slot": "0",
             "type": "t_array(t_uint256)50_storage",
             "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
-          },
-          {
-            "label": "totalProtocolFeeAmount",
-            "offset": 0,
-            "slot": "50",
-            "type": "t_uint256",
-            "contract": "FeeManager",
-            "src": "src/core/FeeManager.sol:28"
-          }
-        ],
-        "types": {
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_uint256": {
-            "label": "uint256",
-            "numberOfBytes": "32"
-          }
-        },
-        "namespaces": {}
-      }
-    },
-    "e4244a3d29aae650e929ddf338f43273d2a0f1d22b55b996cb7975e7b78c0792": {
-      "address": "0x741B6613EeF52e8D67bb175D6F3aEF48Ba8aA59f",
-      "txHash": "0x3ecaf9219c193b955f3cc18a297dafa9e1e7d9731d5c3079cb92ac65355f572e",
-      "layout": {
-        "solcVersion": "0.8.23",
-        "storage": [
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
           },
           {
             "label": "_userManager",
@@ -1347,7 +1323,7 @@
             "slot": "50",
             "type": "t_address",
             "contract": "UserLoyaltyRewards",
-            "src": "src/core/UserLoyaltyRewards.sol:33"
+            "src": "src/core/UserLoyaltyRewards.sol:30"
           },
           {
             "label": "doEmitRewards",
@@ -1355,7 +1331,7 @@
             "slot": "50",
             "type": "t_bool",
             "contract": "UserLoyaltyRewards",
-            "src": "src/core/UserLoyaltyRewards.sol:36"
+            "src": "src/core/UserLoyaltyRewards.sol:33"
           },
           {
             "label": "totalUnclaimedRewards",
@@ -1363,7 +1339,7 @@
             "slot": "51",
             "type": "t_uint256",
             "contract": "UserLoyaltyRewards",
-            "src": "src/core/UserLoyaltyRewards.sol:39"
+            "src": "src/core/UserLoyaltyRewards.sol:36"
           },
           {
             "label": "loyaltyEpochRewardRates",
@@ -1371,7 +1347,7 @@
             "slot": "52",
             "type": "t_mapping(t_uint256,t_uint256)",
             "contract": "UserLoyaltyRewards",
-            "src": "src/core/UserLoyaltyRewards.sol:42"
+            "src": "src/core/UserLoyaltyRewards.sol:39"
           },
           {
             "label": "userRewards",
@@ -1379,7 +1355,7 @@
             "slot": "53",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "UserLoyaltyRewards",
-            "src": "src/core/UserLoyaltyRewards.sol:45"
+            "src": "src/core/UserLoyaltyRewards.sol:42"
           }
         ],
         "types": {
@@ -1452,9 +1428,9 @@
         }
       }
     },
-    "76d753579c26d98b5987c63c2701ffdb127e98a6ae712a8e72e7f4131b172fe3": {
-      "address": "0x8974FC0468a40950c421a4c15216803976EFdFD4",
-      "txHash": "0x8e600946a6f8eeebde90ca5d3d7a6f9561d55712c10b1351480486b8e47c7b3f",
+    "80838ada615200f9996cd590d4304a9a2621239c2bf9bef29b45d585868eccda": {
+      "address": "0xEC42e6c6F4cE1FbB4dC8667FF083C1074C7ECFa3",
+      "txHash": "0x2aac421160165636479ebb9cc381311e39761579361d5f5f2f7760cf98e0decf",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1464,7 +1440,7 @@
             "slot": "0",
             "type": "t_address",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:34"
+            "src": "src/core/UserManager.sol:31"
           },
           {
             "label": "_isUser",
@@ -1472,7 +1448,7 @@
             "slot": "1",
             "type": "t_mapping(t_address,t_bool)",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:37"
+            "src": "src/core/UserManager.sol:34"
           },
           {
             "label": "_isUserPartOfLendingPool",
@@ -1480,7 +1456,7 @@
             "slot": "2",
             "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:40"
+            "src": "src/core/UserManager.sol:37"
           },
           {
             "label": "_allUsers",
@@ -1488,7 +1464,7 @@
             "slot": "3",
             "type": "t_array(t_address)dyn_storage",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:44"
+            "src": "src/core/UserManager.sol:41"
           },
           {
             "label": "_userLendingPools",
@@ -1496,7 +1472,7 @@
             "slot": "4",
             "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:48"
+            "src": "src/core/UserManager.sol:45"
           },
           {
             "label": "_userEpochLoyaltyLevel",
@@ -1504,15 +1480,15 @@
             "slot": "5",
             "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint8))",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:51"
+            "src": "src/core/UserManager.sol:48"
           },
           {
             "label": "_epochUserLoyaltyProcessing",
             "offset": 0,
             "slot": "6",
-            "type": "t_mapping(t_uint256,t_struct(EpochUserLoyaltyProcessing)1844_storage)",
+            "type": "t_mapping(t_uint256,t_struct(EpochUserLoyaltyProcessing)17577_storage)",
             "contract": "UserManager",
-            "src": "src/core/UserManager.sol:54"
+            "src": "src/core/UserManager.sol:51"
           }
         ],
         "types": {
@@ -1566,7 +1542,7 @@
             "label": "mapping(address => mapping(uint256 => uint8))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(EpochUserLoyaltyProcessing)1844_storage)": {
+          "t_mapping(t_uint256,t_struct(EpochUserLoyaltyProcessing)17577_storage)": {
             "label": "mapping(uint256 => struct EpochUserLoyaltyProcessing)",
             "numberOfBytes": "32"
           },
@@ -1574,7 +1550,7 @@
             "label": "mapping(uint256 => uint8)",
             "numberOfBytes": "32"
           },
-          "t_struct(EpochUserLoyaltyProcessing)1844_storage": {
+          "t_struct(EpochUserLoyaltyProcessing)17577_storage": {
             "label": "struct EpochUserLoyaltyProcessing",
             "members": [
               {
@@ -1629,9 +1605,9 @@
         }
       }
     },
-    "aabd0d26be4e84fc6f951d5bace056084087b7f0cf90ad848a6faa33b453bd01": {
-      "address": "0xd4A60F5473470415CB0F155584935DCFf185eb19",
-      "txHash": "0x3fc343d0d7a8be67bd21e4f57c12ed9735dafc84dd1a5961ea88fa10f35a3aec",
+    "0b9c6355f94e101b51479a370db7956f76b6a4f7d14a3e970deaffb5547641ec": {
+      "address": "0xB9a5133B50090eb1259dEc95596C22EE49B2C2D3",
+      "txHash": "0xb23f75e08ea1af05eaa4981f1669f3ebd11930b93751339cff5544392082b606",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1641,7 +1617,7 @@
             "slot": "0",
             "type": "t_array(t_uint256)50_storage",
             "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
           },
           {
             "label": "_exchangeAllowlist",
@@ -1677,9 +1653,9 @@
         "namespaces": {}
       }
     },
-    "c751ce301e1324e1e0c32f9ecccfd9aa4ead0e207477cd1baff8bd663749428f": {
-      "address": "0x30eAeD2FdBc1F4e83cd44596C6Aa112D807b3D47",
-      "txHash": "0xaff9c7f7f1042f9a42a8b2e9a926c983f2098b21333339bac1a954dcb3f39ba2",
+    "44eb6fb2eda71eec0f226d17da0286c0097582999df1c2db436e8c0ed6ba3544": {
+      "address": "0xa43dA20e7316F7F9C24651E791E0Ab8E2E1644aa",
+      "txHash": "0x59276353f4bbbe5f7b4c466f659cf2dacaac68ddab7bd60fbfbc4f6d94bc5d27",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1689,13 +1665,13 @@
             "slot": "0",
             "type": "t_array(t_uint256)50_storage",
             "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
           },
           {
             "label": "_lendingPoolFactory",
             "offset": 0,
             "slot": "50",
-            "type": "t_contract(ILendingPoolFactory)3765",
+            "type": "t_contract(ILendingPoolFactory)18557",
             "contract": "LendingPoolManager",
             "src": "src/core/lendingPool/LendingPoolManager.sol:34"
           },
@@ -1703,7 +1679,7 @@
             "label": "_kasuAllowList",
             "offset": 0,
             "slot": "51",
-            "type": "t_contract(IKasuAllowList)2706",
+            "type": "t_contract(IKasuAllowList)17177",
             "contract": "LendingPoolManager",
             "src": "src/core/lendingPool/LendingPoolManager.sol:36"
           },
@@ -1711,7 +1687,7 @@
             "label": "_userManager",
             "offset": 0,
             "slot": "52",
-            "type": "t_contract(IUserManager)2901",
+            "type": "t_contract(IUserManager)17692",
             "contract": "LendingPoolManager",
             "src": "src/core/lendingPool/LendingPoolManager.sol:38"
           },
@@ -1719,7 +1695,7 @@
             "label": "_clearingCoordinator",
             "offset": 0,
             "slot": "53",
-            "type": "t_contract(IClearingCoordinator)3093",
+            "type": "t_contract(IClearingCoordinator)17883",
             "contract": "LendingPoolManager",
             "src": "src/core/lendingPool/LendingPoolManager.sol:40"
           },
@@ -1727,7 +1703,7 @@
             "label": "lendingPools",
             "offset": 0,
             "slot": "54",
-            "type": "t_mapping(t_address,t_struct(LendingPoolDeployment)3745_storage)",
+            "type": "t_mapping(t_address,t_struct(LendingPoolDeployment)18537_storage)",
             "contract": "LendingPoolManager",
             "src": "src/core/lendingPool/LendingPoolManager.sol:43"
           }
@@ -1771,27 +1747,27 @@
             "label": "uint256[50]",
             "numberOfBytes": "1600"
           },
-          "t_contract(IClearingCoordinator)3093": {
+          "t_contract(IClearingCoordinator)17883": {
             "label": "contract IClearingCoordinator",
             "numberOfBytes": "20"
           },
-          "t_contract(IKasuAllowList)2706": {
+          "t_contract(IKasuAllowList)17177": {
             "label": "contract IKasuAllowList",
             "numberOfBytes": "20"
           },
-          "t_contract(ILendingPoolFactory)3765": {
+          "t_contract(ILendingPoolFactory)18557": {
             "label": "contract ILendingPoolFactory",
             "numberOfBytes": "20"
           },
-          "t_contract(IUserManager)2901": {
+          "t_contract(IUserManager)17692": {
             "label": "contract IUserManager",
             "numberOfBytes": "20"
           },
-          "t_mapping(t_address,t_struct(LendingPoolDeployment)3745_storage)": {
+          "t_mapping(t_address,t_struct(LendingPoolDeployment)18537_storage)": {
             "label": "mapping(address => struct LendingPoolDeployment)",
             "numberOfBytes": "32"
           },
-          "t_struct(LendingPoolDeployment)3745_storage": {
+          "t_struct(LendingPoolDeployment)18537_storage": {
             "label": "struct LendingPoolDeployment",
             "members": [
               {
@@ -1842,9 +1818,9 @@
         }
       }
     },
-    "05ce15d8232a58224e7527a5c5c8c63c8ee6a3bdaed2cc86744c4f73a3f189e1": {
-      "address": "0x165b2dA7ba0a42C6d2DDb63D9B91BCE65CaAAb47",
-      "txHash": "0xadb6c0f2ff6f79980b9d9eac8a776dd8371f368fdfc616bfb36c745c4a9d80da",
+    "520e477db000584b6c379b7ae5b8012c4f3f7c020dc8729fa412b82f6a8d8903": {
+      "address": "0x94fe367f41d9635D5148986DA9AC395e38075e9D",
+      "txHash": "0x4808c9404663b990f9ff7cf5e5150d4b37cabef96daa04e234f04ee673c03aab",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1854,7 +1830,43 @@
             "slot": "0",
             "type": "t_array(t_uint256)50_storage",
             "contract": "KasuAccessControllable",
-            "src": "src/shared/access/KasuAccessControllable.sol:102"
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
+          },
+          {
+            "label": "totalProtocolFeeAmount",
+            "offset": 0,
+            "slot": "50",
+            "type": "t_uint256",
+            "contract": "FeeManager",
+            "src": "src/core/FeeManager.sol:30"
+          }
+        ],
+        "types": {
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "4397bfd6c7f0bc3312c76c19383e2c5d3bb40ac3f272c15c37509943ca8d1a09": {
+      "address": "0x432E8EA0259e3EA69D0567EC2032FEE1075F0279",
+      "txHash": "0x4a7990ebaa00ebfb75866f0af8198ff80f0c6b35afa8dbf29aa86998f91f4076",
+      "layout": {
+        "solcVersion": "0.8.23",
+        "storage": [
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "KasuAccessControllable",
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
           },
           {
             "label": "_signerAddress",
@@ -1862,7 +1874,7 @@
             "slot": "50",
             "type": "t_address",
             "contract": "BaseTxAuthDataVerifier",
-            "src": "NexeraIDSigGatingContracts/BaseTxAuthDataVerifier.sol:31"
+            "src": "NexeraIDSigGatingContracts/BaseTxAuthDataVerifier.sol:30"
           },
           {
             "label": "nonces",
@@ -1870,7 +1882,7 @@
             "slot": "51",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "BaseTxAuthDataVerifier",
-            "src": "NexeraIDSigGatingContracts/BaseTxAuthDataVerifier.sol:35"
+            "src": "NexeraIDSigGatingContracts/BaseTxAuthDataVerifier.sol:34"
           },
           {
             "label": "_lendingPoolManager",
@@ -1967,9 +1979,9 @@
         }
       }
     },
-    "71870997848beb85e5da149e379a0c31bc0df34c2c3c936015e0890f76e8a7a6": {
-      "address": "0x9E3bA1Cc0DC8928072DAFcFaC8Bc9589aab499Bf",
-      "txHash": "0xabb835dce399e12178cfedd33b7c25643e7c335abbba0dc12301401e45371bee",
+    "ecc390b69e4dbcbdaab068988608e8b3dd062ffa31ebf804f1832da061543343": {
+      "address": "0x113920f601BD4B17a0d3B5dCfC056f2F37ec0860",
+      "txHash": "0xd059dab9976f9658ab9c062fb17de024f113d297afa42a83e2b1489151c70612",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -1977,9 +1989,9 @@
             "label": "_lendingPool",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(ILendingPool)12976",
+            "type": "t_contract(ILendingPool)18461",
             "contract": "LendingPoolHelpers",
-            "src": "src/core/lendingPool/LendingPoolHelpers.sol:17"
+            "src": "src/core/lendingPool/LendingPoolHelpers.sol:16"
           },
           {
             "label": "nextLendingPoolClearingEpoch",
@@ -1987,23 +1999,23 @@
             "slot": "1",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "ClearingCoordinator",
-            "src": "src/core/clearing/ClearingCoordinator.sol:57"
+            "src": "src/core/clearing/ClearingCoordinator.sol:55"
           },
           {
             "label": "_lendingPoolClearingStatus",
             "offset": 0,
             "slot": "2",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_enum(ClearingStatus)12300))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_enum(ClearingStatus)17783))",
             "contract": "ClearingCoordinator",
-            "src": "src/core/clearing/ClearingCoordinator.sol:59"
+            "src": "src/core/clearing/ClearingCoordinator.sol:57"
           },
           {
             "label": "_clearingConfigPerLendingPoolAndEpoch",
             "offset": 0,
             "slot": "3",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(AppliedClearingConfiguration)12309_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(AppliedClearingConfiguration)17792_storage))",
             "contract": "ClearingCoordinator",
-            "src": "src/core/clearing/ClearingCoordinator.sol:61"
+            "src": "src/core/clearing/ClearingCoordinator.sol:59"
           }
         ],
         "types": {
@@ -2041,11 +2053,11 @@
             "label": "uint256[]",
             "numberOfBytes": "32"
           },
-          "t_contract(ILendingPool)12976": {
+          "t_contract(ILendingPool)18461": {
             "label": "contract ILendingPool",
             "numberOfBytes": "20"
           },
-          "t_enum(ClearingStatus)12300": {
+          "t_enum(ClearingStatus)17783": {
             "label": "enum ClearingStatus",
             "members": [
               "UNINITIALIZED",
@@ -2058,11 +2070,11 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_enum(ClearingStatus)12300))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_enum(ClearingStatus)17783))": {
             "label": "mapping(address => mapping(uint256 => enum ClearingStatus))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(AppliedClearingConfiguration)12309_storage))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(AppliedClearingConfiguration)17792_storage))": {
             "label": "mapping(address => mapping(uint256 => struct AppliedClearingConfiguration))",
             "numberOfBytes": "32"
           },
@@ -2070,20 +2082,20 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_enum(ClearingStatus)12300)": {
+          "t_mapping(t_uint256,t_enum(ClearingStatus)17783)": {
             "label": "mapping(uint256 => enum ClearingStatus)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(AppliedClearingConfiguration)12309_storage)": {
+          "t_mapping(t_uint256,t_struct(AppliedClearingConfiguration)17792_storage)": {
             "label": "mapping(uint256 => struct AppliedClearingConfiguration)",
             "numberOfBytes": "32"
           },
-          "t_struct(AppliedClearingConfiguration)12309_storage": {
+          "t_struct(AppliedClearingConfiguration)17792_storage": {
             "label": "struct AppliedClearingConfiguration",
             "members": [
               {
                 "label": "config",
-                "type": "t_struct(ClearingConfiguration)12488_storage",
+                "type": "t_struct(ClearingConfiguration)17971_storage",
                 "offset": 0,
                 "slot": "0"
               },
@@ -2102,7 +2114,7 @@
             ],
             "numberOfBytes": "160"
           },
-          "t_struct(ClearingConfiguration)12488_storage": {
+          "t_struct(ClearingConfiguration)17971_storage": {
             "label": "struct ClearingConfiguration",
             "members": [
               {
@@ -2160,8 +2172,8 @@
       }
     },
     "8078e0ccbb730229d22524bfad0b3fbb7cf858d4666a71673848185aca157292": {
-      "address": "0x516838E259aa7254502876B236cff21DcCC33142",
-      "txHash": "0xb3e09906314c3edc5bf95a825ea8089ab6a4c2b8d0777ac5d2274d83dd31b7e1",
+      "address": "0x913B1834Dd0478a507E44847513F393730855e30",
+      "txHash": "0xaefd977c6cd99285474358aba0a942481ccdeeb6457018fcfb24fb859a7ff0c7",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [],
@@ -2169,9 +2181,9 @@
         "namespaces": {}
       }
     },
-    "fbc9411a875e63b46a8ccb4684b985ce0051383b1b8abcc8a4e32a83a0cafecf": {
-      "address": "0x1fC161Cb3e802D2245BEdBA59285C45BB97fCBb5",
-      "txHash": "0xbf8a39acbf9de15d4b3c812feb5f2a7068fb9230751cbec7afa51f7fe55f91ec",
+    "11314bc4e25dd143e9a82f0896b3f6b27d20ea1d23a4c4570316c8cae7b3272d": {
+      "address": "0xD934c09c16Aa9Fa74D76943F2e51d099A0BaAd27",
+      "txHash": "0x8aeed11fdebcb5c65a29acc260079032e62c76df17fbbc6aac07fd5be6013223",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -2187,17 +2199,17 @@
             "label": "_lendingPoolInfo",
             "offset": 0,
             "slot": "1",
-            "type": "t_struct(LendingPoolInfo)11859_storage",
+            "type": "t_struct(LendingPoolInfo)18016_storage",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:58"
+            "src": "src/core/lendingPool/LendingPool.sol:54"
           },
           {
             "label": "_poolConfiguration",
             "offset": 0,
             "slot": "3",
-            "type": "t_struct(PoolConfiguration)11875_storage",
+            "type": "t_struct(PoolConfiguration)18032_storage",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:60"
+            "src": "src/core/lendingPool/LendingPool.sol:56"
           },
           {
             "label": "_trancheIndex",
@@ -2205,15 +2217,15 @@
             "slot": "9",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:62"
+            "src": "src/core/lendingPool/LendingPool.sol:58"
           },
           {
             "label": "_futureTrancheInterests",
             "offset": 0,
             "slot": "10",
-            "type": "t_mapping(t_address,t_array(t_struct(FutureTrancheInterestRates)13159_storage)dyn_storage)",
+            "type": "t_mapping(t_address,t_array(t_struct(FutureTrancheInterestRates)19319_storage)dyn_storage)",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:66"
+            "src": "src/core/lendingPool/LendingPool.sol:62"
           },
           {
             "label": "_trancheInterestIndex",
@@ -2221,7 +2233,7 @@
             "slot": "11",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:68"
+            "src": "src/core/lendingPool/LendingPool.sol:64"
           },
           {
             "label": "feesOwedAmount",
@@ -2229,7 +2241,7 @@
             "slot": "12",
             "type": "t_uint256",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:71"
+            "src": "src/core/lendingPool/LendingPool.sol:67"
           },
           {
             "label": "userOwedAmount",
@@ -2237,7 +2249,7 @@
             "slot": "13",
             "type": "t_uint256",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:73"
+            "src": "src/core/lendingPool/LendingPool.sol:69"
           },
           {
             "label": "firstLossCapital",
@@ -2245,7 +2257,7 @@
             "slot": "14",
             "type": "t_uint256",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:76"
+            "src": "src/core/lendingPool/LendingPool.sol:72"
           },
           {
             "label": "nextLossId",
@@ -2253,7 +2265,7 @@
             "slot": "15",
             "type": "t_uint256",
             "contract": "LendingPool",
-            "src": "src/core/lendingPool/LendingPool.sol:78"
+            "src": "src/core/lendingPool/LendingPool.sol:74"
           }
         ],
         "types": {
@@ -2343,19 +2355,19 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(FutureTrancheInterestRates)13159_storage)dyn_storage": {
+          "t_array(t_struct(FutureTrancheInterestRates)19319_storage)dyn_storage": {
             "label": "struct FutureTrancheInterestRates[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(TrancheConfig)11885_storage)dyn_storage": {
+          "t_array(t_struct(TrancheConfig)18042_storage)dyn_storage": {
             "label": "struct TrancheConfig[]",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_array(t_struct(FutureTrancheInterestRates)13159_storage)dyn_storage)": {
+          "t_mapping(t_address,t_array(t_struct(FutureTrancheInterestRates)19319_storage)dyn_storage)": {
             "label": "mapping(address => struct FutureTrancheInterestRates[])",
             "numberOfBytes": "32"
           },
-          "t_struct(FutureTrancheInterestRates)13159_storage": {
+          "t_struct(FutureTrancheInterestRates)19319_storage": {
             "label": "struct FutureTrancheInterestRates",
             "members": [
               {
@@ -2373,7 +2385,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(LendingPoolInfo)11859_storage": {
+          "t_struct(LendingPoolInfo)18016_storage": {
             "label": "struct LendingPoolInfo",
             "members": [
               {
@@ -2391,12 +2403,12 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(PoolConfiguration)11875_storage": {
+          "t_struct(PoolConfiguration)18032_storage": {
             "label": "struct PoolConfiguration",
             "members": [
               {
                 "label": "tranches",
-                "type": "t_array(t_struct(TrancheConfig)11885_storage)dyn_storage",
+                "type": "t_array(t_struct(TrancheConfig)18042_storage)dyn_storage",
                 "offset": 0,
                 "slot": "0"
               },
@@ -2433,7 +2445,7 @@
             ],
             "numberOfBytes": "192"
           },
-          "t_struct(TrancheConfig)11885_storage": {
+          "t_struct(TrancheConfig)18042_storage": {
             "label": "struct TrancheConfig",
             "members": [
               {
@@ -2528,9 +2540,9 @@
         }
       }
     },
-    "eb9eb1d6c23c82cc46faf3327501627a0ac1e53b7890d8dbaf1386547565c8df": {
-      "address": "0x24b488Ff9bBb45B4B3315d44192F709Cc5700c5D",
-      "txHash": "0xfaf59e98fe4444f90464f6aea8a4c41359713786b9245e8322eb503731e90f41",
+    "4101d6d4d883b75607a52368af2bd4534826c3419b028458831be375f9173b35": {
+      "address": "0x155c2Dc71fb7eE748C1786450d23D8C5631f17F6",
+      "txHash": "0xb07e652d5d81dcbd296f58a279ce780e15c406e97799485dd457bc1768421080",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -2538,9 +2550,9 @@
             "label": "_lendingPool",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(ILendingPool)12304",
+            "type": "t_contract(ILendingPool)18461",
             "contract": "LendingPoolHelpers",
-            "src": "src/core/lendingPool/LendingPoolHelpers.sol:17"
+            "src": "src/core/lendingPool/LendingPoolHelpers.sol:16"
           },
           {
             "label": "isLendingPoolStopped",
@@ -2554,25 +2566,25 @@
             "label": "_pendingRequestsPerEpoch",
             "offset": 0,
             "slot": "1",
-            "type": "t_mapping(t_uint256,t_struct(PendingRequestsEpoch)10510_storage)",
+            "type": "t_mapping(t_uint256,t_struct(PendingRequestsEpoch)16402_storage)",
             "contract": "PendingRequestsPriorityCalculation",
-            "src": "src/core/clearing/PendingRequestsPriorityCalculation.sol:40"
+            "src": "src/core/clearing/PendingRequestsPriorityCalculation.sol:39"
           },
           {
             "label": "_acceptedRequestsExecutionPerEpoch",
             "offset": 0,
             "slot": "2",
-            "type": "t_mapping(t_uint256,t_struct(AcceptedRequestsExecutionEpoch)9668_storage)",
+            "type": "t_mapping(t_uint256,t_struct(AcceptedRequestsExecutionEpoch)14889_storage)",
             "contract": "AcceptedRequestsExecution",
-            "src": "src/core/clearing/AcceptedRequestsExecution.sol:33"
+            "src": "src/core/clearing/AcceptedRequestsExecution.sol:30"
           },
           {
             "label": "_clearingDataPerEpoch",
             "offset": 0,
             "slot": "3",
-            "type": "t_mapping(t_uint256,t_struct(ClearingData)11805_storage)",
+            "type": "t_mapping(t_uint256,t_struct(ClearingData)17960_storage)",
             "contract": "ClearingSteps",
-            "src": "src/core/clearing/ClearingSteps.sol:34"
+            "src": "src/core/clearing/ClearingSteps.sol:32"
           },
           {
             "label": "_nextTrancheDepositNFTId",
@@ -2580,15 +2592,15 @@
             "slot": "4",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:51"
+            "src": "src/core/lendingPool/PendingPool.sol:47"
           },
           {
             "label": "_trancheDepositNftDetails",
             "offset": 0,
             "slot": "5",
-            "type": "t_mapping(t_uint256,t_struct(DepositNftDetails)12858_storage)",
+            "type": "t_mapping(t_uint256,t_struct(DepositNftDetails)19018_storage)",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:54"
+            "src": "src/core/lendingPool/PendingPool.sol:50"
           },
           {
             "label": "_dNftIdPerUserPerEpochPerTranche",
@@ -2596,7 +2608,7 @@
             "slot": "6",
             "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_uint256)))",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:58"
+            "src": "src/core/lendingPool/PendingPool.sol:54"
           },
           {
             "label": "_nextTrancheWithdrawalNFTId",
@@ -2604,23 +2616,23 @@
             "slot": "7",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:62"
+            "src": "src/core/lendingPool/PendingPool.sol:58"
           },
           {
             "label": "_trancheWithdrawalNftDetails",
             "offset": 0,
             "slot": "8",
-            "type": "t_mapping(t_uint256,t_struct(WithdrawalNftDetails)12871_storage)",
+            "type": "t_mapping(t_uint256,t_struct(WithdrawalNftDetails)19031_storage)",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:65"
+            "src": "src/core/lendingPool/PendingPool.sol:61"
           },
           {
             "label": "_wNftIdPerUserPerEpochPerTranchePerPriority",
             "offset": 0,
             "slot": "9",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_mapping(t_enum(RequestedFrom)12848,t_uint256))))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_mapping(t_enum(RequestedFrom)19008,t_uint256))))",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:70"
+            "src": "src/core/lendingPool/PendingPool.sol:66"
           },
           {
             "label": "totalPendingDepositAmount",
@@ -2628,7 +2640,7 @@
             "slot": "10",
             "type": "t_uint256",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:78"
+            "src": "src/core/lendingPool/PendingPool.sol:74"
           },
           {
             "label": "_totalEpochPendingDepositAmount",
@@ -2636,7 +2648,7 @@
             "slot": "11",
             "type": "t_mapping(t_uint256,t_uint256)",
             "contract": "PendingPool",
-            "src": "src/core/lendingPool/PendingPool.sol:81"
+            "src": "src/core/lendingPool/PendingPool.sol:77"
           }
         ],
         "types": {
@@ -2786,11 +2798,11 @@
             "label": "uint256[][]",
             "numberOfBytes": "32"
           },
-          "t_contract(ILendingPool)12304": {
+          "t_contract(ILendingPool)18461": {
             "label": "contract ILendingPool",
             "numberOfBytes": "20"
           },
-          "t_enum(RequestedFrom)12848": {
+          "t_enum(RequestedFrom)19008": {
             "label": "enum RequestedFrom",
             "members": [
               "USER",
@@ -2798,7 +2810,7 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_enum(TaskStatus)11769": {
+          "t_enum(TaskStatus)17924": {
             "label": "enum TaskStatus",
             "members": [
               "UNINITIALIZED",
@@ -2807,11 +2819,11 @@
             ],
             "numberOfBytes": "1"
           },
-          "t_mapping(t_address,t_mapping(t_enum(RequestedFrom)12848,t_uint256))": {
+          "t_mapping(t_address,t_mapping(t_enum(RequestedFrom)19008,t_uint256))": {
             "label": "mapping(address => mapping(enum RequestedFrom => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_mapping(t_enum(RequestedFrom)12848,t_uint256))))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_mapping(t_enum(RequestedFrom)19008,t_uint256))))": {
             "label": "mapping(address => mapping(uint256 => mapping(address => mapping(enum RequestedFrom => uint256))))",
             "numberOfBytes": "32"
           },
@@ -2819,11 +2831,11 @@
             "label": "mapping(address => mapping(uint256 => mapping(address => uint256)))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_enum(RequestedFrom)12848,t_uint256)": {
+          "t_mapping(t_enum(RequestedFrom)19008,t_uint256)": {
             "label": "mapping(enum RequestedFrom => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_mapping(t_address,t_mapping(t_enum(RequestedFrom)12848,t_uint256)))": {
+          "t_mapping(t_uint256,t_mapping(t_address,t_mapping(t_enum(RequestedFrom)19008,t_uint256)))": {
             "label": "mapping(uint256 => mapping(address => mapping(enum RequestedFrom => uint256)))",
             "numberOfBytes": "32"
           },
@@ -2831,27 +2843,27 @@
             "label": "mapping(uint256 => mapping(address => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(AcceptedRequestsExecutionEpoch)9668_storage)": {
+          "t_mapping(t_uint256,t_struct(AcceptedRequestsExecutionEpoch)14889_storage)": {
             "label": "mapping(uint256 => struct AcceptedRequestsExecutionEpoch)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(ClearingData)11805_storage)": {
+          "t_mapping(t_uint256,t_struct(ClearingData)17960_storage)": {
             "label": "mapping(uint256 => struct ClearingData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(DepositNftDetails)12858_storage)": {
+          "t_mapping(t_uint256,t_struct(DepositNftDetails)19018_storage)": {
             "label": "mapping(uint256 => struct DepositNftDetails)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(PendingRequestsEpoch)10510_storage)": {
+          "t_mapping(t_uint256,t_struct(PendingRequestsEpoch)16402_storage)": {
             "label": "mapping(uint256 => struct PendingRequestsEpoch)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(WithdrawalNftDetails)12871_storage)": {
+          "t_mapping(t_uint256,t_struct(WithdrawalNftDetails)19031_storage)": {
             "label": "mapping(uint256 => struct WithdrawalNftDetails)",
             "numberOfBytes": "32"
           },
-          "t_struct(AcceptedRequestsExecutionEpoch)9668_storage": {
+          "t_struct(AcceptedRequestsExecutionEpoch)14889_storage": {
             "label": "struct AcceptedRequestsExecutionEpoch",
             "members": [
               {
@@ -2862,25 +2874,25 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(TaskStatus)11769",
+                "type": "t_enum(TaskStatus)17924",
                 "offset": 0,
                 "slot": "1"
               }
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(ClearingData)11805_storage": {
+          "t_struct(ClearingData)17960_storage": {
             "label": "struct ClearingData",
             "members": [
               {
                 "label": "pendingDeposits",
-                "type": "t_struct(PendingDeposits)11780_storage",
+                "type": "t_struct(PendingDeposits)17935_storage",
                 "offset": 0,
                 "slot": "0"
               },
               {
                 "label": "pendingWithdrawals",
-                "type": "t_struct(PendingWithdrawals)11787_storage",
+                "type": "t_struct(PendingWithdrawals)17942_storage",
                 "offset": 0,
                 "slot": "3"
               },
@@ -2905,7 +2917,7 @@
             ],
             "numberOfBytes": "256"
           },
-          "t_struct(DepositNftDetails)12858_storage": {
+          "t_struct(DepositNftDetails)19018_storage": {
             "label": "struct DepositNftDetails",
             "members": [
               {
@@ -2935,7 +2947,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(PendingDeposits)11780_storage": {
+          "t_struct(PendingDeposits)17935_storage": {
             "label": "struct PendingDeposits",
             "members": [
               {
@@ -2959,7 +2971,7 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(PendingRequestsEpoch)10510_storage": {
+          "t_struct(PendingRequestsEpoch)16402_storage": {
             "label": "struct PendingRequestsEpoch",
             "members": [
               {
@@ -2976,14 +2988,14 @@
               },
               {
                 "label": "status",
-                "type": "t_enum(TaskStatus)11769",
+                "type": "t_enum(TaskStatus)17924",
                 "offset": 0,
                 "slot": "2"
               }
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(PendingWithdrawals)11787_storage": {
+          "t_struct(PendingWithdrawals)17942_storage": {
             "label": "struct PendingWithdrawals",
             "members": [
               {
@@ -3001,7 +3013,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(WithdrawalNftDetails)12871_storage": {
+          "t_struct(WithdrawalNftDetails)19031_storage": {
             "label": "struct WithdrawalNftDetails",
             "members": [
               {
@@ -3030,7 +3042,7 @@
               },
               {
                 "label": "requestedFrom",
-                "type": "t_enum(RequestedFrom)12848",
+                "type": "t_enum(RequestedFrom)19008",
                 "offset": 29,
                 "slot": "1"
               }
@@ -3148,9 +3160,9 @@
         }
       }
     },
-    "889cbbf24821a54928fea9882fb48bba4b563447e945f2a1c5b3fd7f792bb724": {
-      "address": "0x6A9f073b1da0640A5053CAac2c36Ed1415302D03",
-      "txHash": "0xfe40020a2146d0e93d281b5c7ce7f200f0888c724fbfb5cc675fc3e40b83d68f",
+    "73739feb260b977ebb83f837f350214aed23385d4364d6a2b981a71858cb0d6a": {
+      "address": "0x6f023254526a2Fe7D6a5d938920758e21894e167",
+      "txHash": "0xc35375bb596f3b24649fa49739e43ea7b1db0ff79053017da26840179e2d9854",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [
@@ -3158,9 +3170,9 @@
             "label": "_lendingPool",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(ILendingPool)12304",
+            "type": "t_contract(ILendingPool)18461",
             "contract": "LendingPoolHelpers",
-            "src": "src/core/lendingPool/LendingPoolHelpers.sol:17"
+            "src": "src/core/lendingPool/LendingPoolHelpers.sol:16"
           },
           {
             "label": "_pendingMintLossId",
@@ -3174,7 +3186,7 @@
             "label": "_lossDetails",
             "offset": 0,
             "slot": "2",
-            "type": "t_mapping(t_uint256,t_struct(LossDetails)12708_storage)",
+            "type": "t_mapping(t_uint256,t_struct(LossDetails)18872_storage)",
             "contract": "LendingPoolTrancheLoss",
             "src": "src/core/lendingPool/LendingPoolTrancheLoss.sol:32"
           },
@@ -3192,7 +3204,7 @@
             "slot": "4",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "LendingPoolTranche",
-            "src": "src/core/lendingPool/LendingPoolTranche.sol:27"
+            "src": "src/core/lendingPool/LendingPoolTranche.sol:25"
           },
           {
             "label": "_userArrayIndex",
@@ -3200,7 +3212,7 @@
             "slot": "5",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "LendingPoolTranche",
-            "src": "src/core/lendingPool/LendingPoolTranche.sol:29"
+            "src": "src/core/lendingPool/LendingPoolTranche.sol:27"
           },
           {
             "label": "_trancheUsers",
@@ -3208,7 +3220,7 @@
             "slot": "6",
             "type": "t_array(t_address)dyn_storage",
             "contract": "LendingPoolTranche",
-            "src": "src/core/lendingPool/LendingPoolTranche.sol:31"
+            "src": "src/core/lendingPool/LendingPoolTranche.sol:29"
           }
         ],
         "types": {
@@ -3220,7 +3232,7 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IERC20)1204": {
+          "t_contract(IERC20)1176": {
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
@@ -3313,7 +3325,7 @@
             "members": [
               {
                 "label": "_asset",
-                "type": "t_contract(IERC20)1204",
+                "type": "t_contract(IERC20)1176",
                 "offset": 0,
                 "slot": "0"
               },
@@ -3360,7 +3372,7 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
-          "t_contract(ILendingPool)12304": {
+          "t_contract(ILendingPool)18461": {
             "label": "contract ILendingPool",
             "numberOfBytes": "20"
           },
@@ -3368,7 +3380,7 @@
             "label": "mapping(address => mapping(uint256 => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(LossDetails)12708_storage)": {
+          "t_mapping(t_uint256,t_struct(LossDetails)18872_storage)": {
             "label": "mapping(uint256 => struct LossDetails)",
             "numberOfBytes": "32"
           },
@@ -3376,7 +3388,7 @@
             "label": "mapping(uint256 => uint256)",
             "numberOfBytes": "32"
           },
-          "t_struct(LossDetails)12708_storage": {
+          "t_struct(LossDetails)18872_storage": {
             "label": "struct LossDetails",
             "members": [
               {
@@ -3444,7 +3456,7 @@
             {
               "contract": "ERC4626Upgradeable",
               "label": "_asset",
-              "type": "t_contract(IERC20)1204",
+              "type": "t_contract(IERC20)1176",
               "src": "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol:56",
               "offset": 0,
               "slot": "0"
@@ -3521,9 +3533,9 @@
         }
       }
     },
-    "37c7667eef801ede0d75153a0a351481da818946d1fe2636c9a38214c733e5eb": {
-      "address": "0x6A14fA5f6781959D9ec0c67F017878bdB7c2e99a",
-      "txHash": "0x9f1593bef53715df9d4e06e32e5831084e5d560f5baa6d0ab923bf38b854bbd5",
+    "15dbb5454e0d0457268c019102f76c1c205aa0ca802c6462f6a0ff516af150a1": {
+      "address": "0xb13FABb6B15b61e0552BD68C85843bD8dB6e0070",
+      "txHash": "0xa44f9fb9f35ede6bf9e666d0f592a8231684fa89e66efd582283c1394e92b29c",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [],
@@ -3532,8 +3544,8 @@
       }
     },
     "58eb82d8fabcf41ca27d164cc330de2e6bd159a64eb20fca8825f5940ab242c1": {
-      "address": "0x6e73caceD94534dbcd69C8aE817D207cd8B05D99",
-      "txHash": "0x209a630d83a52b76b5c6115f7caa5529debd01ba24e9b82e2a1636ea31b722ad",
+      "address": "0x85e3674Fc4d4E8eBAEF9c2A2478787d38dbCedEB",
+      "txHash": "0x84f8720d0bdf9321525714d5081785ab9bab084b26ad6ad98f16251256244dd8",
       "layout": {
         "solcVersion": "0.8.23",
         "storage": [],
