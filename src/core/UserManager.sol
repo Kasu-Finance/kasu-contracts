@@ -19,15 +19,12 @@ import "./Constants.sol";
  */
 contract UserManager is IUserManager, Initializable {
     /// @notice System variables contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISystemVariables private immutable _systemVariables;
 
     /// @notice KSU locking contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKSULocking private immutable _ksuLocking;
 
     /// @notice User loyalty rewards contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IUserLoyaltyRewards private immutable _userLoyaltyRewards;
 
     /// @notice Lending pool manager address.

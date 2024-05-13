@@ -47,10 +47,8 @@ import "../../shared/AddressLib.sol";
  */
 contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     /// @dev System variables contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ISystemVariables private immutable _systemVariables;
     /// @dev User manager contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IUserManager private immutable _userManager;
 
     /// @notice Returns the next clearing epoch that needs to be processed for the lending pool.

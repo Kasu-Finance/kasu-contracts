@@ -18,15 +18,12 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     using SafeERC20 for IERC20;
 
     /// @notice Maximum epoch reward rate.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     uint256 private immutable MAX_REWARD_EPOCH_RATE = INTEREST_RATE_FULL_PERCENT / 20; // 5%
 
     /// @notice KSU token price contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKsuPrice private immutable _ksuPrice;
 
     /// @notice KSU token contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IERC20 private immutable _ksuToken;
 
     /// @notice User manager contract.

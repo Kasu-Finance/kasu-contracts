@@ -12,7 +12,6 @@ import "../../shared/AddressLib.sol";
  * @notice Helper contract for lending pool contracts.
  */
 abstract contract LendingPoolHelpers is Initializable, ILendingPoolErrors {
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILendingPoolManager private immutable __lendingPoolManager;
     ILendingPool private _lendingPool;
 

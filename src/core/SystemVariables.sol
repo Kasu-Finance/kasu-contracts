@@ -45,7 +45,6 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
     uint256 private constant EPOCH_DURATION = 1 weeks;
 
     /// @notice The KSU token price contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IKsuPrice private immutable _ksuPrice;
 
     /// @notice The timestamp of the start of the initial epoch.

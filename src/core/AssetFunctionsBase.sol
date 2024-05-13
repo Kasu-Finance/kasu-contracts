@@ -12,7 +12,6 @@ abstract contract AssetFunctionsBase {
     using SafeERC20 for IERC20;
 
     /// @notice Underlying asset of the contract.
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IERC20 internal immutable _underlyingAsset;
 
     /* ========== CONSTRUCTOR ========== */
