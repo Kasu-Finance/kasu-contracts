@@ -10,8 +10,7 @@ import { lockPeriod30, lockPeriod180 } from './utils/addLockPeriods';
 
 async function main() {
     // contract addresses
-    const ksuLockingAddress =
-        deployment['KSULocking'].address;
+    const ksuLockingAddress = deployment['KSULocking'].address;
     const ksuAddress = deployment['KSU'].address;
     const usdcAddress = deployment['USDC'].address;
 
@@ -42,6 +41,9 @@ async function main() {
         ksuLockingAddress,
         parseUnits('200', 6),
     );
+    await tx.wait();
+
+    tx = await ksuLockingAdminContract.setCanEmitFees(admin.address, true);
     await tx.wait();
 
     tx = await ksuLockingAdminContract.emitFees(parseUnits('200', 6));

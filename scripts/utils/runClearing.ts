@@ -90,7 +90,7 @@ export async function runClearing(
     );
     await tx.wait(1);
 
-    // start clearing period
+    // end clearing period
     console.log('Manually stop clearing period');
     tx = await systemVariablesTestable.endClearing();
     await tx.wait(1);

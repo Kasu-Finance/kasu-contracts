@@ -4,9 +4,9 @@ import {
     LendingPoolManager__factory,
     MockUSDC__factory,
 } from '../../typechain-types';
-import path from 'path';
 import * as hre from 'hardhat';
 import fs from 'fs';
+import { getLogFilePath } from './_logs';
 
 export type RequestDepositInput = {
     user: Signer;
@@ -20,11 +20,9 @@ export async function requestDeposits(
 ) {
     let tx: ContractTransactionResponse;
 
-    const deploymentAddressesPath = path.join(
-        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
-    );
+    const { filePath } = getLogFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
-        fs.readFileSync(deploymentAddressesPath).toString(),
+        fs.readFileSync(filePath).toString(),
     );
 
     // signers

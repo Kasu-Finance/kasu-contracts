@@ -29,12 +29,12 @@ export async function createLendingPool(
     const signers = await hre.ethers.getSigners();
 
     const deployerAccount = signers[0];
-    const adminAccount = signers[1];
+    const adminAccount = signers[0];
 
-    const clearingManagerAccount = signers[1];
-    const poolCreatorAccount = signers[1];
-    const poolAdminAccount = signers[1];
-    const drawRecipientAccount = signers[1];
+    const clearingManagerAccount = signers[0];
+    const poolCreatorAccount = signers[0];
+    const poolAdminAccount = signers[0];
+    const drawRecipientAccount = signers[0];
 
     console.info('adminAccount', adminAccount.address);
     console.info('clearingManagerAccount', clearingManagerAccount.address);
