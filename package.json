@@ -13,6 +13,8 @@
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
         "scripts:deploy:base-sepolia": "DEPLOYER_KEY= ADMIN_KEY= hardhat run --network base-sepolia ./scripts/deploy.ts",
+        "scripts:mint-usdc:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/mintMockUSDC.ts",
+        "scripts:sendFunds:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/sendFunds.ts",
         "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
         "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",

@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import hre from 'hardhat';
 
 export function getLogFilePath(networkName: string) {
     const folderPath = path.join(__dirname, '..', '..', '.openzeppelin');
