@@ -11,7 +11,7 @@ import {
     CreateTrancheConfigStruct,
 } from '../../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse } from 'ethers';
-import { getLogFilePath } from './_logs';
+import { addressFileFactory, getLogFilePath } from './_logs';
 
 export async function createLendingPool(
     poolName: string,
@@ -20,10 +20,8 @@ export async function createLendingPool(
 ) {
     let tx: ContractTransactionResponse;
 
-    const { filePath } = getLogFilePath(hre.network.name);
-    const deploymentAddresses = JSON.parse(
-        fs.readFileSync(filePath).toString(),
-    );
+    const addressFile = addressFileFactory(0, hre.network.name);
+    const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
     const signers = await hre.ethers.getSigners();

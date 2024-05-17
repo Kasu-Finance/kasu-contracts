@@ -1,16 +1,10 @@
-import path from 'path';
-import fs from 'fs';
-
 import { ERC20__factory, KSULocking__factory } from '../typechain-types';
 import * as hre from 'hardhat';
+import { addressFileFactory } from './utils/_logs';
 
 async function main() {
-    const deploymentAddressesPath = path.join(
-        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
-    );
-    const deploymentAddresses = JSON.parse(
-        fs.readFileSync(deploymentAddressesPath).toString(),
-    );
+    const addressFile = addressFileFactory(0, hre.network.name);
+    const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
     const signers = await hre.ethers.getSigners();

@@ -6,7 +6,7 @@ import {
 } from '../../typechain-types';
 import * as hre from 'hardhat';
 import fs from 'fs';
-import { getLogFilePath } from './_logs';
+import { addressFileFactory, getLogFilePath } from './_logs';
 
 export type RequestDepositInput = {
     user: Signer;
@@ -20,10 +20,8 @@ export async function requestDeposits(
 ) {
     let tx: ContractTransactionResponse;
 
-    const { filePath } = getLogFilePath(hre.network.name);
-    const deploymentAddresses = JSON.parse(
-        fs.readFileSync(filePath).toString(),
-    );
+    const addressFile = addressFileFactory(0, hre.network.name);
+    const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
     const signers = await hre.ethers.getSigners();

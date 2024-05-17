@@ -1,18 +1,12 @@
-import path from 'path';
-import fs from 'fs';
-// import * as deploymentAddresses from '../deployments/base-testnet/addresses-base-testnet.json';
 import { ERC20__factory } from '../typechain-types';
 import * as hre from 'hardhat';
+import { addressFileFactory } from './utils/_logs';
 
 const recipients = ['0x97cbcD33f1075070e59F354E4eCf71Ed6267E1ED'];
 
 async function main() {
-    const deploymentAddressesPath = path.join(
-        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
-    );
-    const deploymentAddresses = JSON.parse(
-        fs.readFileSync(deploymentAddressesPath).toString(),
-    );
+    const addressFile = addressFileFactory(0, hre.network.name);
+    const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
     const signers = await hre.ethers.getSigners();
@@ -28,17 +22,19 @@ async function main() {
     );
 
     for (const recipient of recipients) {
-        console.log(`Sending 0.1 ETH and 10000 KSU to ${recipient}`);
+        console.log(`Sending 0.1 ETH to ${recipient}`);
         let tx = await admin.sendTransaction({
             to: recipient,
             value: hre.ethers.parseEther('0.1'),
         });
         await tx.wait();
+        console.log(`Sending 10000 KSU to ${recipient}`);
         tx = await ksuContract.transfer(
             recipient,
             hre.ethers.parseEther('10000'),
         );
         await tx.wait();
+        console.log(`Sending 100000 USDC to ${recipient}`);
         tx = await usdcContract.transfer(
             recipient,
             hre.ethers.parseUnits('100000', 6),

@@ -4,19 +4,13 @@ import hre from 'hardhat';
 
 export function getLogFilePath(networkName: string) {
     const folderPath = path.join(__dirname, '..', '..', '.openzeppelin');
-    const filePath = path.join(
-        folderPath,
-        `${networkName}-addresses.json`,
-    );
+    const filePath = path.join(folderPath, `${networkName}-addresses.json`);
 
-    return {folderPath, filePath}
+    return { folderPath, filePath };
 }
 
-export function addressFileFactory(
-    blockNumber: number,
-    networkName: string,
-) {
-    const {filePath} = getLogFilePath(hre.network.name);
+export function addressFileFactory(blockNumber: number, networkName: string) {
+    const { filePath } = getLogFilePath(networkName);
 
     const didFileInitiallyExist = fileExists(filePath);
 
@@ -43,10 +37,13 @@ export function addressFileFactory(
                 name,
                 proxy,
                 implementation,
-                proxyType
+                proxyType,
             ),
         didFileInitiallyExist: didFileInitiallyExist,
-        getContractAddress: (contractName: string) => getContractAddress(filePath, contractName)
+        getContractAddresses: () =>
+            JSON.parse(fs.readFileSync(filePath).toString()),
+        getContractAddress: (contractName: string) =>
+            getContractAddress(filePath, contractName),
     };
 }
 
@@ -56,7 +53,7 @@ function writeAddressProxy(
     name: string,
     proxy: string,
     implementation: string,
-    proxyType: string
+    proxyType: string,
 ) {
     const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
     addresses[name] = {
@@ -77,12 +74,19 @@ function fileExists(filePath: string): boolean {
     }
 }
 
-function getContractAddress(deploymentPath: string, contractName: string): string {
+function getContractAddress(
+    deploymentPath: string,
+    contractName: string,
+): string {
     const addresses = JSON.parse(fs.readFileSync(deploymentPath).toString());
     const address = addresses[contractName].address;
-    if(address == undefined || address == "") {
-        console.error("Could not find address for deployment", deploymentPath, contractName);
-        throw new Error()
+    if (address == undefined || address == '') {
+        console.error(
+            'Could not find address for deployment',
+            deploymentPath,
+            contractName,
+        );
+        throw new Error();
     }
     return address;
 }
