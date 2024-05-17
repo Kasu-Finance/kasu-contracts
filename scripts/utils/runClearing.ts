@@ -8,6 +8,7 @@ import {
 } from '../../typechain-types';
 import { ethers } from 'ethers';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
+import { getLogFilePath } from './_logs';
 
 export async function runClearing(
     lendingPoolAddress: string,
@@ -20,11 +21,9 @@ export async function runClearing(
         )} USDC`,
     );
 
-    const deploymentAddressesPath = path.join(
-        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
-    );
+    const { filePath } = getLogFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
-        fs.readFileSync(deploymentAddressesPath).toString(),
+        fs.readFileSync(filePath).toString(),
     );
 
     // signers
