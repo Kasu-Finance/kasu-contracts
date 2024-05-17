@@ -20,7 +20,8 @@
         "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",
         "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts",
         "scripts:createTestLendingPools": "hardhat run --network localhost ./scripts/createTestLendingPools.ts",
-        "scripts:createTestLendingPools:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/createTestLendingPools.ts"
+        "scripts:createTestLendingPools:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/createTestLendingPools.ts",
+        "repl:kasu": "NETWORK_NAME=base-sepolia ts-node ./scripts/repl/kasu_repl.ts"
     },
     "repository": {
         "type": "git",
