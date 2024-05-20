@@ -1,7 +1,11 @@
 import * as repl from 'node:repl';
 
 import { addressFileFactory } from '../utils/_logs';
-import { SystemVariablesTestable__factory } from '../../typechain-types';
+import {
+    LendingPoolManager__factory,
+    SystemVariablesTestable__factory,
+    UserManager__factory,
+} from '../../typechain-types';
 import { ethers } from 'ethers';
 import * as dotenv from 'dotenv';
 
@@ -17,17 +21,37 @@ const deploymentAddresses = addressFile.getContractAddresses();
 
 // json rpc
 const provider = new ethers.JsonRpcProvider(jsonRpcUrl);
-const wallet = new ethers.Wallet(adminPK, provider);
+const adminWallet = new ethers.Wallet(adminPK, provider);
 
+// contracts
 export const systemVariablesTestableAdmin =
     SystemVariablesTestable__factory.connect(
         deploymentAddresses['SystemVariables'].address,
-        wallet,
+        adminWallet,
     );
 
+const lendingPoolManager = LendingPoolManager__factory.connect(
+    deploymentAddresses.LendingPoolManager.address,
+    adminWallet,
+);
+
+const userManager = UserManager__factory.connect(
+    deploymentAddresses.UserManager.address,
+    adminWallet,
+);
+
 const replServer = repl.start({
-    prompt: 'Start interacting with KASU > ',
+    prompt: '>',
     useGlobal: true,
 });
 
+const help = [
+    'systemVariablesTestableAdmin',
+    'lendingPoolManager',
+    'adminWallet',
+];
+
+replServer.context.help = help;
 replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
+replServer.context.lendingPoolManager = lendingPoolManager;
+replServer.context.userManager = userManager;
