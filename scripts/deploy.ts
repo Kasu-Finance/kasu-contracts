@@ -11,8 +11,8 @@ import {
 } from '../typechain-types';
 import { ContractTransactionResponse, parseEther, Signer } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
-import { addressFileFactory } from './_utils/_logs';
-import { deployFactory, deployOptions } from './_utils/_deploy';
+import { addressFileFactory } from './_utils/addressFileFactory';
+import { deployFactory, deployOptions } from './_utils/deployFactory';
 import hre from 'hardhat';
 import { addLockPeriods } from './_modules/addLockPeriods';
 import { getAccounts } from './_modules/getAccounts';

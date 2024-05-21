@@ -1,4 +1,4 @@
-import { addressFileFactory } from '../_utils/_logs';
+import { addressFileFactory } from '../_utils/addressFileFactory';
 import * as hre from 'hardhat';
 import { MockUSDC__factory } from '../../typechain-types';
 import { getAccounts } from '../_modules/getAccounts';

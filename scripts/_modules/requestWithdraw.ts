@@ -3,7 +3,7 @@ import { LendingPoolManager__factory } from '../../typechain-types';
 import path from 'path';
 import * as hre from 'hardhat';
 import fs from 'fs';
-import { addressFileFactory } from '../_utils/_logs';
+import { addressFileFactory } from '../_utils/addressFileFactory';
 
 export type RequestWithdrawInput = {
     user: Signer;

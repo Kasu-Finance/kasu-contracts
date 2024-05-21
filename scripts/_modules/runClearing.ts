@@ -7,7 +7,7 @@ import {
 } from '../../typechain-types';
 import { ethers, Signer } from 'ethers';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
-import { getLogFilePath } from '../_utils/_logs';
+import { getLogFilePath } from '../_utils/addressFileFactory';
 import { getAccounts } from './getAccounts';
 
 export async function runClearing(

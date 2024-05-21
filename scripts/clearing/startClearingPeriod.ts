@@ -1,5 +1,5 @@
 import { SystemVariablesTestable__factory } from '../../typechain-types';
-import { getLogFilePath } from '../_utils/_logs';
+import { getLogFilePath } from '../_utils/addressFileFactory';
 import * as hre from 'hardhat';
 import fs from 'fs';
 import { ethers } from 'ethers';
