@@ -12,6 +12,8 @@ import {
 } from '../../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse } from 'ethers';
 import { addressFileFactory, getLogFilePath } from './_logs';
+import { ROLE_POOL_CLEARING_MANAGER } from './grantLendingPoolRole';
+import { getAccounts } from './getAccounts';
 
 export async function createLendingPool(
     poolName: string,
@@ -24,7 +26,7 @@ export async function createLendingPool(
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
 
     const deployerAccount = signers[0];
     const adminAccount = signers[0];
@@ -34,15 +36,18 @@ export async function createLendingPool(
     const poolAdminAccount = signers[0];
     const drawRecipientAccount = signers[0];
 
-    console.info('adminAccount', adminAccount.address);
-    console.info('clearingManagerAccount', clearingManagerAccount.address);
-    console.info('poolCreatorAccount', poolCreatorAccount.address);
-    console.info('poolAdminAccount', poolAdminAccount.address);
-    console.info('drawRecipientAccount', poolAdminAccount.address);
+    console.info('adminAccount', await adminAccount.getAddress());
+    console.info(
+        'clearingManagerAccount',
+        await clearingManagerAccount.getAddress(),
+    );
+    console.info('poolCreatorAccount', await poolCreatorAccount.getAddress());
+    console.info('poolAdminAccount', await poolAdminAccount.getAddress());
+    console.info('drawRecipientAccount', await poolAdminAccount.getAddress());
 
     // access control
     console.info(
-        `Granting ROLE_LENDING_POOL_CREATOR role to ${adminAccount.address}`,
+        `Granting ROLE_LENDING_POOL_CREATOR role to ${await adminAccount.getAddress()}`,
     );
     const kasuControllerAdmin = KasuController__factory.connect(
         deploymentAddresses['KasuController'].address,
@@ -109,8 +114,8 @@ export async function createLendingPool(
         targetExcessLiquidityPercentage: BigInt(10_000),
         minExcessLiquidityPercentage: 0,
         tranches: createTranchesConfig,
-        poolAdmin: poolAdminAccount.address,
-        drawRecipient: drawRecipientAccount.address,
+        poolAdmin: await poolAdminAccount.getAddress(),
+        drawRecipient: await drawRecipientAccount.getAddress(),
         desiredDrawAmount: BigInt(0),
     };
 
@@ -138,15 +143,12 @@ export async function createLendingPool(
     console.info('PendingPool Address:', createdPendingPoolAddress);
     console.info('Tranche Addresses"', createdTrancheAddresses);
 
-    const ROLE_POOL_CLEARING_MANAGER = hre.ethers.id(
-        'ROLE_POOL_CLEARING_MANAGER',
-    );
     tx = await kasuControllerAdmin
         .connect(poolAdminAccount)
         .grantLendingPoolRole(
             createdLendingPoolAddress,
             ROLE_POOL_CLEARING_MANAGER,
-            clearingManagerAccount.address,
+            await clearingManagerAccount.getAddress(),
         );
     await tx.wait(1);
 

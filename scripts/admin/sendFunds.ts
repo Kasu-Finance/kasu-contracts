@@ -1,7 +1,8 @@
-import { ERC20__factory } from '../typechain-types';
+import { ERC20__factory } from '../../typechain-types';
 import * as hre from 'hardhat';
-import { addressFileFactory } from './utils/_logs';
+import { addressFileFactory } from '../_utils/_logs';
 import { ContractTransactionResponse } from 'ethers';
+import { getAccounts } from '../_utils/getAccounts';
 
 const recipients = [
     '0x022d1b8c2808702013bb52D0429F45FDC571dD53',
@@ -17,7 +18,7 @@ async function main() {
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
     const admin = signers[1];
     // contracts
     const ksuContract = ERC20__factory.connect(

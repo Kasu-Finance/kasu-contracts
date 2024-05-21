@@ -1,6 +1,7 @@
-import { addressFileFactory } from './utils/_logs';
+import { addressFileFactory } from '../_utils/_logs';
 import * as hre from 'hardhat';
-import { MockUSDC__factory } from '../typechain-types';
+import { MockUSDC__factory } from '../../typechain-types';
+import { getAccounts } from '../_utils/getAccounts';
 
 const recipients = ['0x68ea8544AA64479c592711205B59F92122E0893c'];
 
@@ -11,7 +12,7 @@ async function main() {
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
     const admin = signers[1];
 
     // contracts

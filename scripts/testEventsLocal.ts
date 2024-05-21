@@ -6,7 +6,8 @@ import {
 } from '../typechain-types';
 import * as hre from 'hardhat';
 import { parseUnits } from 'ethers';
-import { lockPeriod30, lockPeriod180 } from './utils/addLockPeriods';
+import { lockPeriod30, lockPeriod180 } from './_utils/addLockPeriods';
+import { getAccounts } from './_utils/getAccounts';
 
 async function main() {
     // contract addresses
@@ -15,7 +16,7 @@ async function main() {
     const usdcAddress = deployment['USDC'].address;
 
     // signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
     const admin = signers[0];
     const alice = signers[1];
     const bob = signers[2];
@@ -33,7 +34,10 @@ async function main() {
     let tx;
 
     // mint USDC to admin
-    tx = await usdcAdminContract.mint(admin.address, parseUnits('1000', 6));
+    tx = await usdcAdminContract.mint(
+        await admin.getAddress(),
+        parseUnits('1000', 6),
+    );
     await tx.wait();
 
     // fees emitted
@@ -43,7 +47,10 @@ async function main() {
     );
     await tx.wait();
 
-    tx = await ksuLockingAdminContract.setCanEmitFees(admin.address, true);
+    tx = await ksuLockingAdminContract.setCanEmitFees(
+        await admin.getAddress(),
+        true,
+    );
     await tx.wait();
 
     tx = await ksuLockingAdminContract.emitFees(parseUnits('200', 6));

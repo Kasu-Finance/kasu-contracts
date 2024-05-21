@@ -7,6 +7,7 @@ import {
 import * as hre from 'hardhat';
 import fs from 'fs';
 import { addressFileFactory, getLogFilePath } from './_logs';
+import { getAccounts } from './getAccounts';
 
 export type RequestDepositInput = {
     user: Signer;
@@ -24,7 +25,7 @@ export async function requestDeposits(
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
     const adminAccount = signers[0];
 
     // fund accounts

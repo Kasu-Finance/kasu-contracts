@@ -1,7 +1,8 @@
 import { KasuController__factory } from '../../typechain-types';
-import { ContractTransactionResponse, Wallet } from 'ethers';
+import { ContractTransactionResponse, Signer, Wallet } from 'ethers';
 import hre from 'hardhat';
 import { addressFileFactory } from './_logs';
+import { getAccounts } from './getAccounts';
 
 export const ROLE_POOL_CLEARING_MANAGER = hre.ethers.id(
     'ROLE_POOL_CLEARING_MANAGER',
@@ -18,7 +19,7 @@ export async function grantLendingPoolRole(
     const addressFile = addressFileFactory(blockNumber, hre.network.name);
 
     // signers
-    const namedSigners = await hre.ethers.getSigners();
+    const namedSigners = await getAccounts(hre.network.name);
     const adminAccount = namedSigners[0];
 
     // access control

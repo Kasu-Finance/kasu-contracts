@@ -1,13 +1,14 @@
-import { ERC20__factory, KSULocking__factory } from '../typechain-types';
+import { ERC20__factory, KSULocking__factory } from '../../typechain-types';
 import * as hre from 'hardhat';
-import { addressFileFactory } from './utils/_logs';
+import { addressFileFactory } from '../_utils/_logs';
+import { getAccounts } from '../_utils/getAccounts';
 
 async function main() {
     const addressFile = addressFileFactory(0, hre.network.name);
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
     const admin = signers[0];
     // contracts
     const usdcContract = ERC20__factory.connect(

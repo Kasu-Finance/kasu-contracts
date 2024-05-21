@@ -1,4 +1,4 @@
-import { createLendingPool } from './utils/createLendingPool';
+import { createLendingPool } from '../_utils/createLendingPool';
 
 async function main() {
     await createLendingPool('lending pool 1', 'LP', 3);

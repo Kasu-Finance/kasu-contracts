@@ -11,10 +11,11 @@ import {
 } from '../typechain-types';
 import { ContractTransactionResponse, parseEther, Signer } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
-import { addressFileFactory } from './utils/_logs';
-import { deployFactory, deployOptions } from './utils/_deploy';
+import { addressFileFactory } from './_utils/_logs';
+import { deployFactory, deployOptions } from './_utils/_deploy';
 import hre from 'hardhat';
-import { addLockPeriods } from './utils/addLockPeriods';
+import { addLockPeriods } from './_utils/addLockPeriods';
+import { getAccounts } from './_utils/getAccounts';
 
 // config values
 export const wEthAddress = '0x4200000000000000000000000000000000000006';
@@ -22,24 +23,18 @@ const NEXERA_ID_SIGNER = '0x0BAd9DaD98143b2E946e8A40E4f27537be2f55E2';
 let PROTOCOL_FEE_RECEIVER = '';
 
 function isLocalDeployment() {
-    return (
-        hre.network.name === 'localhost' || hre.network.name === 'hardhat'
-    );
+    return hre.network.name === 'localhost' || hre.network.name === 'hardhat';
 }
-
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
-    const addressFile = addressFileFactory(
-        blockNumber,
-        hre.network.name,
-    );
+    const addressFile = addressFileFactory(blockNumber, hre.network.name);
 
     const isNewDeployment = !addressFile.didFileInitiallyExist;
     console.log(`Is new deployment: ${isNewDeployment}`);
 
     // get signers
-    const signers = await hre.ethers.getSigners();
+    const signers = await getAccounts(hre.network.name);
 
     const deployerSigner = signers[0];
     const deployerAddress = await deployerSigner.getAddress();
@@ -58,7 +53,7 @@ async function main() {
 
     const { deployTransparentProxy, deployBeacon } = await deployFactory(
         addressFile,
-        isNewDeployment
+        isNewDeployment,
     );
 
     // deploy
@@ -69,7 +64,6 @@ async function main() {
     );
     const ksu = KSU__factory.connect(ksuDeploymentAddress, adminSigner);
 
-
     const mockUsdcDeploymentAddress = await deployTransparentProxy(
         'MockUSDC',
         deployOptions(deployerAddress, []),
@@ -79,7 +73,6 @@ async function main() {
         mockUsdcDeploymentAddress,
         adminSigner,
     );
-
 
     const kasuControllerDeploymentAddress = await deployTransparentProxy(
         'KasuController',
@@ -94,7 +87,6 @@ async function main() {
         ksuLockingDeploymentAddress,
         adminSigner,
     );
-
 
     const mockKsuPriceDeploymentAddress = await deployTransparentProxy(
         'MockKsuPrice',
@@ -182,7 +174,6 @@ async function main() {
         adminSigner,
     );
 
-
     // clearing
     const clearingCoordinatorDeploymentAddress = await deployTransparentProxy(
         'ClearingCoordinator',
@@ -249,7 +240,7 @@ async function main() {
     );
 
     // initialize
-    if(isNewDeployment) {
+    if (isNewDeployment) {
         tx = await ksu.initialize(adminAddress);
         await tx.wait(1);
 
@@ -275,7 +266,10 @@ async function main() {
             kasuControllerDeploymentAddress,
             adminSigner,
         );
-        tx = await kasuController.initialize(adminAddress, lendingPoolFactoryAddress);
+        tx = await kasuController.initialize(
+            adminAddress,
+            lendingPoolFactoryAddress,
+        );
         await tx.wait(1);
 
         const lendingPoolManager = LendingPoolManager__factory.connect(
@@ -311,16 +305,17 @@ async function main() {
         console.log('System Variables initialized');
     }
 
-
     // add lock periods
-    if(isNewDeployment) {
-        let tx = await ksuLocking.setCanEmitFees(feeManagerDeploymentAddress, true);
+    if (isNewDeployment) {
+        let tx = await ksuLocking.setCanEmitFees(
+            feeManagerDeploymentAddress,
+            true,
+        );
         await tx.wait(1);
 
         await addLockPeriods(ksuLocking, ksuLockBonusDeploymentAddress);
     }
 }
-
 
 main().catch((error) => {
     console.error(error);

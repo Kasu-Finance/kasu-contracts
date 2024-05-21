@@ -12,16 +12,15 @@
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
-        "scripts:deploy:base-sepolia": "DEPLOYER_KEY= ADMIN_KEY= hardhat run --network base-sepolia ./scripts/deploy.ts",
-        "scripts:mint-usdc:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/mintMockUSDC.ts",
-        "scripts:sendFunds:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/sendFunds.ts",
         "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
+        "scripts:createTestLendingPools": "hardhat run --network localhost scripts/clearing/createTestLendingPools.ts",
+        "scripts:grant-role": "hardhat run --network base-sepolia scripts/clearing/grantClearingManagerLendingPoolRole.ts",
+        "scripts:mint-usdc": "hardhat run --network localhost scripts/admin/mintMockUSDC.ts",
+        "scripts:sendFunds": "hardhat run --network localhost scripts/admin/sendFunds.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
-        "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts",
-        "scripts:checkProxyAdmin": "hardhat run --network localhost ./scripts/checkProxyAdmin.ts",
-        "scripts:createTestLendingPools": "hardhat run --network localhost ./scripts/createTestLendingPools.ts",
-        "scripts:createTestLendingPools:base:sepolia": "ADMIN_KEY= hardhat run --network base-sepolia ./scripts/createTestLendingPools.ts",
-        "repl:kasu": "NETWORK_NAME=base-sepolia ts-node ./scripts/repl/kasu_repl.ts"
+        "scripts:clearingWorkFlow": "hardhat run --network localhost scripts/clearingWorkflow.ts",
+        "scripts:startClearingPeriod": "hardhat run --network localhost scripts/clearing/startClearingPeriod.ts",
+        "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
     },
     "repository": {
         "type": "git",

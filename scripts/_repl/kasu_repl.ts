@@ -1,6 +1,6 @@
 import * as repl from 'node:repl';
 
-import { addressFileFactory } from '../utils/_logs';
+import { addressFileFactory } from '../_utils/_logs';
 import {
     LendingPoolManager__factory,
     SystemVariablesTestable__factory,

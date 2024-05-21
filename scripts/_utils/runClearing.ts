@@ -1,4 +1,3 @@
-import path from 'path';
 import * as hre from 'hardhat';
 import fs from 'fs';
 import {
@@ -6,13 +5,15 @@ import {
     SystemVariablesTestable__factory,
     UserManager__factory,
 } from '../../typechain-types';
-import { ethers } from 'ethers';
+import { ethers, Signer } from 'ethers';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
 import { getLogFilePath } from './_logs';
+import { getAccounts } from './getAccounts';
 
 export async function runClearing(
     lendingPoolAddress: string,
     drawAmount: bigint,
+    fromAccount: Signer,
 ) {
     console.log(
         `running clearing for lending pool: ${lendingPoolAddress}, draw amount: ${hre.ethers.formatUnits(
@@ -27,9 +28,8 @@ export async function runClearing(
     );
 
     // signers
-    const signers = await hre.ethers.getSigners();
-    const admin = signers[0];
-    const clearingManager = signers[3];
+    const signers = await getAccounts(hre.network.name);
+    const admin = signers[1];
 
     // contracts
     const userManager = UserManager__factory.connect(
@@ -39,7 +39,7 @@ export async function runClearing(
 
     const lendingPoolManager = LendingPoolManager__factory.connect(
         deploymentAddresses.LendingPoolManager.address,
-        clearingManager,
+        fromAccount,
     );
 
     const systemVariablesTestable = SystemVariablesTestable__factory.connect(
