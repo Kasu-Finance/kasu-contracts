@@ -1,7 +1,7 @@
-import { runClearing } from '../_utils/runClearing';
+import { runClearing } from '../_modules/runClearing';
 import { parseUnits } from 'ethers';
 import * as hre from 'hardhat';
-import { getAccounts } from '../_utils/getAccounts';
+import { getAccounts } from '../_modules/getAccounts';
 
 const lendingPoolAddress = '0xBf5A316F4303e13aE92c56D2D8C9F7629bEF5c6e';
 const drawAmount = parseUnits('500', 6);

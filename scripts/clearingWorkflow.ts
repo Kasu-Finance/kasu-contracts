@@ -1,16 +1,19 @@
 import * as hre from 'hardhat';
-import { createLendingPool } from './_utils/createLendingPool';
-import { RequestDepositInput, requestDeposits } from './_utils/requestDeposit';
-import { runClearing } from './_utils/runClearing';
+import { createLendingPool } from './_modules/createLendingPool';
+import {
+    RequestDepositInput,
+    requestDeposits,
+} from './_modules/requestDeposit';
+import { runClearing } from './_modules/runClearing';
 import {
     requestWithdrawals,
     RequestWithdrawInput,
-} from './_utils/requestWithdraw';
+} from './_modules/requestWithdraw';
 import {
     grantLendingPoolRole,
     ROLE_POOL_CLEARING_MANAGER,
-} from './_utils/grantLendingPoolRole';
-import { getAccounts } from './_utils/getAccounts';
+} from './_modules/grantLendingPoolRole';
+import { getAccounts } from './_modules/getAccounts';
 
 const clearing1DrawAmount = hre.ethers.parseUnits('2500', 6); // 2500 USDC
 const clearing2DrawAmount = hre.ethers.parseUnits('1000', 6); // 1000 USDC

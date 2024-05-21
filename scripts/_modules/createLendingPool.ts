@@ -11,7 +11,7 @@ import {
     CreateTrancheConfigStruct,
 } from '../../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse } from 'ethers';
-import { addressFileFactory, getLogFilePath } from './_logs';
+import { addressFileFactory, getLogFilePath } from '../_utils/_logs';
 import { ROLE_POOL_CLEARING_MANAGER } from './grantLendingPoolRole';
 import { getAccounts } from './getAccounts';
 

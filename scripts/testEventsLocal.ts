@@ -6,8 +6,8 @@ import {
 } from '../typechain-types';
 import * as hre from 'hardhat';
 import { parseUnits } from 'ethers';
-import { lockPeriod30, lockPeriod180 } from './_utils/addLockPeriods';
-import { getAccounts } from './_utils/getAccounts';
+import { lockPeriod30, lockPeriod180 } from './_modules/addLockPeriods';
+import { getAccounts } from './_modules/getAccounts';
 
 async function main() {
     // contract addresses

@@ -1,6 +1,9 @@
-import { RequestDepositInput, requestDeposits } from '../_utils/requestDeposit';
+import {
+    RequestDepositInput,
+    requestDeposits,
+} from '../_modules/requestDeposit';
 import * as hre from 'hardhat';
-import { getAccounts } from '../_utils/getAccounts';
+import { getAccounts } from '../_modules/getAccounts';
 
 const lendingPoolAddress = '0xBf5A316F4303e13aE92c56D2D8C9F7629bEF5c6e';
 const juniorTrancheAddress = '0xbA94C268049DD87Ded35F41F6D4C7542b4BdB767';

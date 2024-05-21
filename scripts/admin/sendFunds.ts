@@ -2,7 +2,7 @@ import { ERC20__factory } from '../../typechain-types';
 import * as hre from 'hardhat';
 import { addressFileFactory } from '../_utils/_logs';
 import { ContractTransactionResponse } from 'ethers';
-import { getAccounts } from '../_utils/getAccounts';
+import { getAccounts } from '../_modules/getAccounts';
 
 const recipients = [
     '0x022d1b8c2808702013bb52D0429F45FDC571dD53',

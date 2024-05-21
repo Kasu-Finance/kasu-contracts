@@ -4,7 +4,7 @@ import * as hre from 'hardhat';
 import fs from 'fs';
 import { ethers } from 'ethers';
 import * as systemVariablesAbi from '../../out/SystemVariables.sol/SystemVariables.json';
-import { getAccounts } from '../_utils/getAccounts';
+import { getAccounts } from '../_modules/getAccounts';
 
 async function main() {
     try {

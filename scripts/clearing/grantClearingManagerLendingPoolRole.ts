@@ -1,7 +1,7 @@
 import {
     grantLendingPoolRole,
     ROLE_POOL_CLEARING_MANAGER,
-} from '../_utils/grantLendingPoolRole';
+} from '../_modules/grantLendingPoolRole';
 
 const LENDING_POOL_ADDRESS = '0xB93c239690061228110525AA16622345241B388e';
 const ACCOUNT_ADDRESS = '0x68ea8544AA64479c592711205B59F92122E0893c';

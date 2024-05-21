@@ -6,7 +6,7 @@ import {
 } from '../../typechain-types';
 import * as hre from 'hardhat';
 import fs from 'fs';
-import { addressFileFactory, getLogFilePath } from './_logs';
+import { addressFileFactory, getLogFilePath } from '../_utils/_logs';
 import { getAccounts } from './getAccounts';
 
 export type RequestDepositInput = {

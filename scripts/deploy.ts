@@ -14,8 +14,8 @@ import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVa
 import { addressFileFactory } from './_utils/_logs';
 import { deployFactory, deployOptions } from './_utils/_deploy';
 import hre from 'hardhat';
-import { addLockPeriods } from './_utils/addLockPeriods';
-import { getAccounts } from './_utils/getAccounts';
+import { addLockPeriods } from './_modules/addLockPeriods';
+import { getAccounts } from './_modules/getAccounts';
 
 // config values
 export const wEthAddress = '0x4200000000000000000000000000000000000006';

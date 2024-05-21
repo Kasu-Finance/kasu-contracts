@@ -1,7 +1,7 @@
 import { addressFileFactory } from '../_utils/_logs';
 import * as hre from 'hardhat';
 import { MockUSDC__factory } from '../../typechain-types';
-import { getAccounts } from '../_utils/getAccounts';
+import { getAccounts } from '../_modules/getAccounts';
 
 const recipients = ['0x68ea8544AA64479c592711205B59F92122E0893c'];
 
