@@ -33,8 +33,8 @@
     },
     "SystemVariables": {
         "address": "0xcbBDa280E2850e526277b62af7Afe9d16c151f39",
-        "implementation": "0x376c43c582B036ce66871DB54c002D3513f7d6CB",
-        "startBlock": 9921327,
+        "implementation": "0xC847Af74A0DfEb7fe7cE80A0d736ea0360ed4950",
+        "startBlock": 10304458,
         "proxyType": "TransparentProxy"
     },
     "UserLoyaltyRewards": {
