@@ -111,8 +111,8 @@ interface ILendingPool is IERC20 {
 
     /* ========== EVENTS ========== */
 
-    event DepositAccepted(address indexed user, address indexed tranche, uint256 amount);
-    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares, uint256 assetAmount);
+    event DepositAccepted(address indexed user, address indexed tranche, uint256 amount, uint256 shares);
+    event WithdrawalAccepted(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
     event ImmediateWithdrawal(address indexed user, address indexed tranche, uint256 shares, uint256 amount);
     event FundsDrawn(uint256 amount);
     event OwedFundsRepaid(uint256 amountForUsers, uint256 amountForFees);
