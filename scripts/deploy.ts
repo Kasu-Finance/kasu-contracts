@@ -9,7 +9,7 @@ import {
     SystemVariables__factory,
     UserManager__factory,
 } from '../typechain-types';
-import { ContractTransactionResponse, parseEther, Signer } from 'ethers';
+import { ContractTransactionResponse, parseEther } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
 import { addressFileFactory } from './_utils/addressFileFactory';
 import { deployFactory, deployOptions } from './_utils/deployFactory';
