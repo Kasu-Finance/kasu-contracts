@@ -120,6 +120,14 @@ contract UserManager is IUserManager, Initializable {
     }
 
     /**
+     * @notice Get the count of active users in the system.
+     * @return The count of all active users.
+     */
+    function userCount() external view returns (uint256) {
+        return _allUsers.length;
+    }
+
+    /**
      * @notice Get all active users.
      * @dev Users are only removed by manually calling updateUserLendingPools.
      * @return The array of all active users.

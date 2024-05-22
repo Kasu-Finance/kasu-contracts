@@ -13,6 +13,7 @@ interface IUserManager {
     function calculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint8 loyaltyLevel);
     function epochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory);
     function userLendingPools(address user) external view returns (address[] memory lendingPools);
+    function userCount() external view returns (uint256);
     function allUsers() external view returns (address[] memory);
     function userTotalPendingAndActiveDepositedAmount(address user)
         external

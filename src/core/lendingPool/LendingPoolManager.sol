@@ -573,8 +573,7 @@ contract LendingPoolManager is
      */
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay)
         external
-        whenNotPaused
-        onlyRole(ROLE_KASU_ADMIN, msg.sender)
+        onlyAdmin
         validLendingPool(lendingPool)
     {
         ILendingPool(lendingPool).updateTrancheInterestRateChangeEpochDelay(epochDelay);
