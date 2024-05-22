@@ -8,7 +8,7 @@ const drawAmount = parseUnits('500', 6);
 
 async function main() {
     const signers = await getAccounts(hre.network.name);
-    const clearingManagerAccount = signers[1];
+    const clearingManagerAccount = signers[0];
 
     await doClearing(lendingPoolAddress, drawAmount, clearingManagerAccount);
 }

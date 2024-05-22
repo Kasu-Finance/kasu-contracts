@@ -2,6 +2,7 @@ import * as repl from 'node:repl';
 
 import { addressFileFactory } from '../_utils/addressFileFactory';
 import {
+    KasuController__factory,
     LendingPoolManager__factory,
     SystemVariablesTestable__factory,
     UserManager__factory,
@@ -40,6 +41,11 @@ const userManagerAdmin = UserManager__factory.connect(
     adminWallet,
 );
 
+const kasuControllerAdmin = KasuController__factory.connect(
+    deploymentAddresses.KasuController.address,
+    adminWallet,
+);
+
 const replServer = repl.start({
     prompt: '>',
     useGlobal: true,
@@ -55,3 +61,4 @@ replServer.context.help = help;
 replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
 replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
 replServer.context.userManagerAdmin = userManagerAdmin;
+replServer.context.kasuControllerAdmin = kasuControllerAdmin;
