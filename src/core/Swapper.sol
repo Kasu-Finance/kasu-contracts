@@ -103,10 +103,7 @@ contract Swapper is ISwapper, KasuAccessControllable {
      * @param exchanges Exchanges to update.
      * @param allowed Whether the exchanges are allowed.
      */
-    function updateExchangeAllowlist(address[] calldata exchanges, bool[] calldata allowed)
-        external
-        onlyRole(ROLE_KASU_ADMIN, msg.sender)
-    {
+    function updateExchangeAllowlist(address[] calldata exchanges, bool[] calldata allowed) external onlyAdmin {
         if (exchanges.length != allowed.length) {
             revert InvalidArrayLength();
         }
