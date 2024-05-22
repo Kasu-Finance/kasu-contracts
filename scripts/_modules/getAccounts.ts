@@ -15,9 +15,9 @@ export async function getAccounts(networkName: string) {
     if (deployerKey) signers[0] = new Wallet(deployerKey, hre.ethers.provider);
     if (adminKey) signers[1] = new Wallet(adminKey, hre.ethers.provider);
 
-    const addresses = await Promise.all(
-        signers.map(async (it) => await it.getAddress()),
-    );
-    console.log(addresses);
+    // const addresses = await Promise.all(
+    //     signers.map(async (it) => await it.getAddress()),
+    // );
+    // console.log(addresses);
     return signers;
 }

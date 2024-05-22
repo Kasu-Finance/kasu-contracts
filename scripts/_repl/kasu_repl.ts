@@ -30,12 +30,12 @@ export const systemVariablesTestableAdmin =
         adminWallet,
     );
 
-const lendingPoolManager = LendingPoolManager__factory.connect(
+const lendingPoolManagerAdmin = LendingPoolManager__factory.connect(
     deploymentAddresses.LendingPoolManager.address,
     adminWallet,
 );
 
-const userManager = UserManager__factory.connect(
+const userManagerAdmin = UserManager__factory.connect(
     deploymentAddresses.UserManager.address,
     adminWallet,
 );
@@ -53,5 +53,5 @@ const help = [
 
 replServer.context.help = help;
 replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
-replServer.context.lendingPoolManager = lendingPoolManager;
-replServer.context.userManager = userManager;
+replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
+replServer.context.userManagerAdmin = userManagerAdmin;

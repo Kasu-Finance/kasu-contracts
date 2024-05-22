@@ -14,10 +14,11 @@
         "build:solidity": "forge build",
         "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:createTestLendingPools": "hardhat run --network localhost scripts/clearing/createTestLendingPools.ts",
-        "scripts:grant-role": "hardhat run --network base-sepolia scripts/clearing/grantClearingManagerLendingPoolRole.ts",
+        "scripts:grant-role": "hardhat run --network localhost scripts/clearing/grantClearingManagerLendingPoolRole.ts",
         "scripts:mint-usdc": "hardhat run --network localhost scripts/admin/mintMockUSDC.ts",
         "scripts:sendFunds": "hardhat run --network localhost scripts/admin/sendFunds.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
+        "scripts:requestDeposits": "hardhat run --network localhost ./scripts/lendingPools/requestDeposits.ts",
         "scripts:clearingWorkFlow": "hardhat run --network localhost scripts/clearingWorkflow.ts",
         "scripts:startClearingPeriod": "hardhat run --network localhost scripts/clearing/startClearingPeriod.ts",
         "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
