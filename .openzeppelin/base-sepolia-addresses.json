@@ -87,8 +87,8 @@
     },
     "LendingPool": {
         "address": "0xFEef2A3AC9f6832318e31Cc46fE79F82755eF2F0",
-        "implementation": "0xD934c09c16Aa9Fa74D76943F2e51d099A0BaAd27",
-        "startBlock": 9921327,
+        "implementation": "0x65D8DC813d730e282be86d17Fa214B5c41c911d8",
+        "startBlock": 10305139,
         "proxyType": "BeaconProxy"
     },
     "PendingPool": {

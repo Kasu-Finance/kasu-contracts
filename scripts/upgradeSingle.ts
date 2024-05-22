@@ -22,19 +22,30 @@ async function main() {
     const deployerAddress = await deployerSigner.getAddress();
 
     // contract addresses
-    const mockKsuPriceDeploymentAddress =
-        addressFile.getContractAddress('KsuPrice');
+    const systemVariablesDeploymentAddress =
+        addressFile.getContractAddress('SystemVariables');
 
-    const kasuControllerDeploymentAddress =
-        addressFile.getContractAddress('KasuController');
+    const lendingPoolManagerDeploymentAddress =
+        addressFile.getContractAddress('LendingPoolManager');
+
+    const clearingCoordinatorDeploymentAddress = addressFile.getContractAddress(
+        'ClearingCoordinator',
+    );
+
+    const feeManagerDeploymentAddress =
+        addressFile.getContractAddress('FeeManager');
+
+    const mockUsdcDeploymentAddress = addressFile.getContractAddress('USDC');
 
     // upgrade
-
-    await deployTransparentProxy(
-        'SystemVariables',
+    const lendingPoolBeaconAddress = await deployBeacon(
+        'LendingPool',
         deployOptions(deployerAddress, [
-            mockKsuPriceDeploymentAddress,
-            kasuControllerDeploymentAddress,
+            systemVariablesDeploymentAddress,
+            lendingPoolManagerDeploymentAddress,
+            clearingCoordinatorDeploymentAddress,
+            feeManagerDeploymentAddress,
+            mockUsdcDeploymentAddress,
         ]),
     );
 }
