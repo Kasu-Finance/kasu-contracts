@@ -377,7 +377,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         // transfer lending pool tokens from lending pool to the user in tranche - creates tranche shares for user
         trancheSharesMinted = ILendingPoolTranche(tranche).deposit(acceptedAmount, user);
 
-        emit DepositAccepted(user, tranche, acceptedAmount);
+        emit DepositAccepted(user, tranche, acceptedAmount, trancheSharesMinted);
     }
 
     /**
