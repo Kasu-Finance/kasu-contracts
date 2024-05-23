@@ -6,7 +6,6 @@ import { getAccounts } from './getAccounts';
 import {
     LendingPoolManager__factory,
     SystemVariablesTestable__factory,
-    UserManager__factory,
 } from '../../typechain-types';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
 
@@ -14,6 +13,7 @@ export async function doClearing(
     lendingPoolAddress: string,
     drawAmount: bigint,
     fromAccount: Signer,
+    numberOfTranches: number,
 ) {
     console.log(
         `running clearing for lending pool: ${lendingPoolAddress}, draw amount: ${hre.ethers.formatUnits(
@@ -48,9 +48,11 @@ export async function doClearing(
     const currentEpochNumber =
         await systemVariablesTestable.currentEpochNumber();
 
+    const ratios = [[100_00], [30_00, 70_00], [15_00, 35_00, 50_00]];
+
     const clearingConfiguration: ClearingConfigurationStruct = {
         drawAmount: drawAmount,
-        trancheDesiredRatios: [20_00, 30_00, 50_00], // 20%, 30%, 50%
+        trancheDesiredRatios: ratios[numberOfTranches - 1],
         maxExcessPercentage: 0, // 10%
         minExcessPercentage: 0, // 0%
     };
@@ -60,6 +62,7 @@ export async function doClearing(
     const acceptedRequestsExecutionBatchSize = ethers.MaxUint256;
 
     console.log('Run clearing');
+
     tx = await lendingPoolManager.doClearing(
         lendingPoolAddress,
         currentEpochNumber,
