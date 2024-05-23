@@ -2,7 +2,7 @@ import { parseUnits } from 'ethers';
 import { getAccounts } from '../_modules/getAccounts';
 import * as hre from 'hardhat';
 import { doClearing } from '../_modules/doClearing';
-import { parseKasuErrors } from '../_utils/parseErrors';
+import { parseKasuError } from '../_utils/parseErrors';
 
 const lendingPoolAddress = '0x2F9c56edD3Ba0a06AA58767f50E52761D85f3Bc7';
 const numberOfTranches = 3;
@@ -20,7 +20,7 @@ async function main() {
             numberOfTranches,
         );
     } catch (error: any) {
-        parseKasuErrors(error);
+        parseKasuError(error);
     }
 }
 
