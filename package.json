@@ -21,7 +21,9 @@
         "scripts:requestDeposits": "hardhat run --network localhost ./scripts/lendingPools/requestDeposits.ts",
         "scripts:clearingWorkFlow": "hardhat run --network localhost scripts/clearingWorkflow.ts",
         "scripts:startClearingPeriod": "hardhat run --network localhost scripts/clearing/startClearingPeriod.ts",
-        "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
+        "scripts:upgradeSignle": "hardhat run --network localhost scripts/upgradeSingle.ts",
+        "scripts:doClearing": "hardhat run --network localhost scripts/clearing/doClearing.ts",
+        "repl:kasu": "NETWORK_NAME=localhost ts-node scripts/_repl/kasu_repl.ts"
     },
     "repository": {
         "type": "git",
