@@ -76,3 +76,4 @@ replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
 replServer.context.userManagerAdmin = userManagerAdmin;
 replServer.context.kasuControllerAdmin = kasuControllerAdmin;
 replServer.context.connectToLendingPool = connectToLendingPool;
+replServer.context.ethers = ethers;

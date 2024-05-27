@@ -1,17 +1,16 @@
 import {
     grantLendingPoolRole,
-    ROLE_POOL_CLEARING_MANAGER,
+    ROLE_POOL_FUNDS_MANAGER,
 } from '../_modules/grantLendingPoolRole';
 
-const LENDING_POOL_ADDRESS = '0xBf5A316F4303e13aE92c56D2D8C9F7629bEF5c6e';
-const ACCOUNT_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+const LENDING_POOL_ADDRESS = '0xb93c239690061228110525aa16622345241b388e';
+const ACCOUNT_ADDRESS = '0x68ea8544AA64479c592711205B59F92122E0893c';
 
 export async function main() {
-    // TODO: continue here
     await grantLendingPoolRole(
         LENDING_POOL_ADDRESS,
         ACCOUNT_ADDRESS,
-        ROLE_POOL_CLEARING_MANAGER,
+        ROLE_POOL_FUNDS_MANAGER,
     );
 }
 
