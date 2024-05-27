@@ -1,11 +1,11 @@
 import * as repl from 'node:repl';
-
 import { addressFileFactory } from '../_utils/addressFileFactory';
 import {
     KasuController__factory,
     LendingPool,
     LendingPool__factory,
     LendingPoolManager__factory,
+    MockUSDC__factory,
     SystemVariablesTestable__factory,
     UserManager__factory,
 } from '../../typechain-types';
@@ -22,14 +22,25 @@ const adminPK = process.env.ADMIN_PK ?? '';
 const addressFile = addressFileFactory(0, networkName);
 const deploymentAddresses = addressFile.getContractAddresses();
 
+// REPL Config
+const replServer = repl.start({
+    prompt: '>',
+    useGlobal: true,
+});
+
 // json rpc
 const provider = new ethers.JsonRpcProvider(jsonRpcUrl);
 const adminWallet = new ethers.Wallet(adminPK, provider);
 
 // contracts
+export const mockUsdc = MockUSDC__factory.connect(
+    deploymentAddresses.USDC.address,
+    adminWallet,
+);
+
 export const systemVariablesTestableAdmin =
     SystemVariablesTestable__factory.connect(
-        deploymentAddresses['SystemVariables'].address,
+        deploymentAddresses.SystemVariables.address,
         adminWallet,
     );
 
@@ -52,11 +63,6 @@ const connectToLendingPool = (lendingPoolAddress: string): LendingPool => {
     return LendingPool__factory.connect(lendingPoolAddress, adminWallet);
 };
 
-const replServer = repl.start({
-    prompt: '>',
-    useGlobal: true,
-});
-
 const help = [
     'systemVariablesTestableAdmin',
     'lendingPoolManager',
@@ -64,6 +70,7 @@ const help = [
 ];
 
 replServer.context.help = help;
+replServer.context.mockUsdc = mockUsdc;
 replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
 replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
 replServer.context.userManagerAdmin = userManagerAdmin;
