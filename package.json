@@ -4,7 +4,7 @@
     "description": "kasu smart contracts",
     "main": "index.js",
     "scripts": {
-        "node:local": "hardhat node --hostname 0.0.0.0",
+        "node:local": "hardhat node --hostname 0.0.0.0 ",
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
         "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info -o report",

@@ -3,6 +3,8 @@ import * as repl from 'node:repl';
 import { addressFileFactory } from '../_utils/addressFileFactory';
 import {
     KasuController__factory,
+    LendingPool,
+    LendingPool__factory,
     LendingPoolManager__factory,
     SystemVariablesTestable__factory,
     UserManager__factory,
@@ -46,6 +48,10 @@ const kasuControllerAdmin = KasuController__factory.connect(
     adminWallet,
 );
 
+const connectToLendingPool = (lendingPoolAddress: string): LendingPool => {
+    return LendingPool__factory.connect(lendingPoolAddress, adminWallet);
+};
+
 const replServer = repl.start({
     prompt: '>',
     useGlobal: true,
@@ -62,3 +68,4 @@ replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
 replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
 replServer.context.userManagerAdmin = userManagerAdmin;
 replServer.context.kasuControllerAdmin = kasuControllerAdmin;
+replServer.context.connectToLendingPool = connectToLendingPool;
