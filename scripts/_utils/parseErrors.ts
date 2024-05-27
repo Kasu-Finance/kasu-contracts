@@ -1,9 +1,6 @@
 import { ethers } from 'hardhat';
-import * as AcceptedRequestsCalculationAbi from '../../artifacts/src/core/clearing/AcceptedRequestsCalculation.sol/AcceptedRequestsCalculation.json';
-import * as AcceptedRequestsExecutionAbi from '../../artifacts/src/core/clearing/AcceptedRequestsExecution.sol/AcceptedRequestsExecution.json';
-import * as ClearingCoordinatorAbi from '../../artifacts/src/core/clearing/ClearingCoordinator.sol/ClearingCoordinator.json';
-import * as ClearingStepsAbi from '../../artifacts/src/core/clearing/ClearingSteps.sol/ClearingSteps.json';
-import * as PendingRequestsPriorityCalculationAbi from '../../artifacts/src/core/clearing/PendingRequestsPriorityCalculation.sol/PendingRequestsPriorityCalculation.json';
+import fs from 'fs';
+import path from 'path';
 
 export function parseKasuError(error: any): void {
     console.error('Error in transaction');
@@ -11,14 +8,10 @@ export function parseKasuError(error: any): void {
 }
 
 function getKasuAbis(): any[] {
-    const kasuAbis = [
-        ...AcceptedRequestsCalculationAbi.abi,
-        ...AcceptedRequestsExecutionAbi.abi,
-        ...ClearingCoordinatorAbi.abi,
-        ...ClearingStepsAbi.abi,
-        ...PendingRequestsPriorityCalculationAbi.abi,
-    ];
-    return kasuAbis;
+    const jsonPaths = findJsonFiles(`${__dirname}/../../artifacts/src`);
+    return jsonPaths
+        .flatMap((it) => parseJsonFile(it)['abi'])
+        .filter((it) => it.type === 'error');
 }
 
 function parseError(error: any, abis: any): void {
@@ -40,4 +33,35 @@ function parseError(error: any, abis: any): void {
 
 function hasKey<O extends object>(obj: O, key: keyof any): key is keyof O {
     return key in obj;
+}
+
+function findJsonFiles(rootDirectory: string): string[] {
+    let jsonFiles: string[] = [];
+
+    function searchDirectory(directory: string) {
+        const entries = fs.readdirSync(directory, { withFileTypes: true });
+
+        for (const entry of entries) {
+            const fullPath = path.join(directory, entry.name);
+
+            if (entry.isDirectory()) {
+                searchDirectory(fullPath);
+            } else if (entry.isFile()) {
+                if (
+                    entry.name.endsWith('.json') &&
+                    !entry.name.endsWith('.dbg.json')
+                ) {
+                    jsonFiles.push(fullPath);
+                }
+            }
+        }
+    }
+
+    searchDirectory(rootDirectory);
+    return jsonFiles;
+}
+
+function parseJsonFile(filePath: string): any {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(fileContent);
 }
