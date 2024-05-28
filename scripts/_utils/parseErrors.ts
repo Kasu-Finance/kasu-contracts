@@ -2,9 +2,9 @@ import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 
-export function parseKasuError(error: any): void {
+export function parseKasuError(error: any) {
     console.error('Error in transaction');
-    parseError(error, getKasuAbis());
+    return parseError(error, getKasuAbis());
 }
 
 function getKasuAbis(): any[] {

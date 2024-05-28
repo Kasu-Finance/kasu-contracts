@@ -7,8 +7,8 @@ import { getAccounts } from './getAccounts';
 export const ROLE_POOL_CLEARING_MANAGER = hre.ethers.id(
     'ROLE_POOL_CLEARING_MANAGER',
 );
-
 export const ROLE_POOL_FUNDS_MANAGER = hre.ethers.id('ROLE_POOL_FUNDS_MANAGER');
+export const ROLE_POOL_MANAGER = hre.ethers.id('ROLE_POOL_MANAGER');
 
 export async function grantLendingPoolRole(
     lendingPool: string,

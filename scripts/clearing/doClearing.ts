@@ -3,21 +3,32 @@ import { getAccounts } from '../_modules/getAccounts';
 import * as hre from 'hardhat';
 import { doClearing } from '../_modules/doClearing';
 import { parseKasuError } from '../_utils/parseErrors';
+import { getLogFilePath } from '../_utils/addressFileFactory';
+import fs from 'fs';
 
-const lendingPoolAddress = '0x2F9c56edD3Ba0a06AA58767f50E52761D85f3Bc7';
+const lendingPoolAddress = '0xb93c239690061228110525aa16622345241b388e';
 const numberOfTranches = 3;
 const drawAmount = parseUnits('0', 6);
+const targetEpochNumber = 4n;
 
 async function main() {
     const signers = await getAccounts(hre.network.name);
     const clearingManagerAccount = signers[0];
+    const admin = signers[1];
 
+    const { filePath } = getLogFilePath(hre.network.name);
+    const deploymentAddresses = JSON.parse(
+        fs.readFileSync(filePath).toString(),
+    );
+
+    // signers
     try {
         await doClearing(
             lendingPoolAddress,
             drawAmount,
             clearingManagerAccount,
             numberOfTranches,
+            targetEpochNumber,
         );
     } catch (error: any) {
         parseKasuError(error);

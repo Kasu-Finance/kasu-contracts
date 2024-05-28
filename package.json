@@ -14,7 +14,7 @@
         "build:solidity": "forge build",
         "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
         "scripts:createTestLendingPools": "hardhat run --network localhost scripts/clearing/createTestLendingPools.ts",
-        "scripts:grantLendingPoolRole": "hardhat run --network localhost scripts/clearing/grantLendingPoolRole.ts",
+        "scripts:grantLendingPoolRole": "hardhat run --network base-sepolia scripts/lendingPools/grantLendingPoolRole.ts",
         "scripts:mockUsdc:mint": "hardhat run --network localhost scripts/admin/mintMockUSDC.ts",
         "scripts:sendFunds": "hardhat run --network localhost scripts/admin/sendFunds.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
@@ -22,8 +22,9 @@
         "scripts:clearingWorkFlow": "hardhat run --network localhost scripts/clearingWorkflow.ts",
         "scripts:startClearingPeriod": "hardhat run --network localhost scripts/clearing/startClearingPeriod.ts",
         "scripts:upgradeSingle": "hardhat run --network localhost scripts/upgradeSingle.ts",
-        "scripts:doClearing": "hardhat run --network localhost scripts/clearing/doClearing.ts",
-        "scripts:repayOwedFunds": "hardhat run --network localhost scripts/lendingPools/repayOwedFunds.ts",
+        "scripts:doClearing": "hardhat run --network base-sepolia scripts/clearing/doClearing.ts",
+        "scripts:repayOwedFunds": "hardhat run --network base-sepolia scripts/lendingPools/repayOwedFunds.ts",
+        "scripts:stopLendingPool": "hardhat run --network base-sepolia scripts/lendingPools/stopLendingPool.ts",
         "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
     },
     "repository": {

@@ -53,7 +53,15 @@ export async function runClearing(
     await tx.wait(1);
 
     // do clearing
-    await doClearing(lendingPoolAddress, drawAmount, fromAccount, 3);
+    const targetEpochNumber =
+        await systemVariablesTestable.currentEpochNumber();
+    await doClearing(
+        lendingPoolAddress,
+        drawAmount,
+        fromAccount,
+        3,
+        targetEpochNumber,
+    );
 
     // end clearing period
     console.log('Manually stop clearing period');

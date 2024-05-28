@@ -14,6 +14,7 @@ export async function doClearing(
     drawAmount: bigint,
     fromAccount: Signer,
     numberOfTranches: number,
+    targetEpochNumber: bigint,
 ) {
     console.log(
         `running clearing for lending pool: ${lendingPoolAddress}, draw amount: ${hre.ethers.formatUnits(
@@ -27,27 +28,15 @@ export async function doClearing(
         fs.readFileSync(filePath).toString(),
     );
 
-    // signers
-    const signers = await getAccounts(hre.network.name);
-    const admin = signers[1];
-
     // contracts
     const lendingPoolManager = LendingPoolManager__factory.connect(
         deploymentAddresses.LendingPoolManager.address,
         fromAccount,
     );
 
-    const systemVariablesTestable = SystemVariablesTestable__factory.connect(
-        deploymentAddresses.SystemVariables.address,
-        admin,
-    );
-
     let tx;
 
     // overwrite clearing config - optional
-    const currentEpochNumber =
-        await systemVariablesTestable.currentEpochNumber();
-
     const ratios = [[100_00], [30_00, 70_00], [15_00, 35_00, 50_00]];
 
     const clearingConfiguration: ClearingConfigurationStruct = {
@@ -65,7 +54,7 @@ export async function doClearing(
 
     tx = await lendingPoolManager.doClearing(
         lendingPoolAddress,
-        currentEpochNumber,
+        targetEpochNumber,
         pendingRequestsPriorityCalculationBatchSize,
         acceptedRequestsExecutionBatchSize,
         clearingConfiguration,
