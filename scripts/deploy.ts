@@ -39,7 +39,7 @@ async function main() {
     const deployerSigner = signers[0];
     const deployerAddress = await deployerSigner.getAddress();
 
-    const adminSigner = signers[0];
+    const adminSigner = signers[1];
     const adminAddress = await adminSigner.getAddress();
 
     if (PROTOCOL_FEE_RECEIVER === '') {

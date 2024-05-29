@@ -9,9 +9,19 @@ export function parseKasuError(error: any) {
 
 function getKasuAbis(): any[] {
     const jsonPaths = findJsonFiles(`${__dirname}/../../artifacts/src`);
+
+    const seenNames = new Set<string>();
+
     return jsonPaths
         .flatMap((it) => parseJsonFile(it)['abi'])
-        .filter((it) => it.type === 'error');
+        .filter((it) => {
+            if (it.type === 'error') {
+                if (seenNames.has(it.name)) return false;
+                seenNames.add(it.name);
+                return true;
+            }
+            return false;
+        });
 }
 
 function parseError(error: any, abis: any): void {

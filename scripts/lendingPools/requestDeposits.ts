@@ -13,6 +13,7 @@ const seniorTrancheAddress = '';
 async function main() {
     // signers
     const signers = await getAccounts(hre.network.name);
+    const admin = signers[1];
     const alice = signers[2];
     const bob = signers[3];
     const carol = signers[4];

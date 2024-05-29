@@ -1,70 +1,32 @@
-import * as hre from 'hardhat';
-import fs from 'fs';
-import {
-    LendingPoolManager__factory,
-    SystemVariablesTestable__factory,
-    UserManager__factory,
-} from '../../typechain-types';
-import { ethers, Signer } from 'ethers';
-import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
-import { getAccounts } from './getAccounts';
+import { Signer } from 'ethers';
 import { doClearing } from './doClearing';
+import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
+import { calculateLoyaltyLevel } from './calculateLoyaltyLevel';
+import { endClearing, starClearing } from './startEndClearing';
+import { getCurrentEpochNumber } from './getCurrentEpochNumber';
 
 export async function runClearing(
     lendingPoolAddress: string,
-    drawAmount: bigint,
-    fromAccount: Signer,
+    clearingConfiguration: ClearingConfigurationStruct,
+    clearingManagerAccount: Signer,
+    adminAccount: Signer,
 ) {
-    // config
-    const { filePath } = getDeploymentFilePath(hre.network.name);
-    const deploymentAddresses = JSON.parse(
-        fs.readFileSync(filePath).toString(),
-    );
-
-    // signers
-    const signers = await getAccounts(hre.network.name);
-    const admin = signers[1];
-
-    // contracts
-    const systemVariablesTestable = SystemVariablesTestable__factory.connect(
-        deploymentAddresses.SystemVariables.address,
-        admin,
-    );
-
-    const userManager = UserManager__factory.connect(
-        deploymentAddresses.UserManager.address,
-        admin,
-    );
-
-    let tx;
-
-    // start clearing period
     console.log('Manually start clearing period');
-    tx = await systemVariablesTestable.startClearing();
-    await tx.wait(1);
+    await starClearing(adminAccount);
 
-    // overwrite clearing config - optional
-    const calculateUserLoyaltyLevelsBatchSize = 10000;
+    console.log('Calculating loyalty level');
+    await calculateLoyaltyLevel(10000, adminAccount);
 
-    console.log('Calculate user loyalty levels');
-    tx = await userManager.batchCalculateUserLoyaltyLevels(
-        calculateUserLoyaltyLevelsBatchSize,
-    );
-    await tx.wait(1);
-
-    // do clearing
-    const targetEpochNumber =
-        await systemVariablesTestable.currentEpochNumber();
+    // run clearing
+    const targetEpochNumber = await getCurrentEpochNumber(adminAccount);
     await doClearing(
         lendingPoolAddress,
-        drawAmount,
-        fromAccount,
-        3,
+        clearingManagerAccount,
         targetEpochNumber,
+        clearingConfiguration,
     );
 
     // end clearing period
-    console.log('Manually stop clearing period');
-    tx = await systemVariablesTestable.endClearing();
-    await tx.wait(1);
+    console.log('Manually ending clearing period');
+    await endClearing(adminAccount);
 }

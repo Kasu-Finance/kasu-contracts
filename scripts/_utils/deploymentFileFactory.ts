@@ -10,7 +10,7 @@ export function getDeploymentFilePath(networkName: string) {
 
 export function deploymentFileFactory(
     networkName: string,
-    blockNumber: number,
+    deploymentBlockNumber: number = 0,
 ) {
     const { filePath } = getDeploymentFilePath(networkName);
 
@@ -21,7 +21,7 @@ export function deploymentFileFactory(
             filePath,
             JSON.stringify({
                 network: networkName,
-                startBlock: blockNumber,
+                startBlock: deploymentBlockNumber,
             }),
         );
     }
@@ -35,7 +35,7 @@ export function deploymentFileFactory(
         ) =>
             writeAddressProxy(
                 filePath,
-                blockNumber,
+                deploymentBlockNumber,
                 name,
                 proxy,
                 implementation,

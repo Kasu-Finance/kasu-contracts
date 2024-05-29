@@ -22,9 +22,10 @@
         "scripts:clearingWorkFlow": "hardhat run --network localhost scripts/clearingWorkflow.ts",
         "scripts:startClearingPeriod": "hardhat run --network localhost scripts/clearing/startClearingPeriod.ts",
         "scripts:upgradeSingle": "hardhat run --network localhost scripts/upgradeSingle.ts",
-        "scripts:doClearing": "hardhat run --network base-sepolia scripts/clearing/doClearing.ts",
-        "scripts:repayOwedFunds": "hardhat run --network base-sepolia scripts/lendingPools/repayOwedFunds.ts",
-        "scripts:stopLendingPool": "hardhat run --network base-sepolia scripts/lendingPools/stopLendingPool.ts",
+        "scripts:doClearing": "hardhat run --network localhost scripts/clearing/doClearing.ts",
+        "scripts:repayOwedFunds": "hardhat run --network localhost scripts/lendingPools/repayOwedFunds.ts",
+        "scripts:stopLendingPool": "hardhat run --network localhost scripts/lendingPools/stopLendingPool.ts",
+        "scripts:scenario1": "hardhat run --network localhost scripts/scenarios/scenario1.ts",
         "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
     },
     "repository": {
