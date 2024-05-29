@@ -9,7 +9,10 @@ import {
     requestDeposits,
 } from '../_modules/requestDeposit';
 import { ethers } from 'hardhat';
-import { LendingPoolManager__factory } from '../../typechain-types';
+import {
+    LendingPool__factory,
+    LendingPoolManager__factory,
+} from '../../typechain-types';
 import { ContractTransactionResponse } from 'ethers';
 import { runClearing } from '../_modules/runClearing';
 
@@ -43,6 +46,7 @@ async function main() {
         const clearingManagerAccount =
             createdLendingPool.roles.clearingManagerAccount;
         const poolManagerAccount = createdLendingPool.roles.poolManagerAccount;
+        const poolAdminAccount = createdLendingPool.roles.poolAdminAccount;
 
         // configure system
         let tx: ContractTransactionResponse;
@@ -54,23 +58,29 @@ async function main() {
         tx = await lendingPoolManagerAdmin.updateMaximumDepositAmount(
             lp,
             lp_junior,
-            toUSDC(1_000_000n),
+            toUSDC(3_000_000n),
         );
         await tx.wait(1);
 
         tx = await lendingPoolManagerAdmin.updateMaximumDepositAmount(
             lp,
             lp_mezzanine,
-            toUSDC(1_000_000n),
+            toUSDC(3_000_000n),
         );
         await tx.wait(1);
 
         tx = await lendingPoolManagerAdmin.updateMaximumDepositAmount(
             lp,
             lp_senior,
-            toUSDC(1_000_000n),
+            toUSDC(3_000_000n),
         );
         await tx.wait(1);
+
+        // available funds
+        const lendingPoolPoolAdmin = LendingPool__factory.connect(
+            createdLendingPool.lendingPoolAddress,
+            poolAdminAccount,
+        );
 
         // ### epoch 1rst ###
         console.info('### Epoch 1rst ###');
@@ -97,8 +107,9 @@ async function main() {
         ];
         await requestDeposits(requestDepositsEpoch1, true, true);
         // clearing (20%,10%,70%, total 100K, draw 100K, 10% max excess)
+        let availableFunds = await lendingPoolPoolAdmin.availableFunds();
         const clearingConfigurationEpoch1: ClearingConfigurationStruct = {
-            drawAmount: toUSDC(100_000n),
+            drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
             maxExcessPercentage: 10_00,
             minExcessPercentage: 0,
@@ -135,8 +146,9 @@ async function main() {
         ];
         await requestDeposits(requestDepositsEpoch2, true, false);
         // clearing (20%,10%,70%, total 550K, draw 500K, 10% max excess)
+        availableFunds = await lendingPoolPoolAdmin.availableFunds();
         const clearingConfigurationEpoch2: ClearingConfigurationStruct = {
-            drawAmount: toUSDC(500_000n),
+            drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
             maxExcessPercentage: 10_00,
             minExcessPercentage: 0,
@@ -173,8 +185,9 @@ async function main() {
         ];
         await requestDeposits(requestDepositsEpoch3, true, false);
         // clearing (20%,10%,70%, total 770K, draw 700K, 10% max excess)
+        availableFunds = await lendingPoolPoolAdmin.availableFunds();
         const clearingConfigurationEpoch3: ClearingConfigurationStruct = {
-            drawAmount: toUSDC(700_000n),
+            drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
             maxExcessPercentage: 10_00,
             minExcessPercentage: 0,
@@ -211,8 +224,9 @@ async function main() {
         ];
         await requestDeposits(requestDepositsEpoch4, true, false);
         // clearing (20%,10%,70%, total 1320K, draw 1200K, 10% max excess)
+        availableFunds = await lendingPoolPoolAdmin.availableFunds();
         const clearingConfigurationEpoch4: ClearingConfigurationStruct = {
-            drawAmount: toUSDC(1_200_000n),
+            drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
             maxExcessPercentage: 10_00,
             minExcessPercentage: 0,
@@ -249,8 +263,9 @@ async function main() {
         ];
         await requestDeposits(requestDepositsEpoch5, true, false);
         // clearing (20%,10%,70%, total 1320K, draw 1200K, 10% max excess)
+        availableFunds = await lendingPoolPoolAdmin.availableFunds();
         const clearingConfigurationEpoch5: ClearingConfigurationStruct = {
-            drawAmount: toUSDC(1_200_000n),
+            drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
             maxExcessPercentage: 10_00,
             minExcessPercentage: 0,
