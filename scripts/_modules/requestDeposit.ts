@@ -7,9 +7,9 @@ import {
 import * as hre from 'hardhat';
 import fs from 'fs';
 import {
-    addressFileFactory,
-    getLogFilePath,
-} from '../_utils/addressFileFactory';
+    deploymentFileFactory,
+    getDeploymentFilePath,
+} from '../_utils/deploymentFileFactory';
 import { getAccounts } from './getAccounts';
 
 export type RequestDepositInput = {
@@ -24,7 +24,7 @@ export async function requestDeposits(
 ) {
     let tx: ContractTransactionResponse;
 
-    const addressFile = addressFileFactory(0, hre.network.name);
+    const addressFile = deploymentFileFactory(hre.network.name, 0);
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers

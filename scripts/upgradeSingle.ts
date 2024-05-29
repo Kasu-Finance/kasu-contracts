@@ -1,12 +1,12 @@
 import { deployFactory, deployOptions } from './_utils/deployFactory';
 import hre from 'hardhat';
-import { addressFileFactory } from './_utils/addressFileFactory';
+import { deploymentFileFactory } from './_utils/deploymentFileFactory';
 import { getAccounts } from './_modules/getAccounts';
 
 async function main() {
     // setup
     const blockNumber = await hre.ethers.provider.getBlockNumber();
-    const addressFile = addressFileFactory(blockNumber, hre.network.name);
+    const addressFile = deploymentFileFactory(hre.network.name, blockNumber);
 
     const isNewDeployment = !addressFile.didFileInitiallyExist;
     console.log(`Is new deployment: ${isNewDeployment}`);

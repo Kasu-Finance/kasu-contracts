@@ -11,7 +11,7 @@ import {
 } from '../typechain-types';
 import { ContractTransactionResponse, parseEther } from 'ethers';
 import { SystemVariablesSetupStruct } from '../typechain-types/src/core/SystemVariables';
-import { addressFileFactory } from './_utils/addressFileFactory';
+import { deploymentFileFactory } from './_utils/deploymentFileFactory';
 import { deployFactory, deployOptions } from './_utils/deployFactory';
 import hre from 'hardhat';
 import { addLockPeriods } from './_modules/addLockPeriods';
@@ -28,7 +28,7 @@ function isLocalDeployment() {
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
-    const addressFile = addressFileFactory(blockNumber, hre.network.name);
+    const addressFile = deploymentFileFactory(hre.network.name, blockNumber);
 
     const isNewDeployment = !addressFile.didFileInitiallyExist;
     console.log(`Is new deployment: ${isNewDeployment}`);

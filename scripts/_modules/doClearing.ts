@@ -1,6 +1,6 @@
 import { ethers, parseUnits, Signer } from 'ethers';
 import * as hre from 'hardhat';
-import { getLogFilePath } from '../_utils/addressFileFactory';
+import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
 import { getAccounts } from './getAccounts';
 import {
@@ -23,7 +23,7 @@ export async function doClearing(
         )} USDC`,
     );
 
-    const { filePath } = getLogFilePath(hre.network.name);
+    const { filePath } = getDeploymentFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
         fs.readFileSync(filePath).toString(),
     );

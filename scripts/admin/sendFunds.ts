@@ -1,6 +1,6 @@
 import { ERC20__factory } from '../../typechain-types';
 import * as hre from 'hardhat';
-import { addressFileFactory } from '../_utils/addressFileFactory';
+import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 import { ContractTransactionResponse } from 'ethers';
 import { getAccounts } from '../_modules/getAccounts';
 
@@ -14,7 +14,7 @@ const KSU_TO_SEND = '10000';
 const USDC_TO_SEND = '10000';
 
 async function main() {
-    const addressFile = addressFileFactory(0, hre.network.name);
+    const addressFile = deploymentFileFactory(hre.network.name, 0);
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers

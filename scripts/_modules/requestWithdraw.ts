@@ -3,7 +3,7 @@ import { LendingPoolManager__factory } from '../../typechain-types';
 import path from 'path';
 import * as hre from 'hardhat';
 import fs from 'fs';
-import { addressFileFactory } from '../_utils/addressFileFactory';
+import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 
 export type RequestWithdrawInput = {
     user: Signer;
@@ -15,7 +15,7 @@ export type RequestWithdrawInput = {
 export async function requestWithdrawals(
     requestDepositsInput: RequestWithdrawInput[],
 ) {
-    const addressFile = addressFileFactory(0, hre.network.name);
+    const addressFile = deploymentFileFactory(hre.network.name, 0);
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // request withdraw

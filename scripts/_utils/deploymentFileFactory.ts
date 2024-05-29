@@ -1,17 +1,20 @@
 import fs from 'fs';
 import path from 'path';
 
-export function getLogFilePath(networkName: string) {
+export function getDeploymentFilePath(networkName: string) {
     const folderPath = path.join(__dirname, '..', '..', '.openzeppelin');
     const filePath = path.join(folderPath, `${networkName}-addresses.json`);
 
     return { folderPath, filePath };
 }
 
-export function addressFileFactory(blockNumber: number, networkName: string) {
-    const { filePath } = getLogFilePath(networkName);
+export function deploymentFileFactory(
+    networkName: string,
+    blockNumber: number,
+) {
+    const { filePath } = getDeploymentFilePath(networkName);
 
-    const didFileInitiallyExist = fileExists(filePath);
+    const didFileInitiallyExist = deploymentFileExists(filePath);
 
     if (!didFileInitiallyExist) {
         fs.writeFileSync(
@@ -64,7 +67,7 @@ function writeAddressProxy(
     fs.writeFileSync(deploymentPath, JSON.stringify(addresses, null, 4));
 }
 
-function fileExists(filePath: string): boolean {
+function deploymentFileExists(filePath: string): boolean {
     try {
         fs.accessSync(filePath);
         return true;

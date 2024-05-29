@@ -6,7 +6,7 @@ import {
     UserManager__factory,
 } from '../../typechain-types';
 import { ethers, Signer } from 'ethers';
-import { getLogFilePath } from '../_utils/addressFileFactory';
+import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import { getAccounts } from './getAccounts';
 import { doClearing } from './doClearing';
 
@@ -16,7 +16,7 @@ export async function runClearing(
     fromAccount: Signer,
 ) {
     // config
-    const { filePath } = getLogFilePath(hre.network.name);
+    const { filePath } = getDeploymentFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
         fs.readFileSync(filePath).toString(),
     );

@@ -12,9 +12,9 @@ import {
 } from '../../typechain-types/src/core/lendingPool/LendingPool';
 import { ContractTransactionResponse } from 'ethers';
 import {
-    addressFileFactory,
-    getLogFilePath,
-} from '../_utils/addressFileFactory';
+    deploymentFileFactory,
+    getDeploymentFilePath,
+} from '../_utils/deploymentFileFactory';
 import { ROLE_POOL_CLEARING_MANAGER } from './grantLendingPoolRole';
 import { getAccounts } from './getAccounts';
 
@@ -25,7 +25,7 @@ export async function createLendingPool(
 ) {
     let tx: ContractTransactionResponse;
 
-    const addressFile = addressFileFactory(0, hre.network.name);
+    const addressFile = deploymentFileFactory(hre.network.name, 0);
     const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers

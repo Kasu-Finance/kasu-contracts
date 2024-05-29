@@ -1,6 +1,6 @@
 import { getAccounts } from '../_modules/getAccounts';
 import * as hre from 'hardhat';
-import { getLogFilePath } from '../_utils/addressFileFactory';
+import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
 import {
     LendingPoolManager__factory,
@@ -14,7 +14,7 @@ const repayAmount = 100_000_000;
 
 async function main() {
     // file
-    const { filePath } = getLogFilePath(hre.network.name);
+    const { filePath } = getDeploymentFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
         fs.readFileSync(filePath).toString(),
     );

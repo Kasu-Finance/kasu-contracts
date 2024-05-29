@@ -1,5 +1,5 @@
 import * as repl from 'node:repl';
-import { addressFileFactory } from '../_utils/addressFileFactory';
+import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 import {
     KasuController__factory,
     LendingPool,
@@ -19,7 +19,7 @@ dotenv.config({ path: `${__dirname}/.${networkName}.env` });
 const jsonRpcUrl = process.env.JSON_RPC_URL ?? '';
 const adminPK = process.env.ADMIN_PK ?? '';
 
-const addressFile = addressFileFactory(0, networkName);
+const addressFile = deploymentFileFactory(networkName, 0);
 const deploymentAddresses = addressFile.getContractAddresses();
 
 // REPL Config

@@ -1,4 +1,4 @@
-import { addressFileFactory } from './addressFileFactory';
+import { deploymentFileFactory } from './deploymentFileFactory';
 import { ethers, upgrades } from 'hardhat';
 import { DeployProxyOptions } from '@openzeppelin/hardhat-upgrades/src/utils';
 
@@ -18,7 +18,7 @@ export function deployOptions(
 }
 
 export async function deployFactory(
-    addressFile: ReturnType<typeof addressFileFactory>,
+    addressFile: ReturnType<typeof deploymentFileFactory>,
     isNewDeployment: boolean,
 ) {
     return {
