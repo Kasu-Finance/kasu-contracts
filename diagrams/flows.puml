@@ -15,7 +15,7 @@ participant "KSU \n Price" as KP
 participant "User \n Manager" as UM
 actor "Draw \n Recipient" as DR
 participant "Fee \n Manager" as FM
-participant "KSU \n Locking" as KS
+participant "KSU \n Locking" as KSL
 actor "Protocol Fee \n Claimer" as PFC
 
 group KYC
@@ -92,11 +92,11 @@ group payOwedFees
 CC -> LP: payOwedFees
 LP -> FM: emitFees
 LP -> FM: transfer USDC
-FM -> FM: transfer ecosystem fee
+FM -> KSL: transfer ecosystem fee
 end
 
 end
 
-PFC -> KS: claim protocol fee
+PFC -> FM: claim protocol fee
 
 @enduml
