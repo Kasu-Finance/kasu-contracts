@@ -76,8 +76,8 @@ CC -> PP: accept request deposits / withdrawals
     group accept withdrawals
     PP -> PP: update/burn wNFT - erc721
     PP -> LP: accept withdrawal
-    T -> LP: redeem LP - erc4727
-    T -> T: burn tranche shares - erc4727
+    T -> LP: redeem LP - erc4626
+    T -> T: burn tranche shares - erc4626
     LP -> LP: burn LP tokens \n (equivalent tranche shares) - erc20
     LP -> User: transfer USDC
     end
