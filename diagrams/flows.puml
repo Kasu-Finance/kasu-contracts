@@ -2,6 +2,8 @@
 actor User
 
 participant KYC
+actor "Funds \n Manager" as FundsM
+
 
 participant "Lending Pool Manager" as LPM
 participant "Pending Pool \n ERC721" as PP
@@ -16,7 +18,9 @@ participant "User \n Manager" as UM
 actor "Draw \n Recipient" as DR
 participant "Fee \n Manager" as FM
 participant "KSU \n Locking" as KSL
+
 actor "Protocol Fee \n Claimer" as PFC
+
 
 group KYC
 User -> KYC: kyc process
@@ -98,5 +102,15 @@ end
 end
 
 PFC -> FM: claim protocol fee
+
+newpage
+
+group repayment
+FundsM -> LPM: repayOwnedFunds
+FundsM -> LPM: transfer USDC
+LPM -> LP: repayOwnedFunds
+LPM -> LP: transfer USDC
+
+end
 
 @enduml
