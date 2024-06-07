@@ -4,13 +4,13 @@ pragma solidity 0.8.23;
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "../../../src/shared/interfaces/IKasuController.sol";
 import "../../../src/core/UserLoyaltyRewards.sol";
-import "../../shared/MockKsuPrice.sol";
+import "../../shared/ManualKsuPrice.sol";
 import "../../shared/MockERC20Permit.sol";
 import {BaseTestUtils} from "../_utils/BaseTestUtils.sol";
 import "forge-std/Test.sol";
 
 contract UserLoyaltyRewardsMockTest is BaseTestUtils {
-    MockKsuPrice internal _mockKsuPrice;
+    ManualKsuPrice internal _mockKsuPrice;
     MockERC20Permit internal _ksu;
     IKasuController internal _kasuController;
     address internal _userManager;
@@ -18,7 +18,7 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
     UserLoyaltyRewards internal _userLoyaltyRewards;
 
     function setUp() public {
-        _mockKsuPrice = new MockKsuPrice();
+        _mockKsuPrice = new ManualKsuPrice();
         _ksu = new MockERC20Permit("Kasu", "KSU", 18);
         _kasuController = IKasuController(address(0xcccc));
         _userManager = address(0xdddd);

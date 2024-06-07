@@ -4,9 +4,10 @@ import {
     KSU__factory,
     KSULocking__factory,
     LendingPoolManager__factory,
-    MockKsuPrice__factory,
+    ManualKsuPrice__factory,
     MockUSDC__factory,
     SystemVariables__factory,
+    UserLoyaltyRewards__factory,
     UserManager__factory,
 } from '../typechain-types';
 import { ContractTransactionResponse, parseEther } from 'ethers';
@@ -19,8 +20,9 @@ import { getAccounts } from './_modules/getAccounts';
 
 // config values
 export const wEthAddress = '0x4200000000000000000000000000000000000006';
-const NEXERA_ID_SIGNER = '0x0BAd9DaD98143b2E946e8A40E4f27537be2f55E2';
-let PROTOCOL_FEE_RECEIVER = '';
+const NEXERA_ID_SIGNER = '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
+let PROTOCOL_FEE_RECEIVER = '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483';
+let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
 
 function isLocalDeployment() {
     return hre.network.name === 'localhost' || hre.network.name === 'hardhat';
@@ -64,15 +66,17 @@ async function main() {
     );
     const ksu = KSU__factory.connect(ksuDeploymentAddress, adminSigner);
 
-    const mockUsdcDeploymentAddress = await deployTransparentProxy(
-        'MockUSDC',
-        deployOptions(deployerAddress, []),
-        'USDC',
-    );
-    const mockUsdc = MockUSDC__factory.connect(
-        mockUsdcDeploymentAddress,
-        adminSigner,
-    );
+    let usdcAddress = USDC_ADDRESS;
+    if (USDC_ADDRESS === '') {
+        usdcAddress = await deployTransparentProxy(
+            'MockUSDC',
+            deployOptions(deployerAddress, []),
+            'USDC',
+        );
+        const usdc = MockUSDC__factory.connect(usdcAddress, adminSigner);
+        tx = await usdc.initialize();
+        await tx.wait(1);
+    }
 
     const kasuControllerDeploymentAddress = await deployTransparentProxy(
         'KasuController',
@@ -88,23 +92,23 @@ async function main() {
         adminSigner,
     );
 
-    const mockKsuPriceDeploymentAddress = await deployTransparentProxy(
-        'MockKsuPrice',
+    const manualKsuPriceDeploymentAddress = await deployTransparentProxy(
+        'ManualKsuPrice',
         deployOptions(adminAddress, []),
         'KsuPrice',
     );
-    const mockKsuPriceAddress = MockKsuPrice__factory.connect(
-        mockKsuPriceDeploymentAddress,
+    const manualKsuPriceAddress = ManualKsuPrice__factory.connect(
+        manualKsuPriceDeploymentAddress,
         adminSigner,
     );
-    tx = await mockKsuPriceAddress.setKsuTokenPrice(parseEther('2'));
+    tx = await manualKsuPriceAddress.setKsuTokenPrice(parseEther('2'));
     await tx.wait(1);
 
     const systemVariablesDeploymentAddress = isLocalDeployment()
         ? await deployTransparentProxy(
               'SystemVariablesTestable',
               deployOptions(deployerAddress, [
-                  mockKsuPriceDeploymentAddress,
+                  manualKsuPriceDeploymentAddress,
                   kasuControllerDeploymentAddress,
               ]),
               'SystemVariables',
@@ -112,15 +116,15 @@ async function main() {
         : await deployTransparentProxy(
               'SystemVariables',
               deployOptions(deployerAddress, [
-                  mockKsuPriceDeploymentAddress,
+                  manualKsuPriceDeploymentAddress,
                   kasuControllerDeploymentAddress,
               ]),
           );
 
-    const userLoyaltyRewardsDeployment = await deployTransparentProxy(
+    const userLoyaltyRewardsDeploymentAddress = await deployTransparentProxy(
         'UserLoyaltyRewards',
         deployOptions(deployerAddress, [
-            mockKsuPriceDeploymentAddress,
+            manualKsuPriceDeploymentAddress,
             ksuDeploymentAddress,
             kasuControllerDeploymentAddress,
         ]),
@@ -131,7 +135,7 @@ async function main() {
         deployOptions(deployerAddress, [
             systemVariablesDeploymentAddress,
             ksuLockingDeploymentAddress,
-            userLoyaltyRewardsDeployment,
+            userLoyaltyRewardsDeploymentAddress,
         ]),
     );
     const userManager = UserManager__factory.connect(
@@ -147,7 +151,7 @@ async function main() {
     const lendingPoolManagerDeploymentAddress = await deployTransparentProxy(
         'LendingPoolManager',
         deployOptions(deployerAddress, [
-            mockUsdcDeploymentAddress,
+            usdcAddress,
             kasuControllerDeploymentAddress,
             wEthAddress,
             swapperProxyAddress,
@@ -157,7 +161,7 @@ async function main() {
     const feeManagerDeploymentAddress = await deployTransparentProxy(
         'FeeManager',
         deployOptions(deployerAddress, [
-            mockUsdcDeploymentAddress,
+            usdcAddress,
             systemVariablesDeploymentAddress,
             kasuControllerDeploymentAddress,
             ksuLockingDeploymentAddress,
@@ -198,7 +202,7 @@ async function main() {
             lendingPoolManagerDeploymentAddress,
             clearingCoordinatorDeploymentAddress,
             feeManagerDeploymentAddress,
-            mockUsdcDeploymentAddress,
+            usdcAddress,
         ]),
     );
 
@@ -206,7 +210,7 @@ async function main() {
         'PendingPool',
         deployOptions(deployerAddress, [
             systemVariablesDeploymentAddress,
-            mockUsdcDeploymentAddress,
+            usdcAddress,
             lendingPoolManagerDeploymentAddress,
             userManagerDeploymentAddress,
             clearingCoordinatorDeploymentAddress,
@@ -218,7 +222,7 @@ async function main() {
         'LendingPoolTranche',
         deployOptions(deployerAddress, [
             lendingPoolManagerDeploymentAddress,
-            mockUsdcDeploymentAddress,
+            usdcAddress,
         ]),
     );
 
@@ -239,18 +243,17 @@ async function main() {
         deployOptions(deployerAddress, []),
     );
 
+    const userLoyaltyRewards = UserLoyaltyRewards__factory.connect(
+        userLoyaltyRewardsDeploymentAddress,
+        adminSigner,
+    );
+
     // initialize
     if (isNewDeployment) {
         tx = await ksu.initialize(adminAddress);
         await tx.wait(1);
 
-        tx = await mockUsdc.initialize();
-        await tx.wait(1);
-
-        tx = await ksuLocking.initialize(
-            ksuDeploymentAddress,
-            mockUsdcDeploymentAddress,
-        );
+        tx = await ksuLocking.initialize(ksuDeploymentAddress, usdcAddress);
         await tx.wait(1);
 
         tx = await userManager.initialize(lendingPoolManagerDeploymentAddress);
@@ -289,28 +292,37 @@ async function main() {
             adminSigner,
         );
         const systemVariablesSetup: SystemVariablesSetupStruct = {
-            initialEpochStartTimestamp:
-                Math.round(Date.now() / 1000) - 3600 * 24 * 4,
-            clearingPeriodLength: 60 * 60 * 36,
+            // Math.round(Date.now() / 1000) - 3600 * 24 * 4
+            initialEpochStartTimestamp: 1717480800,
+            clearingPeriodLength: 3600 * 48,
             performanceFee: 10_00,
             loyaltyThresholds: [1_00, 5_00],
-            defaultTrancheInterestChangeEpochDelay: 1,
-            ecosystemFeeRate: 50_00,
-            protocolFeeRate: 50_00,
-            protocolFeeReceiver: PROTOCOL_FEE_RECEIVER,
+            defaultTrancheInterestChangeEpochDelay: 4,
+            ecosystemFeeRate: 0,
+            protocolFeeRate: 100_00,
+            protocolFeeReceiver: adminAddress,
         };
-        console.info('Initializing System Variables', PROTOCOL_FEE_RECEIVER);
+        console.info('Initializing System Variables', adminAddress);
         tx = await systemVariables.initialize(systemVariablesSetup);
         await tx.wait(1);
         console.log('System Variables initialized');
-    }
 
-    // add lock periods
-    if (isNewDeployment) {
-        let tx = await ksuLocking.setCanEmitFees(
-            feeManagerDeploymentAddress,
+        tx = await userLoyaltyRewards.initialize(
+            userManagerDeploymentAddress,
             true,
         );
+        await tx.wait(1);
+    }
+
+    // initial values
+    if (isNewDeployment) {
+        tx = await ksuLocking.setCanEmitFees(feeManagerDeploymentAddress, true);
+        await tx.wait(1);
+
+        tx = await userLoyaltyRewards.setRewardRatesPerLoyaltyLevel([
+            { loyaltyLevel: 1, epochRewardRate: 19164956034632 }, // 0.1% / 52.17857 epochs/years * 10^18
+            { loyaltyLevel: 2, epochRewardRate: 38329912069265 }, // 0.2% / 52.17857 epochs/years * 10^18
+        ]);
         await tx.wait(1);
 
         await addLockPeriods(ksuLocking, ksuLockBonusDeploymentAddress);

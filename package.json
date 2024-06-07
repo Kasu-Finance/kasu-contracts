@@ -4,7 +4,7 @@
     "description": "kasu smart contracts",
     "main": "index.js",
     "scripts": {
-        "node:local": "hardhat node --hostname 0.0.0.0 ",
+        "node:local": "hardhat node --hostname 0.0.0.0",
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
         "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info -o report",
@@ -25,6 +25,7 @@
         "scripts:doClearing": "hardhat run --network localhost scripts/clearing/doClearing.ts",
         "scripts:repayOwedFunds": "hardhat run --network localhost scripts/lendingPools/repayOwedFunds.ts",
         "scripts:stopLendingPool": "hardhat run --network localhost scripts/lendingPools/stopLendingPool.ts",
+        "scripts:updateDesiredDrawAmount": "hardhat run --network base-sepolia scripts/updateDesiredDrawAmount.ts",
         "scripts:scenario1": "hardhat run --network localhost scripts/scenarios/scenario1.ts",
         "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
     },

@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import "../../src/core/interfaces/IKsuPrice.sol";
 
-contract MockKsuPrice is IKsuPrice {
+contract ManualKsuPrice is IKsuPrice {
     uint256 private _ksuTokenPrice;
 
     function test_mock() external pure {}

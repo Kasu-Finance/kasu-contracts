@@ -6,7 +6,7 @@ import {UserManager} from "../../../src/core/UserManager.sol";
 import "../../../src/core/interfaces/IUserManager.sol";
 import "../../../src/core/interfaces/IUserLoyaltyRewards.sol";
 import "../../../src/core/SystemVariables.sol";
-import "../../shared/MockKsuPrice.sol";
+import "../../shared/ManualKsuPrice.sol";
 
 contract UserManagerTest is LockingTestUtils {
     IUserManager private userManager;
@@ -16,7 +16,7 @@ contract UserManagerTest is LockingTestUtils {
         __baseTestUtils_setUp();
         __locking_setUp();
 
-        MockKsuPrice ksuPrice = new MockKsuPrice();
+        ManualKsuPrice ksuPrice = new ManualKsuPrice();
 
         SystemVariables systemVariablesImpl = new SystemVariables(ksuPrice, _kasuController);
         TransparentUpgradeableProxy systemVariablesProxy =
