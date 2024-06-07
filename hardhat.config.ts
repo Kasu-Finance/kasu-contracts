@@ -23,7 +23,7 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
             hre.config.paths.root,
             'test',
             'shared',
-            'MockKsuPrice.sol',
+            'ManualKsuPrice.sol',
         );
         const dependenciesFix = path.join(
             hre.config.paths.root,
@@ -59,7 +59,7 @@ const config: HardhatUserConfig = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 200,
+                runs: 800,
             },
         },
     },
