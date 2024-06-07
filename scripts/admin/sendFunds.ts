@@ -9,26 +9,25 @@ const recipients = [
     '0xDFd2128009cB2eaeA93F637aAec22566d3F93Db7',
 ];
 
-const ETH_TO_SEND = '0.025';
-const KSU_TO_SEND = '10000';
-const USDC_TO_SEND = '10000';
+const ETH_TO_SEND = '0.02';
+const USDC_TO_SEND = '25';
+const KSU_TO_SEND = 'DO_NOT_SEND_KSU';
+
+let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
 
 async function main() {
-    const addressFile = deploymentFileFactory(hre.network.name, 0);
-    const deploymentAddresses = addressFile.getContractAddresses();
+    if (USDC_ADDRESS === '') {
+        const addressFile = deploymentFileFactory(hre.network.name, 0);
+        const deploymentAddresses = addressFile.getContractAddresses();
+        USDC_ADDRESS = deploymentAddresses.USDC.address;
+    }
 
     // signers
     const signers = await getAccounts(hre.network.name);
     const admin = signers[1];
+
     // contracts
-    const ksuContract = ERC20__factory.connect(
-        deploymentAddresses.KSU.address,
-        admin,
-    );
-    const usdcContract = ERC20__factory.connect(
-        deploymentAddresses.USDC.address,
-        admin,
-    );
+    const usdcContract = ERC20__factory.connect(USDC_ADDRESS, admin);
 
     let tx: ContractTransactionResponse;
 
@@ -38,12 +37,6 @@ async function main() {
             to: recipient,
             value: hre.ethers.parseEther(ETH_TO_SEND),
         });
-        await tx.wait();
-        console.log(`Sending ${KSU_TO_SEND} KSU to ${recipient}`);
-        tx = await ksuContract.transfer(
-            recipient,
-            hre.ethers.parseEther('10000'),
-        );
         await tx.wait();
         console.log(`Sending ${USDC_TO_SEND} USDC to ${recipient}`);
         tx = await usdcContract.transfer(
