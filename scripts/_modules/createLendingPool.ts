@@ -20,9 +20,7 @@ import { getAccounts } from './getAccounts';
 import { grantRole, ROLE_LENDING_POOL_CREATOR } from './grantRole';
 
 export async function createLendingPool(
-    poolName: string,
-    poolSymbol: string,
-    numberOfTranches: number,
+    createPoolConfig: CreatePoolConfigStruct,
 ) {
     let tx: ContractTransactionResponse;
 
@@ -66,59 +64,11 @@ export async function createLendingPool(
     );
 
     // create lending pool
-    console.info(`Creating Lending Pool`);
-    console.info(`lending pool name: ${poolName}`);
-    console.info(`lending pool symbol: ${poolSymbol}`);
-    console.info(`number of tranches: ${numberOfTranches}`);
-
     const lendingPoolManagerAdmin = LendingPoolManager__factory.connect(
         deploymentAddresses['LendingPoolManager'].address,
         adminAccount,
     );
 
-    // tranche config
-    const createTranchesConfig: CreateTrancheConfigStruct[] = [];
-    const ratios = [[100_00], [30_00, 70_00], [15_00, 35_00, 50_00]];
-    if (numberOfTranches >= 1) {
-        const juniorTrancheConfig: CreateTrancheConfigStruct = {
-            ratio: ratios[numberOfTranches - 1][0],
-            interestRate: 2500000000000000, //
-            minDepositAmount: 50_000_000, // 50 USDC
-            maxDepositAmount: 10_000_000_000, // 100K USDC
-        };
-        createTranchesConfig.push(juniorTrancheConfig);
-    }
-
-    if (numberOfTranches >= 2) {
-        const mezzoTrancheConfig: CreateTrancheConfigStruct = {
-            ratio: ratios[numberOfTranches - 1][1],
-            interestRate: 2000000000000000,
-            minDepositAmount: 50_000_000,
-            maxDepositAmount: 10_000_000_000,
-        };
-        createTranchesConfig.push(mezzoTrancheConfig);
-    }
-
-    if (numberOfTranches >= 3) {
-        const seniorTrancheConfig: CreateTrancheConfigStruct = {
-            ratio: ratios[numberOfTranches - 1][2],
-            interestRate: 1500000000000000,
-            minDepositAmount: 50_000_000,
-            maxDepositAmount: 100_000_000_000,
-        };
-        createTranchesConfig.push(seniorTrancheConfig);
-    }
-
-    const createPoolConfig: CreatePoolConfigStruct = {
-        poolName: poolName,
-        poolSymbol: poolSymbol,
-        targetExcessLiquidityPercentage: BigInt(10_000),
-        minExcessLiquidityPercentage: 0,
-        tranches: createTranchesConfig,
-        poolAdmin: poolAdminAccountAddress, // ROLE_POOL_ADMIN
-        drawRecipient: drawRecipientAccountAddress,
-        desiredDrawAmount: BigInt(0),
-    };
     console.info('Pool Config', createPoolConfig);
 
     tx = await lendingPoolManagerAdmin.createPool(createPoolConfig);
@@ -193,4 +143,64 @@ export async function createLendingPool(
             feeClaimerAccount,
         },
     };
+}
+
+export async function getDefaultLendingPoolConfig(
+    poolName: string,
+    poolSymbol: string,
+    numberOfTranches: number,
+) {
+    // signers
+    const signers = await getAccounts(hre.network.name);
+    const adminAccount = signers[1];
+    const adminAccountAddress = await adminAccount.getAddress();
+
+    const poolAdminAccountAddress = adminAccountAddress;
+    const drawRecipientAccountAddress = adminAccountAddress;
+
+    // config
+    const createTranchesConfig: CreateTrancheConfigStruct[] = [];
+    const ratios = [[100_00], [30_00, 70_00], [15_00, 35_00, 50_00]];
+    if (numberOfTranches >= 1) {
+        const juniorTrancheConfig: CreateTrancheConfigStruct = {
+            ratio: ratios[numberOfTranches - 1][0],
+            interestRate: 2500000000000000, //
+            minDepositAmount: 50_000_000, // 50 USDC
+            maxDepositAmount: 10_000_000_000, // 100K USDC
+        };
+        createTranchesConfig.push(juniorTrancheConfig);
+    }
+
+    if (numberOfTranches >= 2) {
+        const mezzoTrancheConfig: CreateTrancheConfigStruct = {
+            ratio: ratios[numberOfTranches - 1][1],
+            interestRate: 2000000000000000,
+            minDepositAmount: 50_000_000,
+            maxDepositAmount: 10_000_000_000,
+        };
+        createTranchesConfig.push(mezzoTrancheConfig);
+    }
+
+    if (numberOfTranches >= 3) {
+        const seniorTrancheConfig: CreateTrancheConfigStruct = {
+            ratio: ratios[numberOfTranches - 1][2],
+            interestRate: 1500000000000000,
+            minDepositAmount: 50_000_000,
+            maxDepositAmount: 100_000_000_000,
+        };
+        createTranchesConfig.push(seniorTrancheConfig);
+    }
+
+    const createPoolConfig: CreatePoolConfigStruct = {
+        poolName: poolName,
+        poolSymbol: poolSymbol,
+        targetExcessLiquidityPercentage: BigInt(10_00),
+        minExcessLiquidityPercentage: 0,
+        tranches: createTranchesConfig,
+        poolAdmin: poolAdminAccountAddress, // ROLE_POOL_ADMIN
+        drawRecipient: drawRecipientAccountAddress,
+        desiredDrawAmount: BigInt(0),
+    };
+
+    return createPoolConfig;
 }

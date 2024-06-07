@@ -2,7 +2,10 @@ import { parseKasuError } from '../_utils/parseErrors';
 import { getAccounts } from '../_modules/getAccounts';
 import * as hre from 'hardhat';
 import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
-import { createLendingPool } from '../_modules/createLendingPool';
+import {
+    createLendingPool,
+    getDefaultLendingPoolConfig,
+} from '../_modules/createLendingPool';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
 import {
     RequestDepositInput,
@@ -34,9 +37,11 @@ async function main() {
         // create a lending pool (three tranches)
         const numberOfTranches = 3;
         const createdLendingPool = await createLendingPool(
-            'scenario1 lending pool',
-            'S1LP',
-            numberOfTranches,
+            await getDefaultLendingPoolConfig(
+                'scenario1 lending pool',
+                'S1LP',
+                numberOfTranches,
+            ),
         );
         const lp = createdLendingPool.lendingPoolAddress;
         const lp_junior = createdLendingPool.trancheAddresses[0];

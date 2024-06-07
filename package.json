@@ -13,7 +13,7 @@
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
         "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
-        "scripts:createTestLendingPools": "hardhat run --network localhost scripts/clearing/createTestLendingPools.ts",
+        "scripts:createTestLendingPools": "hardhat run --network localhost scripts/lendingPools/createTestLendingPools.ts",
         "scripts:grantLendingPoolRole": "hardhat run --network base-sepolia scripts/lendingPools/grantLendingPoolRole.ts",
         "scripts:mockUsdc:mint": "hardhat run --network localhost scripts/admin/mintMockUSDC.ts",
         "scripts:sendFunds": "hardhat run --network localhost scripts/admin/sendFunds.ts",
@@ -26,6 +26,7 @@
         "scripts:repayOwedFunds": "hardhat run --network localhost scripts/lendingPools/repayOwedFunds.ts",
         "scripts:stopLendingPool": "hardhat run --network localhost scripts/lendingPools/stopLendingPool.ts",
         "scripts:updateDesiredDrawAmount": "hardhat run --network base-sepolia scripts/lendingPools/updateDesiredDrawAmount.ts",
+        "scripts:createLendingPool": "hardhat run --network localhost scripts/lendingPools/createLendingPools.ts.ts",
         "scripts:scenario1": "hardhat run --network localhost scripts/scenarios/scenario1.ts",
         "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
     },
