@@ -1,6 +1,7 @@
 import * as repl from 'node:repl';
 import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 import {
+    KasuAllowList__factory,
     KasuController__factory,
     LendingPool,
     LendingPool__factory,
@@ -59,6 +60,11 @@ const kasuControllerAdmin = KasuController__factory.connect(
     adminWallet,
 );
 
+const kasuAllowListAdmin = KasuAllowList__factory.connect(
+    deploymentAddresses.KasuAllowList.address,
+    adminWallet,
+);
+
 const connectToLendingPool = (lendingPoolAddress: string): LendingPool => {
     return LendingPool__factory.connect(lendingPoolAddress, adminWallet);
 };
@@ -75,5 +81,6 @@ replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
 replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
 replServer.context.userManagerAdmin = userManagerAdmin;
 replServer.context.kasuControllerAdmin = kasuControllerAdmin;
+replServer.context.kasuAllowListAdmin = kasuAllowListAdmin;
 replServer.context.connectToLendingPool = connectToLendingPool;
 replServer.context.ethers = ethers;

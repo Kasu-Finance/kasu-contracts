@@ -72,6 +72,10 @@ const config: HardhatUserConfig = {
             url: 'https://sepolia.base.org',
             chainId: 84532,
         },
+        'base-mainnet': {
+            url: 'https://mainnet.base.org',
+            chainId: 8453,
+        },
     },
 };
 

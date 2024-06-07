@@ -23,10 +23,7 @@ export const wEthAddress = '0x4200000000000000000000000000000000000006';
 const NEXERA_ID_SIGNER = '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
 let PROTOCOL_FEE_RECEIVER = '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483';
 let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
-
-function isLocalDeployment() {
-    return hre.network.name === 'localhost' || hre.network.name === 'hardhat';
-}
+const deploySystemVariablesTestable = false;
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -104,22 +101,27 @@ async function main() {
     tx = await manualKsuPriceAddress.setKsuTokenPrice(parseEther('2'));
     await tx.wait(1);
 
-    const systemVariablesDeploymentAddress = isLocalDeployment()
-        ? await deployTransparentProxy(
-              'SystemVariablesTestable',
-              deployOptions(deployerAddress, [
-                  manualKsuPriceDeploymentAddress,
-                  kasuControllerDeploymentAddress,
-              ]),
-              'SystemVariables',
-          )
-        : await deployTransparentProxy(
-              'SystemVariables',
-              deployOptions(deployerAddress, [
-                  manualKsuPriceDeploymentAddress,
-                  kasuControllerDeploymentAddress,
-              ]),
-          );
+    let systemVariablesDeploymentAddress;
+    if (deploySystemVariablesTestable) {
+        console.log('Deploying SystemVariablesTestable...');
+        systemVariablesDeploymentAddress = await deployTransparentProxy(
+            'SystemVariablesTestable',
+            deployOptions(deployerAddress, [
+                manualKsuPriceDeploymentAddress,
+                kasuControllerDeploymentAddress,
+            ]),
+            'SystemVariables',
+        );
+    } else {
+        console.log('Deploying SystemVariables...');
+        systemVariablesDeploymentAddress = await deployTransparentProxy(
+            'SystemVariables',
+            deployOptions(deployerAddress, [
+                manualKsuPriceDeploymentAddress,
+                kasuControllerDeploymentAddress,
+            ]),
+        );
+    }
 
     const userLoyaltyRewardsDeploymentAddress = await deployTransparentProxy(
         'UserLoyaltyRewards',
@@ -270,7 +272,7 @@ async function main() {
             adminSigner,
         );
         tx = await kasuController.initialize(
-            adminAddress,
+            adminAddress, // KASU_ADMIN
             lendingPoolFactoryAddress,
         );
         await tx.wait(1);
