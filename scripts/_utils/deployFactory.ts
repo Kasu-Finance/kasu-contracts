@@ -1,5 +1,5 @@
 import { deploymentFileFactory } from './deploymentFileFactory';
-import { ethers, upgrades } from 'hardhat';
+import hre, { ethers, upgrades } from 'hardhat';
 import { DeployProxyOptions } from '@openzeppelin/hardhat-upgrades/src/utils';
 
 export function deployOptions(
@@ -20,6 +20,8 @@ export function deployOptions(
 export async function deployFactory(
     addressFile: ReturnType<typeof deploymentFileFactory>,
     isNewDeployment: boolean,
+    deployUpdates: boolean,
+    verifySource: boolean,
 ) {
     return {
         deployTransparentProxy: async (
@@ -48,9 +50,16 @@ export async function deployFactory(
                     await upgrades.erc1967.getImplementationAddress(
                         proxyAddress,
                     );
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    proxyAddress,
+                    implementationAddress,
+                    'TransparentProxy',
+                );
             }
 
-            if (!isNewDeployment) {
+            if (!isNewDeployment && deployUpdates) {
                 console.log(`Checking to update ${name} contract`);
                 proxyAddress = addressFile.getContractAddress(exportName);
 
@@ -65,17 +74,30 @@ export async function deployFactory(
                     await upgrades.erc1967.getImplementationAddress(
                         proxyAddress,
                     );
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    proxyAddress,
+                    implementationAddress,
+                    'TransparentProxy',
+                );
             }
 
-            addressFile.writeAddressProxy(
-                exportName,
-                proxyAddress,
-                implementationAddress,
-                'TransparentProxy',
-            );
+            if (!isNewDeployment && verifySource) {
+                proxyAddress = addressFile.getContractAddress(exportName);
+                try {
+                    await hre.run('verify:verify', {
+                        address: proxyAddress,
+                        constructorArguments: options.constructorArgs,
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            }
 
             return proxyAddress;
         },
+
         deployBeacon: async (
             name: string,
             options: DeployProxyOptions,
@@ -102,9 +124,16 @@ export async function deployFactory(
                     await upgrades.beacon.getImplementationAddress(
                         beaconAddress,
                     );
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    beaconAddress,
+                    implementationAddress,
+                    'BeaconProxy',
+                );
             }
 
-            if (!isNewDeployment) {
+            if (!isNewDeployment && deployUpdates) {
                 console.log(`Checking to update ${name} contract`);
                 beaconAddress = addressFile.getContractAddress(name);
 
@@ -119,14 +148,27 @@ export async function deployFactory(
                     await upgrades.beacon.getImplementationAddress(
                         beaconAddress,
                     );
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    beaconAddress,
+                    implementationAddress,
+                    'BeaconProxy',
+                );
             }
 
-            addressFile.writeAddressProxy(
-                exportName,
-                beaconAddress,
-                implementationAddress,
-                'BeaconProxy',
-            );
+            if (!isNewDeployment && verifySource) {
+                beaconAddress = addressFile.getContractAddress(exportName);
+                try {
+                    await hre.run('verify:verify', {
+                        address: beaconAddress,
+                        constructorArguments: options.constructorArgs,
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
             return beaconAddress;
         },
     };

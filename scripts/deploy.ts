@@ -24,6 +24,8 @@ const NEXERA_ID_SIGNER = '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
 let PROTOCOL_FEE_RECEIVER = '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483';
 let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
 const deploySystemVariablesTestable = false;
+const verifySource = true;
+const deployUpdates = false;
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -53,6 +55,8 @@ async function main() {
     const { deployTransparentProxy, deployBeacon } = await deployFactory(
         addressFile,
         isNewDeployment,
+        deployUpdates,
+        verifySource,
     );
 
     // deploy

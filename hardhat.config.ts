@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 import { glob } from 'glob';
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
+import '@nomicfoundation/hardhat-verify';
 import '@openzeppelin/hardhat-upgrades';
 
 dotenv.config();
@@ -75,6 +76,11 @@ const config: HardhatUserConfig = {
         base: {
             url: 'https://mainnet.base.org',
             chainId: 8453,
+        },
+    },
+    etherscan: {
+        apiKey: {
+            base: 'YOUR_API_KEY',
         },
     },
 };
