@@ -171,6 +171,10 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
      * @return The current epoch number.
      */
     function currentEpochNumber() public view returns (uint256) {
+        if (block.timestamp < _initialEpochStartTimestamp) {
+            return 0;
+        }
+
         return (block.timestamp - _initialEpochStartTimestamp) / EPOCH_DURATION;
     }
 
