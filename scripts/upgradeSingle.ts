@@ -1,7 +1,8 @@
 import { deployFactory, deployOptions } from './_utils/deployFactory';
-import hre from 'hardhat';
+import hre, { ethers, upgrades } from 'hardhat';
 import { deploymentFileFactory } from './_utils/deploymentFileFactory';
 import { getAccounts } from './_modules/getAccounts';
+import { parseKasuError } from './_utils/parseErrors';
 
 async function main() {
     // setup
@@ -25,29 +26,36 @@ async function main() {
     const systemVariablesDeploymentAddress =
         addressFile.getContractAddress('SystemVariables');
 
-    const lendingPoolManagerDeploymentAddress =
-        addressFile.getContractAddress('LendingPoolManager');
+    const ksuPriceDeploymentAddress =
+        addressFile.getContractAddress('KsuPrice');
 
-    const clearingCoordinatorDeploymentAddress = addressFile.getContractAddress(
-        'ClearingCoordinator',
+    const kasuControllerDeploymentAddress =
+        addressFile.getContractAddress('KasuController');
+
+    console.log(
+        systemVariablesDeploymentAddress,
+        ksuPriceDeploymentAddress,
+        kasuControllerDeploymentAddress,
     );
 
-    const feeManagerDeploymentAddress =
-        addressFile.getContractAddress('FeeManager');
+    const systemVariablesImplementation = await ethers.getContractFactory(
+        'SystemVariables',
+    );
 
-    const mockUsdcDeploymentAddress = addressFile.getContractAddress('USDC');
-
-    // upgrade
-    const lendingPoolBeaconAddress = await deployBeacon(
-        'LendingPool',
-        deployOptions(deployerAddress, [
+    try {
+        const proxy = await upgrades.upgradeProxy(
             systemVariablesDeploymentAddress,
-            lendingPoolManagerDeploymentAddress,
-            clearingCoordinatorDeploymentAddress,
-            feeManagerDeploymentAddress,
-            mockUsdcDeploymentAddress,
-        ]),
-    );
+            systemVariablesImplementation,
+            deployOptions(deployerAddress, [
+                ksuPriceDeploymentAddress,
+                kasuControllerDeploymentAddress,
+            ]),
+        );
+
+        await proxy.waitForDeployment();
+    } catch (error) {
+        parseKasuError(error);
+    }
 }
 
 main().catch((error) => {

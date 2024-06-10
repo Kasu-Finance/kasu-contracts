@@ -1,5 +1,6 @@
 node_modules
-scripts/_env/.localhost.env
+scripts/_env/.base.env
+
 
 # Hardhat files
 /cache

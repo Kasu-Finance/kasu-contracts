@@ -28,7 +28,7 @@
         "scripts:updateDesiredDrawAmount": "hardhat run --network base-sepolia scripts/lendingPools/updateDesiredDrawAmount.ts",
         "scripts:createLendingPool": "hardhat run --network localhost scripts/lendingPools/createLendingPools.ts.ts",
         "scripts:scenario1": "hardhat run --network localhost scripts/scenarios/scenario1.ts",
-        "repl:kasu": "NETWORK_NAME=base-sepolia ts-node scripts/_repl/kasu_repl.ts"
+        "repl:kasu": "NETWORK_NAME=localhost ts-node scripts/_repl/kasu_repl.ts"
     },
     "repository": {
         "type": "git",

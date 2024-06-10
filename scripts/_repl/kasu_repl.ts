@@ -16,9 +16,11 @@ import * as dotenv from 'dotenv';
 const networkName = process.env.NETWORK_NAME ?? 'localhost';
 
 // dot env
-dotenv.config({ path: `${__dirname}/.${networkName}.env` });
+const envPath = `${__dirname}/../_env/.${networkName}.env`;
+console.log(`Reading from ${envPath}`);
+dotenv.config({ path: envPath });
 const jsonRpcUrl = process.env.JSON_RPC_URL ?? '';
-const adminPK = process.env.ADMIN_PK ?? '';
+const adminPK = process.env.ADMIN_KEY ?? '';
 
 const addressFile = deploymentFileFactory(networkName, 0);
 const deploymentAddresses = addressFile.getContractAddresses();
