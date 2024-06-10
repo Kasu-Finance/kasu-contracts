@@ -3,14 +3,14 @@
     "startBlock": 9921327,
     "KSU": {
         "address": "0xBc4963953e3074003585Ca930D883373A81b1d64",
-        "implementation": "0x72fB58207cc83b90a34CC18B528FA0dE40272174",
-        "startBlock": 9921327,
+        "implementation": "0x519bBCD3252F45C7D10dc24cB5a9042610F716a7",
+        "startBlock": 11142967,
         "proxyType": "TransparentProxy"
     },
     "USDC": {
         "address": "0x15B22C46A37e2fFc1135d143fd3d47d889ad13Ff",
-        "implementation": "0x2a98C1098eEaCfed00fa49d7E6b00E02fD59F786",
-        "startBlock": 9921327,
+        "implementation": "0x15DF3eE2b51DD799a2CCEAA2D1537DaEAaE4159E",
+        "startBlock": 11142967,
         "proxyType": "TransparentProxy"
     },
     "KasuController": {
