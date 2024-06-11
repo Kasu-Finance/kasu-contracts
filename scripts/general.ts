@@ -1,4 +1,4 @@
-import hre, { ethers, upgrades } from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import { getDeploymentFilePath } from './_utils/deploymentFileFactory';
 import { getAccounts } from './_modules/getAccounts';
 import { parseKasuError } from './_utils/parseErrors';

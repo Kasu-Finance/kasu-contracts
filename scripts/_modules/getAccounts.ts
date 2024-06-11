@@ -11,13 +11,13 @@ export async function getAccounts(networkName: string) {
     // replace with env vars
     const deployerKey = process.env.DEPLOYER_KEY ?? '';
     const adminKey = process.env.ADMIN_KEY ?? '';
+    const aliceKey = process.env.ALICE_KEY ?? '';
+    const bobKey = process.env.BOB_KEY ?? '';
 
     if (deployerKey) signers[0] = new Wallet(deployerKey, hre.ethers.provider);
     if (adminKey) signers[1] = new Wallet(adminKey, hre.ethers.provider);
+    if (aliceKey) signers[2] = new Wallet(aliceKey, hre.ethers.provider);
+    if (bobKey) signers[3] = new Wallet(bobKey, hre.ethers.provider);
 
-    // const addresses = await Promise.all(
-    //     signers.map(async (it) => await it.getAddress()),
-    // );
-    // console.log(addresses);
     return signers;
 }

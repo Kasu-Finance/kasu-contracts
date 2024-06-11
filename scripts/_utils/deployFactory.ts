@@ -1,6 +1,7 @@
 import { deploymentFileFactory } from './deploymentFileFactory';
 import hre, { ethers, upgrades } from 'hardhat';
 import { DeployProxyOptions } from '@openzeppelin/hardhat-upgrades/src/utils';
+import { Signer } from 'ethers';
 
 export function deployOptions(
     deployer: string,
@@ -22,6 +23,7 @@ export async function deployFactory(
     isNewDeployment: boolean,
     deployUpdates: boolean,
     verifySource: boolean,
+    deployer: Signer,
 ) {
     return {
         deployTransparentProxy: async (
@@ -29,7 +31,10 @@ export async function deployFactory(
             options: DeployProxyOptions,
             exportName?: string,
         ): Promise<string> => {
-            const implementation = await ethers.getContractFactory(name);
+            const implementation = await ethers.getContractFactory(
+                name,
+                deployer,
+            );
 
             exportName = exportName ? exportName : name;
 
@@ -103,7 +108,10 @@ export async function deployFactory(
             options: DeployProxyOptions,
             exportName?: string,
         ): Promise<string> => {
-            const implementation = await ethers.getContractFactory(name);
+            const implementation = await ethers.getContractFactory(
+                name,
+                deployer,
+            );
 
             exportName = exportName ? exportName : name;
 

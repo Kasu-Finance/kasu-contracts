@@ -17,9 +17,9 @@ async function main() {
 
     // signers
     const signers = await getAccounts(hre.network.name);
-    const admin = signers[0];
-    const alice = signers[1];
-    const bob = signers[2];
+    const admin = signers[1];
+    const alice = signers[2];
+    const bob = signers[3];
 
     // contracts
     const ksuAdminContract = KSU__factory.connect(ksuAddress, admin);

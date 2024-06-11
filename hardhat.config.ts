@@ -1,14 +1,11 @@
 import { HardhatUserConfig, subtask } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
-import * as dotenv from 'dotenv';
 import path from 'path';
 import { glob } from 'glob';
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
 import '@nomicfoundation/hardhat-verify';
 import '@openzeppelin/hardhat-upgrades';
-
-dotenv.config();
 
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
