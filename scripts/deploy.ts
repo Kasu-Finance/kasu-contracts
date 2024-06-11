@@ -206,33 +206,42 @@ async function main() {
 
     const lendingPoolBeaconAddress = await deployBeacon(
         'LendingPool',
-        deployOptions(deployerAddress, [
-            systemVariablesDeploymentAddress,
-            lendingPoolManagerDeploymentAddress,
-            clearingCoordinatorDeploymentAddress,
-            feeManagerDeploymentAddress,
-            usdcAddress,
-        ]),
+        deployOptions(
+            deployerAddress,
+            [
+                systemVariablesDeploymentAddress,
+                lendingPoolManagerDeploymentAddress,
+                clearingCoordinatorDeploymentAddress,
+                feeManagerDeploymentAddress,
+                usdcAddress,
+            ],
+            'beacon',
+        ),
     );
 
     const pendingPoolBeaconAddress = await deployBeacon(
         'PendingPool',
-        deployOptions(deployerAddress, [
-            systemVariablesDeploymentAddress,
-            usdcAddress,
-            lendingPoolManagerDeploymentAddress,
-            userManagerDeploymentAddress,
-            clearingCoordinatorDeploymentAddress,
-            acceptedRequestsCalculationDeployment,
-        ]),
+        deployOptions(
+            deployerAddress,
+            [
+                systemVariablesDeploymentAddress,
+                usdcAddress,
+                lendingPoolManagerDeploymentAddress,
+                userManagerDeploymentAddress,
+                clearingCoordinatorDeploymentAddress,
+                acceptedRequestsCalculationDeployment,
+            ],
+            'beacon',
+        ),
     );
 
     const lendingPoolTrancheBeaconAddress = await deployBeacon(
         'LendingPoolTranche',
-        deployOptions(deployerAddress, [
-            lendingPoolManagerDeploymentAddress,
-            usdcAddress,
-        ]),
+        deployOptions(
+            deployerAddress,
+            [lendingPoolManagerDeploymentAddress, usdcAddress],
+            'beacon',
+        ),
     );
 
     const lendingPoolFactoryAddress = await deployTransparentProxy(

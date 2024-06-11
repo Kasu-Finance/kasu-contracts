@@ -6,6 +6,7 @@ import { Signer } from 'ethers';
 export function deployOptions(
     deployer: string,
     constructorArgs: unknown[],
+    kind: 'transparent' | 'beacon' = 'transparent',
 ): DeployProxyOptions {
     return {
         initializer: false,
@@ -13,7 +14,7 @@ export function deployOptions(
         constructorArgs: constructorArgs,
         redeployImplementation: 'onchange',
         verifySourceCode: false,
-        kind: 'transparent',
+        kind: kind,
         unsafeAllow: ['constructor', 'state-variable-immutable'],
     };
 }
@@ -39,7 +40,7 @@ export async function deployFactory(
             exportName = exportName ? exportName : name;
 
             let proxyAddress = '';
-            let implementationAddress = '';
+            let deployedImplementationAddress = '';
 
             if (isNewDeployment) {
                 console.log(`Deploying ${name} contract`);
@@ -51,7 +52,7 @@ export async function deployFactory(
 
                 proxyAddress = await proxy.getAddress();
 
-                implementationAddress =
+                deployedImplementationAddress =
                     await upgrades.erc1967.getImplementationAddress(
                         proxyAddress,
                     );
@@ -59,7 +60,7 @@ export async function deployFactory(
                 addressFile.writeAddressProxy(
                     exportName,
                     proxyAddress,
-                    implementationAddress,
+                    deployedImplementationAddress,
                     'TransparentProxy',
                 );
             }
@@ -68,22 +69,38 @@ export async function deployFactory(
                 console.log(`Checking to update ${name} contract`);
                 proxyAddress = addressFile.getContractAddress(exportName);
 
-                const proxy = await upgrades.upgradeProxy(
+                const newImplementationAddress = await upgrades.prepareUpgrade(
                     proxyAddress,
                     implementation,
                     options,
                 );
-                await proxy.waitForDeployment();
 
-                implementationAddress =
+                deployedImplementationAddress =
                     await upgrades.erc1967.getImplementationAddress(
                         proxyAddress,
                     );
 
+                if (
+                    newImplementationAddress !== deployedImplementationAddress
+                ) {
+                    console.log('Performing upgrade');
+                    const proxy = await upgrades.upgradeProxy(
+                        proxyAddress,
+                        implementation,
+                        options,
+                    );
+                    await proxy.waitForDeployment();
+
+                    deployedImplementationAddress =
+                        await upgrades.erc1967.getImplementationAddress(
+                            proxyAddress,
+                        );
+                }
+
                 addressFile.writeAddressProxy(
                     exportName,
                     proxyAddress,
-                    implementationAddress,
+                    deployedImplementationAddress,
                     'TransparentProxy',
                 );
             }
@@ -116,7 +133,7 @@ export async function deployFactory(
             exportName = exportName ? exportName : name;
 
             let beaconAddress = '';
-            let implementationAddress = '';
+            let deployedImplementationAddress = '';
 
             if (isNewDeployment) {
                 console.log(`Deploying ${name} contract`);
@@ -128,7 +145,7 @@ export async function deployFactory(
 
                 beaconAddress = await beacon.getAddress();
 
-                implementationAddress =
+                deployedImplementationAddress =
                     await upgrades.beacon.getImplementationAddress(
                         beaconAddress,
                     );
@@ -136,7 +153,7 @@ export async function deployFactory(
                 addressFile.writeAddressProxy(
                     exportName,
                     beaconAddress,
-                    implementationAddress,
+                    deployedImplementationAddress,
                     'BeaconProxy',
                 );
             }
@@ -145,22 +162,34 @@ export async function deployFactory(
                 console.log(`Checking to update ${name} contract`);
                 beaconAddress = addressFile.getContractAddress(name);
 
-                const proxy = await upgrades.upgradeBeacon(
+                const newImplementationAddress = await upgrades.prepareUpgrade(
                     beaconAddress,
                     implementation,
                     options,
                 );
-                beaconAddress = await proxy.getAddress();
 
-                implementationAddress =
+                deployedImplementationAddress =
                     await upgrades.beacon.getImplementationAddress(
                         beaconAddress,
                     );
 
+                if (
+                    newImplementationAddress !== deployedImplementationAddress
+                ) {
+                    console.log('Performing upgrade');
+
+                    const proxy = await upgrades.upgradeBeacon(
+                        beaconAddress,
+                        implementation,
+                        options,
+                    );
+                    beaconAddress = await proxy.getAddress();
+                }
+
                 addressFile.writeAddressProxy(
                     exportName,
                     beaconAddress,
-                    implementationAddress,
+                    deployedImplementationAddress,
                     'BeaconProxy',
                 );
             }
