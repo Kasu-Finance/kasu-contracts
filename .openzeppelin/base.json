@@ -3592,6 +3592,249 @@
           ]
         }
       }
+    },
+    "65f64c370630ec4ac2e353e49cbc0e341344b737e7e47dd64452686e1fe68083": {
+      "address": "0x59c8eA31bD71fA48E0201a88354B1Be26Dd0eedc",
+      "txHash": "0x3da7dcf6b89d83aa43e9282c95e2041a0ebace91bf9c279f7ffdbf5ef03b5355",
+      "layout": {
+        "solcVersion": "0.8.23",
+        "storage": [
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "KasuAccessControllable",
+            "src": "src/shared/access/KasuAccessControllable.sol:100"
+          },
+          {
+            "label": "_initialEpochStartTimestamp",
+            "offset": 0,
+            "slot": "50",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:51"
+          },
+          {
+            "label": "clearingPeriodLength",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:54"
+          },
+          {
+            "label": "priceUpdateEpoch",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:57"
+          },
+          {
+            "label": "ksuEpochTokenPrice",
+            "offset": 0,
+            "slot": "53",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:61"
+          },
+          {
+            "label": "performanceFee",
+            "offset": 0,
+            "slot": "54",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:64"
+          },
+          {
+            "label": "_loyaltyThresholds",
+            "offset": 0,
+            "slot": "55",
+            "type": "t_array(t_uint256)dyn_storage",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:67"
+          },
+          {
+            "label": "_userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU",
+            "offset": 0,
+            "slot": "56",
+            "type": "t_bool",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:70"
+          },
+          {
+            "label": "_defaultTrancheInterestChangeEpochDelay",
+            "offset": 0,
+            "slot": "57",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:73"
+          },
+          {
+            "label": "_maxTrancheInterestRate",
+            "offset": 0,
+            "slot": "58",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:77"
+          },
+          {
+            "label": "_minTrancheCountPerLendingPool",
+            "offset": 0,
+            "slot": "59",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:80"
+          },
+          {
+            "label": "_maxTrancheCountPerLendingPool",
+            "offset": 0,
+            "slot": "60",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:83"
+          },
+          {
+            "label": "_ecosystemFeeRate",
+            "offset": 0,
+            "slot": "61",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:87"
+          },
+          {
+            "label": "_protocolFeeRate",
+            "offset": 0,
+            "slot": "62",
+            "type": "t_uint256",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:91"
+          },
+          {
+            "label": "_protocolFeeReceiver",
+            "offset": 0,
+            "slot": "63",
+            "type": "t_address",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:94"
+          },
+          {
+            "label": "_trancheNameIndexes",
+            "offset": 0,
+            "slot": "64",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:97"
+          },
+          {
+            "label": "_trancheNameInfo",
+            "offset": 0,
+            "slot": "65",
+            "type": "t_mapping(t_uint256,t_struct(TrancheInfo)1196_storage)",
+            "contract": "SystemVariables",
+            "src": "src/core/SystemVariables.sol:101"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)10_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(uint256 => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(TrancheInfo)1196_storage)": {
+            "label": "mapping(uint256 => struct TrancheInfo)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(TrancheInfo)1196_storage": {
+            "label": "struct TrancheInfo",
+            "members": [
+              {
+                "label": "trancheName",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "tokenSymbol",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
     }
   }
 }

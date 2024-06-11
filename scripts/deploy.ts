@@ -299,7 +299,7 @@ async function main() {
         );
         const systemVariablesSetup: SystemVariablesSetupStruct = {
             // Math.round(Date.now() / 1000) - 3600 * 24 * 4
-            initialEpochStartTimestamp: 1717480800,
+            initialEpochStartTimestamp: 1717653600,
             clearingPeriodLength: 3600 * 48,
             performanceFee: 10_00,
             loyaltyThresholds: [1_00, 5_00],

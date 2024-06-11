@@ -41,11 +41,10 @@ export const mockUsdc = MockUSDC__factory.connect(
     adminWallet,
 );
 
-export const systemVariablesTestableAdmin =
-    SystemVariablesTestable__factory.connect(
-        deploymentAddresses.SystemVariables.address,
-        adminWallet,
-    );
+export const systemVariablesAdmin = SystemVariablesTestable__factory.connect(
+    deploymentAddresses.SystemVariables.address,
+    adminWallet,
+);
 
 const lendingPoolManagerAdmin = LendingPoolManager__factory.connect(
     deploymentAddresses.LendingPoolManager.address,
@@ -79,7 +78,7 @@ const help = [
 
 replServer.context.help = help;
 replServer.context.mockUsdc = mockUsdc;
-replServer.context.systemVariablesTestableAdmin = systemVariablesTestableAdmin;
+replServer.context.systemVariablesAdmin = systemVariablesAdmin;
 replServer.context.lendingPoolManagerAdmin = lendingPoolManagerAdmin;
 replServer.context.userManagerAdmin = userManagerAdmin;
 replServer.context.kasuControllerAdmin = kasuControllerAdmin;

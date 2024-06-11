@@ -12,11 +12,6 @@ async function main() {
     const isNewDeployment = !addressFile.didFileInitiallyExist;
     console.log(`Is new deployment: ${isNewDeployment}`);
 
-    const { deployTransparentProxy, deployBeacon } = await deployFactory(
-        addressFile,
-        isNewDeployment,
-    );
-
     const signers = await getAccounts(hre.network.name);
 
     const deployerSigner = signers[0];
