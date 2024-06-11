@@ -1,4 +1,3 @@
-import * as deployment from '../.openzeppelin/localhost-addresses.json';
 import {
     KSU__factory,
     KSULocking__factory,
@@ -8,12 +7,19 @@ import * as hre from 'hardhat';
 import { parseUnits } from 'ethers';
 import { lockPeriod30, lockPeriod180 } from './_modules/addLockPeriods';
 import { getAccounts } from './_modules/getAccounts';
+import { getDeploymentFilePath } from './_utils/deploymentFileFactory';
+import fs from 'fs';
 
 async function main() {
     // contract addresses
-    const ksuLockingAddress = deployment['KSULocking'].address;
-    const ksuAddress = deployment['KSU'].address;
-    const usdcAddress = deployment['USDC'].address;
+    const { filePath } = getDeploymentFilePath(hre.network.name);
+    const deploymentAddresses = JSON.parse(
+        fs.readFileSync(filePath).toString(),
+    );
+
+    const ksuLockingAddress = deploymentAddresses['KSULocking'].address;
+    const ksuAddress = deploymentAddresses['KSU'].address;
+    const usdcAddress = deploymentAddresses['USDC'].address;
 
     // signers
     const signers = await getAccounts(hre.network.name);
