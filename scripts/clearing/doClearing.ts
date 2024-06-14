@@ -13,7 +13,6 @@ const targetEpochNumber = 4n;
 async function main() {
     const signers = await getAccounts(hre.network.name);
     const clearingManagerAccount = signers[1];
-    const admin = signers[1];
 
     // overwrite clearing config - optional
     const ratios = [[100_00], [30_00, 70_00], [15_00, 35_00, 50_00]];
