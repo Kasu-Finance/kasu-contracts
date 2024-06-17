@@ -1,0 +1,118 @@
+{
+    "network": "base-sepolia",
+    "startBlock": 9921327,
+    "KSU": {
+        "address": "0xBc4963953e3074003585Ca930D883373A81b1d64",
+        "implementation": "0x519bBCD3252F45C7D10dc24cB5a9042610F716a7",
+        "startBlock": 11142967,
+        "proxyType": "TransparentProxy"
+    },
+    "USDC": {
+        "address": "0x15B22C46A37e2fFc1135d143fd3d47d889ad13Ff",
+        "implementation": "0x15DF3eE2b51DD799a2CCEAA2D1537DaEAaE4159E",
+        "startBlock": 11142967,
+        "proxyType": "TransparentProxy"
+    },
+    "KasuController": {
+        "address": "0x5cc38970C6c8697627CC5B0E81FB11C06FbdD3cC",
+        "implementation": "0x5541405b10f0Ea85E1f488270982325d887Ea02A",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "KSULocking": {
+        "address": "0xbA38bA64433B876A1C2E987C05712236eC7324A4",
+        "implementation": "0xa5b03bD8616178CC2545d5E064914e232Af9FB19",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "KsuPrice": {
+        "address": "0xDE68b02102aB05814FC7bf5B201D5e01Aa1db341",
+        "implementation": "0x6cC6c6067047D8f657334e85a0425764a341a2D8",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "SystemVariables": {
+        "address": "0xcbBDa280E2850e526277b62af7Afe9d16c151f39",
+        "implementation": "0xC847Af74A0DfEb7fe7cE80A0d736ea0360ed4950",
+        "startBlock": 10304458,
+        "proxyType": "TransparentProxy"
+    },
+    "UserLoyaltyRewards": {
+        "address": "0x4826269893E4004A3D218E866023f7D438f2041b",
+        "implementation": "0x4b8d0862493D7C55AC0bF10009DaeA67c817B67c",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "UserManager": {
+        "address": "0xaA930b03A39e48e586d1e814Bec2606D016Ec520",
+        "implementation": "0xEC42e6c6F4cE1FbB4dC8667FF083C1074C7ECFa3",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "Swapper": {
+        "address": "0xccEad902D3c27926d8E9cF106F219cbf871Af26a",
+        "implementation": "0xB9a5133B50090eb1259dEc95596C22EE49B2C2D3",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "LendingPoolManager": {
+        "address": "0x267e7e8C6064302847db7fcE447e5C3443e558c4",
+        "implementation": "0xa43dA20e7316F7F9C24651E791E0Ab8E2E1644aa",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "FeeManager": {
+        "address": "0x61365cC3e3c7947B7C9a1eb454D48bFc4A9EEC5E",
+        "implementation": "0x94fe367f41d9635D5148986DA9AC395e38075e9D",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "KasuAllowList": {
+        "address": "0x00e21fEBc702664510860934E589333e4ECe7a15",
+        "implementation": "0x432E8EA0259e3EA69D0567EC2032FEE1075F0279",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "ClearingCoordinator": {
+        "address": "0x643F9f44ECC101242a5E466aA789d7aFb0081070",
+        "implementation": "0x113920f601BD4B17a0d3B5dCfC056f2F37ec0860",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "AcceptedRequestsCalculation": {
+        "address": "0x06C75A4498d4C5C2912Da807134195DF4D97020E",
+        "implementation": "0x913B1834Dd0478a507E44847513F393730855e30",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "LendingPool": {
+        "address": "0xFEef2A3AC9f6832318e31Cc46fE79F82755eF2F0",
+        "implementation": "0x65D8DC813d730e282be86d17Fa214B5c41c911d8",
+        "startBlock": 10305139,
+        "proxyType": "BeaconProxy"
+    },
+    "PendingPool": {
+        "address": "0x9bC330F29b614F17D0AaB9cda246f9509841DB49",
+        "implementation": "0x155c2Dc71fb7eE748C1786450d23D8C5631f17F6",
+        "startBlock": 9921327,
+        "proxyType": "BeaconProxy"
+    },
+    "LendingPoolTranche": {
+        "address": "0x056c734CC72c62628D21FE2b0C014AD38Bffed00",
+        "implementation": "0x6f023254526a2Fe7D6a5d938920758e21894e167",
+        "startBlock": 9921327,
+        "proxyType": "BeaconProxy"
+    },
+    "LendingPoolFactory": {
+        "address": "0xbf4fB8854860538AAf346C39d23CFcDBef1bBBd0",
+        "implementation": "0xb13FABb6B15b61e0552BD68C85843bD8dB6e0070",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    },
+    "KSULockBonus": {
+        "address": "0xF3358cC2Add28C620B95CAcd816a96CEe775EfF8",
+        "implementation": "0x85e3674Fc4d4E8eBAEF9c2A2478787d38dbCedEB",
+        "startBlock": 9921327,
+        "proxyType": "TransparentProxy"
+    }
+}

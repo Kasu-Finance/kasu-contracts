@@ -1,0 +1,44 @@
+Admin address 0x68ea8544AA64479c592711205B59F92122E0893c
+
+Creating Lending Pool
+lending pool name: lending pool 1
+lending pool symbol: LP
+number of tranches: 3
+LendingPool Address: 0xB93c239690061228110525AA16622345241B388e
+PendingPool Address: 0x9F93a20354116095D162A0C8c3398338625fcF4C
+Tranche Addresses" Result(3) [
+  '0x7C7Aa580b80Db2b5ecA38b5F403Db10dE9f993E6',
+  '0x69B15bd0e999CF258e08Ad29E4d427748ec21f95',
+  '0xd6f3C3E17DA9AE8C92aD5AA960b2940e49754fbC'
+]
+
+Creating Lending Pool
+lending pool name: lending pool 2
+lending pool symbol: LP
+number of tranches: 2
+LendingPool Address: 0xF9EF1eCd3F7D33CDD7F56CC0cEE2684Ff9f7392b
+PendingPool Address: 0xd96C98205Af2ce75F390A05F1CD6C2Fa17E03B36
+Tranche Addresses" Result(2) [
+  '0x504744c23E99464D08dbdAb48fd0C80cDd2Bfc43',
+  '0x3Bf6cbA2c0A6Fa402DE52F10415F83fb6c8c1882'
+]
+
+Creating Lending Pool
+lending pool name: lending pool 2
+lending pool symbol: LP
+number of tranches: 1
+LendingPool Address: 0x8aFdA6478Be7E610cf6f6b981Cb055a005978731
+PendingPool Address: 0x0d3BFa5561C1B717F4FCb4e857D18C415972D44a
+Tranche Addresses" Result(1) [ '0x4EDE4e80D5Cb8bb4abaC87b241A5b20ad0A596a2' ]
+
+Creating Lending Pool
+lending pool name: lending pool 2
+lending pool symbol: LP
+number of tranches: 3
+LendingPool Address: 0x2F9c56edD3Ba0a06AA58767f50E52761D85f3Bc7
+PendingPool Address: 0x942836C0f9B7864C34BF9d9f34325421aAF5e14c
+Tranche Addresses" Result(3) [
+  '0x5BB8F5E3cD492BBe400D4C531F4411d5da99F6B8',
+  '0x133765CD64a1F645a7d519F429936eD9dc56Bc35',
+  '0x6b06460c7255bf423458e8eB44FDAA404555f21D'
+]

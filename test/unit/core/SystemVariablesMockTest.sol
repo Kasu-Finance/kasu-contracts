@@ -8,15 +8,15 @@ import "forge-std/Test.sol";
 import {BaseTestUtils} from "../_utils/BaseTestUtils.sol";
 import "../../../src/core/SystemVariables.sol";
 import "../../../src/shared/CommonErrors.sol";
-import "../../shared/MockKsuPrice.sol";
+import "../../shared/ManualKsuPrice.sol";
 
 contract SystemVariablesMockTest is BaseTestUtils {
     SystemVariables internal systemVariables;
-    MockKsuPrice internal ksuPrice;
+    ManualKsuPrice internal ksuPrice;
     IKasuController internal kasuController;
 
     function setUp() public {
-        ksuPrice = new MockKsuPrice();
+        ksuPrice = new ManualKsuPrice();
         kasuController = IKasuController(address(0xcccc));
 
         SystemVariables systemVariablesImpl = new SystemVariables(ksuPrice, kasuController);

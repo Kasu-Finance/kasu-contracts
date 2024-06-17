@@ -4,8 +4,7 @@
     "description": "kasu smart contracts",
     "main": "index.js",
     "scripts": {
-        "node:local": "hardhat node --no-deploy --hostname 0.0.0.0",
-        "deploy:local": "hardhat --network localhost deploy --export-all deployments/localhost/export.json",
+        "node:local": "hardhat node --hostname 0.0.0.0",
         "test": "forge test",
         "test:coverage": "forge coverage --report lcov",
         "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info -o report",
@@ -13,8 +12,23 @@
         "format:solidity": "forge fmt",
         "format:typescript": "prettier -w .",
         "build:solidity": "forge build",
+        "scripts:deploy": "hardhat run --network localhost ./scripts/deploy.ts",
+        "scripts:createTestLendingPools": "hardhat run --network localhost scripts/lendingPools/createTestLendingPools.ts",
+        "scripts:grantLendingPoolRole": "hardhat run --network base-sepolia scripts/lendingPools/grantLendingPoolRole.ts",
+        "scripts:mockUsdc:mint": "hardhat run --network localhost scripts/admin/mintMockUSDC.ts",
+        "scripts:sendFunds": "hardhat run --network localhost scripts/admin/sendFunds.ts",
         "scripts:testEventsLocal": "hardhat run --network localhost ./scripts/testEventsLocal.ts",
-        "scripts:clearingWorkFlow": "hardhat run --network localhost ./scripts/clearingWorkflow.ts"
+        "scripts:requestDeposits": "hardhat run --network localhost ./scripts/lendingPools/requestDeposits.ts",
+        "scripts:clearingWorkFlow": "hardhat run --network localhost scripts/clearingWorkflow.ts",
+        "scripts:startClearingPeriod": "hardhat run --network localhost scripts/clearing/startClearingPeriod.ts",
+        "scripts:upgradeSingle": "hardhat run --network localhost scripts/upgradeSingle.ts",
+        "scripts:doClearing": "hardhat run --network base-sepolia scripts/clearing/doClearing.ts",
+        "scripts:repayOwedFunds": "hardhat run --network localhost scripts/lendingPools/repayOwedFunds.ts",
+        "scripts:stopLendingPool": "hardhat run --network localhost scripts/lendingPools/stopLendingPool.ts",
+        "scripts:updateDesiredDrawAmount": "hardhat run --network base-sepolia scripts/lendingPools/updateDesiredDrawAmount.ts",
+        "scripts:createLendingPool": "hardhat run --network localhost scripts/lendingPools/createLendingPools.ts.ts",
+        "scripts:scenario1": "hardhat run --network localhost scripts/scenarios/scenario1.ts",
+        "repl:kasu": "NETWORK_NAME=localhost ts-node scripts/_repl/kasu_repl.ts"
     },
     "repository": {
         "type": "git",
@@ -28,13 +42,14 @@
     },
     "homepage": "https://github.com/solidant/kasu-contracts#readme",
     "devDependencies": {
+        "@nomicfoundation/hardhat-ethers": "^3.0.5",
         "@nomicfoundation/hardhat-foundry": "^1.1.1",
         "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+        "@nomicfoundation/hardhat-verify": "^2.0.8",
+        "@openzeppelin/hardhat-upgrades": "^3.1.0",
         "@types/node": "^20.11.0",
-        "ethers": "^6.9.2",
-        "hardhat": "^2.19.4",
-        "hardhat-deploy": "^0.11.45",
-        "hardhat-deploy-ethers": "^0.4.1",
-        "dotenv": "^16.3.1"
+        "dotenv": "^16.3.1",
+        "ethers": "^6.12.0",
+        "hardhat": "^2.19.4"
     }
 }

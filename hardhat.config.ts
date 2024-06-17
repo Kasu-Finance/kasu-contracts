@@ -1,13 +1,11 @@
 import { HardhatUserConfig, subtask } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
-import 'hardhat-deploy';
-import 'hardhat-deploy-ethers';
-import * as dotenv from 'dotenv';
 import path from 'path';
 import { glob } from 'glob';
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
-dotenv.config();
+import '@nomicfoundation/hardhat-verify';
+import '@openzeppelin/hardhat-upgrades';
 
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
@@ -23,7 +21,7 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
             hre.config.paths.root,
             'test',
             'shared',
-            'MockKsuPrice.sol',
+            'ManualKsuPrice.sol',
         );
         const dependenciesFix = path.join(
             hre.config.paths.root,
@@ -59,37 +57,28 @@ const config: HardhatUserConfig = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 200,
+                runs: 800,
             },
         },
     },
     networks: {
         localhost: {
-            live: false,
-            saveDeployments: true,
-            tags: ['local'],
+            url: 'http://127.0.0.1:8545/',
+            chainId: 31337,
         },
         'base-sepolia': {
             url: 'https://sepolia.base.org',
             chainId: 84532,
-            live: true,
-            saveDeployments: true,
-            tags: ['baseSepolia'],
-            accounts: [
-                process.env.DEPLOYER_KEY ||
-                    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-            ],
+        },
+        base: {
+            url: 'https://mainnet.base.org',
+            chainId: 8453,
         },
     },
-    namedAccounts: {
-        admin: {
-            default: 0,
-            'base-sepolia': 0,
+    etherscan: {
+        apiKey: {
+            base: 'YOUR_API_KEY',
         },
-        alice: 1,
-        bob: 2,
-        carol: 2,
-        david: 4,
     },
 };
 

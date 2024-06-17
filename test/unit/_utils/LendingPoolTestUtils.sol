@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "forge-std/Test.sol";
 import "./BaseTestUtils.sol";
-import "../../shared/MockKsuPrice.sol";
+import "../../shared/ManualKsuPrice.sol";
 import "../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../src/core/lendingPool/LendingPoolFactory.sol";
 import "../../../src/core/SystemVariables.sol";
@@ -28,7 +28,7 @@ import {WETH9} from "../../shared/MockWeth.sol";
 abstract contract LendingPoolTestUtils is LockingTestUtils {
     ILendingPoolManager internal lendingPoolManager;
     IKasuController internal kasuController;
-    MockKsuPrice internal ksuPrice;
+    ManualKsuPrice internal ksuPrice;
     IUserLoyaltyRewards internal userLoyaltyRewards;
     ISystemVariables internal systemVariables;
     IUserManager internal userManager;
@@ -223,10 +223,10 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     }
 
     function _deployKsuPrice() internal {
-        MockKsuPrice ksuPriceImpl = new MockKsuPrice();
+        ManualKsuPrice ksuPriceImpl = new ManualKsuPrice();
         TransparentUpgradeableProxy ksuPriceProxy =
             new TransparentUpgradeableProxy(address(ksuPriceImpl), address(proxyAdmin), "");
-        ksuPrice = MockKsuPrice(address(ksuPriceProxy));
+        ksuPrice = ManualKsuPrice(address(ksuPriceProxy));
 
         // set price
         ksuPrice.setKsuTokenPrice(2e18);

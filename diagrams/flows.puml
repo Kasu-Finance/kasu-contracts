@@ -1,0 +1,116 @@
+@startuml
+actor User
+
+participant KYC
+actor "Funds \n Manager" as FundsM
+
+
+participant "Lending Pool Manager" as LPM
+participant "Pending Pool \n ERC721" as PP
+participant "Lending Pool \n ERC20" as LP
+participant "Tranche \n ERC4626 \n ERC1155" as T
+
+participant Automation
+actor "Clearing \n Manager" as CM
+participant "Clearing \n Coordinator" as CC
+participant "KSU \n Price" as KP
+participant "User \n Manager" as UM
+actor "Draw \n Recipient" as DR
+participant "Fee \n Manager" as FM
+participant "KSU \n Locking" as KSL
+
+actor "Protocol Fee \n Claimer" as PFC
+
+
+group KYC
+User -> KYC: kyc process
+KYC --> User
+end
+
+group requestDeposit
+User -> LPM: requestDeposit(lendingPool, tranche, usdcAmount)
+User -> LPM : transfer usdc
+LPM -> PP: transfer usdc
+PP --> User: dNft
+end
+
+group cancelRequestDeposit
+User -> LPM: cancelDepositRequest(dNft)
+LPM -> PP: cancelDepositRequest
+PP --> User: transfer USDC
+end
+
+newpage
+
+group requestWithdrawal
+User -> LPM: requestWithdrawal(lendingPool, tranche, trancheSharesAmount)
+LPM -> PP : requestWithdrawal
+User -> PP: transfer tranche shares - erc4626
+PP --> User: mint wNFT - erc721
+end
+
+group cancelWithdrawal
+User -> LPM: cancelWithdrawalRequest(wNft)
+LPM -> PP: cancelWithdrawalRequest
+PP -> PP: burn wNFT - erc721
+PP --> User: transfer tranche shares - erc4626
+end
+
+newpage
+
+group clearing
+group preparation
+Automation -> KP: updateKsuPrice
+Automation -> UM: calculateUserLoyaltyLevels
+end
+
+group accepting
+CM -> CC: doClearing(lendingPool)
+CC -> PP: calculate accept deposits / withdrawals
+CC -> PP: accept request deposits / withdrawals
+
+    group accept deposits
+    PP -> PP: update/burn dNft - erc721
+    PP -> LP: transfer USDC
+    LP -> LP: mint LP tokens - erc20
+    LP -> T: deposit LP - erc4626
+    T --> User: mint tranche shares - erc4626
+    end
+
+    group accept withdrawals
+    PP -> PP: update/burn wNFT - erc721
+    PP -> LP: accept withdrawal
+    T -> LP: redeem LP - erc4626
+    T -> T: burn tranche shares - erc4626
+    LP -> LP: burn LP tokens \n (equivalent tranche shares) - erc20
+    LP -> User: transfer USDC
+    end
+end
+
+group drawFunds
+CC -> LP: drawFunds
+LP -> DR: transfer USDC
+end
+
+group payOwedFees
+CC -> LP: payOwedFees
+LP -> FM: emitFees
+LP -> FM: transfer USDC
+FM -> KSL: transfer ecosystem fee
+end
+
+end
+
+PFC -> FM: claim protocol fee
+
+newpage
+
+group repayment
+FundsM -> LPM: repayOwnedFunds
+FundsM -> LPM: transfer USDC
+LPM -> LP: repayOwnedFunds
+LPM -> LP: transfer USDC
+
+end
+
+@enduml

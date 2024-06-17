@@ -1,5 +1,6 @@
 node_modules
-.env
+scripts/_env/.base.env
+
 
 # Hardhat files
 /cache
@@ -20,5 +21,9 @@ out
 cache
 cache_hardhat
 
-deployments/hardhat
-deployments/localhost
+**/lcov.info
+**/report
+
+**/.base-sepolia.env
+**/.base-mainnet.env
+**/localhost-addresses.json

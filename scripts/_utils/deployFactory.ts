@@ -1,0 +1,212 @@
+import { deploymentFileFactory } from './deploymentFileFactory';
+import hre, { ethers, upgrades } from 'hardhat';
+import { DeployProxyOptions } from '@openzeppelin/hardhat-upgrades/src/utils';
+import { Signer } from 'ethers';
+
+export function deployOptions(
+    deployer: string,
+    constructorArgs: unknown[],
+    kind: 'transparent' | 'beacon' = 'transparent',
+): DeployProxyOptions {
+    return {
+        initializer: false,
+        initialOwner: deployer,
+        constructorArgs: constructorArgs,
+        redeployImplementation: 'onchange',
+        verifySourceCode: false,
+        kind: kind,
+        unsafeAllow: ['constructor', 'state-variable-immutable'],
+    };
+}
+
+export async function deployFactory(
+    addressFile: ReturnType<typeof deploymentFileFactory>,
+    isNewDeployment: boolean,
+    deployUpdates: boolean,
+    verifySource: boolean,
+    deployer: Signer,
+) {
+    return {
+        deployTransparentProxy: async (
+            name: string,
+            options: DeployProxyOptions,
+            exportName?: string,
+        ): Promise<string> => {
+            const implementation = await ethers.getContractFactory(
+                name,
+                deployer,
+            );
+
+            exportName = exportName ? exportName : name;
+
+            let proxyAddress = '';
+            let deployedImplementationAddress = '';
+
+            if (isNewDeployment) {
+                console.log(`Deploying ${name} contract`);
+                const proxy = await upgrades.deployProxy(
+                    implementation,
+                    options,
+                );
+                await proxy.waitForDeployment();
+
+                proxyAddress = await proxy.getAddress();
+
+                deployedImplementationAddress =
+                    await upgrades.erc1967.getImplementationAddress(
+                        proxyAddress,
+                    );
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    proxyAddress,
+                    deployedImplementationAddress,
+                    'TransparentProxy',
+                );
+            }
+
+            if (!isNewDeployment && deployUpdates) {
+                console.log(`Checking to update ${name} contract`);
+                proxyAddress = addressFile.getContractAddress(exportName);
+
+                const newImplementationAddress = await upgrades.prepareUpgrade(
+                    proxyAddress,
+                    implementation,
+                    options,
+                );
+
+                deployedImplementationAddress =
+                    await upgrades.erc1967.getImplementationAddress(
+                        proxyAddress,
+                    );
+
+                if (
+                    newImplementationAddress !== deployedImplementationAddress
+                ) {
+                    console.log('Performing upgrade');
+                    const proxy = await upgrades.upgradeProxy(
+                        proxyAddress,
+                        implementation,
+                        options,
+                    );
+                    await proxy.waitForDeployment();
+
+                    deployedImplementationAddress =
+                        await upgrades.erc1967.getImplementationAddress(
+                            proxyAddress,
+                        );
+                }
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    proxyAddress,
+                    deployedImplementationAddress,
+                    'TransparentProxy',
+                );
+            }
+
+            if (!isNewDeployment && verifySource) {
+                proxyAddress = addressFile.getContractAddress(exportName);
+                try {
+                    await hre.run('verify:verify', {
+                        address: proxyAddress,
+                        constructorArguments: options.constructorArgs,
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            return proxyAddress;
+        },
+
+        deployBeacon: async (
+            name: string,
+            options: DeployProxyOptions,
+            exportName?: string,
+        ): Promise<string> => {
+            const implementation = await ethers.getContractFactory(
+                name,
+                deployer,
+            );
+
+            exportName = exportName ? exportName : name;
+
+            let beaconAddress = '';
+            let deployedImplementationAddress = '';
+
+            if (isNewDeployment) {
+                console.log(`Deploying ${name} contract`);
+                const beacon = await upgrades.deployBeacon(
+                    implementation,
+                    options,
+                );
+                await beacon.waitForDeployment();
+
+                beaconAddress = await beacon.getAddress();
+
+                deployedImplementationAddress =
+                    await upgrades.beacon.getImplementationAddress(
+                        beaconAddress,
+                    );
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    beaconAddress,
+                    deployedImplementationAddress,
+                    'BeaconProxy',
+                );
+            }
+
+            if (!isNewDeployment && deployUpdates) {
+                console.log(`Checking to update ${name} contract`);
+                beaconAddress = addressFile.getContractAddress(name);
+
+                const newImplementationAddress = await upgrades.prepareUpgrade(
+                    beaconAddress,
+                    implementation,
+                    options,
+                );
+
+                deployedImplementationAddress =
+                    await upgrades.beacon.getImplementationAddress(
+                        beaconAddress,
+                    );
+
+                if (
+                    newImplementationAddress !== deployedImplementationAddress
+                ) {
+                    console.log('Performing upgrade');
+
+                    const proxy = await upgrades.upgradeBeacon(
+                        beaconAddress,
+                        implementation,
+                        options,
+                    );
+                    beaconAddress = await proxy.getAddress();
+                }
+
+                addressFile.writeAddressProxy(
+                    exportName,
+                    beaconAddress,
+                    deployedImplementationAddress,
+                    'BeaconProxy',
+                );
+            }
+
+            if (!isNewDeployment && verifySource) {
+                beaconAddress = addressFile.getContractAddress(exportName);
+                try {
+                    await hre.run('verify:verify', {
+                        address: beaconAddress,
+                        constructorArguments: options.constructorArgs,
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            return beaconAddress;
+        },
+    };
+}

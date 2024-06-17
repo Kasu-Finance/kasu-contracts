@@ -4,9 +4,15 @@ import {
     LendingPoolManager__factory,
     MockUSDC__factory,
 } from '../../typechain-types';
-import path from 'path';
 import * as hre from 'hardhat';
 import fs from 'fs';
+import {
+    deploymentFileFactory,
+    getDeploymentFilePath,
+} from '../_utils/deploymentFileFactory';
+import { getAccounts } from './getAccounts';
+import { allowUsers } from './allowUsers';
+import { mockUsdcMintUser } from './mockUsdcMintUsers';
 
 export type RequestDepositInput = {
     user: Signer;
@@ -17,50 +23,34 @@ export type RequestDepositInput = {
 
 export async function requestDeposits(
     requestDepositsInput: RequestDepositInput[],
+    fundAccounts = true,
+    allowAccounts = true,
 ) {
     let tx: ContractTransactionResponse;
 
-    const deploymentAddressesPath = path.join(
-        `./deployments/${hre.network.name}/addresses-${hre.network.name}.json`,
-    );
-    const deploymentAddresses = JSON.parse(
-        fs.readFileSync(deploymentAddressesPath).toString(),
-    );
+    const addressFile = deploymentFileFactory(hre.network.name, 0);
+    const deploymentAddresses = addressFile.getContractAddresses();
 
     // signers
-    const namedSigners = await hre.ethers.getNamedSigners();
-    const adminAccount = namedSigners['admin'];
+    const signers = await getAccounts(hre.network.name);
+    const adminAccount = signers[1];
 
     // fund accounts
-    console.info('Funding accounts with USDC');
-
-    const usdcAdmin = MockUSDC__factory.connect(
-        deploymentAddresses['USDC'].address,
-        adminAccount,
-    );
-
-    for (const rdi of requestDepositsInput) {
-        const userAddress = await rdi.user.getAddress();
-        tx = await usdcAdmin.mint(userAddress, rdi.amount);
-        await tx.wait(1);
+    if (fundAccounts) {
+        await mockUsdcMintUser(
+            requestDepositsInput.map((it) => {
+                return { user: it.user, amount: it.amount };
+            }),
+            adminAccount,
+        );
     }
 
-    // add users to allow list
-    console.info('Add users to allow list');
-    const kasuAllowListAdmin = KasuAllowList__factory.connect(
-        deploymentAddresses['KasuAllowList'].address,
-        adminAccount,
-    );
-
-    const userAddresses: string[] = [];
-    for (const rdi of requestDepositsInput) {
-        userAddresses.push(await rdi.user.getAddress());
-    }
-
-    const uniqueUserAddresses = [...new Set(userAddresses)];
-    for (const uniqueUserAddress of uniqueUserAddresses) {
-        tx = await kasuAllowListAdmin.allowUser(uniqueUserAddress);
-        await tx.wait(1);
+    // allow accounts
+    if (allowAccounts) {
+        await allowUsers(
+            requestDepositsInput.map((it) => it.user),
+            adminAccount,
+        );
     }
 
     // request deposits
@@ -96,11 +86,11 @@ async function requestDeposit(
     );
     await tx.wait(1);
 
-    const lendingPoolManagerAlice = LendingPoolManager__factory.connect(
+    const lendingPoolManagerUser = LendingPoolManager__factory.connect(
         addresses['LendingPoolManager'].address,
         requester,
     );
-    tx = await lendingPoolManagerAlice.requestDeposit(
+    tx = await lendingPoolManagerUser.requestDeposit(
         lendingPoolAddress,
         trancheAddress,
         amount,
