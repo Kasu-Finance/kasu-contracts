@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/IUserManager.sol";
 import "./LendingPoolTrancheLoss.sol";
 import "./LendingPoolHelpers.sol";
 import "../../shared/CommonErrors.sol";
@@ -21,6 +22,9 @@ import "../../shared/CommonErrors.sol";
  * None of the tokens can be transferred by anyone except the lending pool and the pending pool.
  */
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
+    /// @notice User manager contract.
+    IUserManager private immutable _userManager;
+
     /// @dev User active shares. This includes user pending withdrawal shares.
     mapping(address user => uint256 activeShares) public userActiveShares;
     /// @dev Index of a user in the _trancheUsers array.
@@ -31,13 +35,16 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     /* ========== CONSTRUCTOR ========== */
 
     /**
+     * @notice Initializes the lending pool tranche contract.
+     * @param userManager_ User manager address.
      * @param lendingPoolManager_ Lending pool manager address.
      * @param lossAsset_ Loss repayment asset address.
      */
-    constructor(ILendingPoolManager lendingPoolManager_, address lossAsset_)
+    constructor(IUserManager userManager_, ILendingPoolManager lendingPoolManager_, address lossAsset_)
         LendingPoolHelpers(lendingPoolManager_)
         AssetFunctionsBase(lossAsset_)
     {
+        _userManager = userManager_;
         _disableInitializers();
     }
 
@@ -81,7 +88,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     /**
      * @notice Remove user active shares after redeem was called.
      * @dev Lending pool should call this function right after redeem.
-     * If user has no shares left, they are removed from the trancheUsers array.
+     * If user has no shares left, they are removed from the trancheUsers array
+     * and the userManager is updated.
      * @param user The address of the user.
      * @param shares The amount of shares that were redeemed.
      */
@@ -102,6 +110,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
             // update last and removing user index
             _userArrayIndex[lastUser] = removingUserIndex;
             delete _userArrayIndex[user];
+
+            _userManager.removeUserActiveTranche(user, address(_ownLendingPool()));
         }
     }
 
@@ -110,7 +120,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @dev Overrides the ERC4626 deposit function.
      * Only the lending pool can call this function.
      * The user receives tranche shares.
-     * If the user had no shares before, they are added to the trancheUsers array.
+     * If the user had no shares before, they are added to the trancheUsers array
+     * and the userManager is updated.
      * @param assets The amount of assets to deposit.
      * @param receiver The receiver address of the tranche shares.
      * @return shares The amount of shares received.
@@ -128,6 +139,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
         if (userActiveShares[receiver] == 0) {
             _userArrayIndex[receiver] = _trancheUsers.length;
             _trancheUsers.push(receiver);
+
+            _userManager.addUserActiveTranche(receiver, address(_ownLendingPool()));
         }
 
         userActiveShares[receiver] += shares;

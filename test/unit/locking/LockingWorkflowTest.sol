@@ -15,8 +15,9 @@ contract LockingWorkflowTest is LockingTestUtils {
             new TransparentUpgradeableProxy(address(new KSULockBonus()), address(proxyAdmin), "");
         _KSULockBonus = KSULockBonus(address(ksuLockBonusProxy));
         _KSULockBonus.initialize(address(_KSULocking), _ksu);
-        vm.prank(admin);
+        vm.startPrank(admin);
         _KSULocking.setKSULockBonus(address(_KSULockBonus));
+        _KSULocking.setCanSetFeeRecipient(admin, true);
     }
 
     /*
@@ -53,6 +54,13 @@ contract LockingWorkflowTest is LockingTestUtils {
     function testCase1() public {
         // Admin adds 300 KSU to Lock Bonus Contract
         _addBonusKSU(300 ether);
+
+        vm.startPrank(admin);
+        _KSULocking.enableFeesForUser(alice);
+        _KSULocking.enableFeesForUser(bob);
+        _KSULocking.enableFeesForUser(carol);
+        _KSULocking.enableFeesForUser(david);
+
         // Alice locks 100 KSU for 30d
         _lock(alice, 100 ether, lockPeriod30);
         assertApproxEqAbs(_ksu.balanceOf(address(alice)), 0, 0);

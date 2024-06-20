@@ -63,6 +63,9 @@ interface IKSULocking is IERC20 {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
     function canAddressEmitFees(address feeEmitter) external view returns (bool canEmitFees);
+    function eligibleRKSUForFees() external view returns (uint256);
+    function canSetFeeRecipient(address feeRecipientSetter) external view returns (bool canSet);
+    function isFeeRecipientEnabled(address user) external view returns (bool isEnabled);
     function lockDetails(uint256 lockPeriod) external view returns (LockPeriodDetails memory);
     function userTotalDeposits(address) external view returns (uint256);
     function userLock(address, uint256) external view returns (UserLock memory);
@@ -72,6 +75,7 @@ interface IKSULocking is IERC20 {
 
     function setKSULockBonus(address ksuBonusTokens_) external;
     function setCanEmitFees(address feeEmitter, bool canEmitFees) external;
+    function setCanSetFeeRecipient(address feeRecipientSetter, bool canSet) external;
     function addLockPeriod(uint256 lockPeriod, uint256 rKSUMultiplier, uint256 ksuBonusMultiplier) external;
 
     function lock(uint256 amount, uint256 lockPeriod) external returns (uint256 userLockId);
@@ -84,6 +88,9 @@ interface IKSULocking is IERC20 {
     function emergencyWithdraw(EmergencyWithdrawInput[] calldata emergencyWithdrawInput, address receiver) external;
 
     function emitFees(uint256 amount) external;
+
+    function enableFeesForUser(address user) external;
+    function disableFeesForUser(address user) external;
 
     /* ========== EVENTS ========== */
 
@@ -103,6 +110,9 @@ interface IKSULocking is IERC20 {
     event EmergencyWithdraw(
         address indexed user, uint256 indexed lockId, uint256 ksuAmount, uint256 rKSUBurned, address receiver
     );
+    event CanSetFeeRecipientSet(address indexed feeRecipientSetter, bool canSetFeeRecipient);
+    event FeesEnabledForUser(address indexed user);
+    event FeesDisabledForUser(address indexed user);
 
     /* ========== ERRORS ========== */
 
@@ -114,4 +124,5 @@ interface IKSULocking is IERC20 {
     error LockAmountShouldBeMoreThanZero();
     error UnlockAmountShouldBeMoreThanZero();
     error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
+    error AddressCannotSetFeeRecipient(address badFeeRecipientSetter);
 }

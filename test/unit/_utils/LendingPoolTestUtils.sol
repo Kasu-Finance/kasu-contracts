@@ -96,7 +96,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         userLoyaltyRewards = UserLoyaltyRewards(address(userLoyaltyRewardsProxy));
 
         // user manager
-        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards);
+        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards, kasuController);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
@@ -160,7 +160,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         );
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
-        LendingPoolTranche lendingPoolTrancheImp = new LendingPoolTranche(lendingPoolManager, address(mockUsdc));
+        LendingPoolTranche lendingPoolTrancheImp =
+            new LendingPoolTranche(userManager, lendingPoolManager, address(mockUsdc));
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
         // lending pool factory
         LendingPoolFactory lendingPoolFactoryImpl = new LendingPoolFactory(
@@ -215,6 +216,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(loyaltyEpochRewardRatesInput);
 
         _KSULocking.setCanEmitFees(address(feeManager), true);
+        _KSULocking.setCanSetFeeRecipient(address(userManager), true);
         vm.stopPrank();
     }
 

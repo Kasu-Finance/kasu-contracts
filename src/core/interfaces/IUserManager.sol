@@ -32,6 +32,8 @@ interface IUserManager {
 
     function batchCalculateUserLoyaltyLevels(uint256 batchSize) external;
     function userRequestedDeposit(address user, address lendingPool) external;
+    function addUserActiveTranche(address user, address lendingPool) external;
+    function removeUserActiveTranche(address user, address lendingPool) external;
     function updateUserLendingPools(uint256 fromIndex, uint256 toIndex) external;
 
     /* ========== EVENTS ========== */
