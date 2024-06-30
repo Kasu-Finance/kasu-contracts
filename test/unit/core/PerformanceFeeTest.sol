@@ -82,14 +82,30 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         // clearing pool 1 (accept all deposits)
         ClearingConfiguration memory clearingConfiguration1 =
             ClearingConfiguration(6_900 * 1e6, trancheDesiredRatios1, 10_00, 0);
-        _doClearing(poolClearingManagerAccount, lpd1.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration1, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd1.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            true
+        );
 
         // clearing pool 2 (accept all deposits)
         uint256[] memory trancheDesiredRatios2 = new uint256[](1);
         trancheDesiredRatios2[0] = 100_00;
         ClearingConfiguration memory clearingConfiguration2 =
             ClearingConfiguration(2_900 * 1e6, trancheDesiredRatios2, 10_00, 0);
-        _doClearing(poolClearingManagerAccount, lpd2.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration2, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd2.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration2,
+            true
+        );
 
         skip(1 days);
 
@@ -100,9 +116,13 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         _requestDeposit(user5, lpd1.lendingPool, lpd1.tranches[2], 1_000 * 1e6);
 
         // Alice withdraws from pool 2
-        _requestWithdrawal(alice, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(alice));
+        _requestWithdrawal(
+            alice, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(alice)
+        );
         // Carol partially withdraws from pool 2 tranche 2
-        _requestWithdrawal(carol, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(carol) / 2);
+        _requestWithdrawal(
+            carol, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(carol) / 2
+        );
 
         _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd2.lendingPool, 1_600 * 1e6);
 
@@ -112,12 +132,22 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
         currentEpoch = systemVariables.currentEpochNumber();
 
-        uint256 totalRewards2 = (ILendingPool(lpd2.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
-        uint256 totalRewards1 = (ILendingPool(lpd1.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
+        uint256 totalRewards2 = (ILendingPool(lpd2.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent
+            * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
+        uint256 totalRewards1 = (ILendingPool(lpd1.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent
+            * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
 
         // clearing pool 2 (accept all withdrawals)
         clearingConfiguration2.drawAmount = 0;
-        _doClearing(poolClearingManagerAccount, lpd2.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration2, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd2.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration2,
+            true
+        );
 
         // 5% of yield is distributed to users as collected fees
         assertApproxEqAbs(_KSULocking.rewards(alice), totalRewards2 / 3, 1);
@@ -130,7 +160,15 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
 
         // clearing pool 1 (accept all deposits)
         clearingConfiguration1.drawAmount = 1_000 * 1e6;
-        _doClearing(poolClearingManagerAccount, lpd1.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration1, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd1.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            true
+        );
 
         assertApproxEqAbs(_KSULocking.rewards(alice), userRewardsBefore[0] + totalRewards1 / 4, 1);
         assertApproxEqAbs(_KSULocking.rewards(bob), userRewardsBefore[1] + totalRewards1 / 4, 1);
@@ -146,10 +184,18 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         _unlockAll(user5, 0);
 
         // Bob withdraws from all pools
-        _requestWithdrawal(bob, lpd1.lendingPool, lpd1.tranches[0], ILendingPoolTranche(lpd1.tranches[0]).balanceOf(bob));
-        _requestWithdrawal(bob, lpd1.lendingPool, lpd1.tranches[1], ILendingPoolTranche(lpd1.tranches[1]).balanceOf(bob));
-        _requestWithdrawal(bob, lpd1.lendingPool, lpd1.tranches[2], ILendingPoolTranche(lpd1.tranches[2]).balanceOf(bob));
-        _requestWithdrawal(bob, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(bob));
+        _requestWithdrawal(
+            bob, lpd1.lendingPool, lpd1.tranches[0], ILendingPoolTranche(lpd1.tranches[0]).balanceOf(bob)
+        );
+        _requestWithdrawal(
+            bob, lpd1.lendingPool, lpd1.tranches[1], ILendingPoolTranche(lpd1.tranches[1]).balanceOf(bob)
+        );
+        _requestWithdrawal(
+            bob, lpd1.lendingPool, lpd1.tranches[2], ILendingPoolTranche(lpd1.tranches[2]).balanceOf(bob)
+        );
+        _requestWithdrawal(
+            bob, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(bob)
+        );
 
         // repay owed funds for pool 1
         _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd1.lendingPool, 3_100 * 1e6);
@@ -163,13 +209,23 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
         currentEpoch = systemVariables.currentEpochNumber();
 
-        totalRewards2 = (ILendingPool(lpd2.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
-        totalRewards1 = (ILendingPool(lpd1.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
+        totalRewards2 = (ILendingPool(lpd2.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00
+            / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
+        totalRewards1 = (ILendingPool(lpd1.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00
+            / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
         userRewardsBefore = _getUserRewards();
 
         // clearing pool 2 (accept all withdrawals)
         clearingConfiguration2.drawAmount = 0;
-        _doClearing(poolClearingManagerAccount, lpd2.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration2, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd2.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration2,
+            true
+        );
 
         assertApproxEqAbs(_KSULocking.rewards(alice), userRewardsBefore[0] + totalRewards2 / 3, 1);
         assertApproxEqAbs(_KSULocking.rewards(bob), userRewardsBefore[1] + totalRewards2 / 3, 1);
@@ -181,7 +237,15 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
 
         // clearing pool 1 (accept all withdrawals)
         clearingConfiguration1.drawAmount = 0;
-        _doClearing(poolClearingManagerAccount, lpd1.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration1, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd1.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            true
+        );
 
         assertApproxEqAbs(_KSULocking.rewards(alice), userRewardsBefore[0] + totalRewards1 / 2, 1);
         assertApproxEqAbs(_KSULocking.rewards(bob), userRewardsBefore[1], 1);
@@ -194,19 +258,39 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         // EPOCH 8
 
         // Everyone withdraws from all pools
-        _requestWithdrawal(alice, lpd1.lendingPool, lpd1.tranches[0], ILendingPoolTranche(lpd1.tranches[0]).balanceOf(alice));
-        _requestWithdrawal(alice, lpd1.lendingPool, lpd1.tranches[1], ILendingPoolTranche(lpd1.tranches[1]).balanceOf(alice));
-        _requestWithdrawal(alice, lpd1.lendingPool, lpd1.tranches[2], ILendingPoolTranche(lpd1.tranches[2]).balanceOf(alice));
+        _requestWithdrawal(
+            alice, lpd1.lendingPool, lpd1.tranches[0], ILendingPoolTranche(lpd1.tranches[0]).balanceOf(alice)
+        );
+        _requestWithdrawal(
+            alice, lpd1.lendingPool, lpd1.tranches[1], ILendingPoolTranche(lpd1.tranches[1]).balanceOf(alice)
+        );
+        _requestWithdrawal(
+            alice, lpd1.lendingPool, lpd1.tranches[2], ILendingPoolTranche(lpd1.tranches[2]).balanceOf(alice)
+        );
 
-        _requestWithdrawal(carol, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(carol));
+        _requestWithdrawal(
+            carol, lpd2.lendingPool, lpd2.tranches[0], ILendingPoolTranche(lpd2.tranches[0]).balanceOf(carol)
+        );
 
-        _requestWithdrawal(user5, lpd1.lendingPool, lpd1.tranches[2], ILendingPoolTranche(lpd1.tranches[2]).balanceOf(user5));
+        _requestWithdrawal(
+            user5, lpd1.lendingPool, lpd1.tranches[2], ILendingPoolTranche(lpd1.tranches[2]).balanceOf(user5)
+        );
 
         // repay owed funds for pool 1
-        _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd1.lendingPool, ILendingPool(lpd1.lendingPool).userOwedAmount());
+        _repayOwedFunds(
+            poolFundsManagerAccount,
+            poolFundsManagerAccount,
+            lpd1.lendingPool,
+            ILendingPool(lpd1.lendingPool).userOwedAmount()
+        );
 
         // repaying owed funds for pool 2
-        _repayOwedFunds(poolFundsManagerAccount, poolFundsManagerAccount, lpd2.lendingPool, ILendingPool(lpd2.lendingPool).userOwedAmount());
+        _repayOwedFunds(
+            poolFundsManagerAccount,
+            poolFundsManagerAccount,
+            lpd2.lendingPool,
+            ILendingPool(lpd2.lendingPool).userOwedAmount()
+        );
 
         skip(6 days);
 
@@ -214,25 +298,43 @@ contract PerformanceFeeTest is LendingPoolTestUtils {
         userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
         currentEpoch = systemVariables.currentEpochNumber();
 
-        totalRewards2 = (ILendingPool(lpd2.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
-        totalRewards1 = (ILendingPool(lpd1.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00 / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
+        totalRewards2 = (ILendingPool(lpd2.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00
+            / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
+        totalRewards1 = (ILendingPool(lpd1.lendingPool).totalSupply() - 1_000 * 1e6) * interestRate_0_1_percent * 5_00
+            / INTEREST_RATE_FULL_PERCENT / FULL_PERCENT;
         userRewardsBefore = _getUserRewards();
 
         // clearing pool 2 (accept all withdrawals)
         clearingConfiguration2.drawAmount = 0;
-        _doClearing(poolClearingManagerAccount, lpd2.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration2, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd2.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration2,
+            true
+        );
 
         assertApproxEqAbs(_KSULocking.rewards(alice), userRewardsBefore[0] + totalRewards2, 1);
         assertApproxEqAbs(_KSULocking.rewards(bob), userRewardsBefore[1], 1);
         assertApproxEqAbs(_KSULocking.rewards(carol), userRewardsBefore[2], 1);
         assertApproxEqAbs(_KSULocking.rewards(david), userRewardsBefore[3], 0);
         assertApproxEqAbs(_KSULocking.rewards(user5), userRewardsBefore[4], 0);
-    
+
         userRewardsBefore = _getUserRewards();
 
         // clearing pool 1 (accept all withdrawals)
         clearingConfiguration1.drawAmount = 0;
-        _doClearing(poolClearingManagerAccount, lpd1.lendingPool, currentEpoch, type(uint256).max, type(uint256).max, clearingConfiguration1, true);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd1.lendingPool,
+            currentEpoch,
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration1,
+            true
+        );
 
         assertApproxEqAbs(_KSULocking.rewards(alice), userRewardsBefore[0], 0);
         assertApproxEqAbs(_KSULocking.rewards(bob), userRewardsBefore[1], 0);
