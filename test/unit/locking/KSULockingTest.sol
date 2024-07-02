@@ -16,6 +16,9 @@ contract KSULockingTest is LockingTestUtils {
     function setUp() public {
         __baseTestUtils_setUp();
         __locking_setUp();
+
+        vm.prank(admin);
+        _KSULocking.setCanSetFeeRecipient(admin, true);
     }
 
     function test_addLockPeriod_WhenNotAdmin_ShouldRevert() public {
@@ -30,6 +33,50 @@ contract KSULockingTest is LockingTestUtils {
         vm.expectRevert(abi.encodeWithSelector(IKSULocking.LockPeriodAlreadyExists.selector, lockPeriod30));
         vm.prank(admin);
         _KSULocking.addLockPeriod(lockPeriod30, lockMultiplier30, ksuBonusMultiplier30);
+    }
+
+    function test_setFeeRecipient() public {
+        // ARRANGE
+        address feeRecipientSetter = address(0xFEEeEeeEEEEeeEEEeeEEeeEEEeEeeeEeEeeeeEEe);
+        uint256 aliceLockAmount = 100 ether;
+        _lock(alice, aliceLockAmount, lockPeriod720);
+
+        // ASSERT
+        assertFalse(_KSULocking.isFeeRecipientEnabled(alice));
+        assertEq(_KSULocking.eligibleRKSUForFees(), 0);
+
+        // ACT / ASSERT
+
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
+        _KSULocking.setCanSetFeeRecipient(feeRecipientSetter, true);
+
+        startHoax(feeRecipientSetter);
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.AddressCannotSetFeeRecipient.selector, feeRecipientSetter));
+        _KSULocking.enableFeesForUser(alice);
+
+        vm.expectRevert(abi.encodeWithSelector(IKSULocking.AddressCannotSetFeeRecipient.selector, feeRecipientSetter));
+        _KSULocking.disableFeesForUser(alice);
+
+        vm.startPrank(admin);
+        _KSULocking.setCanSetFeeRecipient(feeRecipientSetter, true);
+
+        vm.startPrank(feeRecipientSetter);
+        _KSULocking.enableFeesForUser(alice);
+
+        // ASSERT
+        assertTrue(_KSULocking.isFeeRecipientEnabled(alice));
+        assertEq(_KSULocking.eligibleRKSUForFees(), aliceLockAmount);
+
+        // ACT
+        vm.startPrank(feeRecipientSetter);
+        _KSULocking.disableFeesForUser(alice);
+
+        // ASSERT
+        assertFalse(_KSULocking.isFeeRecipientEnabled(alice));
+        assertEq(_KSULocking.eligibleRKSUForFees(), 0);
     }
 
     function test_emitFees() public {
@@ -217,6 +264,9 @@ contract KSULockingTest is LockingTestUtils {
         uint256 rewardAmount = 100 * 1e6;
         uint256 aliceLockAmount = 200 ether;
 
+        vm.prank(admin);
+        _KSULocking.enableFeesForUser(alice);
+
         _lock(alice, aliceLockAmount, lockPeriod30);
         _emitFees(rewardAmount);
 
@@ -242,8 +292,13 @@ contract KSULockingTest is LockingTestUtils {
         uint256 aliceLockAmount = 100 ether;
         uint256 bobLockAmount = 300 ether;
 
+        vm.startPrank(admin);
+        _KSULocking.enableFeesForUser(alice);
+        _KSULocking.enableFeesForUser(bob);
+
         _lock(alice, aliceLockAmount, lockPeriod30);
         _lock(bob, bobLockAmount, lockPeriod30);
+        _lock(carol, 100 ether, lockPeriod30);
         _emitFees(rewardAmount);
 
         // ACT
@@ -253,24 +308,34 @@ contract KSULockingTest is LockingTestUtils {
         // ASSERT
         assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 25 * 1e6, 1);
         assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6, 1);
+        assertEq(mockUsdc.balanceOf(address(carol)), 0);
     }
 
-    function test_lockRewardsForTwoUsersMultipleDepositsAndRewards() public {
+    function test_lockRewardsForTwoUsersMultipleDepositsAndUserJoiningLater() public {
         // ARRANGE
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
         uint256 bobLockAmountDeposit1 = 300 ether;
 
+        vm.startPrank(admin);
+        _KSULocking.enableFeesForUser(alice);
+        _KSULocking.enableFeesForUser(bob);
+
         _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
         _lock(bob, bobLockAmountDeposit1, lockPeriod30);
+        _lock(carol, 100 ether, lockPeriod30);
         _emitFees(reward1Amount);
 
-        uint256 reward2Amount = 50 * 1e6;
+        uint256 reward2Amount = 1000 * 1e6;
         uint256 aliceLockAmountDeposit2 = 200 ether;
         uint256 bobLockAmountDeposit2 = 200 ether;
 
+        vm.startPrank(admin);
+        _KSULocking.enableFeesForUser(carol);
+
         _lock(alice, aliceLockAmountDeposit2, lockPeriod30);
         _lock(bob, bobLockAmountDeposit2, lockPeriod30);
+        _lock(carol, 100 ether, lockPeriod30);
         _emitFees(reward2Amount);
 
         // ACT
@@ -278,10 +343,13 @@ contract KSULockingTest is LockingTestUtils {
         _KSULocking.claimFees();
         vm.prank(bob);
         _KSULocking.claimFees();
+        vm.prank(carol);
+        _KSULocking.claimFees();
 
         // ASSERT
-        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 25 * 1e6 + 1875 * 1e4, 1);
-        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6 + 3125 * 1e4, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(alice)), 25 * 1e6 + 300 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(bob)), 75 * 1e6 + 500 * 1e6, 1);
+        assertApproxEqAbs(mockUsdc.balanceOf(address(carol)), 200 * 1e6, 1);
     }
 
     function test_unlock1() public {
@@ -356,6 +424,10 @@ contract KSULockingTest is LockingTestUtils {
 
     function test_rewards() public {
         // ARRANGE
+        vm.startPrank(admin);
+        _KSULocking.enableFeesForUser(alice);
+        _KSULocking.enableFeesForUser(bob);
+
         uint256 reward1Amount = 100 * 1e6;
         uint256 aliceLockAmountDeposit1 = 100 ether;
         uint256 bobLockAmountDeposit1 = 300 ether;

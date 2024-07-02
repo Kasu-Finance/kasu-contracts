@@ -6,9 +6,11 @@ import "./interfaces/IUserManager.sol";
 import "./interfaces/ISystemVariables.sol";
 import "./interfaces/IUserLoyaltyRewards.sol";
 import "./interfaces/lendingPool/ILendingPool.sol";
+import "./interfaces/lendingPool/ILendingPoolTranche.sol";
 import "./interfaces/lendingPool/IPendingPool.sol";
 import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../locking/interfaces/IKSULocking.sol";
+import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/AddressLib.sol";
 import "./Constants.sol";
@@ -17,7 +19,7 @@ import "./Constants.sol";
  * @title User Manager Contract
  * @notice This contract is primarily used to calculate a user loyalty level for the current epoch.
  */
-contract UserManager is IUserManager, Initializable {
+contract UserManager is IUserManager, KasuAccessControllable, Initializable {
     /// @notice System variables contract.
     ISystemVariables private immutable _systemVariables;
 
@@ -50,6 +52,9 @@ contract UserManager is IUserManager, Initializable {
     /// @dev Details of processing user loyalty levels for the epoch.
     mapping(uint256 epochId => EpochUserLoyaltyProcessing) private _epochUserLoyaltyProcessing;
 
+    /// @notice Count of tranches user is active in.
+    mapping(address user => uint256 activeTrancheCount) private _userActiveTrancheCount;
+
     struct LoyaltyGlobalParameters {
         uint256 currentEpoch;
         uint256 ksuPrice;
@@ -63,8 +68,14 @@ contract UserManager is IUserManager, Initializable {
      * @param systemVariables_ System variables contract.
      * @param ksuLocking_ KSU locking contract.
      * @param userLoyaltyRewards_ User loyalty rewards contract.
+     * @param controller_ Kasu controller contract.
      */
-    constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_, IUserLoyaltyRewards userLoyaltyRewards_) {
+    constructor(
+        ISystemVariables systemVariables_,
+        IKSULocking ksuLocking_,
+        IUserLoyaltyRewards userLoyaltyRewards_,
+        IKasuController controller_
+    ) KasuAccessControllable(controller_) {
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(ksuLocking_));
         AddressLib.checkIfZero(address(userLoyaltyRewards_));
@@ -300,6 +311,62 @@ contract UserManager is IUserManager, Initializable {
     }
 
     /**
+     * @notice Increase the user active tranche count.
+     * @dev This function is called by the tranche when a user first deposit is accepted in the tranche.
+     * If the user has no active tranches before, the user fees are enabled.
+     * @param user The address of the user that deposited in the tranche.
+     * @param lendingPool The address of the lending pool corresponding to the tranche.
+     */
+    function addUserActiveTranche(address user, address lendingPool) external verifyTranche(lendingPool, msg.sender) {
+        _userActiveTrancheCount[user]++;
+
+        if (_userActiveTrancheCount[user] == 1) {
+            _ksuLocking.enableFeesForUser(user);
+        }
+    }
+
+    /**
+     * @notice Decrease the user active tranche count.
+     * @dev This function is called by the tranche when a user redeems all of his shares from the tranche.
+     * If the user has no active tranches after, the user fees are disabled.
+     * @param user The address of the user that redeemed all of his shares from the tranche.
+     * @param lendingPool The address of the lending pool corresponding to the tranche.
+     */
+    function removeUserActiveTranche(address user, address lendingPool)
+        external
+        verifyTranche(lendingPool, msg.sender)
+    {
+        _userActiveTrancheCount[user]--;
+
+        if (_userActiveTrancheCount[user] == 0) {
+            _ksuLocking.disableFeesForUser(user);
+        }
+    }
+
+    /**
+     * @notice Manually updates user active tranche count.
+     * @dev SHOULD ONLY BE CALLED TO MANUALLY SYNC USER ACTIVE TRANCHE COUNT AFTER UPGRADING THE CONTRACT.
+     * Can only be called by the admin.
+     * @param users The array of users.
+     * @param counts The array of user active tranche counts.
+     */
+    function batchSetUserActiveTrancheCount(address[] calldata users, uint256[] calldata counts) external onlyAdmin {
+        if (users.length != counts.length) {
+            revert InvalidArrayLength();
+        }
+
+        for (uint256 i; i < users.length; ++i) {
+            if (_userActiveTrancheCount[users[i]] == 0 && counts[i] > 0) {
+                _ksuLocking.enableFeesForUser(users[i]);
+            } else if (_userActiveTrancheCount[users[i]] > 0 && counts[i] == 0) {
+                _ksuLocking.disableFeesForUser(users[i]);
+            }
+
+            _userActiveTrancheCount[users[i]] = counts[i];
+        }
+    }
+
+    /**
      * @notice Update users and user lending pools arrays. Removes user from all users if it has no balance in lending pools left.
      * @dev This function is used to remove users and its lending pools and from arrays if balance is 0.
      * Processing of users and user lending pools is done in reverse order. From `toIndex` to `fromIndex`.
@@ -452,5 +519,17 @@ contract UserManager is IUserManager, Initializable {
         _isUser[_allUsers[userIndex]] = false;
         _allUsers[userIndex] = _allUsers[_allUsers.length - 1];
         _allUsers.pop();
+    }
+
+    /* ========== MODIFIERS ========== */
+
+    modifier verifyTranche(address lendingPool, address tranche) {
+        if (
+            !ILendingPoolManager(_lendingPoolManager).isLendingPool(lendingPool)
+                || !ILendingPool(lendingPool).isLendingPoolTranche(tranche)
+        ) {
+            revert ILendingPoolErrors.InvalidTranche(lendingPool, tranche);
+        }
+        _;
     }
 }

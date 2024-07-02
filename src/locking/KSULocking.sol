@@ -35,8 +35,17 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /// @dev Ksu bonus tokens address.
     address private _ksuBonusTokens;
 
+    /// @notice Amount of rKSU eligible for receiving emitted fees.
+    uint256 public eligibleRKSUForFees;
+
     /// @notice Can address emit fees.
     mapping(address feeEmitter => bool canEmitFees) public canAddressEmitFees;
+
+    /// @notice Can enable or disable address to receive fees.
+    mapping(address feeRecipientSetter => bool canSet) public canSetFeeRecipient;
+
+    /// @notice Returns true if user is eligible to receive fees.
+    mapping(address user => bool isEnabled) public isFeeRecipientEnabled;
 
     /// @notice User total KSU locked amount.
     mapping(address user => uint256 totalKsuLocked) public userTotalDeposits;
@@ -130,6 +139,13 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         canAddressEmitFees[feeEmitter] = canEmit;
 
         emit CanEmitFessSet(feeEmitter, canEmit);
+    }
+
+    function setCanSetFeeRecipient(address feeRecipientSetter, bool canSet) external onlyAdmin {
+        AddressLib.checkIfZero(feeRecipientSetter);
+        canSetFeeRecipient[feeRecipientSetter] = canSet;
+
+        emit CanSetFeeRecipientSet(feeRecipientSetter, canSet);
     }
 
     /**
@@ -255,13 +271,73 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         emit FeesEmitted(msg.sender, amount);
     }
 
+    function enableFeesForUser(address user) external verifyFeeRecipientSetter {
+        if (!isFeeRecipientEnabled[user]) {
+            // calculate current user rewards
+            _updateUserRewards(user);
+
+            isFeeRecipientEnabled[user] = true;
+
+            eligibleRKSUForFees += balanceOf(user);
+
+            // update user reward debt
+            _updateUserRewardDebt(user);
+
+            emit FeesEnabledForUser(user);
+        }
+    }
+
+    function disableFeesForUser(address user) external verifyFeeRecipientSetter {
+        if (isFeeRecipientEnabled[user]) {
+            // calculate current user rewards
+            _updateUserRewards(user);
+
+            isFeeRecipientEnabled[user] = false;
+
+            eligibleRKSUForFees -= balanceOf(user);
+
+            // update user reward debt
+            _updateUserRewardDebt(user);
+
+            emit FeesDisabledForUser(user);
+        }
+    }
+
     /* ========== INTERNAL VIEW FUNCTIONS ========== */
 
     function _userRewards(address user) private view returns (uint256) {
-        return balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
+        return _userRKSUBalanceForFees(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION - _rewardDebt[user];
+    }
+
+    function _userRKSUBalanceForFees(address user) private view returns (uint256 rKSUBalanceForFees) {
+        if (isFeeRecipientEnabled[user]) {
+            rKSUBalanceForFees = balanceOf(user);
+        }
+    }
+
+    function _verifyFeeRecipientSetter(address setter) private view {
+        if (!canSetFeeRecipient[setter]) {
+            revert AddressCannotSetFeeRecipient(setter);
+        }
     }
 
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    function _mintRKSU(address user, uint256 rKSUAmount) private {
+        _mint(user, rKSUAmount);
+
+        if (isFeeRecipientEnabled[user]) {
+            eligibleRKSUForFees += rKSUAmount;
+        }
+    }
+
+    function _burnRKSU(address user, uint256 rKSUAmount) private {
+        _burn(user, rKSUAmount);
+
+        if (isFeeRecipientEnabled[user]) {
+            eligibleRKSUForFees -= rKSUAmount;
+        }
+    }
 
     function _emergencyWithdraw(address user, uint256 userLockId, uint256 withdrawAmount, address receiver) internal {
         uint256 rKSUBurned = _withdrawUserLockId(user, userLockId, withdrawAmount, receiver);
@@ -295,7 +371,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         uint256 amountRemaining = userLock_.amount - withdrawAmount;
         uint256 rKSURemaining = amountRemaining * userLock_.rKSUMultiplier / FULL_PERCENT;
         uint256 rKSUBurned = userLock_.rKSUAmount - rKSURemaining;
-        _burn(user, rKSUBurned);
+        _burnRKSU(user, rKSUBurned);
 
         // update reward details
         userLock_.amount = amountRemaining;
@@ -335,7 +411,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         // mint rKSU
         uint256 rKSUMultiplier = _lockDetails[lockPeriod].rKSUMultiplier;
         uint256 rKSUAmount = lockAmount * rKSUMultiplier / FULL_PERCENT;
-        _mint(msg.sender, rKSUAmount);
+        _mintRKSU(msg.sender, rKSUAmount);
 
         // add user lock details
         userLockId = _userLocks[msg.sender].length;
@@ -350,21 +426,23 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     }
 
     function _updatePoolRewards(uint256 newRewards) private {
-        if (totalSupply() == 0) {
+        if (eligibleRKSUForFees == 0) {
             return;
         }
 
-        _accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / totalSupply();
+        _accumulatedRewardsPerShare += newRewards * REWARDS_PRECISION / eligibleRKSUForFees;
     }
 
     function _updateUserRewards(address user) private {
-        uint256 earned = _userRewards(user);
+        if (_userRKSUBalanceForFees(user) > 0) {
+            uint256 earned = _userRewards(user);
 
-        _rewards[user] += earned;
+            _rewards[user] += earned;
+        }
     }
 
     function _updateUserRewardDebt(address user) private {
-        _rewardDebt[user] = balanceOf(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION;
+        _rewardDebt[user] = _userRKSUBalanceForFees(user) * _accumulatedRewardsPerShare / REWARDS_PRECISION;
     }
 
     /**
@@ -387,5 +465,12 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         if (ksuSentAmount > 0) {
             _ksuToken.safeTransferFrom(_ksuBonusTokens, address(this), ksuSentAmount);
         }
+    }
+
+    /* ========== MODIFIERS ========== */
+
+    modifier verifyFeeRecipientSetter() {
+        _verifyFeeRecipientSetter(msg.sender);
+        _;
     }
 }
