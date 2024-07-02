@@ -434,9 +434,11 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     }
 
     function _updateUserRewards(address user) private {
-        uint256 earned = _userRewards(user);
+        if (_userRKSUBalanceForFees(user) > 0) {
+            uint256 earned = _userRewards(user);
 
-        _rewards[user] += earned;
+            _rewards[user] += earned;
+        }
     }
 
     function _updateUserRewardDebt(address user) private {
