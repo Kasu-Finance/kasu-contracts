@@ -273,9 +273,6 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
 
     function enableFeesForUser(address user) external verifyFeeRecipientSetter {
         if (!isFeeRecipientEnabled[user]) {
-            // calculate current user rewards
-            _updateUserRewards(user);
-
             isFeeRecipientEnabled[user] = true;
 
             eligibleRKSUForFees += balanceOf(user);
@@ -297,7 +294,7 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             eligibleRKSUForFees -= balanceOf(user);
 
             // update user reward debt
-            _updateUserRewardDebt(user);
+            _rewardDebt[user] = 0;
 
             emit FeesDisabledForUser(user);
         }
