@@ -35,17 +35,8 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     /// @dev Ksu bonus tokens address.
     address private _ksuBonusTokens;
 
-    /// @notice Amount of rKSU eligible for receiving emitted fees.
-    uint256 public eligibleRKSUForFees;
-
     /// @notice Can address emit fees.
     mapping(address feeEmitter => bool canEmitFees) public canAddressEmitFees;
-
-    /// @notice Can enable or disable address to receive fees.
-    mapping(address feeRecipientSetter => bool canSet) public canSetFeeRecipient;
-
-    /// @notice Returns true if user is eligible to receive fees.
-    mapping(address user => bool isEnabled) public isFeeRecipientEnabled;
 
     /// @notice User total KSU locked amount.
     mapping(address user => uint256 totalKsuLocked) public userTotalDeposits;
@@ -63,6 +54,15 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
     mapping(address => uint256) private _rewards;
     /// @dev User reward debt.
     mapping(address => uint256) private _rewardDebt;
+
+    /// @notice Amount of rKSU eligible for receiving emitted fees.
+    uint256 public eligibleRKSUForFees;
+
+    /// @notice Can enable or disable address to receive fees.
+    mapping(address feeRecipientSetter => bool canSet) public canSetFeeRecipient;
+
+    /// @notice Returns true if user is eligible to receive fees.
+    mapping(address user => bool isEnabled) public isFeeRecipientEnabled;
 
     /* ========== CONSTRUCTOR ========== */
 
