@@ -239,7 +239,7 @@ async function main() {
         'LendingPoolTranche',
         deployOptions(
             deployerAddress,
-            [lendingPoolManagerDeploymentAddress, usdcAddress],
+            [userManagerDeploymentAddress, lendingPoolManagerDeploymentAddress, usdcAddress],
             'beacon',
         ),
     );
