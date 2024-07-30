@@ -10,7 +10,6 @@ import "./interfaces/lendingPool/ILendingPoolTranche.sol";
 import "./interfaces/lendingPool/IPendingPool.sol";
 import "./interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../locking/interfaces/IKSULocking.sol";
-import "../shared/access/KasuAccessControllable.sol";
 import "../shared/CommonErrors.sol";
 import "../shared/AddressLib.sol";
 import "./Constants.sol";
@@ -19,7 +18,7 @@ import "./Constants.sol";
  * @title User Manager Contract
  * @notice This contract is primarily used to calculate a user loyalty level for the current epoch.
  */
-contract UserManager is IUserManager, KasuAccessControllable, Initializable {
+contract UserManager is IUserManager, Initializable {
     /// @notice System variables contract.
     ISystemVariables private immutable _systemVariables;
 
@@ -68,14 +67,8 @@ contract UserManager is IUserManager, KasuAccessControllable, Initializable {
      * @param systemVariables_ System variables contract.
      * @param ksuLocking_ KSU locking contract.
      * @param userLoyaltyRewards_ User loyalty rewards contract.
-     * @param controller_ Kasu controller contract.
      */
-    constructor(
-        ISystemVariables systemVariables_,
-        IKSULocking ksuLocking_,
-        IUserLoyaltyRewards userLoyaltyRewards_,
-        IKasuController controller_
-    ) KasuAccessControllable(controller_) {
+    constructor(ISystemVariables systemVariables_, IKSULocking ksuLocking_, IUserLoyaltyRewards userLoyaltyRewards_) {
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(ksuLocking_));
         AddressLib.checkIfZero(address(userLoyaltyRewards_));
@@ -96,6 +89,15 @@ contract UserManager is IUserManager, KasuAccessControllable, Initializable {
     function initialize(address lendingPoolManager_) external initializer {
         AddressLib.checkIfZero(lendingPoolManager_);
         _lendingPoolManager = lendingPoolManager_;
+    }
+
+    /**
+     * @notice Initialize the contract the second time.
+     * @param users The array of users.
+     * @param counts The array of user active tranche counts.
+     */
+    function reinitialize(address[] calldata users, uint256[] calldata counts) external reinitializer(2) {
+        _batchSetUserActiveTrancheCount(users, counts);
     }
 
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
@@ -344,29 +346,6 @@ contract UserManager is IUserManager, KasuAccessControllable, Initializable {
     }
 
     /**
-     * @notice Manually updates user active tranche count.
-     * @dev SHOULD ONLY BE CALLED TO MANUALLY SYNC USER ACTIVE TRANCHE COUNT AFTER UPGRADING THE CONTRACT.
-     * Can only be called by the admin.
-     * @param users The array of users.
-     * @param counts The array of user active tranche counts.
-     */
-    function batchSetUserActiveTrancheCount(address[] calldata users, uint256[] calldata counts) external onlyAdmin {
-        if (users.length != counts.length) {
-            revert InvalidArrayLength();
-        }
-
-        for (uint256 i; i < users.length; ++i) {
-            if (_userActiveTrancheCount[users[i]] == 0 && counts[i] > 0) {
-                _ksuLocking.enableFeesForUser(users[i]);
-            } else if (_userActiveTrancheCount[users[i]] > 0 && counts[i] == 0) {
-                _ksuLocking.disableFeesForUser(users[i]);
-            }
-
-            _userActiveTrancheCount[users[i]] = counts[i];
-        }
-    }
-
-    /**
      * @notice Update users and user lending pools arrays. Removes user from all users if it has no balance in lending pools left.
      * @dev This function is used to remove users and its lending pools and from arrays if balance is 0.
      * Processing of users and user lending pools is done in reverse order. From `toIndex` to `fromIndex`.
@@ -519,6 +498,30 @@ contract UserManager is IUserManager, KasuAccessControllable, Initializable {
         _isUser[_allUsers[userIndex]] = false;
         _allUsers[userIndex] = _allUsers[_allUsers.length - 1];
         _allUsers.pop();
+    }
+
+    /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    /**
+     * @notice Manually updates user active tranche count.
+     * @dev SHOULD ONLY BE CALLED TO MANUALLY SYNC USER ACTIVE TRANCHE COUNT AFTER UPGRADING THE CONTRACT.
+     * @param users The array of users.
+     * @param counts The array of user active tranche counts.
+     */
+    function _batchSetUserActiveTrancheCount(address[] calldata users, uint256[] calldata counts) private {
+        if (users.length != counts.length) {
+            revert InvalidArrayLength();
+        }
+
+        for (uint256 i; i < users.length; ++i) {
+            if (_userActiveTrancheCount[users[i]] == 0 && counts[i] > 0) {
+                _ksuLocking.enableFeesForUser(users[i]);
+            } else if (_userActiveTrancheCount[users[i]] > 0 && counts[i] == 0) {
+                _ksuLocking.disableFeesForUser(users[i]);
+            }
+
+            _userActiveTrancheCount[users[i]] = counts[i];
+        }
     }
 
     /* ========== MODIFIERS ========== */

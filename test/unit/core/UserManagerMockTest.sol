@@ -35,9 +35,8 @@ contract UserManagerMockTest is BaseTestUtils {
         systemVariables = ISystemVariables(address(0xffff));
         lendingPoolManager = address(0x1234);
         userLoyaltyRewards = IUserLoyaltyRewards(address(0x9999));
-        IKasuController kasuController = IKasuController(address(0x8888));
 
-        UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking, userLoyaltyRewards, kasuController);
+        UserManager userManagerImpl = new UserManager(systemVariables, ksuLocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));

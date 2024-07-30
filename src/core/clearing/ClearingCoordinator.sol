@@ -178,6 +178,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
             if (!_systemVariables.isClearingTime()) {
                 revert TargetEpochClearingNotStarted(targetEpoch);
             }
+        } else if (targetEpoch > currentEpoch) {
+            revert TargetEpochClearingNotStarted(targetEpoch);
         } else {
             isPastClearingTime = true;
         }

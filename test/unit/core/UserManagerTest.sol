@@ -24,9 +24,8 @@ contract UserManagerTest is LockingTestUtils {
         systemVariables = ISystemVariables(address(systemVariablesProxy));
 
         IUserLoyaltyRewards userLoyaltyRewards = IUserLoyaltyRewards(address(0x9999));
-        IKasuController kasuController = IKasuController(address(0x8888));
 
-        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards, kasuController);
+        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = IUserManager(address(userManagerProxy));

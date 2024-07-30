@@ -96,7 +96,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         userLoyaltyRewards = UserLoyaltyRewards(address(userLoyaltyRewardsProxy));
 
         // user manager
-        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards, kasuController);
+        UserManager userManagerImpl = new UserManager(systemVariables, _KSULocking, userLoyaltyRewards);
         TransparentUpgradeableProxy userManagerProxy =
             new TransparentUpgradeableProxy(address(userManagerImpl), address(proxyAdmin), "");
         userManager = UserManager(address(userManagerProxy));
