@@ -8,6 +8,7 @@ import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
+import "../interfaces/lendingPool/IFixedTermDeposit.sol";
 import "../interfaces/IKasuAllowList.sol";
 import "../interfaces/IUserManager.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
@@ -30,6 +31,9 @@ contract LendingPoolManager is
     KasuAccessControllable,
     Initializable
 {
+    /// @notice Fixed term deposit contract.
+    IFixedTermDeposit private immutable _fixedTermDeposit;
+
     /// @notice Lending pool factory contract.
     ILendingPoolFactory private _lendingPoolFactory;
     /// @notice Kasu allow list contract.
@@ -46,16 +50,21 @@ contract LendingPoolManager is
 
     /**
      * @notice Constructor.
+     * @param fixedTermDeposit_ Fixed term deposit contract.
      * @param underlyingAsset_ Underlying asset contract address.
      * @param controller_ Kasu controller contract.
      * @param weth_ WETH contract.
      * @param swapper_ Swapper contract.
      */
-    constructor(address underlyingAsset_, IKasuController controller_, IWETH9 weth_, ISwapper swapper_)
-        DepositSwap(weth_, swapper_)
-        AssetFunctionsBase(underlyingAsset_)
-        KasuAccessControllable(controller_)
-    {
+    constructor(
+        IFixedTermDeposit fixedTermDeposit_,
+        address underlyingAsset_,
+        IKasuController controller_,
+        IWETH9 weth_,
+        ISwapper swapper_
+    ) DepositSwap(weth_, swapper_) AssetFunctionsBase(underlyingAsset_) KasuAccessControllable(controller_) {
+        AddressLib.checkIfZero(address(fixedTermDeposit_));
+        _fixedTermDeposit = fixedTermDeposit_;
         _disableInitializers();
     }
 
@@ -108,9 +117,16 @@ contract LendingPoolManager is
      * @param tranche Address of the tranche to deposit to.
      * @param maxAmount Maximum amount to deposit. If no swap data is provided, this amount will be deposited.
      * @param swapData Swap data for deposit. Ignore if empty.
+     * @param fixedTermConfigId ID of the fixed term configuration.
      * @return dNftID ID of the deposit NFT.
      */
-    function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
+    function requestDeposit(
+        address lendingPool,
+        address tranche,
+        uint256 maxAmount,
+        bytes calldata swapData,
+        uint256 fixedTermConfigId
+    )
         external
         payable
         whenNotPaused
@@ -119,7 +135,7 @@ contract LendingPoolManager is
         isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
-        return _requestDeposit(lendingPool, tranche, maxAmount, swapData);
+        return _requestDeposit(lendingPool, tranche, maxAmount, swapData, fixedTermConfigId);
     }
 
     /**
@@ -130,6 +146,7 @@ contract LendingPoolManager is
      * @param tranche Address of the tranche to deposit to.
      * @param maxAmount Maximum amount to deposit. If no swap data is provided, this amount will be deposited.
      * @param swapData Swap data for deposit. Ignore if empty.
+     * @param fixedTermConfigId ID of the fixed term configuration.
      * @param blockExpiration Expiration block number for the KYC signature.
      * @param signature KYC signature.
      * @return dNftID ID of the deposit NFT.
@@ -139,6 +156,7 @@ contract LendingPoolManager is
         address tranche,
         uint256 maxAmount,
         bytes calldata swapData,
+        uint256 fixedTermConfigId,
         uint256 blockExpiration,
         bytes calldata signature
     )
@@ -147,10 +165,10 @@ contract LendingPoolManager is
         whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
-        isUserKycd(msg.sender, blockExpiration, signature)
+        isUserKycd(blockExpiration, signature)
         returns (uint256 dNftID)
     {
-        return _requestDeposit(lendingPool, tranche, maxAmount, swapData);
+        return _requestDeposit(lendingPool, tranche, maxAmount, swapData, fixedTermConfigId);
     }
 
     /**
@@ -208,6 +226,47 @@ contract LendingPoolManager is
         returns (uint256 claimedAmount)
     {
         claimedAmount = ILendingPool(lendingPool).claimRepaidLoss(msg.sender, tranche, lossId);
+    }
+
+    /**
+     * @notice Lock already owner tranche shares as a fixed term deposit.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche.
+     * @param amount Amount to lock.
+     * @param fixedTermConfigId ID of the fixed term configuration.
+     */
+    function lockDepositForFixedTerm(address lendingPool, address tranche, uint256 amount, uint256 fixedTermConfigId)
+        external
+        whenNotPaused
+        validLendingPool(lendingPool)
+    {
+        _fixedTermDeposit.lockFixedTermDepositManually(msg.sender, lendingPool, tranche, amount, fixedTermConfigId);
+    }
+
+    /**
+     * @notice Request fixed term deposit withdrawal when the fixed term deposit is matured.
+     * @param lendingPool Address of the lending pool.
+     * @param fixedTermDepositId ID of the fixed term deposit.
+     */
+    function requestFixedTermDepositWithdrawal(address lendingPool, uint256 fixedTermDepositId)
+        external
+        whenNotPaused
+        validLendingPool(lendingPool)
+    {
+        _fixedTermDeposit.requestFixedTermDepositWithdrawal(msg.sender, lendingPool, fixedTermDepositId);
+    }
+
+    /**
+     * @notice Cancel fixed term deposit withdrawal request.
+     * @param lendingPool Address of the lending pool.
+     * @param fixedTermDepositId ID of the fixed term deposit.
+     */
+    function cancelFixedTermDepositWithdrawalRequest(address lendingPool, uint256 fixedTermDepositId)
+        external
+        whenNotPaused
+        validLendingPool(lendingPool)
+    {
+        _fixedTermDeposit.cancelFixedTermDepositWithdrawalRequest(msg.sender, lendingPool, fixedTermDepositId);
     }
 
     // #### LENDING POOL CREATOR #### //
@@ -341,6 +400,7 @@ contract LendingPoolManager is
      * @dev Can possibly be executed in multiple transactions.
      * @param lendingPool Address of the lending pool.
      * @param targetEpoch Target epoch to clear.
+     * @param fixedTermDepositBatchSize Numbers of user requests to process in step 1 of the clearing process.
      * @param priorityCalculationBatchSize Numbers of user requests to process in step 2 of the clearing process.
      * @param acceptRequestsBatchSize Numbers of user requests to process in step 4 of the clearing process.
      * @param clearingConfigOverride Clearing configuration override. Ignore if isConfigOverridden is false. Only applied when step 3 is executed.
@@ -349,6 +409,7 @@ contract LendingPoolManager is
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,
+        uint256 fixedTermDepositBatchSize,
         uint256 priorityCalculationBatchSize,
         uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
@@ -362,6 +423,7 @@ contract LendingPoolManager is
         _clearingCoordinator.doClearing(
             lendingPool,
             targetEpoch,
+            fixedTermDepositBatchSize,
             priorityCalculationBatchSize,
             acceptRequestsBatchSize,
             clearingConfigOverride,
@@ -439,6 +501,20 @@ contract LendingPoolManager is
         validLendingPool(lendingPool)
     {
         _pendingPool(lendingPool).forceCancelWithdrawalRequest(wNftID);
+    }
+
+    /**
+     * @notice Prematurely end the fixed term deposit for the user by the pool manager.
+     * @param lendingPool Address of the lending pool.
+     * @param fixedTermDepositId ID of the fixed term deposit.
+     */
+    function endFixedTermDeposit(address lendingPool, uint256 fixedTermDepositId, uint256 arrayIndex)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        _fixedTermDeposit.endFixedTermDeposit(lendingPool, fixedTermDepositId, arrayIndex);
     }
 
     /**
@@ -566,6 +642,76 @@ contract LendingPoolManager is
     }
 
     /**
+     * @notice Add a new fixed term deposit configuration to the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param tranche Address of the tranche.
+     * @param epochLockDuration Lock duration in epochs.
+     * @param epochInterestRate Interest rate per epoch. 100% is 10^18.
+     * @param whitelistedOnly Whether the fixed term deposit is allowed only for whitelisted users.
+     */
+    function addLendingPoolTrancheFixedTermDeposit(
+        address lendingPool,
+        address tranche,
+        uint256 epochLockDuration,
+        uint256 epochInterestRate,
+        bool whitelistedOnly
+    )
+        external
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+        returns (uint256)
+    {
+        return _fixedTermDeposit.addLendingPoolTrancheFixedTermDeposit(
+            lendingPool, tranche, epochLockDuration, epochInterestRate, whitelistedOnly
+        );
+    }
+
+    /**
+     * @notice Update fixed term deposit configuration status for the lending pool.
+     * @dev Allow deposits to everyone, only whitelisted users or disable deposits.
+     * @param lendingPool Address of the lending pool.
+     * @param fixedTermConfigId ID of the fixed term configuration.
+     * @param fixedTermDepositStatus New fixed term deposit status.
+     */
+    function updateLendingPoolTrancheFixedInterestStatus(
+        address lendingPool,
+        uint256 fixedTermConfigId,
+        FixedTermDepositStatus fixedTermDepositStatus
+    ) external onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender) validLendingPool(lendingPool) {
+        _fixedTermDeposit.updateLendingPoolTrancheFixedInterestStatus(
+            lendingPool, fixedTermConfigId, fixedTermDepositStatus
+        );
+    }
+
+    /**
+     * @notice Update fixed term deposit withdraw configuration for the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param withdrawalConfiguration New fixed term deposit withdraw configuration.
+     */
+    function updateLendingPoolWithdrawalConfiguration(
+        address lendingPool,
+        LendingPoolWithdrawalConfiguration calldata withdrawalConfiguration
+    ) external onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender) validLendingPool(lendingPool) {
+        _fixedTermDeposit.updateLendingPoolWithdrawalConfiguration(lendingPool, withdrawalConfiguration);
+    }
+
+    /**
+     * @notice Update fixed term deposit allowlist for the lending pool.
+     * @param lendingPool Address of the lending pool.
+     * @param configId ID of the fixed term configuration.
+     * @param users Array of user addresses.
+     * @param isAllowedList Array of user allowlist statuses.
+     */
+    function updateFixedTermDepositAllowlist(
+        address lendingPool,
+        uint256 configId,
+        address[] calldata users,
+        bool[] calldata isAllowedList
+    ) external onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender) validLendingPool(lendingPool) {
+        _fixedTermDeposit.updateFixedTermDepositAllowlist(lendingPool, configId, users, isAllowedList);
+    }
+
+    /**
      * @notice Update tranche interest rate change epoch delay for the lending pool.
      * @dev Only Kasu admin can call this function.
      * @param lendingPool Address of the lending pool.
@@ -593,10 +739,13 @@ contract LendingPoolManager is
 
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
-    function _requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
-        internal
-        returns (uint256 dNftID)
-    {
+    function _requestDeposit(
+        address lendingPool,
+        address tranche,
+        uint256 maxAmount,
+        bytes calldata swapData,
+        uint256 fixedTermConfigId
+    ) internal returns (uint256 dNftID) {
         uint256 amount;
         address[] memory swapTokens;
         if (swapData.length > 0) {
@@ -612,10 +761,22 @@ contract LendingPoolManager is
         _approveAsset(lendingPools[lendingPool].pendingPool, amount);
         // notify user manager to be able to calculate loyalty levels
         _userManager.userRequestedDeposit(msg.sender, lendingPool);
-        dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount);
+        dNftID = _pendingPool(lendingPool).requestDeposit(msg.sender, tranche, amount, fixedTermConfigId);
 
         if (swapTokens.length > 0 || msg.value > 0) {
             _postSwap(swapTokens, address(_underlyingAsset));
+        }
+    }
+
+    function _isUserKycd(uint256 blockExpiration, bytes calldata signature) private {
+        bytes memory callData = bytes.concat(
+            abi.encodeCall(_kasuAllowList.verifyUserKyc, (msg.sender)), abi.encodePacked(blockExpiration, signature)
+        );
+        bytes memory response = Address.functionCall(address(_kasuAllowList), callData);
+        (bool isKycd) = abi.decode(response, (bool));
+
+        if (!isKycd) {
+            revert IKasuAllowList.UserNotKycd(msg.sender);
         }
     }
 
@@ -640,18 +801,8 @@ contract LendingPoolManager is
         _;
     }
 
-    modifier isUserKycd(address user, uint256 blockExpiration, bytes calldata signature) {
-        {
-            bytes memory callData = bytes.concat(
-                abi.encodeCall(_kasuAllowList.verifyUserKyc, (user)), abi.encodePacked(blockExpiration, signature)
-            );
-            bytes memory response = Address.functionCall(address(_kasuAllowList), callData);
-            (bool isKycd) = abi.decode(response, (bool));
-
-            if (!isKycd) {
-                revert IKasuAllowList.UserNotKycd(user);
-            }
-        }
+    modifier isUserKycd(uint256 blockExpiration, bytes calldata signature) {
+        _isUserKycd(blockExpiration, signature);
         _;
     }
 }

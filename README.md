@@ -88,6 +88,10 @@ The contract is responsible for managing pending deposit and withdrawal requests
 
 This contract handles lending pool tranche activity, including sending users ERC20 receipt tranche tokens when deposits are cleared and sending assets to the lending pool when withdrawals are cleared. It utilizes ERC4626, `LendingPool.sol` being the only one who can interact with the vault standard functions. In the event of lending pool impairment, users received ERC1155 impairment receipt tokens.
 
+##### `FixedTermDeposit.sol`
+
+This contract locks and handles fixed term deposits for all lending pools. Fixed yields are locked for a specific duration in return for a fixed yield for the duration. During the clearing it calculates the difference between the base tranche yield and the promised fixed yield. After the lock ends tranche tokens are set back to the user, now accruing the base tranche yield, or withdrawn if the user has requested a withdrawal.
+
 #### Clearing
 
 Clearing contracts can be found inside `./src/core/clearing` folder.

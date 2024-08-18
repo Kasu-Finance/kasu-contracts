@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/IFixedTermDeposit.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../interfaces/IUserManager.sol";
 import "../clearing/ClearingSteps.sol";
@@ -42,6 +43,8 @@ contract PendingPool is
     ISystemVariables private immutable _systemVariables;
     /// @notice User manager contract.
     IUserManager private immutable _userManager;
+    /// @notice Fixed term deposit contract.
+    IFixedTermDeposit private immutable _fixedTermDeposit;
 
     /// @dev tranche address => next deposit NFT id
     mapping(address tranche => uint256 dNftId) private _nextTrancheDepositNFTId;
@@ -76,6 +79,9 @@ contract PendingPool is
     /// @dev epoch => total pending deposit amount for the epoch
     mapping(uint256 epoch => uint256 totalEpochPendingDepositAmount) private _totalEpochPendingDepositAmount;
 
+    /// @dev deposit NFT id => fixed term configuration id
+    mapping(uint256 dNftId => uint256 fixedTermConfigId) private _fixedTermConfigPerDeposit;
+
     /* ========== CONSTRUCTOR ========== */
 
     /**
@@ -86,6 +92,7 @@ contract PendingPool is
      * @param userManger_ User manager address.
      * @param clearingCoordinator_ Clearing coordinator address.
      * @param acceptedRequestsCalculation_ Accepted requests calculation contract.
+     * @param fixedTermDeposit_ Fixed term deposit contract.
      */
     constructor(
         ISystemVariables systemVariables_,
@@ -93,7 +100,8 @@ contract PendingPool is
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_,
         IClearingCoordinator clearingCoordinator_,
-        IAcceptedRequestsCalculation acceptedRequestsCalculation_
+        IAcceptedRequestsCalculation acceptedRequestsCalculation_,
+        IFixedTermDeposit fixedTermDeposit_
     )
         AssetFunctionsBase(underlyingAsset_)
         LendingPoolHelpers(lendingPoolManager_)
@@ -101,9 +109,11 @@ contract PendingPool is
     {
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(userManger_));
+        AddressLib.checkIfZero(address(fixedTermDeposit_));
 
         _systemVariables = systemVariables_;
         _userManager = userManger_;
+        _fixedTermDeposit = fixedTermDeposit_;
         _disableInitializers();
     }
 
@@ -204,12 +214,14 @@ contract PendingPool is
      * @dev Transfers asset from lending pool manager to the pending pool.
      * If the deposit is done during the clearing period the deposit is set for the next epoch.
      * If user already deposited in the current epoch, and tranche the same deposit NFT is reused and requested asset amount increased.
+     * If the deposit already exists in the current epoch and fixedTermConfigId is different, the deposit is rejected.
      * @param user The user requesting the deposit.
      * @param tranche The user's desired tranche for the deposit.
      * @param amount The requested deposit amount.
+     * @param fixedTermConfigId The fixed term configuration id for the deposit. If 0, no fixed term configuration is used.
      * @return dNftID The deposit NFT id that acts as a receipt for the requested deposit.
      */
-    function requestDeposit(address user, address tranche, uint256 amount)
+    function requestDeposit(address user, address tranche, uint256 amount, uint256 fixedTermConfigId)
         external
         lendingPoolShouldNotBeStopped
         onlyLendingPoolManager
@@ -221,6 +233,8 @@ contract PendingPool is
             revert AmountShouldBeGreaterThanZero();
         }
 
+        _verifyFixedTermConfig(user, tranche, fixedTermConfigId);
+
         // receive the asset from the lending pool manager
         _transferAssetsFrom(msg.sender, address(this), amount);
 
@@ -229,7 +243,10 @@ contract PendingPool is
         // get user's dNftID for current epoch
         dNftID = _dNftIdPerUserPerEpochPerTranche[user][requestEpochId][tranche];
 
+        bool isNewDeposit;
         if (dNftID == 0) {
+            isNewDeposit = true;
+
             // create new dNft
             dNftID = _nextTrancheDepositNFTId[tranche];
             _nextTrancheDepositNFTId[tranche] = _incrementDepositRequestId(dNftID);
@@ -238,32 +255,43 @@ contract PendingPool is
 
             _trancheDepositNftDetails[dNftID] = DepositNftDetails(amount, tranche, uint64(requestEpochId), 0);
 
+            _fixedTermConfigPerDeposit[dNftID] = fixedTermConfigId;
+
             _mint(user, dNftID);
         } else {
             // update existing dNft
             _trancheDepositNftDetails[dNftID].assetAmount += amount;
+
+            // revert if the fixed term configuration is different to the one used for the previous deposit in the same epoch
+            if (_fixedTermConfigPerDeposit[dNftID] != fixedTermConfigId) {
+                revert FixedTermDepositConfigMismatch(dNftID, _fixedTermConfigPerDeposit[dNftID], fixedTermConfigId);
+            }
         }
 
-        ILendingPool lendingPool = _ownLendingPool();
+        {
+            // verify the request is between min and max deposit amount
+            (uint256 minDepositAmount, uint256 maxDepositAmount) =
+                _ownLendingPool().trancheConfigurationDepositLimits(tranche);
+            uint256 totalDeposited = _trancheDepositNftDetails[dNftID].assetAmount;
+            if (totalDeposited < minDepositAmount) {
+                revert RequestDepositAmountLessThanMinimumAllowed(
+                    address(_ownLendingPool()), tranche, minDepositAmount, totalDeposited, amount
+                );
+            }
 
-        // verify the request is between min and max deposit amount
-        (uint256 minDepositAmount, uint256 maxDepositAmount) = lendingPool.trancheConfigurationDepositLimits(tranche);
-        uint256 totalDeposited = _trancheDepositNftDetails[dNftID].assetAmount;
-        if (totalDeposited < minDepositAmount) {
-            revert RequestDepositAmountLessThanMinimumAllowed(
-                address(lendingPool), tranche, minDepositAmount, totalDeposited, amount
-            );
-        }
-
-        if (totalDeposited > maxDepositAmount) {
-            revert RequestDepositAmountMoreThanMaximumAllowed(
-                address(lendingPool), tranche, maxDepositAmount, totalDeposited, amount
-            );
+            if (totalDeposited > maxDepositAmount) {
+                revert RequestDepositAmountMoreThanMaximumAllowed(
+                    address(_ownLendingPool()), tranche, maxDepositAmount, totalDeposited, amount
+                );
+            }
         }
 
         _increasePendingDepositAmount(requestEpochId, amount);
 
         emit DepositRequested(user, tranche, dNftID, requestEpochId, amount);
+        if (isNewDeposit) {
+            emit DepositRequestFixedTermConfiguration(dNftID, fixedTermConfigId);
+        }
     }
 
     /**
@@ -372,6 +400,25 @@ contract PendingPool is
     }
 
     /**
+     * @notice Request a priority withdrawal.
+     * @dev Only called by the fixed term deposit contract when the user's fixed term deposit is matured and the user wants to withdraw.
+     * These withdrawal requests are forced and cannot be cancelled.
+     * Forced withdrawal has the highest priority (above highest standard priority) when clearing.
+     * @param user The user making the withdrawal request.
+     * @param tranche The tranche user is withdrawing from.
+     * @param sharesToWithdraw The amount of tranche shares to withdraw.
+     * @param requestEpochId The epoch id for the withdrawal request.
+     * @return wNftID The withdrawal NFT id that was created.
+     */
+    function requestPriorityWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 requestEpochId)
+        external
+        onlyFixedTermDeposit
+        returns (uint256 wNftID)
+    {
+        wNftID = _requestWithdrawal(user, tranche, sharesToWithdraw, requestEpochId, RequestedFrom.SYSTEM);
+    }
+
+    /**
      * @notice Called when the lending pool is stopped.
      * @dev After the pool is stopped new deposits should be disabled.
      */
@@ -446,6 +493,14 @@ contract PendingPool is
     function _verifyWithdrawalNft(uint256 nftId) private pure {
         if (UserRequestIds.isDepositNft(nftId)) {
             revert NotWithdrawalNFT(nftId);
+        }
+    }
+
+    function _verifyFixedTermConfig(address user, address tranche, uint256 fixedTermConfigId) private view {
+        if (fixedTermConfigId > 0) {
+            _fixedTermDeposit.verifyFixedTermDepositParameters(
+                user, address(_ownLendingPool()), tranche, fixedTermConfigId
+            );
         }
     }
 
@@ -527,6 +582,8 @@ contract PendingPool is
         address user = ownerOf(dNftID);
         uint256 epochId = depositNftDetails.epochId;
 
+        uint256 fixedTermConfigId = _fixedTermConfigPerDeposit[dNftID];
+
         if (depositNftDetails.assetAmount == 0) {
             _burn(dNftID);
 
@@ -542,6 +599,15 @@ contract PendingPool is
         _decreasePendingDepositAmount(epochId, acceptedAmount);
 
         emit DepositRequestAccepted(user, tranche, dNftID, acceptedAmount, trancheSharesMinted);
+
+        // if there is a fixed term configuration for the deposit for the requested tranche, lock the deposit
+        if (fixedTermConfigId > 0) {
+            if (_fixedTermDeposit.configIdTranche(address(lendingPool), fixedTermConfigId) == tranche) {
+                _fixedTermDeposit.lockFixedTermDepositAutomatically(
+                    user, address(lendingPool), tranche, trancheSharesMinted, fixedTermConfigId, epochId
+                );
+            }
+        }
     }
 
     function _rejectDepositRequest(uint256 dNftID) internal override nftExists(dNftID) {
@@ -598,6 +664,7 @@ contract PendingPool is
         DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
         delete _dNftIdPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche];
         delete _trancheDepositNftDetails[dNftID];
+        delete _fixedTermConfigPerDeposit[dNftID];
     }
 
     function _deleteWNftDetails(address user, uint256 wNftID) private {
@@ -703,6 +770,13 @@ contract PendingPool is
 
     modifier verifyTranche(address tranche) {
         _verifyTranche(tranche);
+        _;
+    }
+
+    modifier onlyFixedTermDeposit() {
+        if (msg.sender != address(_fixedTermDeposit)) {
+            revert OnlyFixedTermDeposit();
+        }
         _;
     }
 }

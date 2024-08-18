@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import "../interfaces/clearing/IClearingCoordinator.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/IFixedTermDeposit.sol";
 import "../interfaces/clearing/IAcceptedRequestsCalculation.sol";
 import "../interfaces/ISystemVariables.sol";
 import "../interfaces/IUserManager.sol";
@@ -50,6 +51,8 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     ISystemVariables private immutable _systemVariables;
     /// @dev User manager contract.
     IUserManager private immutable _userManager;
+    /// @dev Fixed term deposit contract.
+    IFixedTermDeposit private immutable _fixedTermDeposit;
 
     /// @notice Returns the next clearing epoch that needs to be processed for the lending pool.
     mapping(address lendingPool => uint256 nextClearingEpoch) public nextLendingPoolClearingEpoch;
@@ -65,16 +68,22 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      * @notice Constructor.
      * @param systemVariables_ System variables contract.
      * @param userManager_ User manager contract.
+     * @param fixedTermDeposit_ Fixed term deposit contract.
      * @param lendingPoolManager_ Lending pool manager contract.
      */
-    constructor(ISystemVariables systemVariables_, IUserManager userManager_, ILendingPoolManager lendingPoolManager_)
-        LendingPoolHelpers(lendingPoolManager_)
-    {
+    constructor(
+        ISystemVariables systemVariables_,
+        IUserManager userManager_,
+        IFixedTermDeposit fixedTermDeposit_,
+        ILendingPoolManager lendingPoolManager_
+    ) LendingPoolHelpers(lendingPoolManager_) {
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(address(userManager_));
+        AddressLib.checkIfZero(address(fixedTermDeposit_));
 
         _systemVariables = systemVariables_;
         _userManager = userManager_;
+        _fixedTermDeposit = fixedTermDeposit_;
     }
 
     /* ========== EXTERNAL VIEW FUNCTION ========== */
@@ -143,6 +152,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
      * @dev Can be called multiple times to execute clearing in multiple transactions.
      * @param lendingPool Lending pool address.
      * @param targetEpoch Target epoch to execute clearing.
+     * @param fixedTermDepositBatchSize Numbers of user requests to process in step 1. Only used when step 1 is being processed.
      * @param priorityCalculationBatchSize Numbers of user requests to process in step 2. Only used when step 2 is being processed.
      * @param acceptRequestsBatchSize Numbers of user requests to process in step 4. Only used when step 4 is being processed.
      * @param clearingConfig Clearing configuration to override the lending pool configuration. Is only used when step 3 is processed if `isConfigOverridden` is true.
@@ -151,6 +161,7 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,
+        uint256 fixedTermDepositBatchSize,
         uint256 priorityCalculationBatchSize,
         uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfig,
@@ -185,26 +196,31 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         }
 
         // start clearing process for the lending pool
+        // apply the base interests for the lending pool tranches for the target epoch
         if (clearingStatus == ClearingStatus.UNINITIALIZED) {
             clearingStatus = ClearingStatus.STEP1_PENDING;
+            ILendingPool(lendingPool).applyInterests(targetEpoch);
         }
 
-        // Step 1 - Apply interests to the lending pool tranches for the target epoch
+        // Step 1 - Apply fixed interests to the lending pool tranches for the target epoch
         if (clearingStatus == ClearingStatus.STEP1_PENDING) {
-            ILendingPool(lendingPool).applyInterests(targetEpoch);
+            _fixedTermDeposit.applyFixedTermInterests(lendingPool, targetEpoch, fixedTermDepositBatchSize);
 
-            if (isPastClearingTime) {
-                // if clearing is run after epoch end, end clearing for target epoch
-                clearingStatus = ClearingStatus.ENDED;
-            } else {
-                // if clearing is run before epoch end, check if user loyalty levels are already processed before proceeding
-                bool areUserLoyaltyLevelsProcessed = _userManager.areUserEpochLoyaltyLevelProcessed(targetEpoch);
+            if (_fixedTermDeposit.fixedTermDepositsClearingPerEpochStatus(lendingPool, targetEpoch) == TaskStatus.ENDED)
+            {
+                if (isPastClearingTime) {
+                    // if clearing is run after epoch end, end clearing for target epoch
+                    clearingStatus = ClearingStatus.ENDED;
+                } else {
+                    // if clearing is run before epoch end, check if user loyalty levels are already processed before proceeding
+                    bool areUserLoyaltyLevelsProcessed = _userManager.areUserEpochLoyaltyLevelProcessed(targetEpoch);
 
-                if (!areUserLoyaltyLevelsProcessed) {
-                    revert UserLoyaltyLevelsNotYetProcessed(targetEpoch);
+                    if (!areUserLoyaltyLevelsProcessed) {
+                        revert UserLoyaltyLevelsNotYetProcessed(targetEpoch);
+                    }
+
+                    clearingStatus = ClearingStatus.STEP2_PENDING;
                 }
-
-                clearingStatus = ClearingStatus.STEP2_PENDING;
             }
         }
 

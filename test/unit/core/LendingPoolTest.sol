@@ -37,7 +37,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(IPendingPool.UserCanOnlyDepositInJuniorTrancheIfHeHasLockedRKsu.selector, bob)
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "", 0);
         vm.stopPrank();
 
         vm.prank(admin);
@@ -48,7 +48,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         deal(address(mockUsdc), userNotAllowed, 125 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(IKasuAllowList.UserNotInAllowList.selector, userNotAllowed));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "", 0);
         vm.stopPrank();
 
         // request deposit on user that was allowed and now is disallowed
@@ -58,7 +58,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         deal(address(mockUsdc), bob, 125 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 125 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(IKasuAllowList.UserNotInAllowList.selector, bob));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 125 * 10 ** 6, "", 0);
         vm.stopPrank();
         vm.prank(admin);
         kasuAllowList.allowUser(bob);
@@ -70,7 +70,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // revert if the lending pool is not valid
         vm.startPrank(bob);
         vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.InvalidLendingPool.selector, address(0x12)));
-        lendingPoolManager.requestDeposit(address(0x12), lpd.tranches[0], 125 * 10 ** 6, "");
+        lendingPoolManager.requestDeposit(address(0x12), lpd.tranches[0], 125 * 10 ** 6, "", 0);
         vm.stopPrank();
 
         // revert if the lending pool tranche is not valid
@@ -80,7 +80,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(ILendingPoolErrors.InvalidTranche.selector, lpd.lendingPool, address(0x13))
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, address(0x13), 125 * 10 ** 6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, address(0x13), 125 * 10 ** 6, "", 0);
         vm.stopPrank();
 
         // transfer dNFT
@@ -123,10 +123,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
         uint256 blockExpiration = block.number + 1;
-        bytes memory argsWithSelector = abi.encodeCall(kasuAllowList.verifyUserKyc, (alice));
 
         BaseTxAuthDataVerifier.TxAuthData memory txAuthData = BaseTxAuthDataVerifier.TxAuthData({
-            functionCallData: argsWithSelector,
+            functionCallData: abi.encodeCall(kasuAllowList.verifyUserKyc, (alice)),
             contractAddress: address(kasuAllowList),
             userAddress: alice,
             chainID: block.chainid,
@@ -148,14 +147,14 @@ contract LendingPoolTest is LendingPoolTestUtils {
         vm.startPrank(bob);
         vm.expectRevert(abi.encodeWithSelector(BaseTxAuthDataVerifier.InvalidSignature.selector));
         lendingPoolManager.requestDepositWithKyc(
-            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", blockExpiration, signature
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", 0, blockExpiration, signature
         );
 
         // Alice deposits with KYC signature
         vm.startPrank(alice);
         mockUsdc.approve(address(lendingPoolManager), type(uint256).max);
         uint256 dNftId1_alice = lendingPoolManager.requestDepositWithKyc(
-            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", blockExpiration, signature
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", 0, blockExpiration, signature
         );
 
         // ASSERT
@@ -165,7 +164,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         vm.expectRevert(abi.encodeWithSelector(BaseTxAuthDataVerifier.InvalidSignature.selector));
         lendingPoolManager.requestDepositWithKyc(
-            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", blockExpiration, signature
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", 0, blockExpiration, signature
         );
     }
 
@@ -810,7 +809,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         deal(address(mockUsdc), bob, 10 * 10 ** 6, true);
         mockUsdc.approve(address(lendingPoolManager), 10 * 10 ** 6);
         vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.LendingPoolIsStopped.selector));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 10 * 10 ** 6, "", 0);
         vm.stopPrank();
 
         // deposit first lost capital after stop - not allowed
@@ -1220,7 +1219,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 51 * 1e6
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 51 * 1e6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 51 * 1e6, "", 0);
         vm.stopPrank();
 
         deal(address(mockUsdc), bob, 500 * 1e6, true);
@@ -1236,12 +1235,12 @@ contract LendingPoolTest is LendingPoolTestUtils {
                 500 * 1e6
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 500 * 1e6, "", 0);
         vm.stopPrank();
 
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(AmountShouldBeGreaterThanZero.selector));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 0, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 0, "", 0);
         vm.stopPrank();
     }
 
@@ -1390,7 +1389,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
 
         // 12 WETH should be returned
         uint256 depositId = lendingPoolManager.requestDeposit{value: 12 ether}(
-            lpd.lendingPool, lpd.tranches[0], usdcDepositAmount, abi.encode(bag)
+            lpd.lendingPool, lpd.tranches[0], usdcDepositAmount, abi.encode(bag), 0
         );
         vm.stopPrank();
 
@@ -1441,7 +1440,7 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // 12 WETH should be returned
         vm.expectRevert(abi.encodeWithSelector(InsufficientOutputAmount.selector, usdcSwapAmount, usdcSwapAmount + 1));
         uint256 depositId =
-            lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], usdcSwapAmount, abi.encode(bag));
+            lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], usdcSwapAmount, abi.encode(bag), 0);
 
         console2.log("depositId: ", depositId, "usdcSwapAmount: ", usdcSwapAmount);
     }

@@ -53,6 +53,7 @@ interface IClearingCoordinator {
     function doClearing(
         address lendingPoolAddress,
         uint256 targetEpoch,
+        uint256 fixedTermDepositBatchSize,
         uint256 priorityCalculationBatchSize,
         uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
