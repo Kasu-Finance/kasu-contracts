@@ -270,12 +270,11 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
     ) external onlyLendingPoolManager {
         _verifyConfigId(lendingPool, fixedTermConfigId);
 
-        if (
-            _lendingPoolFixedTermDepositConfigurations[lendingPool][fixedTermConfigId].fixedTermDepositStatus
-                != fixedTermDepositStatus
-        ) {
-            _lendingPoolFixedTermDepositConfigurations[lendingPool][fixedTermConfigId].fixedTermDepositStatus =
-                fixedTermDepositStatus;
+        FixedTermDepositConfig storage fixedTermDepositConfig =
+            _lendingPoolFixedTermDepositConfigurations[lendingPool][fixedTermConfigId];
+
+        if (fixedTermDepositConfig.fixedTermDepositStatus != fixedTermDepositStatus) {
+            fixedTermDepositConfig.fixedTermDepositStatus = fixedTermDepositStatus;
 
             emit LendingPoolTrancheLockInterestStatusUpdated(lendingPool, fixedTermConfigId, fixedTermDepositStatus);
         }
@@ -343,11 +342,12 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
         verifyFixedDepositId(lendingPool, fixedTermDepositId)
         verifyClearingNotPending(lendingPool)
     {
+        uint256 lendingPoolFixedTermDepositIdsLength = _lendingPoolFixedTermDepositIds[lendingPool].length;
         if (
-            arrayIndex >= _lendingPoolFixedTermDepositIds[lendingPool].length
+            arrayIndex >= lendingPoolFixedTermDepositIdsLength
                 || _lendingPoolFixedTermDepositIds[lendingPool][arrayIndex] != fixedTermDepositId
         ) {
-            for (uint256 i; i < _lendingPoolFixedTermDepositIds[lendingPool].length; ++i) {
+            for (uint256 i; i < lendingPoolFixedTermDepositIdsLength; ++i) {
                 if (_lendingPoolFixedTermDepositIds[lendingPool][i] == fixedTermDepositId) {
                     arrayIndex = i;
                     break;
@@ -642,14 +642,15 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
     function _initializeLendingPoolFixedTermDepositsProcessing(address lendingPool, uint256 targetEpoch) private {
         uint256 totalFixedTermDeposits = _lendingPoolFixedTermDepositIds[lendingPool].length;
 
+        FixedTermDepositsEpoch storage fixedTermDepositsEpoch =
+            _fixedTermDepositsClearingPerEpoch[lendingPool][targetEpoch];
         if (totalFixedTermDeposits == 0) {
-            _fixedTermDepositsClearingPerEpoch[lendingPool][targetEpoch].status = TaskStatus.ENDED;
+            fixedTermDepositsEpoch.status = TaskStatus.ENDED;
         } else {
             unchecked {
-                _fixedTermDepositsClearingPerEpoch[lendingPool][targetEpoch].nextIndexToProcess =
-                    totalFixedTermDeposits - 1;
+                fixedTermDepositsEpoch.nextIndexToProcess = totalFixedTermDeposits - 1;
             }
-            _fixedTermDepositsClearingPerEpoch[lendingPool][targetEpoch].status = TaskStatus.PENDING;
+            fixedTermDepositsEpoch.status = TaskStatus.PENDING;
         }
     }
 
@@ -664,14 +665,17 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
         // send shares back to the user
         ILendingPoolTranche(tranche).transfer(deposit.user, deposit.trancheShares);
 
-        emit FixedTermDepositEnded(lendingPool, depositIds[i]);
+        uint256 depositId = depositIds[i];
+
+        emit FixedTermDepositEnded(lendingPool, depositId);
 
         // remove deposit from the list
-        delete _lendingPoolFixedTermDepositIdToLock[lendingPool][depositIds[i]];
-        if (i < depositIds.length - 1) {
+        delete _lendingPoolFixedTermDepositIdToLock[lendingPool][depositId];
+        uint256 depositIdsLastIndex = depositIds.length - 1;
+        if (i < depositIdsLastIndex) {
             // can be unchecked as we already checked the same calculation in the if statement
             unchecked {
-                depositIds[i] = depositIds[depositIds.length - 1];
+                depositIds[i] = depositIds[depositIdsLastIndex];
             }
         }
         depositIds.pop();
