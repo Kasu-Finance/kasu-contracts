@@ -80,6 +80,8 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
     constructor(ISystemVariables systemVariables_) {
         AddressLib.checkIfZero(address(systemVariables_));
         _systemVariables = systemVariables_;
+
+        _disableInitializers();
     }
 
     /**
