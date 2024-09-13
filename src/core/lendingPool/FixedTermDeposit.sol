@@ -586,13 +586,13 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
             _verifyWithdrawalActionTime(
                 currentEpoch,
                 deposit.epochUnlockNumber,
-                _lendingPoolWithdrawalConfiguration[lendingPool].requestEpochsInAdvance
+                _lendingPoolWithdrawalConfiguration[lendingPool].cancelRequestEpochsInAdvance
             )
         ) {
             revert FixedTermDepositWithdrawalRequestCancelTooLate(
                 lendingPool,
                 fixedTermDepositId,
-                _lendingPoolWithdrawalConfiguration[lendingPool].requestEpochsInAdvance,
+                _lendingPoolWithdrawalConfiguration[lendingPool].cancelRequestEpochsInAdvance,
                 deposit.epochUnlockNumber,
                 currentEpoch
             );

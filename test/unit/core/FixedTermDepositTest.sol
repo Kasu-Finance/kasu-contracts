@@ -389,7 +389,7 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
         vm.startPrank(david);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFixedTermDeposit.FixedTermDepositWithdrawalRequestCancelTooLate.selector, lpd.lendingPool, 0, 2, 5, 5
+                IFixedTermDeposit.FixedTermDepositWithdrawalRequestCancelTooLate.selector, lpd.lendingPool, 0, 1, 5, 5
             )
         );
         lendingPoolManager.cancelFixedTermDepositWithdrawalRequest(lpd.lendingPool, 0);
