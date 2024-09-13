@@ -507,6 +507,7 @@ contract LendingPoolManager is
      * @notice Prematurely end the fixed term deposit for the user by the pool manager.
      * @param lendingPool Address of the lending pool.
      * @param fixedTermDepositId ID of the fixed term deposit.
+     * @param arrayIndex Index of the fixed term deposit in the lending pool fixed term deposit ids array.
      */
     function endFixedTermDeposit(address lendingPool, uint256 fixedTermDepositId, uint256 arrayIndex)
         external
@@ -648,6 +649,7 @@ contract LendingPoolManager is
      * @param epochLockDuration Lock duration in epochs.
      * @param epochInterestRate Interest rate per epoch. 100% is 10^18.
      * @param whitelistedOnly Whether the fixed term deposit is allowed only for whitelisted users.
+     * @return fixedTermConfigId Lending pool fixed term deposit configuration id.
      */
     function addLendingPoolTrancheFixedTermDeposit(
         address lendingPool,
