@@ -19,6 +19,7 @@ export async function runClearing(
 
     // run clearing
     const targetEpochNumber = await getCurrentEpochNumber(adminAccount);
+    
     await doClearing(
         lendingPoolAddress,
         clearingManagerAccount,

@@ -132,7 +132,7 @@ interface IFixedTermDeposit {
 
     /* ========== EVENTS ========== */
 
-    event LendingPoolTrancheLockInterestAdded(
+    event LendingPoolTrancheFixedTermDepositConfigAdded(
         address indexed lendingPool,
         address indexed tranche,
         uint256 indexed configId,
@@ -141,7 +141,7 @@ interface IFixedTermDeposit {
         FixedTermDepositStatus fixedTermDepositStatus
     );
 
-    event LendingPoolTrancheLockInterestStatusUpdated(
+    event LendingPoolTrancheFixedTermDepositConfigStatusUpdated(
         address indexed lendingPool, uint256 indexed configId, FixedTermDepositStatus fixedTermDepositStatus
     );
 

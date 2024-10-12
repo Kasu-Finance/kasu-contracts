@@ -252,7 +252,7 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
             fixedTermDepositStatus: fixedTermDepositStatus
         });
 
-        emit LendingPoolTrancheLockInterestAdded(
+        emit LendingPoolTrancheFixedTermDepositConfigAdded(
             lendingPool, tranche, fixedTermConfigId, epochLockDuration, epochInterestRate, fixedTermDepositStatus
         );
     }
@@ -276,7 +276,7 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
         if (fixedTermDepositConfig.fixedTermDepositStatus != fixedTermDepositStatus) {
             fixedTermDepositConfig.fixedTermDepositStatus = fixedTermDepositStatus;
 
-            emit LendingPoolTrancheLockInterestStatusUpdated(lendingPool, fixedTermConfigId, fixedTermDepositStatus);
+            emit LendingPoolTrancheFixedTermDepositConfigStatusUpdated(lendingPool, fixedTermConfigId, fixedTermDepositStatus);
         }
     }
 

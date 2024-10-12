@@ -1,4 +1,5 @@
 import {
+    FixedTermDeposit__factory,
     KasuAllowList__factory,
     KasuController__factory,
     KSU__factory,
@@ -24,10 +25,10 @@ const NEXERA_ID_SIGNER = '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
 let PROTOCOL_FEE_RECEIVER = '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483';
 let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
 
-const deployMockUSDC = false;
-const deploySystemVariablesTestable = false;
+const deployMockUSDC = true;
+const deploySystemVariablesTestable = true;
 const deployUpdates = true;
-const verifySource = false;
+const verifySource = true;
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -130,6 +131,16 @@ async function main() {
         );
     }
 
+    const fixedTermDepositAddress = await deployTransparentProxy(
+        'FixedTermDeposit',
+        deployOptions(deployerAddress, [systemVariablesDeploymentAddress]),
+    );
+
+    const fixedTermDeposit = FixedTermDeposit__factory.connect(
+        fixedTermDepositAddress,
+        adminSigner,
+    )
+
     const userLoyaltyRewardsDeploymentAddress = await deployTransparentProxy(
         'UserLoyaltyRewards',
         deployOptions(deployerAddress, [
@@ -160,6 +171,7 @@ async function main() {
     const lendingPoolManagerDeploymentAddress = await deployTransparentProxy(
         'LendingPoolManager',
         deployOptions(deployerAddress, [
+            fixedTermDepositAddress,
             usdcAddress,
             kasuControllerDeploymentAddress,
             wEthAddress,
@@ -193,6 +205,7 @@ async function main() {
         deployOptions(adminAddress, [
             systemVariablesDeploymentAddress,
             userManagerDeploymentAddress,
+            fixedTermDepositAddress,
             lendingPoolManagerDeploymentAddress,
         ]),
     );
@@ -213,6 +226,7 @@ async function main() {
                 lendingPoolManagerDeploymentAddress,
                 clearingCoordinatorDeploymentAddress,
                 feeManagerDeploymentAddress,
+                fixedTermDepositAddress,
                 usdcAddress,
             ],
             'beacon',
@@ -230,6 +244,7 @@ async function main() {
                 userManagerDeploymentAddress,
                 clearingCoordinatorDeploymentAddress,
                 acceptedRequestsCalculationDeployment,
+                fixedTermDepositAddress,
             ],
             'beacon',
         ),
@@ -239,7 +254,7 @@ async function main() {
         'LendingPoolTranche',
         deployOptions(
             deployerAddress,
-            [userManagerDeploymentAddress, lendingPoolManagerDeploymentAddress, usdcAddress],
+            [userManagerDeploymentAddress, fixedTermDepositAddress, lendingPoolManagerDeploymentAddress, usdcAddress],
             'beacon',
         ),
     );
@@ -293,6 +308,10 @@ async function main() {
         );
         await tx.wait(1);
 
+        tx = await fixedTermDeposit.initialize(lendingPoolManagerDeploymentAddress, clearingCoordinatorDeploymentAddress);
+
+        await tx.wait(1);
+
         const lendingPoolManager = LendingPoolManager__factory.connect(
             lendingPoolManagerDeploymentAddress,
             adminSigner,
@@ -335,6 +354,9 @@ async function main() {
     // initial values
     if (isNewDeployment) {
         tx = await ksuLocking.setCanEmitFees(feeManagerDeploymentAddress, true);
+        await tx.wait(1);
+
+        tx = await ksuLocking.setCanSetFeeRecipient(userManagerDeploymentAddress, true);
         await tx.wait(1);
 
         tx = await userLoyaltyRewards.setRewardRatesPerLoyaltyLevel([

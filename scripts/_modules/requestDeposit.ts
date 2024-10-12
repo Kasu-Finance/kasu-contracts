@@ -19,6 +19,7 @@ export type RequestDepositInput = {
     lendingPoolAddress: string;
     trancheAddress: string;
     amount: bigint;
+    ftdConfigId: bigint;
 };
 
 export async function requestDeposits(
@@ -61,6 +62,7 @@ export async function requestDeposits(
             rd.lendingPoolAddress,
             rd.trancheAddress,
             rd.amount,
+            rd.ftdConfigId,
         );
     }
 }
@@ -71,6 +73,7 @@ async function requestDeposit(
     lendingPoolAddress: string,
     trancheAddress: string,
     amount: bigint,
+    ftdConfigId: bigint,
 ) {
     let tx: ContractTransactionResponse;
 
@@ -95,6 +98,7 @@ async function requestDeposit(
         trancheAddress,
         amount,
         '0x',
+        ftdConfigId,
     );
     await tx.wait(1);
     return tx;

@@ -30,6 +30,7 @@ export async function doClearing(
     let tx;
 
     // run clearing
+    const fixedTermDepositBatchSize = ethers.MaxUint256;
     const pendingRequestsPriorityCalculationBatchSize = ethers.MaxUint256;
     const acceptedRequestsExecutionBatchSize = ethers.MaxUint256;
 
@@ -38,10 +39,13 @@ export async function doClearing(
         lendingPoolAddress,
         `draw amount in USDC `,
         clearingConfiguration.drawAmount,
+        "target epoch number",
+        targetEpochNumber,
     );
     tx = await lendingPoolManager.doClearing(
         lendingPoolAddress,
         targetEpochNumber,
+        fixedTermDepositBatchSize,
         pendingRequestsPriorityCalculationBatchSize,
         acceptedRequestsExecutionBatchSize,
         clearingConfiguration,
