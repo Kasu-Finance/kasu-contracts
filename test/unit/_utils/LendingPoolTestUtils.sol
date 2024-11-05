@@ -352,7 +352,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     {
         deal(address(mockUsdc), sender, amount, true);
         mockUsdc.approve(address(lendingPoolManager), amount);
-        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "", 0);
+        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "", 0, "");
     }
 
     function _requestFixedTermDeposit(
@@ -364,7 +364,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     ) internal prank(sender) returns (uint256 dNftId) {
         deal(address(mockUsdc), sender, amount, true);
         mockUsdc.approve(address(lendingPoolManager), amount);
-        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "", fixedTermConfigId);
+        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "", fixedTermConfigId, "");
     }
 
     function _cancelDepositRequest(address sender, address lendingPool, uint256 dNftId) internal prank(sender) {

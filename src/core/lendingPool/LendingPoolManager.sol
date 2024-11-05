@@ -118,6 +118,7 @@ contract LendingPoolManager is
      * @param maxAmount Maximum amount to deposit. If no swap data is provided, this amount will be deposited.
      * @param swapData Swap data for deposit. Ignore if empty.
      * @param fixedTermConfigId ID of the fixed term configuration.
+     * @param depositData Optional additional deposit data.
      * @return dNftID ID of the deposit NFT.
      */
     function requestDeposit(
@@ -125,7 +126,8 @@ contract LendingPoolManager is
         address tranche,
         uint256 maxAmount,
         bytes calldata swapData,
-        uint256 fixedTermConfigId
+        uint256 fixedTermConfigId,
+        bytes calldata depositData
     )
         external
         payable
@@ -135,7 +137,7 @@ contract LendingPoolManager is
         isUserAllowed(msg.sender)
         returns (uint256 dNftID)
     {
-        return _requestDeposit(lendingPool, tranche, maxAmount, swapData, fixedTermConfigId);
+        return _requestDeposit(lendingPool, tranche, maxAmount, swapData, fixedTermConfigId, depositData);
     }
 
     /**
@@ -147,8 +149,8 @@ contract LendingPoolManager is
      * @param maxAmount Maximum amount to deposit. If no swap data is provided, this amount will be deposited.
      * @param swapData Swap data for deposit. Ignore if empty.
      * @param fixedTermConfigId ID of the fixed term configuration.
-     * @param blockExpiration Expiration block number for the KYC signature.
-     * @param signature KYC signature.
+     * @param depositData Optional additional deposit data.
+     * @param kycData KYC data for the depositor.
      * @return dNftID ID of the deposit NFT.
      */
     function requestDepositWithKyc(
@@ -157,18 +159,18 @@ contract LendingPoolManager is
         uint256 maxAmount,
         bytes calldata swapData,
         uint256 fixedTermConfigId,
-        uint256 blockExpiration,
-        bytes calldata signature
+        bytes calldata depositData,
+        KycData calldata kycData
     )
         external
         payable
         whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
-        isUserKycd(blockExpiration, signature)
+        isUserKycd(kycData)
         returns (uint256 dNftID)
     {
-        return _requestDeposit(lendingPool, tranche, maxAmount, swapData, fixedTermConfigId);
+        return _requestDeposit(lendingPool, tranche, maxAmount, swapData, fixedTermConfigId, depositData);
     }
 
     /**
@@ -746,7 +748,8 @@ contract LendingPoolManager is
         address tranche,
         uint256 maxAmount,
         bytes calldata swapData,
-        uint256 fixedTermConfigId
+        uint256 fixedTermConfigId,
+        bytes calldata depositData
     ) internal returns (uint256 dNftID) {
         uint256 amount;
         address[] memory swapTokens;
@@ -768,11 +771,16 @@ contract LendingPoolManager is
         if (swapTokens.length > 0 || msg.value > 0) {
             _postSwap(swapTokens, address(_underlyingAsset));
         }
+
+        if (depositData.length > 0) {
+            emit DepositDataAdded(lendingPool, dNftID, depositData);
+        }
     }
 
-    function _isUserKycd(uint256 blockExpiration, bytes calldata signature) private {
+    function _isUserKycd(KycData calldata kycData) private {
         bytes memory callData = bytes.concat(
-            abi.encodeCall(_kasuAllowList.verifyUserKyc, (msg.sender)), abi.encodePacked(blockExpiration, signature)
+            abi.encodeCall(_kasuAllowList.verifyUserKyc, (msg.sender)),
+            abi.encodePacked(kycData.blockExpiration, kycData.signature)
         );
         bytes memory response = Address.functionCall(address(_kasuAllowList), callData);
         (bool isKycd) = abi.decode(response, (bool));
@@ -803,8 +811,8 @@ contract LendingPoolManager is
         _;
     }
 
-    modifier isUserKycd(uint256 blockExpiration, bytes calldata signature) {
-        _isUserKycd(blockExpiration, signature);
+    modifier isUserKycd(KycData calldata kycData) {
+        _isUserKycd(kycData);
         _;
     }
 }

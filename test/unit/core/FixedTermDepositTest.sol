@@ -147,7 +147,7 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
                 IFixedTermDeposit.UserNotWhitelistedForFixedTermDeposit.selector, lpd.lendingPool, configId1, alice
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100 * 1e6, "", configId1);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100 * 1e6, "", configId1, "");
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -158,12 +158,12 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
                 lpd.tranches[1]
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100 * 1e6, "", configId2);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100 * 1e6, "", configId2, "");
 
         vm.expectRevert(InvalidConfiguration.selector);
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[2], 100 * 1e6, "", 3);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[2], 100 * 1e6, "", 3, "");
 
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[2], 100 * 1e6, "", configId2);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[2], 100 * 1e6, "", configId2, "");
 
         // ### ARRANGE ###
         vm.startPrank(poolManagerAccount);
@@ -176,7 +176,7 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
         vm.expectRevert(
             abi.encodeWithSelector(IFixedTermDeposit.FixedTermDepositDisabled.selector, lpd.lendingPool, configId2)
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100 * 1e6, "", configId2);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100 * 1e6, "", configId2, "");
 
         // ### ARRANGE ###
         vm.startPrank(poolManagerAccount);
@@ -194,7 +194,7 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
                 IFixedTermDeposit.UserNotWhitelistedForFixedTermDeposit.selector, lpd.lendingPool, configId2, alice
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[2], 100 * 1e6, "", configId2);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[2], 100 * 1e6, "", configId2, "");
 
         // ### ASSERT ###
         assertFalse(fixedTermDeposit.fixedTermDepositsAllowlist(lpd.lendingPool, configId1, alice));
@@ -272,7 +272,7 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
                 lpd.tranches[1]
             )
         );
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100, "", configId1);
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[1], 100, "", configId1, "");
 
         uint256 nextClearingEpoch = systemVariables.currentEpochNumber();
 

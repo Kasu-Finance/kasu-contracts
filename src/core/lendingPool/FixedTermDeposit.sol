@@ -276,7 +276,9 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
         if (fixedTermDepositConfig.fixedTermDepositStatus != fixedTermDepositStatus) {
             fixedTermDepositConfig.fixedTermDepositStatus = fixedTermDepositStatus;
 
-            emit LendingPoolTrancheFixedTermDepositConfigStatusUpdated(lendingPool, fixedTermConfigId, fixedTermDepositStatus);
+            emit LendingPoolTrancheFixedTermDepositConfigStatusUpdated(
+                lendingPool, fixedTermConfigId, fixedTermDepositStatus
+            );
         }
     }
 

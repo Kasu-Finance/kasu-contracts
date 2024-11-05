@@ -6,6 +6,11 @@ import "./ILendingPool.sol";
 import "./ILendingPoolFactory.sol";
 import "./IFixedTermDeposit.sol";
 
+struct KycData {
+    uint256 blockExpiration;
+    bytes signature;
+}
+
 interface ILendingPoolManager {
     function isLendingPool(address lendingPool) external view returns (bool);
 
@@ -15,7 +20,8 @@ interface ILendingPoolManager {
         address tranche,
         uint256 maxAmount,
         bytes calldata swapData,
-        uint256 fixedTermConfigId
+        uint256 fixedTermConfigId,
+        bytes calldata depositData
     ) external payable returns (uint256 dNftID);
     function requestDepositWithKyc(
         address lendingPool,
@@ -23,8 +29,8 @@ interface ILendingPoolManager {
         uint256 maxAmount,
         bytes calldata swapData,
         uint256 fixedTermConfigId,
-        uint256 blockExpiration,
-        bytes calldata signature
+        bytes calldata depositData,
+        KycData calldata kycData
     ) external payable returns (uint256 dNftID);
     function cancelDepositRequest(address lendingPool, uint256 dNftID) external;
     function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
@@ -115,4 +121,8 @@ interface ILendingPoolManager {
         address[] calldata users,
         bool[] calldata isAllowedList
     ) external;
+
+    /* ========== EVENTS ========== */
+
+    event DepositDataAdded(address indexed lendingPool, uint256 indexed dNftID, bytes data);
 }
