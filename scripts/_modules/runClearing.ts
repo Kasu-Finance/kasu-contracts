@@ -4,13 +4,19 @@ import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clea
 import { calculateLoyaltyLevel } from './calculateLoyaltyLevel';
 import { endClearing, starClearing } from './startEndClearing';
 import { getCurrentEpochNumber } from './getCurrentEpochNumber';
+import { repayPool } from './repayPool';
 
 export async function runClearing(
     lendingPoolAddress: string,
     clearingConfiguration: ClearingConfigurationStruct,
     clearingManagerAccount: Signer,
     adminAccount: Signer,
+    repayAmount = 0n
 ) {
+    if (repayAmount > 0) {
+        await repayPool(lendingPoolAddress, adminAccount, repayAmount);
+    }
+
     console.log('Manually start clearing period');
     await starClearing(adminAccount);
 

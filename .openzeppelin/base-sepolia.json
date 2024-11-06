@@ -4006,6 +4006,171 @@
           ]
         }
       }
+    },
+    "4b747cea0c5a7c923e2e10fb333708a3d3cfcf8887eb19927f8670745a9d9011": {
+      "address": "0xe51068dE5fe28b5def696b4aA7b5f2aeA32E4304",
+      "txHash": "0x03030f0a9302dada5ccaf563644ce8ff0569605b9674b9ab985c61f204ec3887",
+      "layout": {
+        "solcVersion": "0.8.23",
+        "storage": [
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "KasuAccessControllable",
+            "src": "src\\shared\\access\\KasuAccessControllable.sol:100"
+          },
+          {
+            "label": "_lendingPoolFactory",
+            "offset": 0,
+            "slot": "50",
+            "type": "t_contract(ILendingPoolFactory)4274",
+            "contract": "LendingPoolManager",
+            "src": "src\\core\\lendingPool\\LendingPoolManager.sol:38"
+          },
+          {
+            "label": "_kasuAllowList",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_contract(IKasuAllowList)2725",
+            "contract": "LendingPoolManager",
+            "src": "src\\core\\lendingPool\\LendingPoolManager.sol:40"
+          },
+          {
+            "label": "_userManager",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_contract(IUserManager)2939",
+            "contract": "LendingPoolManager",
+            "src": "src\\core\\lendingPool\\LendingPoolManager.sol:42"
+          },
+          {
+            "label": "_clearingCoordinator",
+            "offset": 0,
+            "slot": "53",
+            "type": "t_contract(IClearingCoordinator)3132",
+            "contract": "LendingPoolManager",
+            "src": "src\\core\\lendingPool\\LendingPoolManager.sol:44"
+          },
+          {
+            "label": "lendingPools",
+            "offset": 0,
+            "slot": "54",
+            "type": "t_mapping(t_address,t_struct(LendingPoolDeployment)4254_storage)",
+            "contract": "LendingPoolManager",
+            "src": "src\\core\\lendingPool\\LendingPoolManager.sol:47"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)10_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_contract(IClearingCoordinator)3132": {
+            "label": "contract IClearingCoordinator",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IKasuAllowList)2725": {
+            "label": "contract IKasuAllowList",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ILendingPoolFactory)4274": {
+            "label": "contract ILendingPoolFactory",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IUserManager)2939": {
+            "label": "contract IUserManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_struct(LendingPoolDeployment)4254_storage)": {
+            "label": "mapping(address => struct LendingPoolDeployment)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(LendingPoolDeployment)4254_storage": {
+            "label": "struct LendingPoolDeployment",
+            "members": [
+              {
+                "label": "lendingPool",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "pendingPool",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "tranches",
+                "type": "t_array(t_address)dyn_storage",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
     }
   }
 }

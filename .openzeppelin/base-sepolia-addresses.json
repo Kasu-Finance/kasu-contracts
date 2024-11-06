@@ -63,7 +63,7 @@
     },
     "LendingPoolManager": {
         "address": "0x3A11b0d854f19Dd6447873c435AE0a0F327F038E",
-        "implementation": "0x74CF2e018e98d9d52275B612cf6653C983314386",
+        "implementation": "0xe51068dE5fe28b5def696b4aA7b5f2aeA32E4304",
         "startBlock": 16036320,
         "proxyType": "TransparentProxy"
     },
