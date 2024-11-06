@@ -7,6 +7,7 @@ import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clea
 const lendingPoolAddress = '0xd48101baf608aea75c53f0ea462b3396e9a79dc0';
 const drawAmount = parseUnits('10000', 6);
 const repayAmount = parseUnits('0', 6);
+const doEndClearing = false;
 
 async function main() {
     const signers = await getAccounts(hre.network.name);
@@ -26,6 +27,7 @@ async function main() {
         clearingManagerAccount,
         adminAccount,
         repayAmount,
+        doEndClearing,
     );
 }
 
