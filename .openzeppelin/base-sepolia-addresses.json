@@ -39,7 +39,7 @@
     },
     "FixedTermDeposit": {
         "address": "0x46969771A9386b86dA7E0f816B1D8d073d8e6aFd",
-        "implementation": "0x79e2fA631D1a10056650c91d7E10386eff0a4AC7",
+        "implementation": "0x290c648546A55E3169065604c0b13EA50A18Eb60",
         "startBlock": 16036320,
         "proxyType": "TransparentProxy"
     },
@@ -93,7 +93,7 @@
     },
     "LendingPool": {
         "address": "0xb79D0DeCbf323161CA3e5D65c99497259bD06502",
-        "implementation": "0xa9FD2C02156650c9547bC2b6da9Bcee5945869DA",
+        "implementation": "0x8edf5bC29fe7525986d985223793801379C999a9",
         "startBlock": 16036320,
         "proxyType": "BeaconProxy"
     },

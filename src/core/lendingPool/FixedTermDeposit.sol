@@ -499,7 +499,7 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
                 _endFixedTermDeposit(deposit, lendingPool, depositConfig.tranche, i);
 
                 // check if the user has signaled to withdraw
-                if (deposit.withdrawRequested) {
+                if (deposit.withdrawRequested && userTrancheSharesAfter > 0) {
                     // request a priority withdraw
                     IPendingPool(ILendingPool(lendingPool).pendingPool()).requestPriorityWithdrawal(
                         deposit.user, depositConfig.tranche, userTrancheSharesAfter, targetEpoch

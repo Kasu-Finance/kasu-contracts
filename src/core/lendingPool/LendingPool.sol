@@ -960,22 +960,31 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             return 0;
         }
 
-        uint256 balanceBeforeBaseInterest = ILendingPoolTranche(tranche).convertToAssets(trancheShares)
-            * INTEREST_RATE_FULL_PERCENT
-            / (
-                INTEREST_RATE_FULL_PERCENT
-                    + ((baseTrancheInterestRate * (FULL_PERCENT - _systemVariables.performanceFee())) / FULL_PERCENT)
-            );
+        uint256 balanceAfterFixedInterest;
+        uint256 balanceAfterBaseInterest;
 
-        uint256 balanceAfterFixedInterest = balanceBeforeBaseInterest * fixedInterestRate / INTEREST_RATE_FULL_PERCENT;
-        uint256 balanceAfterBaseInterest =
-            balanceBeforeBaseInterest * baseTrancheInterestRate / INTEREST_RATE_FULL_PERCENT;
+        {
+            uint256 assets = ILendingPoolTranche(tranche).convertToAssets(trancheShares);
 
-        if (fixedInterestRate > baseTrancheInterestRate) {
+            if (assets == 0) return 0;
+
+            uint256 balanceBeforeBaseInterest = assets * INTEREST_RATE_FULL_PERCENT
+                / (
+                    INTEREST_RATE_FULL_PERCENT
+                        + ((baseTrancheInterestRate * (FULL_PERCENT - _systemVariables.performanceFee())) / FULL_PERCENT)
+                );
+
+            balanceAfterFixedInterest = balanceBeforeBaseInterest * fixedInterestRate / INTEREST_RATE_FULL_PERCENT;
+            balanceAfterBaseInterest = balanceBeforeBaseInterest * baseTrancheInterestRate / INTEREST_RATE_FULL_PERCENT;
+        }
+
+        if (balanceAfterFixedInterest > balanceAfterBaseInterest) {
             // fixed term yield is higher than base interest - deposit the difference
             uint256 interestAmountDiff = balanceAfterFixedInterest - balanceAfterBaseInterest;
             uint256 fees = interestAmountDiff * _systemVariables.performanceFee() / FULL_PERCENT;
             uint256 userInterestAmountDiff = interestAmountDiff - fees;
+
+            if (userInterestAmountDiff == 0) return 0;
 
             _mint(address(this), userInterestAmountDiff);
             sharesDiff = int256(ILendingPoolTranche(tranche).deposit(userInterestAmountDiff, user));
@@ -986,13 +995,15 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
             emit FixedInterestDiffApplied(user, tranche, epoch, sharesDiff, int256(userInterestAmountDiff));
             emit FeesOwedIncreased(epoch, fees);
-        } else {
+        } else if (balanceAfterFixedInterest < balanceAfterBaseInterest) {
             // fixed term yield is lower than base interest - withdraw the difference
             uint256 interestAmountDiff = balanceAfterBaseInterest - balanceAfterFixedInterest;
             uint256 overpaidFees = interestAmountDiff * _systemVariables.performanceFee() / FULL_PERCENT;
             uint256 userInterestAmountDiff = interestAmountDiff - overpaidFees;
 
             uint256 sharesToWithdraw = ILendingPoolTranche(tranche).previewWithdraw(userInterestAmountDiff);
+
+            if (sharesToWithdraw == 0) return 0;
 
             {
                 uint256 assetAmount =
