@@ -15,5 +15,5 @@ export async function getCurrentEpochNumber(account: Signer): Promise<bigint> {
         account,
     );
 
-    return await systemVariables.currentEpochNumber();
+    return systemVariables.currentEpochNumber();
 }

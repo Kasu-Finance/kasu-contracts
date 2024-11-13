@@ -15,7 +15,7 @@ export async function runClearing(
     doEndClearing = false,
 ) {
     if (repayAmount > 0) {
-        await repayPool(lendingPoolAddress, adminAccount, repayAmount);
+        await repayPool(lendingPoolAddress, adminAccount, repayAmount, true);
     }
 
     console.log('Manually start clearing period');
@@ -35,7 +35,7 @@ export async function runClearing(
     );
 
     // end clearing period
-    if (!doEndClearing) {
+    if (doEndClearing) {
         console.log('Manually ending clearing period');
         await endClearing(adminAccount);
     }
