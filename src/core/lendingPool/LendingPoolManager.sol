@@ -338,6 +338,7 @@ contract LendingPoolManager is
         external
         whenNotPaused
         onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, msg.sender)
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_FUNDS_MANAGER, repaymentAddress)
         validLendingPool(lendingPool)
     {
         _transferAssetsFrom(repaymentAddress, address(this), amount);

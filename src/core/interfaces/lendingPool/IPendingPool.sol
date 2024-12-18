@@ -155,5 +155,4 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         uint256 requestedAmount
     );
     error RequestWithdrawSharesAreZero();
-    error FixedTermDepositConfigMismatch(uint256 dNftID, uint256 fixedTermConfigId, uint256 requestedFixedTermConfigId);
 }
