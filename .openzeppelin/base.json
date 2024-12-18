@@ -75,6 +75,11 @@
       "address": "0xEEDE30AcF16caFf49c1a48F75185C67Be2e20B40",
       "txHash": "0x7924421a27793465d59f70611bf5e5f43719ac1870e94fe9c9b55e8a4e6c083f",
       "kind": "transparent"
+    },
+    {
+      "address": "0x757AB3139E09Beb9cCdf59762aD00825EfAE5ED3",
+      "txHash": "0x7aa313060130b112fe19ebdb9033a3d1ffa66bf215a610ff8ef342246149b8ff",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -4953,6 +4958,349 @@
         "storage": [],
         "types": {},
         "namespaces": {}
+      }
+    },
+    "ff432959ce2de849d0b7d832771c426e81dcc52361aab7a5f2dc3eb4abb3d14a": {
+      "address": "0x1617B79c57E00c862941EB578fD134C4D1c0F833",
+      "txHash": "0xac1d6d57e17eefec8bb11d56bdd36ee60a26df239a5bfa986faf289b2e00fbe5",
+      "layout": {
+        "solcVersion": "0.8.23",
+        "storage": [
+          {
+            "label": "_lendingPoolManager",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(ILendingPoolManager)17372",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:41"
+          },
+          {
+            "label": "_clearingCoordinator",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IClearingCoordinator)15862",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:44"
+          },
+          {
+            "label": "_lendingPoolFixedTermDepositConfigurations",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(FixedTermDepositConfig)16005_storage))",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:47"
+          },
+          {
+            "label": "lendingPoolFixedTermDepositConfigCount",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:51"
+          },
+          {
+            "label": "_lendingPoolWithdrawalConfiguration",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_struct(LendingPoolWithdrawalConfiguration)15991_storage)",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:54"
+          },
+          {
+            "label": "_lendingPoolFixedTermDepositIds",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:57"
+          },
+          {
+            "label": "_lendingPoolFixedTermDepositIdToLock",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(UserLendingPoolFixedTermDeposit)16018_storage))",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:60"
+          },
+          {
+            "label": "_lendingPoolFixedTermDepositNextId",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:64"
+          },
+          {
+            "label": "fixedTermDepositsAllowlist",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_bool)))",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:67"
+          },
+          {
+            "label": "_fixedTermDepositsClearingPerEpoch",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(FixedTermDepositsEpoch)17889_storage))",
+            "contract": "FixedTermDeposit",
+            "src": "src\\core\\lendingPool\\FixedTermDeposit.sol:71"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)10_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IClearingCoordinator)15862": {
+            "label": "contract IClearingCoordinator",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ILendingPoolManager)17372": {
+            "label": "contract ILendingPoolManager",
+            "numberOfBytes": "20"
+          },
+          "t_enum(FixedTermDepositStatus)15995": {
+            "label": "enum FixedTermDepositStatus",
+            "members": [
+              "DISABLED",
+              "WHITELISTED_ONLY",
+              "EVERYONE"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_enum(TaskStatus)15903": {
+            "label": "enum TaskStatus",
+            "members": [
+              "UNINITIALIZED",
+              "PENDING",
+              "ENDED"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_address,t_bool)))": {
+            "label": "mapping(address => mapping(uint256 => mapping(address => bool)))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(FixedTermDepositConfig)16005_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct FixedTermDepositConfig))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(FixedTermDepositsEpoch)17889_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct FixedTermDepositsEpoch))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(UserLendingPoolFixedTermDeposit)16018_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct UserLendingPoolFixedTermDeposit))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(LendingPoolWithdrawalConfiguration)15991_storage)": {
+            "label": "mapping(address => struct LendingPoolWithdrawalConfiguration)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
+            "label": "mapping(uint256 => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(FixedTermDepositConfig)16005_storage)": {
+            "label": "mapping(uint256 => struct FixedTermDepositConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(FixedTermDepositsEpoch)17889_storage)": {
+            "label": "mapping(uint256 => struct FixedTermDepositsEpoch)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(UserLendingPoolFixedTermDeposit)16018_storage)": {
+            "label": "mapping(uint256 => struct UserLendingPoolFixedTermDeposit)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(FixedTermDepositConfig)16005_storage": {
+            "label": "struct FixedTermDepositConfig",
+            "members": [
+              {
+                "label": "tranche",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "epochInterestRate",
+                "type": "t_uint64",
+                "offset": 20,
+                "slot": "0"
+              },
+              {
+                "label": "epochLockDuration",
+                "type": "t_uint16",
+                "offset": 28,
+                "slot": "0"
+              },
+              {
+                "label": "fixedTermDepositStatus",
+                "type": "t_enum(FixedTermDepositStatus)15995",
+                "offset": 30,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(FixedTermDepositsEpoch)17889_storage": {
+            "label": "struct FixedTermDepositsEpoch",
+            "members": [
+              {
+                "label": "nextIndexToProcess",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(TaskStatus)15903",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(LendingPoolWithdrawalConfiguration)15991_storage": {
+            "label": "struct LendingPoolWithdrawalConfiguration",
+            "members": [
+              {
+                "label": "requestEpochsInAdvance",
+                "type": "t_uint128",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "cancelRequestEpochsInAdvance",
+                "type": "t_uint128",
+                "offset": 16,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(UserLendingPoolFixedTermDeposit)16018_storage": {
+            "label": "struct UserLendingPoolFixedTermDeposit",
+            "members": [
+              {
+                "label": "user",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "fixedTermDepositConfigId",
+                "type": "t_uint16",
+                "offset": 20,
+                "slot": "0"
+              },
+              {
+                "label": "epochLockNumber",
+                "type": "t_uint32",
+                "offset": 22,
+                "slot": "0"
+              },
+              {
+                "label": "epochUnlockNumber",
+                "type": "t_uint32",
+                "offset": 26,
+                "slot": "0"
+              },
+              {
+                "label": "withdrawRequested",
+                "type": "t_bool",
+                "offset": 30,
+                "slot": "0"
+              },
+              {
+                "label": "trancheShares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
       }
     }
   }

@@ -99,7 +99,7 @@
     },
     "PendingPool": {
         "address": "0x4C3BE4ba2a9f50EbE75BcB19C88E70FaAe693716",
-        "implementation": "0xeBc28034D7dBd64F7B330D9e3B4b500A4a9a012C",
+        "implementation": "0x75402c591f22ccd2c1b233EC403Db2B90B53A690",
         "startBlock": 16036320,
         "proxyType": "BeaconProxy"
     },
