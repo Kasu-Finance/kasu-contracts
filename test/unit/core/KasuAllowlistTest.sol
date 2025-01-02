@@ -26,7 +26,7 @@ contract KasuAllowlistTest is LendingPoolTestUtils {
         // alice is blocked
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(IKasuAllowList.UserBlocked.selector, alice));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 4_000 * 1e6, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], 4_000 * 1e6, "", 0, "");
 
         vm.prank(admin);
         kasuAllowList.unblockUser(alice);

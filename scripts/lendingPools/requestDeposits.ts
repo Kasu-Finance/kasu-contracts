@@ -26,12 +26,14 @@ async function main() {
             lendingPoolAddress: lendingPoolAddress,
             trancheAddress: juniorTrancheAddress,
             amount: hre.ethers.parseUnits('1000', 6),
+            ftdConfigId: 0n,
         },
         {
             user: bob,
             lendingPoolAddress: lendingPoolAddress,
             trancheAddress: mezzoTrancheAddress,
             amount: hre.ethers.parseUnits('2000', 6),
+            ftdConfigId: 0n,
         },
     ];
     await requestDeposits(requestDepositsInput1);

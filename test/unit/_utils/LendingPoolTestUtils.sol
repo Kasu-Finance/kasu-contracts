@@ -8,6 +8,7 @@ import "./BaseTestUtils.sol";
 import "../../shared/ManualKsuPrice.sol";
 import "../../../src/core/lendingPool/LendingPoolManager.sol";
 import "../../../src/core/lendingPool/LendingPoolFactory.sol";
+import "../../../src/core/lendingPool/FixedTermDeposit.sol";
 import "../../../src/core/SystemVariables.sol";
 import "../../../src/core/interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../../../src/core/interfaces/lendingPool/IPendingPool.sol";
@@ -32,6 +33,7 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     IUserLoyaltyRewards internal userLoyaltyRewards;
     ISystemVariables internal systemVariables;
     IUserManager internal userManager;
+    IFixedTermDeposit internal fixedTermDeposit;
     IKasuAllowList internal kasuAllowList;
     ILendingPoolFactory internal lendingPoolFactory;
     IFeeManager internal feeManager;
@@ -103,11 +105,13 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         UserLoyaltyRewards(address(userLoyaltyRewards)).initialize(address(userManager), true);
 
+        _deployFixedTermDeposit();
+
         // lending pool manager
         swapper = new Swapper(kasuController);
         weth = new WETH9();
         LendingPoolManager lendingPoolManagerImpl =
-            new LendingPoolManager(address(mockUsdc), kasuController, IWETH9(address(weth)), swapper);
+            new LendingPoolManager(fixedTermDeposit, address(mockUsdc), kasuController, IWETH9(address(weth)), swapper);
         TransparentUpgradeableProxy lendingPoolManagerProxy =
             new TransparentUpgradeableProxy(address(lendingPoolManagerImpl), address(proxyAdmin), "");
         lendingPoolManager = LendingPoolManager(address(lendingPoolManagerProxy));
@@ -139,10 +143,13 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // clearing
 
         ClearingCoordinator clearingCoordinatorImpl =
-            new ClearingCoordinator(systemVariables, userManager, lendingPoolManager);
+            new ClearingCoordinator(systemVariables, userManager, fixedTermDeposit, lendingPoolManager);
         TransparentUpgradeableProxy clearingManagerProxy =
             new TransparentUpgradeableProxy(address(clearingCoordinatorImpl), address(proxyAdmin), "");
         clearingCoordinator = IClearingCoordinator(address(clearingManagerProxy));
+
+        // fixed term deposit - initialize
+        FixedTermDeposit(address(fixedTermDeposit)).initialize(lendingPoolManager, clearingCoordinator);
 
         // pending pool
         PendingPool pendingPoolIml = new PendingPoolHarness(
@@ -151,17 +158,23 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
             lendingPoolManager,
             userManager,
             clearingCoordinator,
-            acceptedRequestsCalculation
+            acceptedRequestsCalculation,
+            fixedTermDeposit
         );
         UpgradeableBeacon pendingPoolBeacon = new UpgradeableBeacon(address(pendingPoolIml), admin);
         // lending pool
         LendingPool lendingPoolImp = new LendingPool(
-            systemVariables, address(lendingPoolManager), clearingCoordinator, feeManager, address(mockUsdc)
+            systemVariables,
+            address(lendingPoolManager),
+            clearingCoordinator,
+            feeManager,
+            fixedTermDeposit,
+            address(mockUsdc)
         );
         UpgradeableBeacon lendingPoolBeacon = new UpgradeableBeacon(address(lendingPoolImp), admin);
         // lending pool tranche
         LendingPoolTranche lendingPoolTrancheImp =
-            new LendingPoolTranche(userManager, lendingPoolManager, address(mockUsdc));
+            new LendingPoolTranche(userManager, address(fixedTermDeposit), lendingPoolManager, address(mockUsdc));
         UpgradeableBeacon lendingPoolTrancheBeacon = new UpgradeableBeacon(address(lendingPoolTrancheImp), admin);
         // lending pool factory
         LendingPoolFactory lendingPoolFactoryImpl = new LendingPoolFactory(
@@ -232,6 +245,13 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
 
         // set price
         ksuPrice.setKsuTokenPrice(2e18);
+    }
+
+    function _deployFixedTermDeposit() internal {
+        FixedTermDeposit fixedTermDepositImpl = new FixedTermDeposit(systemVariables);
+        TransparentUpgradeableProxy fixedTermDepositProxy =
+            new TransparentUpgradeableProxy(address(fixedTermDepositImpl), address(proxyAdmin), "");
+        fixedTermDeposit = FixedTermDeposit(address(fixedTermDepositProxy));
     }
 
     function _deploySystemVariables() internal {
@@ -332,7 +352,19 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
     {
         deal(address(mockUsdc), sender, amount, true);
         mockUsdc.approve(address(lendingPoolManager), amount);
-        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "");
+        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "", 0, "");
+    }
+
+    function _requestFixedTermDeposit(
+        address sender,
+        address lendingPool,
+        address tranche,
+        uint256 amount,
+        uint256 fixedTermConfigId
+    ) internal prank(sender) returns (uint256 dNftId) {
+        deal(address(mockUsdc), sender, amount, true);
+        mockUsdc.approve(address(lendingPoolManager), amount);
+        return lendingPoolManager.requestDeposit(lendingPool, tranche, amount, "", fixedTermConfigId, "");
     }
 
     function _cancelDepositRequest(address sender, address lendingPool, uint256 dNftId) internal prank(sender) {
@@ -447,6 +479,28 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         lendingPoolManager.doClearing(
             lendingPool,
             targetEpoch,
+            type(uint256).max,
+            pendingRequestsPriorityCalculationBatchSize,
+            acceptedRequestsExecutionBatchSize,
+            clearingConfig,
+            isConfigOverridden
+        );
+    }
+
+    function _doClearing(
+        address caller,
+        address lendingPool,
+        uint256 targetEpoch,
+        uint256 fixedTermDepositBatchSize,
+        uint256 pendingRequestsPriorityCalculationBatchSize,
+        uint256 acceptedRequestsExecutionBatchSize,
+        ClearingConfiguration memory clearingConfig,
+        bool isConfigOverridden
+    ) internal prank(caller) {
+        lendingPoolManager.doClearing(
+            lendingPool,
+            targetEpoch,
+            fixedTermDepositBatchSize,
             pendingRequestsPriorityCalculationBatchSize,
             acceptedRequestsExecutionBatchSize,
             clearingConfig,
@@ -464,7 +518,8 @@ contract PendingPoolHarness is PendingPool {
         ILendingPoolManager lendingPoolManager_,
         IUserManager userManger_,
         IClearingCoordinator clearingCoordinator_,
-        IAcceptedRequestsCalculation acceptedRequestsCalculation_
+        IAcceptedRequestsCalculation acceptedRequestsCalculation_,
+        IFixedTermDeposit fixedTermDeposit_
     )
         PendingPool(
             systemVariables_,
@@ -472,7 +527,8 @@ contract PendingPoolHarness is PendingPool {
             lendingPoolManager_,
             userManger_,
             clearingCoordinator_,
-            acceptedRequestsCalculation_
+            acceptedRequestsCalculation_,
+            fixedTermDeposit_
         )
     {}
 

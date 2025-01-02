@@ -13,11 +13,14 @@ import {
 } from '../_modules/requestDeposit';
 import { ethers } from 'hardhat';
 import {
+    ClearingCoordinator__factory,
     LendingPool__factory,
     LendingPoolManager__factory,
 } from '../../typechain-types';
 import { ContractTransactionResponse } from 'ethers';
 import { runClearing } from '../_modules/runClearing';
+import { addFixedTermDeposit } from '../_modules/addFixedTermDeposit';
+import { addFixedTermDepositConfigAllowlist } from '../_modules/addFixedTermDepositConfigAllowlist';
 
 function toUSDC(usd: bigint): bigint {
     return ethers.parseUnits(usd.toString(), 6);
@@ -38,7 +41,7 @@ async function main() {
         const numberOfTranches = 3;
         const createdLendingPool = await createLendingPool(
             await getDefaultLendingPoolConfig(
-                'scenario1 lending pool',
+                'S1 lending pool',
                 'S1LP',
                 numberOfTranches,
             ),
@@ -81,9 +84,39 @@ async function main() {
         );
         await tx.wait(1);
 
+        const ftdConfigId1 = await addFixedTermDeposit(
+            lp,
+            {
+                tranche: lp_senior,
+                epochLockDuration: 2,  
+                epochInterestRate: 1800000000000000,
+                whitelistedOnly: false
+            },
+            adminAccount
+        );
+
+        const ftdConfigId2 = await addFixedTermDeposit(
+            lp,
+            {
+                tranche: lp_senior,
+                epochLockDuration: 2,  
+                epochInterestRate: 1900000000000000,
+                whitelistedOnly: true
+            },
+            adminAccount
+        );
+
+        await addFixedTermDepositConfigAllowlist(
+            lp,
+            ftdConfigId2,
+            [(await aliceAccount.getAddress())],
+            [true],
+            adminAccount
+        )
+
         // available funds
-        const lendingPoolPoolAdmin = LendingPool__factory.connect(
-            createdLendingPool.lendingPoolAddress,
+        const clearingCoordinator = ClearingCoordinator__factory.connect(
+            deploymentAddresses.ClearingCoordinator.address,
             poolAdminAccount,
         );
 
@@ -96,23 +129,26 @@ async function main() {
                 lendingPoolAddress: lp,
                 trancheAddress: lp_junior,
                 amount: toUSDC(130_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_mezzanine,
                 amount: toUSDC(16_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_senior,
                 amount: toUSDC(4_000n),
+                ftdConfigId: ftdConfigId1,
             },
         ];
         await requestDeposits(requestDepositsEpoch1, true, true);
         // clearing (20%,10%,70%, total 100K, draw 100K, 10% max excess)
-        let availableFunds = await lendingPoolPoolAdmin.availableFunds();
+        let availableFunds = await clearingCoordinator.lendingPoolMaxDrawAmount(lp);
         const clearingConfigurationEpoch1: ClearingConfigurationStruct = {
             drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
@@ -135,23 +171,26 @@ async function main() {
                 lendingPoolAddress: lp,
                 trancheAddress: lp_junior,
                 amount: toUSDC(1_000_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_mezzanine,
                 amount: toUSDC(100_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_senior,
                 amount: toUSDC(36_000n),
+                ftdConfigId: ftdConfigId2,
             },
         ];
         await requestDeposits(requestDepositsEpoch2, true, false);
         // clearing (20%,10%,70%, total 550K, draw 500K, 10% max excess)
-        availableFunds = await lendingPoolPoolAdmin.availableFunds();
+        availableFunds = await clearingCoordinator.lendingPoolMaxDrawAmount(lp);
         const clearingConfigurationEpoch2: ClearingConfigurationStruct = {
             drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
@@ -174,23 +213,26 @@ async function main() {
                 lendingPoolAddress: lp,
                 trancheAddress: lp_junior,
                 amount: toUSDC(464_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_mezzanine,
                 amount: toUSDC(27_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_senior,
                 amount: toUSDC(1_000n),
+                ftdConfigId: 0n,
             },
         ];
         await requestDeposits(requestDepositsEpoch3, true, false);
         // clearing (20%,10%,70%, total 770K, draw 700K, 10% max excess)
-        availableFunds = await lendingPoolPoolAdmin.availableFunds();
+        availableFunds = await clearingCoordinator.lendingPoolMaxDrawAmount(lp);
         const clearingConfigurationEpoch3: ClearingConfigurationStruct = {
             drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
@@ -213,23 +255,26 @@ async function main() {
                 lendingPoolAddress: lp,
                 trancheAddress: lp_junior,
                 amount: toUSDC(3_000_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_mezzanine,
                 amount: toUSDC(500_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_senior,
                 amount: toUSDC(200_000n),
+                ftdConfigId: 0n,
             },
         ];
         await requestDeposits(requestDepositsEpoch4, true, false);
         // clearing (20%,10%,70%, total 1320K, draw 1200K, 10% max excess)
-        availableFunds = await lendingPoolPoolAdmin.availableFunds();
+        availableFunds = await clearingCoordinator.lendingPoolMaxDrawAmount(lp);
         const clearingConfigurationEpoch4: ClearingConfigurationStruct = {
             drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],
@@ -252,23 +297,26 @@ async function main() {
                 lendingPoolAddress: lp,
                 trancheAddress: lp_junior,
                 amount: toUSDC(2_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_mezzanine,
                 amount: toUSDC(15_000n),
+                ftdConfigId: 0n,
             },
             {
                 user: aliceAccount,
                 lendingPoolAddress: lp,
                 trancheAddress: lp_senior,
                 amount: toUSDC(2_000_000n),
+                ftdConfigId: 0n,
             },
         ];
         await requestDeposits(requestDepositsEpoch5, true, false);
         // clearing (20%,10%,70%, total 1320K, draw 1200K, 10% max excess)
-        availableFunds = await lendingPoolPoolAdmin.availableFunds();
+        availableFunds = await clearingCoordinator.lendingPoolMaxDrawAmount(lp);
         const clearingConfigurationEpoch5: ClearingConfigurationStruct = {
             drawAmount: availableFunds,
             trancheDesiredRatios: [20_00, 10_00, 70_00],

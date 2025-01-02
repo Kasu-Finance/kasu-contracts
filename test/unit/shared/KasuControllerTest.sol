@@ -115,7 +115,7 @@ contract KasuControllerTest is LendingPoolTestUtils {
         deal(address(mockUsdc), alice, amount, true);
         mockUsdc.approve(address(lendingPoolManager), amount);
         vm.expectRevert(abi.encodeWithSelector(Pausable.EnforcedPause.selector));
-        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], amount, "");
+        lendingPoolManager.requestDeposit(lpd.lendingPool, lpd.tranches[0], amount, "", 0, "");
 
         vm.prank(admin);
         kasuController.unpause();

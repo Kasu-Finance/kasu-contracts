@@ -79,6 +79,13 @@ interface ILendingPool is IERC20 {
         external
         returns (uint256 assetAmount);
     function applyInterests(uint256 epoch) external;
+    function applyFixedRateInterests(
+        address user,
+        address tranche,
+        uint256 trancheShares,
+        uint256 interestRate,
+        uint256 epoch
+    ) external;
     function payOwedFees() external;
 
     // #### USER #### //
@@ -125,7 +132,15 @@ interface ILendingPool is IERC20 {
         address indexed tranche, uint256 indexed applicableEpoch, uint256 arrayIndex
     );
     event InterestApplied(address indexed tranche, uint256 indexed epoch, uint256 interestAmount);
+    event FixedInterestDiffApplied(
+        address indexed user,
+        address indexed tranche,
+        uint256 indexed epoch,
+        int256 trancheShares,
+        int256 interestAmount
+    );
     event FeesOwedIncreased(uint256 indexed epoch, uint256 feesIncreasedAmount);
+    event FeesOwedDecreased(uint256 indexed epoch, uint256 feesDecreasedAmount);
     event PaidFees(uint256 feesPaid);
     event PaidFeesFromAvailableFunds(uint256 feesPaid);
     event UpdatedDesiredDrawAmount(uint256 desiredDrawAmount);
@@ -149,5 +164,4 @@ interface ILendingPool is IERC20 {
     error FeesOwedAmountIsGreaterThanZero(uint256 feesOwedAmount);
     error PoolConfigurationIsIncorrect(string reason);
     error LossIdNotValid(uint256 lossId);
-    error ClearingIsPending();
 }

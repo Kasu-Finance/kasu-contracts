@@ -24,6 +24,8 @@ import "../../shared/CommonErrors.sol";
 contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingPoolTrancheLoss {
     /// @notice User manager contract.
     IUserManager private immutable _userManager;
+    /// @notice Fixed term deposit address.
+    address private immutable _fixedTermDeposit;
 
     /// @dev User active shares. This includes user pending withdrawal shares.
     mapping(address user => uint256 activeShares) public userActiveShares;
@@ -37,14 +39,18 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     /**
      * @notice Initializes the lending pool tranche contract.
      * @param userManager_ User manager address.
+     * @param fixedTermDeposit_ Fixed term deposit address.
      * @param lendingPoolManager_ Lending pool manager address.
      * @param lossAsset_ Loss repayment asset address.
      */
-    constructor(IUserManager userManager_, ILendingPoolManager lendingPoolManager_, address lossAsset_)
-        LendingPoolHelpers(lendingPoolManager_)
-        AssetFunctionsBase(lossAsset_)
-    {
+    constructor(
+        IUserManager userManager_,
+        address fixedTermDeposit_,
+        ILendingPoolManager lendingPoolManager_,
+        address lossAsset_
+    ) LendingPoolHelpers(lendingPoolManager_) AssetFunctionsBase(lossAsset_) {
         _userManager = userManager_;
+        _fixedTermDeposit = fixedTermDeposit_;
         _disableInitializers();
     }
 
@@ -169,23 +175,18 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
 
     /**
      * @notice Transfers the given amount to the given address.
-     * @dev Only the pending pool can call this function.
+     * @dev Only the pending pool, lending pool or fixed term deposit contract can call this function.
      * @param to The address of the receiver.
      * @param value The amount to transfer.
      * @return success Whether the transfer was successful.
      */
-    function transfer(address to, uint256 value)
-        public
-        override(IERC20, ERC20Upgradeable)
-        onlyPendingPool
-        returns (bool)
-    {
+    function transfer(address to, uint256 value) public override(IERC20, ERC20Upgradeable) onlyAllowed returns (bool) {
         return super.transfer(to, value);
     }
 
     /**
      * @notice Transfers the given amount from the given address to the given address.
-     * @dev Only the pending pool can call this function.
+     * @dev Only the pending pool, lending pool or fixed term deposit contract can call this function.
      * @param from The address of the sender.
      * @param to The address of the receiver.
      * @param value The amount to transfer.
@@ -194,7 +195,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     function transferFrom(address from, address to, uint256 value)
         public
         override(IERC20, ERC20Upgradeable)
-        onlyPendingPool
+        onlyAllowed
         returns (bool)
     {
         return super.transferFrom(from, to, value);
@@ -248,18 +249,20 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @dev Allows all spending for the lending pool and the pending pool.
+     * @dev Allows all spending for the lending pool, pending pool and fixed term deposit.
      */
     function _spendAllowance(address owner, address spender, uint256 value) internal override {
         if (spender == _pendingPool()) return;
         if (spender == address(_ownLendingPool())) return;
+        if (spender == _fixedTermDeposit) return;
         super._spendAllowance(owner, spender, value);
     }
 
     /* ========== MODIFIERS ========== */
 
-    modifier onlyPendingPool() {
-        if (msg.sender != _pendingPool()) {
+    modifier onlyAllowed() {
+        if (msg.sender != _pendingPool() && msg.sender != address(_ownLendingPool()) && msg.sender != _fixedTermDeposit)
+        {
             revert NonTransferable();
         }
         _;

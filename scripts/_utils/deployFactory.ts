@@ -69,11 +69,11 @@ export async function deployFactory(
                 console.log(`Checking to update ${name} contract`);
                 proxyAddress = addressFile.getContractAddress(exportName);
 
-                const newImplementationAddress = await upgrades.prepareUpgrade(
+                const newImplementationAddress = (await upgrades.prepareUpgrade(
                     proxyAddress,
                     implementation,
                     options,
-                );
+                )).toString();
 
                 deployedImplementationAddress =
                     await upgrades.erc1967.getImplementationAddress(
@@ -100,7 +100,7 @@ export async function deployFactory(
                 addressFile.writeAddressProxy(
                     exportName,
                     proxyAddress,
-                    deployedImplementationAddress,
+                    newImplementationAddress,
                     'TransparentProxy',
                 );
             }
@@ -162,11 +162,11 @@ export async function deployFactory(
                 console.log(`Checking to update ${name} contract`);
                 beaconAddress = addressFile.getContractAddress(name);
 
-                const newImplementationAddress = await upgrades.prepareUpgrade(
+                const newImplementationAddress = (await upgrades.prepareUpgrade(
                     beaconAddress,
                     implementation,
                     options,
-                );
+                )).toString();
 
                 deployedImplementationAddress =
                     await upgrades.beacon.getImplementationAddress(
@@ -189,7 +189,7 @@ export async function deployFactory(
                 addressFile.writeAddressProxy(
                     exportName,
                     beaconAddress,
-                    deployedImplementationAddress,
+                    newImplementationAddress,
                     'BeaconProxy',
                 );
             }

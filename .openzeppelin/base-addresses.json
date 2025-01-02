@@ -54,7 +54,7 @@
     },
     "LendingPoolManager": {
         "address": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
-        "implementation": "0xd2812f27ee3D898daEF64772E113A13A0F80c229",
+        "implementation": "0xC94216ACeF9C3b602F653135434031A87267eBFF",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
@@ -72,7 +72,7 @@
     },
     "ClearingCoordinator": {
         "address": "0x2cF12A6d91fa4bEB5a4C17589a03e78F88f57DE2",
-        "implementation": "0x8d38a2b611E5Ac72Af1a38A67629322b191737B7",
+        "implementation": "0x2889EaFA5732Abd724cda4ebC1B9659F90175Ed1",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
@@ -84,19 +84,19 @@
     },
     "LendingPool": {
         "address": "0x8855EC34D148FddcD3D536a2Eb9c04943E926E8f",
-        "implementation": "0x2af3eb5945A524e1C23dc2FB2B3B37a5CaD7aB31",
+        "implementation": "0x9B9eC355b7F11a996B8d483d8608A82785EfA621",
         "startBlock": 15486216,
         "proxyType": "BeaconProxy"
     },
     "PendingPool": {
         "address": "0x6ECd74982433Ea8F00fbd879485641C507c8E2E0",
-        "implementation": "0x3CF8562B0A1Ff6D6749071E478177eC2dDC7dBF4",
+        "implementation": "0xc17f46D36de495A866d11E1Fc284fa013903E3A9",
         "startBlock": 15486216,
         "proxyType": "BeaconProxy"
     },
     "LendingPoolTranche": {
         "address": "0xA2e9992B73BE340eC7134e751A4E5358374Fb1d0",
-        "implementation": "0x8F2B35004FD5Fe1b1D649bf52dF8fD6eE4467f12",
+        "implementation": "0x31B186049085E7bF5b68C27657bD73b5A5bac13F",
         "startBlock": 15486216,
         "proxyType": "BeaconProxy"
     },
@@ -110,6 +110,12 @@
         "address": "0xEEDE30AcF16caFf49c1a48F75185C67Be2e20B40",
         "implementation": "0x39a4E4dF478a792afAa9FF56cA7cD5327a89e41A",
         "startBlock": 15486216,
+        "proxyType": "TransparentProxy"
+    },
+    "FixedTermDeposit": {
+        "address": "0x757AB3139E09Beb9cCdf59762aD00825EfAE5ED3",
+        "implementation": "0x1617B79c57E00c862941EB578fD134C4D1c0F833",
+        "startBlock": 23046539,
         "proxyType": "TransparentProxy"
     }
 }

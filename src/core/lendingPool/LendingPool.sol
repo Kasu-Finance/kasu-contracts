@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "../interfaces/lendingPool/ILendingPoolTranche.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
 import "../interfaces/lendingPool/ILendingPool.sol";
+import "../interfaces/lendingPool/IFixedTermDeposit.sol";
 import "../interfaces/lendingPool/ILendingPoolErrors.sol";
 import "../interfaces/lendingPool/ILendingPoolFactory.sol";
 import "../interfaces/clearing/IClearingCoordinator.sol";
@@ -49,6 +50,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     IClearingCoordinator private immutable _clearingCoordinator;
     /// @notice Fee manager contract.
     IFeeManager private immutable _feeManager;
+    /// @dev Fixed term deposit contract.
+    IFixedTermDeposit private immutable _fixedTermDeposit;
 
     /// @notice Lending pool info contains pending pool and tranche addresses.
     LendingPoolInfo private _lendingPoolInfo;
@@ -88,17 +91,20 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         address lendingPoolManager_,
         IClearingCoordinator clearingCoordinator_,
         IFeeManager feeManager_,
+        IFixedTermDeposit fixedTermDeposit_,
         address underlyingAsset_
     ) AssetFunctionsBase(underlyingAsset_) {
         AddressLib.checkIfZero(address(systemVariables_));
         AddressLib.checkIfZero(lendingPoolManager_);
         AddressLib.checkIfZero(address(clearingCoordinator_));
         AddressLib.checkIfZero(address(feeManager_));
+        AddressLib.checkIfZero(address(fixedTermDeposit_));
 
         _systemVariables = systemVariables_;
         _lendingPoolManager = lendingPoolManager_;
         _clearingCoordinator = clearingCoordinator_;
         _feeManager = feeManager_;
+        _fixedTermDeposit = fixedTermDeposit_;
 
         _disableInitializers();
     }
@@ -428,6 +434,27 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
     }
 
     /**
+     * @notice Applies the fixed rate interests to the lending pool and the tranches.
+     * @dev This function is called by the fixed term deposit contract during the clearing.
+     * Applies the fixed rate interests to the lending pool tranches.
+     * Calculated the difference between the fixed rate and the current base rate and applies the difference.
+     * @param user The user address.
+     * @param tranche The tranche address.
+     * @param trancheShares The amount of the tranche shares.
+     * @param interestRate The interest rate.
+     * @param epoch The epoch number for which the interests are applied.
+     */
+    function applyFixedRateInterests(
+        address user,
+        address tranche,
+        uint256 trancheShares,
+        uint256 interestRate,
+        uint256 epoch
+    ) external onlyFixedTermDeposit {
+        _applyFixedRateInterests(user, tranche, trancheShares, interestRate, epoch);
+    }
+
+    /**
      * @notice Pay the lending pool owed fees from available balance.
      * @dev Tries to repay fees from the available balance.
      * Called by the clearing coordinator at the end of the clearing.
@@ -461,7 +488,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
      * @dev First we repay the owed fees, then we repay the user owed amount.
      * @param amount The amount of the repayment.
      */
-    function repayOwedFunds(uint256 amount) external onlyLendingPoolManager {
+    function repayOwedFunds(uint256 amount) external onlyLendingPoolManager verifyClearingNotPending {
         if (amount == 0) {
             revert AmountShouldBeGreaterThanZero();
         }
@@ -921,6 +948,81 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
         emit FeesOwedIncreased(epoch, feesAmount);
     }
 
+    function _applyFixedRateInterests(
+        address user,
+        address tranche,
+        uint256 trancheShares,
+        uint256 fixedInterestRate,
+        uint256 epoch
+    ) internal returns (int256 sharesDiff) {
+        uint256 baseTrancheInterestRate = _trancheConfigurationStorage(tranche).interestRate;
+        if (fixedInterestRate == baseTrancheInterestRate) {
+            return 0;
+        }
+
+        uint256 balanceAfterFixedInterest;
+        uint256 balanceAfterBaseInterest;
+
+        {
+            uint256 assets = ILendingPoolTranche(tranche).convertToAssets(trancheShares);
+
+            if (assets == 0) return 0;
+
+            uint256 balanceBeforeBaseInterest = assets * INTEREST_RATE_FULL_PERCENT
+                / (
+                    INTEREST_RATE_FULL_PERCENT
+                        + ((baseTrancheInterestRate * (FULL_PERCENT - _systemVariables.performanceFee())) / FULL_PERCENT)
+                );
+
+            balanceAfterFixedInterest = balanceBeforeBaseInterest * fixedInterestRate / INTEREST_RATE_FULL_PERCENT;
+            balanceAfterBaseInterest = balanceBeforeBaseInterest * baseTrancheInterestRate / INTEREST_RATE_FULL_PERCENT;
+        }
+
+        if (balanceAfterFixedInterest > balanceAfterBaseInterest) {
+            // fixed term yield is higher than base interest - deposit the difference
+            uint256 interestAmountDiff = balanceAfterFixedInterest - balanceAfterBaseInterest;
+            uint256 fees = interestAmountDiff * _systemVariables.performanceFee() / FULL_PERCENT;
+            uint256 userInterestAmountDiff = interestAmountDiff - fees;
+
+            if (userInterestAmountDiff == 0) return 0;
+
+            _mint(address(this), userInterestAmountDiff);
+            sharesDiff = int256(ILendingPoolTranche(tranche).deposit(userInterestAmountDiff, user));
+            ILendingPoolTranche(tranche).transferFrom(user, address(_fixedTermDeposit), uint256(sharesDiff));
+
+            feesOwedAmount += fees;
+            userOwedAmount += userInterestAmountDiff;
+
+            emit FixedInterestDiffApplied(user, tranche, epoch, sharesDiff, int256(userInterestAmountDiff));
+            emit FeesOwedIncreased(epoch, fees);
+        } else if (balanceAfterFixedInterest < balanceAfterBaseInterest) {
+            // fixed term yield is lower than base interest - withdraw the difference
+            uint256 interestAmountDiff = balanceAfterBaseInterest - balanceAfterFixedInterest;
+            uint256 overpaidFees = interestAmountDiff * _systemVariables.performanceFee() / FULL_PERCENT;
+            uint256 userInterestAmountDiff = interestAmountDiff - overpaidFees;
+
+            uint256 sharesToWithdraw = ILendingPoolTranche(tranche).previewWithdraw(userInterestAmountDiff);
+
+            if (sharesToWithdraw == 0) return 0;
+
+            {
+                uint256 assetAmount =
+                    ILendingPoolTranche(tranche).redeem(sharesToWithdraw, address(this), address(_fixedTermDeposit));
+                _burn(address(this), assetAmount);
+            }
+
+            ILendingPoolTranche(tranche).removeUserActiveShares(user, sharesToWithdraw);
+
+            sharesDiff = -int256(sharesToWithdraw);
+
+            feesOwedAmount -= overpaidFees;
+            userOwedAmount -= userInterestAmountDiff;
+
+            emit FixedInterestDiffApplied(user, tranche, epoch, sharesDiff, -int256(userInterestAmountDiff));
+            emit FeesOwedDecreased(epoch, overpaidFees);
+        }
+    }
+
     function _draw(uint256 drawAmount) private {
         if (drawAmount == 0) return;
 
@@ -1119,6 +1221,13 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     modifier verifyClearingNotPending() {
         _verifyClearingNotPending();
+        _;
+    }
+
+    modifier onlyFixedTermDeposit() {
+        if (msg.sender != address(_fixedTermDeposit)) {
+            revert OnlyFixedTermDeposit();
+        }
         _;
     }
 }

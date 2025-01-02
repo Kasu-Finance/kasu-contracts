@@ -6,6 +6,7 @@ import { glob } from 'glob';
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names';
 import '@nomicfoundation/hardhat-verify';
 import '@openzeppelin/hardhat-upgrades';
+import "hardhat-contract-sizer";
 
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
@@ -53,13 +54,28 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
 
 const config: HardhatUserConfig = {
     solidity: {
-        version: '0.8.23',
-        settings: {
-            optimizer: {
-                enabled: true,
-                runs: 800,
+        compilers: [
+            {
+                version: '0.8.23',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 800,
+                    },
+                },
             },
-        },
+        ],
+        overrides: {
+            "src/core/lendingPool/PendingPool.sol": {
+                version: "0.8.23",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            }
+        }
     },
     networks: {
         localhost: {

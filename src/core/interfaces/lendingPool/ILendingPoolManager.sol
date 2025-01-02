@@ -4,22 +4,33 @@ pragma solidity 0.8.23;
 import "./IPendingPool.sol";
 import "./ILendingPool.sol";
 import "./ILendingPoolFactory.sol";
+import "./IFixedTermDeposit.sol";
+
+struct KycData {
+    uint256 blockExpiration;
+    bytes signature;
+}
 
 interface ILendingPoolManager {
     function isLendingPool(address lendingPool) external view returns (bool);
 
     // #### USER #### //
-    function requestDeposit(address lendingPool, address tranche, uint256 maxAmount, bytes calldata swapData)
-        external
-        payable
-        returns (uint256 dNftID);
+    function requestDeposit(
+        address lendingPool,
+        address tranche,
+        uint256 maxAmount,
+        bytes calldata swapData,
+        uint256 fixedTermConfigId,
+        bytes calldata depositData
+    ) external payable returns (uint256 dNftID);
     function requestDepositWithKyc(
         address lendingPool,
         address tranche,
         uint256 maxAmount,
         bytes calldata swapData,
-        uint256 blockExpiration,
-        bytes calldata signature
+        uint256 fixedTermConfigId,
+        bytes calldata depositData,
+        KycData calldata kycData
     ) external payable returns (uint256 dNftID);
     function cancelDepositRequest(address lendingPool, uint256 dNftID) external;
     function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
@@ -29,6 +40,10 @@ interface ILendingPoolManager {
     function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
         external
         returns (uint256 claimedAmount);
+    function lockDepositForFixedTerm(address lendingPool, address tranche, uint256 amount, uint256 fixedTermConfigId)
+        external;
+    function requestFixedTermDepositWithdrawal(address lendingPool, uint256 fixedTermDepositId) external;
+    function cancelFixedTermDepositWithdrawalRequest(address lendingPool, uint256 fixedTermDepositId) external;
 
     // #### LENDING POOL CREATOR #### //
     function createPool(CreatePoolConfig calldata createPoolConfig)
@@ -52,6 +67,7 @@ interface ILendingPoolManager {
     function doClearing(
         address lendingPool,
         uint256 targetEpoch,
+        uint256 fixedTermDepositBatchSize,
         uint256 priorityCalculationBatchSize,
         uint256 acceptRequestsBatchSize,
         ClearingConfiguration calldata clearingConfigOverride,
@@ -68,6 +84,7 @@ interface ILendingPoolManager {
         returns (uint256[] memory);
     function forceCancelDepositRequest(address lendingPool, uint256 dNftID) external;
     function forceCancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
+    function endFixedTermDeposit(address lendingPool, uint256 fixedTermDepositId, uint256 arrayIndex) external;
     function stopLendingPool(address lendingPool) external;
 
     // #### POOL CONFIG #### //
@@ -82,4 +99,30 @@ interface ILendingPoolManager {
     function updateDesiredDrawAmount(address lendingPool, uint256 amount) external;
     function updateTrancheDesiredRatios(address lendingPool, uint256[] calldata ratios) external;
     function updateTrancheInterestRateChangeEpochDelay(address lendingPool, uint256 epochDelay) external;
+    function addLendingPoolTrancheFixedTermDeposit(
+        address lendingPool,
+        address tranche,
+        uint256 epochLockDuration,
+        uint256 epochInterestRate,
+        bool whitelistedOnly
+    ) external returns (uint256 fixedTermConfigId);
+    function updateLendingPoolTrancheFixedInterestStatus(
+        address lendingPool,
+        uint256 fixedTermConfigId,
+        FixedTermDepositStatus fixedTermDepositStatus
+    ) external;
+    function updateLendingPoolWithdrawalConfiguration(
+        address lendingPool,
+        LendingPoolWithdrawalConfiguration calldata withdrawalConfiguration
+    ) external;
+    function updateFixedTermDepositAllowlist(
+        address lendingPool,
+        uint256 configId,
+        address[] calldata users,
+        bool[] calldata isAllowedList
+    ) external;
+
+    /* ========== EVENTS ========== */
+
+    event DepositDataAdded(address indexed lendingPool, uint256 indexed dNftID, bytes data);
 }

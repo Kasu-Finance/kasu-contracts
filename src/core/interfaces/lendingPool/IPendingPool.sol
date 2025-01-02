@@ -80,12 +80,18 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */
 
-    function requestDeposit(address user, address tranche, uint256 amount) external returns (uint256 dNftID);
+    function requestDeposit(address user, address tranche, uint256 amount, uint256 fixedTermConfigId)
+        external
+        returns (uint256 dNftID);
     function cancelDepositRequest(address user, uint256 dNftID) external;
     function requestWithdrawal(address user, address tranche, uint256 trancheShares)
         external
         returns (uint256 wNftID);
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
+
+    function requestPriorityWithdrawal(address user, address tranche, uint256 sharesToWithdraw, uint256 requestEpochId)
+        external
+        returns (uint256 wNftID);
 
     function forceCancelWithdrawalRequest(uint256 wNftID) external;
     function batchForceWithdrawals(ForceWithdrawalInput[] calldata input) external returns (uint256[] memory wNftIDs);
@@ -96,6 +102,7 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
     event DepositRequested(
         address indexed user, address indexed tranche, uint256 indexed dNftID, uint256 epochId, uint256 amount
     );
+    event DepositRequestFixedTermConfiguration(uint256 indexed dNftID, uint256 fixedTermConfigId);
     event DepositRequestCancelled(address indexed user, address indexed tranche, uint256 indexed dNftID);
     event DepositRequestAccepted(
         address indexed user,

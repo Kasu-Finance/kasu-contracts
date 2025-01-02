@@ -26,7 +26,7 @@
         "scripts:repayOwedFunds": "hardhat run --network localhost scripts/lendingPools/repayOwedFunds.ts",
         "scripts:stopLendingPool": "hardhat run --network localhost scripts/lendingPools/stopLendingPool.ts",
         "scripts:updateDesiredDrawAmount": "hardhat run --network base-sepolia scripts/lendingPools/updateDesiredDrawAmount.ts",
-        "scripts:createLendingPool": "hardhat run --network localhost scripts/lendingPools/createLendingPools.ts.ts",
+        "scripts:createLendingPool": "hardhat run --network localhost scripts/lendingPools/createLendingPools.ts",
         "scripts:scenario1": "hardhat run --network localhost scripts/scenarios/scenario1.ts",
         "repl:kasu": "NETWORK_NAME=localhost ts-node scripts/_repl/kasu_repl.ts"
     },
@@ -50,6 +50,7 @@
         "@types/node": "^20.11.0",
         "dotenv": "^16.3.1",
         "ethers": "^6.12.0",
-        "hardhat": "^2.19.4"
+        "hardhat": "^2.19.4",
+        "hardhat-contract-sizer": "^2.10.0"
     }
 }

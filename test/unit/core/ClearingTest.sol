@@ -990,7 +990,7 @@ contract ClearingTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(IPendingPool.CannotCancelRequestIfClearingIsPending.selector));
         lendingPoolManager.cancelWithdrawalRequest(lpd.lendingPool, aliceWithdrawalId);
 
-        vm.expectRevert(abi.encodeWithSelector(ILendingPool.ClearingIsPending.selector));
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolErrors.ClearingIsPending.selector));
         vm.prank(poolManagerAccount);
         lendingPoolManager.forceImmediateWithdrawal(lpd.lendingPool, lpd.tranches[2], alice, 1);
 
