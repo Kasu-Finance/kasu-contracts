@@ -366,6 +366,20 @@ contract PendingPool is
     }
 
     /**
+     * @notice Accepts a withdrawal request.
+     * @param wNftID The withdrawal id to accept.
+     * @param acceptedShares The amount of shares to accept.
+     */
+    function forceAcceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares)
+        external
+        onlyLendingPoolManager
+        notPendingClearing
+        verifyWithdrawalNft(wNftID)
+    {
+        _acceptWithdrawalRequest(wNftID, acceptedShares);
+    }
+
+    /**
      * @notice Force cancels a pending withdrawal request.
      * @dev Transfers tranche shares from the pending pool back to the user.
      * @param wNftID The withdrawal id to cancel.
@@ -470,6 +484,12 @@ contract PendingPool is
     function _canCancel() private view {
         if (_clearingCoordinator.isLendingPoolClearingPending(address(_ownLendingPool()))) {
             revert CannotCancelRequestIfClearingIsPending();
+        }
+    }
+
+    function _notPendingClearing() private view {
+        if (_clearingCoordinator.isLendingPoolClearingPending(address(_ownLendingPool()))) {
+            revert CannotProcessRequestIfClearingIsPending();
         }
     }
 
@@ -747,6 +767,11 @@ contract PendingPool is
 
     modifier canCancel() {
         _canCancel();
+        _;
+    }
+
+    modifier notPendingClearing() {
+        _notPendingClearing();
         _;
     }
 

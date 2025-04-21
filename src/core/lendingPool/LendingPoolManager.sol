@@ -507,6 +507,21 @@ contract LendingPoolManager is
     }
 
     /**
+     * @notice Accept withdrawal request for the user by the pool manager.
+     * @param lendingPool Address of the lending pool.
+     * @param wNftID ID of the withdrawal NFT to accept.
+     * @param acceptedShares Amount of shares to accept.
+     */
+    function forceAcceptWithdrawalRequest(address lendingPool, uint256 wNftID, uint256 acceptedShares)
+        external
+        whenNotPaused
+        onlyLendingPoolRole(lendingPool, ROLE_POOL_MANAGER, msg.sender)
+        validLendingPool(lendingPool)
+    {
+        _pendingPool(lendingPool).forceAcceptWithdrawalRequest(wNftID, acceptedShares);
+    }
+
+    /**
      * @notice Prematurely end the fixed term deposit for the user by the pool manager.
      * @param lendingPool Address of the lending pool.
      * @param fixedTermDepositId ID of the fixed term deposit.
