@@ -117,5 +117,11 @@
         "implementation": "0x1617B79c57E00c862941EB578fD134C4D1c0F833",
         "startBlock": 23046539,
         "proxyType": "TransparentProxy"
+    },
+    "KasuPoolExternalTVL": {
+        "address": "0x662379FEBb3e4F91400B5f7d4f7F7ce4699F3c9F",
+        "implementation": "0xE477a800c428c7ACe5bA2b4CEf0bE55BcA2cb191",
+        "startBlock": 35595730,
+        "proxyType": "TransparentProxy"
     }
 }
