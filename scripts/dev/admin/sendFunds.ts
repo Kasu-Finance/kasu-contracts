@@ -1,8 +1,8 @@
-import { ERC20__factory } from '../../typechain-types';
+import { ERC20__factory } from '../../../typechain-types';
 import * as hre from 'hardhat';
-import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
+import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import { ContractTransactionResponse } from 'ethers';
-import { getAccounts } from '../_modules/getAccounts';
+import { getAccounts } from '../../_modules/getAccounts';
 
 const recipients = [
     '0x022d1b8c2808702013bb52D0429F45FDC571dD53',
@@ -33,7 +33,7 @@ async function main() {
 
     for (const recipient of recipients) {
         console.log(`Sending ${ETH_TO_SEND} ETH to ${recipient}`);
-        let tx = await admin.sendTransaction({
+        tx = await admin.sendTransaction({
             to: recipient,
             value: hre.ethers.parseEther(ETH_TO_SEND),
         });

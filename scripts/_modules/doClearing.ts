@@ -1,11 +1,9 @@
-import { ethers, parseUnits, Signer } from 'ethers';
+import { ethers, Signer } from 'ethers';
 import * as hre from 'hardhat';
 import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
-import { getAccounts } from './getAccounts';
 import {
     LendingPoolManager__factory,
-    SystemVariablesTestable__factory,
 } from '../../typechain-types';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
 

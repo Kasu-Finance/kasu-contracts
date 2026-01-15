@@ -465,7 +465,7 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
 
             uint256 trancheBalanceAfter = ILendingPoolTranche(depositConfig.tranche).balanceOf(address(this));
 
-            uint256 userTrancheSharesAfter;
+            uint256 userTrancheSharesAfter = trancheShares;
             if (trancheBalanceAfter > trancheBalanceBefore) {
                 // add tranche shares to the user lock
 

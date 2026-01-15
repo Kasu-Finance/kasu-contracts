@@ -1,5 +1,5 @@
 import * as repl from 'node:repl';
-import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
+import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import {
     KasuAllowList__factory,
     KasuController__factory,
@@ -9,7 +9,7 @@ import {
     MockUSDC__factory,
     SystemVariablesTestable__factory,
     UserManager__factory,
-} from '../../typechain-types';
+} from '../../../typechain-types';
 import { ethers } from 'ethers';
 import * as dotenv from 'dotenv';
 

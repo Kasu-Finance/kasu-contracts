@@ -1,8 +1,5 @@
 import { ContractTransactionResponse, Signer } from 'ethers';
 import { LendingPoolManager__factory } from '../../typechain-types';
-import path from 'path';
-import * as hre from 'hardhat';
-import fs from 'fs';
 import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 
 export type RequestWithdrawInput = {

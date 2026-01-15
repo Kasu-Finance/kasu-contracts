@@ -1,7 +1,7 @@
-import { ERC20__factory, KSULocking__factory } from '../../typechain-types';
+import { ERC20__factory, KSULocking__factory } from '../../../typechain-types';
 import * as hre from 'hardhat';
-import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
-import { getAccounts } from '../_modules/getAccounts';
+import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
+import { getAccounts } from '../../_modules/getAccounts';
 
 async function main() {
     const addressFile = deploymentFileFactory(hre.network.name, 0);

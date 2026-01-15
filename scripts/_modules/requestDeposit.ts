@@ -1,18 +1,10 @@
 import { ContractTransactionResponse, Signer } from 'ethers';
-import {
-    KasuAllowList__factory,
-    LendingPoolManager__factory,
-    MockUSDC__factory,
-} from '../../typechain-types';
+import { ERC20__factory, LendingPoolManager__factory } from '../../typechain-types';
 import * as hre from 'hardhat';
-import fs from 'fs';
-import {
-    deploymentFileFactory,
-    getDeploymentFilePath,
-} from '../_utils/deploymentFileFactory';
+import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 import { getAccounts } from './getAccounts';
 import { allowUsers } from './allowUsers';
-import { mockUsdcMintUser } from './mockUsdcMintUsers';
+import { fundUsdcUsers } from './usdc';
 
 export type RequestDepositInput = {
     user: Signer;
@@ -28,8 +20,6 @@ export async function requestDeposits(
     fundAccounts = true,
     allowAccounts = true,
 ) {
-    let tx: ContractTransactionResponse;
-
     const addressFile = deploymentFileFactory(hre.network.name, 0);
     const deploymentAddresses = addressFile.getContractAddresses();
 
@@ -39,7 +29,7 @@ export async function requestDeposits(
 
     // fund accounts
     if (fundAccounts) {
-        await mockUsdcMintUser(
+        await fundUsdcUsers(
             requestDepositsInput.map((it) => {
                 return { user: it.user, amount: it.amount };
             }),
@@ -64,7 +54,7 @@ export async function requestDeposits(
             rd.trancheAddress,
             rd.amount,
             rd.ftdConfigId,
-            rd.depositData ?? "0x",
+            rd.depositData ?? '0x',
         );
     }
 }
@@ -81,7 +71,7 @@ async function requestDeposit(
     let tx: ContractTransactionResponse;
 
     console.info('User deposit request');
-    const usdcRequester = MockUSDC__factory.connect(
+    const usdcRequester = ERC20__factory.connect(
         addresses['USDC'].address,
         requester,
     );

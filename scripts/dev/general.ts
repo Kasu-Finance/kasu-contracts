@@ -1,10 +1,9 @@
-import hre, { ethers } from 'hardhat';
-import { getDeploymentFilePath } from './_utils/deploymentFileFactory';
-import { getAccounts } from './_modules/getAccounts';
-import { parseKasuError } from './_utils/parseErrors';
-import { SystemVariables__factory } from '../typechain-types';
+import hre from 'hardhat';
+import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
+import { getAccounts } from '../_modules/getAccounts';
+import { parseKasuError } from '../_utils/parseErrors';
+import { SystemVariables__factory } from '../../typechain-types';
 import fs from 'fs';
-import { ContractTransactionResponse } from 'ethers';
 
 async function main() {
     // setup
@@ -16,17 +15,10 @@ async function main() {
     const signers = await getAccounts(hre.network.name);
     const adminAccount = signers[1];
 
-    // contracts
-    const systemVariablesImplementation = await ethers.getContractFactory(
-        'SystemVariables',
-    );
-
     const systemVariables = SystemVariables__factory.connect(
         deploymentAddresses.SystemVariables.address,
         adminAccount,
     );
-
-    let tx: ContractTransactionResponse;
 
     try {
         const currentEpochNumber = await systemVariables.currentEpochNumber();

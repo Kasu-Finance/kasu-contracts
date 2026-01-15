@@ -1,9 +1,9 @@
-import { SystemVariablesTestable__factory } from '../../typechain-types';
+import { SystemVariablesTestable__factory } from '../../../typechain-types';
 import { ContractTransactionResponse, Signer } from 'ethers';
-import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
+import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import * as hre from 'hardhat';
 
-export async function starClearing(adminAccount: Signer) {
+export async function startClearing(adminAccount: Signer) {
     const deploymentFile = deploymentFileFactory(hre.network.name);
     const deploymentAddresses = deploymentFile.getContractAddresses();
 

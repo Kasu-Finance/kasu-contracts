@@ -4,7 +4,7 @@ import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
 import {
     LendingPoolManager__factory,
-    MockUSDC__factory,
+    ERC20__factory,
 } from '../../typechain-types';
 import { parseKasuError } from '../_utils/parseErrors';
 import { ContractTransactionResponse } from 'ethers';
@@ -29,7 +29,7 @@ async function main() {
         admin,
     );
 
-    const mockUSDCAdmin = MockUSDC__factory.connect(
+    const usdcAdmin = ERC20__factory.connect(
         deploymentAddresses.USDC.address,
         admin,
     );
@@ -38,7 +38,7 @@ async function main() {
 
     // interactions
     console.log('Approving amount...');
-    tx = await mockUSDCAdmin.approve(
+    tx = await usdcAdmin.approve(
         deploymentAddresses.LendingPoolManager.address,
         repayAmount,
     );

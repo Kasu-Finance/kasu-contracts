@@ -129,8 +129,9 @@ contract LendingPoolManager is
         uint256 fixedTermConfigId,
         bytes calldata depositData
     )
-        external
+        public
         payable
+        virtual
         whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)
@@ -164,6 +165,7 @@ contract LendingPoolManager is
     )
         external
         payable
+        virtual
         whenNotPaused
         validLendingPool(lendingPool)
         isUserNotBlocked(msg.sender)

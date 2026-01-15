@@ -520,6 +520,79 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
         lendingPoolManager.endFixedTermDeposit(lpd.lendingPool, 4, 0);
     }
 
+    function test_fixedTermDeposit_equalRateDoesNotBurnShares() public {
+        // ### ARRANGE ###
+        // skip first epoch
+        skip(1 weeks);
+
+        uint256 interestRate = INTEREST_RATE_FULL_PERCENT / 1000;
+
+        LendingPoolDeployment memory lpd;
+        {
+            CreateTrancheConfig[] memory tranches = new CreateTrancheConfig[](3);
+            tranches[0] = CreateTrancheConfig(30_00, interestRate, 0, type(uint256).max);
+            tranches[1] = CreateTrancheConfig(20_00, interestRate, 0, type(uint256).max);
+            tranches[2] = CreateTrancheConfig(50_00, interestRate, 0, type(uint256).max);
+            CreatePoolConfig memory createPoolConfig = CreatePoolConfig({
+                poolName: "PoolEqualRate",
+                poolSymbol: "PER",
+                targetExcessLiquidityPercentage: 0,
+                minExcessLiquidityPercentage: 0,
+                tranches: tranches,
+                poolAdmin: lendingPoolAdminAccount,
+                drawRecipient: poolFundsManagerAccount,
+                desiredDrawAmount: 0
+            });
+            lpd = _createLendingPoolFromConfig(createPoolConfig);
+        }
+
+        vm.startPrank(admin);
+        lendingPoolManager.updateTrancheInterestRateChangeEpochDelay(lpd.lendingPool, 0);
+        vm.stopPrank();
+
+        vm.startPrank(poolManagerAccount);
+        uint256 configId = lendingPoolManager.addLendingPoolTrancheFixedTermDeposit(
+            lpd.lendingPool, lpd.tranches[0], 4, interestRate, false
+        );
+        vm.stopPrank();
+
+        uint256 depositAmount = 10_000 * 1e6;
+        uint256 dNftId = _requestFixedTermDeposit(alice, lpd.lendingPool, lpd.tranches[0], depositAmount, configId);
+        _acceptDepositRequest(lpd.lendingPool, dNftId, depositAmount);
+
+        uint256[] memory ftdIds = fixedTermDeposit.lendingPoolFixedTermDepositIds(lpd.lendingPool);
+        assertEq(ftdIds.length, 1);
+
+        UserLendingPoolFixedTermDeposit memory ftdBefore =
+            fixedTermDeposit.lendingPoolFixedTermDeposit(lpd.lendingPool, ftdIds[0]);
+        uint256 lockedShares = ftdBefore.trancheShares;
+        assertGt(lockedShares, 0);
+
+        // move to clearing period
+        skip(6 days);
+        userManager.batchCalculateUserLoyaltyLevels(type(uint256).max);
+
+        uint256[] memory trancheDesiredRatios = new uint256[](3);
+        trancheDesiredRatios[0] = 30_00;
+        trancheDesiredRatios[1] = 20_00;
+        trancheDesiredRatios[2] = 50_00;
+
+        ClearingConfiguration memory clearingConfiguration = ClearingConfiguration(0, trancheDesiredRatios, 0, 0);
+        _doClearing(
+            poolClearingManagerAccount,
+            lpd.lendingPool,
+            systemVariables.currentEpochNumber(),
+            type(uint256).max,
+            type(uint256).max,
+            clearingConfiguration,
+            false
+        );
+
+        UserLendingPoolFixedTermDeposit memory ftdAfter =
+            fixedTermDeposit.lendingPoolFixedTermDeposit(lpd.lendingPool, ftdIds[0]);
+        assertEq(ftdAfter.trancheShares, lockedShares);
+    }
+
     struct Balances {
         uint256[][] trancheUser;
         uint256 feesOwed;

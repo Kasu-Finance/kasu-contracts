@@ -20,7 +20,7 @@ import "./Constants.sol";
  */
 contract UserManager is IUserManager, Initializable {
     /// @notice System variables contract.
-    ISystemVariables private immutable _systemVariables;
+    ISystemVariables internal immutable _systemVariables;
 
     /// @notice KSU locking contract.
     IKSULocking private immutable _ksuLocking;
@@ -109,7 +109,7 @@ contract UserManager is IUserManager, Initializable {
      * @param epoch The epoch number.
      * @return The calculated user's loyalty level for the epoch.
      */
-    function calculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view returns (uint8) {
+    function calculatedUserEpochLoyaltyLevel(address user, uint256 epoch) external view virtual returns (uint8) {
         return _userEpochLoyaltyLevel[user][epoch];
     }
 
@@ -118,7 +118,12 @@ contract UserManager is IUserManager, Initializable {
      * @param epoch The epoch number.
      * @return The epoch user loyalty processing details.
      */
-    function epochUserLoyaltyProcessing(uint256 epoch) external view returns (EpochUserLoyaltyProcessing memory) {
+    function epochUserLoyaltyProcessing(uint256 epoch)
+        external
+        view
+        virtual
+        returns (EpochUserLoyaltyProcessing memory)
+    {
         return _epochUserLoyaltyProcessing[epoch];
     }
 
@@ -199,7 +204,7 @@ contract UserManager is IUserManager, Initializable {
      * @param user The address of the user.
      * @return True if the user can deposit in the junior tranche.
      */
-    function canUserDepositInJuniorTranche(address user) external view returns (bool) {
+    function canUserDepositInJuniorTranche(address user) external view virtual returns (bool) {
         if (_systemVariables.userCanOnlyDepositToJuniorTrancheWhenHeHasRKSU()) {
             return hasUserRKSU(user);
         } else {
@@ -212,7 +217,7 @@ contract UserManager is IUserManager, Initializable {
      * @param epoch The epoch number.
      * @return True if the user loyalty levels are processed for the epoch.
      */
-    function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view returns (bool) {
+    function areUserEpochLoyaltyLevelProcessed(uint256 epoch) external view virtual returns (bool) {
         return _epochUserLoyaltyProcessing[epoch].didStart
             && _epochUserLoyaltyProcessing[epoch].processedUsersCount == _epochUserLoyaltyProcessing[epoch].userCount;
     }
@@ -223,7 +228,7 @@ contract UserManager is IUserManager, Initializable {
      * @return currentEpoch The current epoch number.
      * @return loyaltyLevel The user's loyalty level.
      */
-    function userLoyaltyLevel(address user) external view returns (uint256 currentEpoch, uint8 loyaltyLevel) {
+    function userLoyaltyLevel(address user) external view virtual returns (uint256 currentEpoch, uint8 loyaltyLevel) {
         LoyaltyGlobalParameters memory params = _loyaltyParameters();
         currentEpoch = params.currentEpoch;
         (loyaltyLevel,,) = _userLoyaltyLevel(user, params);
@@ -238,7 +243,7 @@ contract UserManager is IUserManager, Initializable {
      * Can only be called during the clearing time.
      * @param batchSize The size of the batch.
      */
-    function batchCalculateUserLoyaltyLevels(uint256 batchSize) external {
+    function batchCalculateUserLoyaltyLevels(uint256 batchSize) external virtual {
         if (!_systemVariables.isClearingTime()) {
             revert CanOnlyExecuteDuringClearingTime();
         }

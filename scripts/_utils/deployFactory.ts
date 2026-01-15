@@ -19,6 +19,20 @@ export function deployOptions(
     };
 }
 
+async function verifyImplementation(
+    address: string,
+    constructorArgs: unknown[] | undefined,
+) {
+    try {
+        await hre.run('verify:verify', {
+            address,
+            constructorArguments: constructorArgs ?? [],
+        });
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 export async function deployFactory(
     addressFile: ReturnType<typeof deploymentFileFactory>,
     isNewDeployment: boolean,
@@ -63,6 +77,13 @@ export async function deployFactory(
                     deployedImplementationAddress,
                     'TransparentProxy',
                 );
+
+                if (verifySource && deployedImplementationAddress) {
+                    await verifyImplementation(
+                        deployedImplementationAddress,
+                        options.constructorArgs,
+                    );
+                }
             }
 
             if (!isNewDeployment && deployUpdates) {
@@ -97,23 +118,20 @@ export async function deployFactory(
                         );
                 }
 
+                const implementationToWrite =
+                    deployedImplementationAddress || newImplementationAddress;
                 addressFile.writeAddressProxy(
                     exportName,
                     proxyAddress,
-                    newImplementationAddress,
+                    implementationToWrite,
                     'TransparentProxy',
                 );
-            }
 
-            if (!isNewDeployment && verifySource) {
-                proxyAddress = addressFile.getContractAddress(exportName);
-                try {
-                    await hre.run('verify:verify', {
-                        address: proxyAddress,
-                        constructorArguments: options.constructorArgs,
-                    });
-                } catch (e) {
-                    console.error(e);
+                if (verifySource && implementationToWrite) {
+                    await verifyImplementation(
+                        implementationToWrite,
+                        options.constructorArgs,
+                    );
                 }
             }
 
@@ -156,11 +174,18 @@ export async function deployFactory(
                     deployedImplementationAddress,
                     'BeaconProxy',
                 );
+
+                if (verifySource && deployedImplementationAddress) {
+                    await verifyImplementation(
+                        deployedImplementationAddress,
+                        options.constructorArgs,
+                    );
+                }
             }
 
             if (!isNewDeployment && deployUpdates) {
                 console.log(`Checking to update ${name} contract`);
-                beaconAddress = addressFile.getContractAddress(name);
+                beaconAddress = addressFile.getContractAddress(exportName);
 
                 const newImplementationAddress = (await upgrades.prepareUpgrade(
                     beaconAddress,
@@ -184,25 +209,27 @@ export async function deployFactory(
                         options,
                     );
                     beaconAddress = await proxy.getAddress();
+
+                    deployedImplementationAddress =
+                        await upgrades.beacon.getImplementationAddress(
+                            beaconAddress,
+                        );
                 }
 
+                const implementationToWrite =
+                    deployedImplementationAddress || newImplementationAddress;
                 addressFile.writeAddressProxy(
                     exportName,
                     beaconAddress,
-                    newImplementationAddress,
+                    implementationToWrite,
                     'BeaconProxy',
                 );
-            }
 
-            if (!isNewDeployment && verifySource) {
-                beaconAddress = addressFile.getContractAddress(exportName);
-                try {
-                    await hre.run('verify:verify', {
-                        address: beaconAddress,
-                        constructorArguments: options.constructorArgs,
-                    });
-                } catch (e) {
-                    console.error(e);
+                if (verifySource && implementationToWrite) {
+                    await verifyImplementation(
+                        implementationToWrite,
+                        options.constructorArgs,
+                    );
                 }
             }
 

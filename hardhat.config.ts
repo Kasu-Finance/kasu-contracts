@@ -90,11 +90,26 @@ const config: HardhatUserConfig = {
             url: 'https://mainnet.base.org',
             chainId: 8453,
         },
+        xdc: {
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.xinfin.network',
+            chainId: 50,
+        },
     },
     etherscan: {
         apiKey: {
             base: 'YOUR_API_KEY',
+            xdc: process.env.XDC_SCAN_API_KEY ?? '',
         },
+        customChains: [
+            {
+                network: 'xdc',
+                chainId: 50,
+                urls: {
+                    apiURL: 'https://api.xdcscan.io/api',
+                    browserURL: 'https://xdcscan.io',
+                },
+            },
+        ],
     },
 };
 

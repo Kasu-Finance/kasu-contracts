@@ -1,7 +1,7 @@
 import {
     createLendingPool,
     getDefaultLendingPoolConfig,
-} from '../_modules/createLendingPool';
+} from '../../_modules/createLendingPool';
 
 async function main() {
     await createLendingPool(

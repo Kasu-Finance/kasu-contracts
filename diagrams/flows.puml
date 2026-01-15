@@ -1,88 +1,118 @@
 @startuml
 actor User
-
-participant KYC
+actor "Nexera \n KYC" as KYC
+actor "Kasu \n Backend" as KB
+actor "Pool \n Manager" as PM
 actor "Funds \n Manager" as FundsM
+actor "Clearing \n Manager" as CM
+actor "Draw \n Recipient" as DR
+actor "Protocol Fee \n Claimer" as PFC
 
-
+participant "Kasu Allow List \n (Nexera KYC)" as AL
 participant "Lending Pool Manager" as LPM
 participant "Pending Pool \n ERC721" as PP
 participant "Lending Pool \n ERC20" as LP
 participant "Tranche \n ERC4626 \n ERC1155" as T
-
-participant Automation
-actor "Clearing \n Manager" as CM
-participant "Clearing \n Coordinator" as CC
+participant "Fixed Term \n Deposit" as FTD
+participant "System \n Variables" as SV
 participant "KSU \n Price" as KP
 participant "User \n Manager" as UM
-actor "Draw \n Recipient" as DR
+participant "Clearing \n Coordinator" as CC
 participant "Fee \n Manager" as FM
 participant "KSU \n Locking" as KSL
 
-actor "Protocol Fee \n Claimer" as PFC
-
-
-group KYC
-User -> KYC: kyc process
-KYC --> User
+group KYC (offchain)
+User -> KYC: request KYC / KYB
+KYC --> User: signed data
 end
 
 group requestDeposit
-User -> LPM: requestDeposit(lendingPool, tranche, usdcAmount)
-User -> LPM : transfer usdc
-LPM -> PP: transfer usdc
-PP --> User: dNft
+User -> LPM: requestDeposit(...) / requestDepositWithKyc(...)
+LPM -> AL: blockList check
+alt allowlist deposit
+  LPM -> AL: allowList check
+else KYC deposit
+  LPM -> AL: verifyUserKyc(signed data)
+end
+LPM -> User: transferFrom USDC
+LPM -> PP: requestDeposit(..., fixedTermConfigId)
+PP -> LPM: transferFrom USDC
+PP --> User: mint dNFT
 end
 
 group cancelRequestDeposit
 User -> LPM: cancelDepositRequest(dNft)
 LPM -> PP: cancelDepositRequest
+PP -> PP: burn dNFT
 PP --> User: transfer USDC
 end
 
 newpage
 
 group requestWithdrawal
-User -> LPM: requestWithdrawal(lendingPool, tranche, trancheSharesAmount)
-LPM -> PP : requestWithdrawal
-User -> PP: transfer tranche shares - erc4626
-PP --> User: mint wNFT - erc721
+User -> LPM: requestWithdrawal(lendingPool, tranche, trancheShares)
+LPM -> PP: requestWithdrawal
+PP -> User: transferFrom tranche shares
+PP --> User: mint wNFT
 end
 
 group cancelWithdrawal
 User -> LPM: cancelWithdrawalRequest(wNft)
 LPM -> PP: cancelWithdrawalRequest
-PP -> PP: burn wNFT - erc721
-PP --> User: transfer tranche shares - erc4626
+PP -> PP: burn wNFT
+PP --> User: transfer tranche shares
+end
+
+newpage
+
+group fixedTerm
+PM -> LPM: add/update fixed term config (per tranche)
+User -> LPM: lockDepositForFixedTerm(tranche, shares, configId)
+LPM -> FTD: lockFixedTermDepositManually
+FTD -> T: transferFrom tranche shares
+
+User -> LPM: requestFixedTermDepositWithdrawal(fixedTermDepositId)
+LPM -> FTD: requestFixedTermDepositWithdrawal
+
+User -> LPM: cancelFixedTermDepositWithdrawalRequest(fixedTermDepositId)
+LPM -> FTD: cancelFixedTermDepositWithdrawalRequest
+
+PM -> LPM: endFixedTermDeposit(fixedTermDepositId)
+LPM -> FTD: endFixedTermDeposit
+FTD --> User: transfer tranche shares (if ended early)
 end
 
 newpage
 
 group clearing
 group preparation
-Automation -> KP: updateKsuPrice
-Automation -> UM: calculateUserLoyaltyLevels
+KB -> SV: updateKsuEpochTokenPrice()
+SV -> KP: ksuTokenPrice()
+KB -> UM: batchCalculateUserLoyaltyLevels()
 end
 
-group accepting
-CM -> CC: doClearing(lendingPool)
-CC -> PP: calculate accept deposits / withdrawals
-CC -> PP: accept request deposits / withdrawals
+group clearingSteps
+CM -> LPM: doClearing(lendingPool, ...)
+LPM -> CC: doClearing(lendingPool, ...)
+
+CC -> LP: applyInterests(epoch)
+CC -> FTD: applyFixedTermInterests(epoch)
+FTD -> LP: applyFixedRateInterests(user, tranche, shares, rate)
+
+CC -> PP: calculatePendingRequestsPriorityBatch(epoch)
+CC -> PP: calculateAndSaveAcceptedRequests(epoch)
+CC -> PP: executeAcceptedRequestsBatch(epoch)
 
     group accept deposits
-    PP -> PP: update/burn dNft - erc721
-    PP -> LP: transfer USDC
-    LP -> LP: mint LP tokens - erc20
-    LP -> T: deposit LP - erc4626
-    T --> User: mint tranche shares - erc4626
+    PP -> LP: acceptDeposit(tranche, user, amount)
+    LP -> T: deposit LP tokens
+    T --> User: mint tranche shares
+    PP -> FTD: lockFixedTermDepositAutomatically (if configId)
     end
 
     group accept withdrawals
-    PP -> PP: update/burn wNFT - erc721
-    PP -> LP: accept withdrawal
-    T -> LP: redeem LP - erc4626
-    T -> T: burn tranche shares - erc4626
-    LP -> LP: burn LP tokens \n (equivalent tranche shares) - erc20
+    PP -> LP: acceptWithdrawal(tranche, user, shares)
+    T -> LP: redeem LP tokens
     LP -> User: transfer USDC
     end
 end
@@ -94,23 +124,20 @@ end
 
 group payOwedFees
 CC -> LP: payOwedFees
-LP -> FM: emitFees
-LP -> FM: transfer USDC
-FM -> KSL: transfer ecosystem fee
+LP -> FM: emitFees (transfer USDC)
+FM -> KSL: emitFees (ecosystem fee)
 end
 
 end
 
-PFC -> FM: claim protocol fee
+PFC -> FM: claimProtocolFees
 
 newpage
 
 group repayment
-FundsM -> LPM: repayOwnedFunds
-FundsM -> LPM: transfer USDC
-LPM -> LP: repayOwnedFunds
-LPM -> LP: transfer USDC
-
+FundsM -> LPM: repayOwedFunds(lendingPool, amount, repaymentAddress)
+LPM -> FundsM: transferFrom USDC
+LPM -> LP: repayOwedFunds
 end
 
 @enduml

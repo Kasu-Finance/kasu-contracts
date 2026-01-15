@@ -2,12 +2,12 @@ import {
     KSU__factory,
     KSULocking__factory,
     MockUSDC__factory,
-} from '../typechain-types';
+} from '../../typechain-types';
 import * as hre from 'hardhat';
 import { parseUnits } from 'ethers';
-import { lockPeriod30, lockPeriod180 } from './_modules/addLockPeriods';
-import { getAccounts } from './_modules/getAccounts';
-import { getDeploymentFilePath } from './_utils/deploymentFileFactory';
+import { lockPeriod30, lockPeriod180 } from '../_modules/addLockPeriods';
+import { getAccounts } from '../_modules/getAccounts';
+import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
 
 async function main() {

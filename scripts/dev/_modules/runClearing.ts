@@ -1,10 +1,10 @@
 import { Signer } from 'ethers';
-import { doClearing } from './doClearing';
-import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
-import { calculateLoyaltyLevel } from './calculateLoyaltyLevel';
-import { endClearing, starClearing } from './startEndClearing';
-import { getCurrentEpochNumber } from './getCurrentEpochNumber';
-import { repayPool } from './repayPool';
+import { doClearing } from '../../_modules/doClearing';
+import { ClearingConfigurationStruct } from '../../../typechain-types/src/core/clearing/ClearingSteps';
+import { calculateLoyaltyLevel } from '../../_modules/calculateLoyaltyLevel';
+import { endClearing, startClearing } from './startEndClearing';
+import { getCurrentEpochNumber } from '../../_modules/getCurrentEpochNumber';
+import { repayPool } from '../../_modules/repayPool';
 
 export async function runClearing(
     lendingPoolAddress: string,
@@ -15,11 +15,17 @@ export async function runClearing(
     doEndClearing = false,
 ) {
     if (repayAmount > 0) {
-        await repayPool(lendingPoolAddress, adminAccount, repayAmount, true);
+        await repayPool(
+            lendingPoolAddress,
+            adminAccount,
+            repayAmount,
+            true,
+            true,
+        );
     }
 
     console.log('Manually start clearing period');
-    await starClearing(adminAccount);
+    await startClearing(adminAccount);
 
     console.log('Calculating loyalty level');
     await calculateLoyaltyLevel(10000, adminAccount);

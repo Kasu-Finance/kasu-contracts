@@ -1,26 +1,25 @@
-import { parseKasuError } from '../_utils/parseErrors';
-import { getAccounts } from '../_modules/getAccounts';
+import { parseKasuError } from '../../_utils/parseErrors';
+import { getAccounts } from '../../_modules/getAccounts';
 import * as hre from 'hardhat';
-import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
+import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import {
     createLendingPool,
     getDefaultLendingPoolConfig,
-} from '../_modules/createLendingPool';
-import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
+} from '../../_modules/createLendingPool';
+import { ClearingConfigurationStruct } from '../../../typechain-types/src/core/clearing/ClearingSteps';
 import {
     RequestDepositInput,
     requestDeposits,
-} from '../_modules/requestDeposit';
+} from '../../_modules/requestDeposit';
 import { ethers } from 'hardhat';
 import {
     ClearingCoordinator__factory,
-    LendingPool__factory,
     LendingPoolManager__factory,
-} from '../../typechain-types';
+} from '../../../typechain-types';
 import { ContractTransactionResponse } from 'ethers';
 import { runClearing } from '../_modules/runClearing';
-import { addFixedTermDeposit } from '../_modules/addFixedTermDeposit';
-import { addFixedTermDepositConfigAllowlist } from '../_modules/addFixedTermDepositConfigAllowlist';
+import { addFixedTermDeposit } from '../../_modules/addFixedTermDeposit';
+import { addFixedTermDepositConfigAllowlist } from '../../_modules/addFixedTermDepositConfigAllowlist';
 
 function toUSDC(usd: bigint): bigint {
     return ethers.parseUnits(usd.toString(), 6);

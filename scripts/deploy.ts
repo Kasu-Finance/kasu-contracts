@@ -19,16 +19,26 @@ import hre from 'hardhat';
 import { addLockPeriods } from './_modules/addLockPeriods';
 import { getAccounts } from './_modules/getAccounts';
 
-// config values
-export const wEthAddress = '0x4200000000000000000000000000000000000006';
-const NEXERA_ID_SIGNER = '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
-let PROTOCOL_FEE_RECEIVER = '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483';
-let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
+type DeploymentMode = 'full' | 'lite';
 
-const deployMockUSDC = true;
-const deploySystemVariablesTestable = true;
-const deployUpdates = true;
-const verifySource = true;
+// config values
+const DEFAULT_WRAPPED_NATIVE_ADDRESS =
+    '0x4200000000000000000000000000000000000006';
+const DEFAULT_NEXERA_ID_SIGNER =
+    '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
+const DEFAULT_PROTOCOL_FEE_RECEIVER = '';
+const DEFAULT_USDC_ADDRESS =
+    '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
+
+const LOCAL_NETWORKS = new Set(['localhost', 'hardhat']);
+
+function resolveBooleanEnv(name: string, defaultValue: boolean): boolean {
+    const rawValue = process.env[name];
+    if (!rawValue) {
+        return defaultValue;
+    }
+    return rawValue.toLowerCase() === 'true';
+}
 
 async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -40,19 +50,48 @@ async function main() {
     // get signers
     const signers = await getAccounts(hre.network.name);
 
+    const deploymentMode = (process.env.DEPLOYMENT_MODE ?? 'full').toLowerCase() as DeploymentMode;
+    if (deploymentMode !== 'full' && deploymentMode !== 'lite') {
+        throw new Error(`Invalid DEPLOYMENT_MODE: ${deploymentMode}`);
+    }
+    const isLiteDeployment = deploymentMode === 'lite';
+    const isLocalNetwork = LOCAL_NETWORKS.has(hre.network.name);
+
+    const deployMockUSDC = resolveBooleanEnv('DEPLOY_MOCK_USDC', isLocalNetwork);
+    const deploySystemVariablesTestable = resolveBooleanEnv(
+        'DEPLOY_SYSTEM_VARIABLES_TESTABLE',
+        isLocalNetwork,
+    );
+    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', isLocalNetwork);
+    const verifySource = resolveBooleanEnv('VERIFY_SOURCE', !isLocalNetwork);
+
     const deployerSigner = signers[0];
     const deployerAddress = await deployerSigner.getAddress();
 
     const adminSigner = signers[1];
     const adminAddress = await adminSigner.getAddress();
 
-    if (PROTOCOL_FEE_RECEIVER === '') {
-        PROTOCOL_FEE_RECEIVER = adminAddress;
+    const nexeraIdSigner =
+        process.env.NEXERA_ID_SIGNER ?? DEFAULT_NEXERA_ID_SIGNER;
+    const wrappedNativeAddress =
+        process.env.WRAPPED_NATIVE_ADDRESS ?? DEFAULT_WRAPPED_NATIVE_ADDRESS;
+    let protocolFeeReceiver =
+        process.env.PROTOCOL_FEE_RECEIVER ?? DEFAULT_PROTOCOL_FEE_RECEIVER;
+    let usdcAddress = process.env.USDC_ADDRESS ?? DEFAULT_USDC_ADDRESS;
+
+    if (protocolFeeReceiver === '') {
+        protocolFeeReceiver = adminAddress;
     }
 
     console.log();
     console.log('deployer account: ', deployerAddress);
     console.log('admin account: ', adminAddress);
+    console.log(`deployment mode: ${isLiteDeployment ? 'Lite' : 'Full'}`);
+    console.log('deploy mock usdc: ', deployMockUSDC);
+    console.log('deploy system variables testable: ', deploySystemVariablesTestable);
+    console.log('deploy updates: ', deployUpdates);
+    console.log('verify source: ', verifySource);
+    console.log('wrapped native: ', wrappedNativeAddress);
     console.log();
 
     const { deployTransparentProxy, deployBeacon } = await deployFactory(
@@ -65,13 +104,19 @@ async function main() {
 
     // deploy
     let tx: ContractTransactionResponse;
-    const ksuDeploymentAddress = await deployTransparentProxy(
-        'KSU',
-        deployOptions(deployerAddress, []),
-    );
-    const ksu = KSU__factory.connect(ksuDeploymentAddress, adminSigner);
+    let ksuDeploymentAddress = '';
+    let ksu:
+        | ReturnType<typeof KSU__factory.connect>
+        | undefined;
 
-    let usdcAddress = USDC_ADDRESS;
+    if (!isLiteDeployment) {
+        ksuDeploymentAddress = await deployTransparentProxy(
+            'KSU',
+            deployOptions(deployerAddress, []),
+        );
+        ksu = KSU__factory.connect(ksuDeploymentAddress, adminSigner);
+    }
+
     if (deployMockUSDC) {
         usdcAddress = await deployTransparentProxy(
             'MockUSDC',
@@ -81,6 +126,11 @@ async function main() {
         const usdc = MockUSDC__factory.connect(usdcAddress, adminSigner);
         tx = await usdc.initialize();
         await tx.wait(1);
+    } else {
+        const existingAddresses = addressFile.getContractAddresses();
+        if (!existingAddresses.USDC?.address) {
+            addressFile.writeAddress('USDC', usdcAddress);
+        }
     }
 
     const kasuControllerDeploymentAddress = await deployTransparentProxy(
@@ -89,25 +139,38 @@ async function main() {
     );
 
     const ksuLockingDeploymentAddress = await deployTransparentProxy(
+        isLiteDeployment ? 'KSULockingLite' : 'KSULocking',
+        deployOptions(
+            deployerAddress,
+            isLiteDeployment ? [] : [kasuControllerDeploymentAddress],
+        ),
         'KSULocking',
-        deployOptions(deployerAddress, [kasuControllerDeploymentAddress]),
     );
-    const ksuLocking = KSULocking__factory.connect(
-        ksuLockingDeploymentAddress,
-        adminSigner,
-    );
+    const ksuLocking = !isLiteDeployment
+        ? KSULocking__factory.connect(ksuLockingDeploymentAddress, adminSigner)
+        : undefined;
 
-    const manualKsuPriceDeploymentAddress = await deployTransparentProxy(
-        'ManualKsuPrice',
-        deployOptions(adminAddress, []),
-        'KsuPrice',
-    );
-    const manualKsuPriceAddress = ManualKsuPrice__factory.connect(
-        manualKsuPriceDeploymentAddress,
-        adminSigner,
-    );
-    tx = await manualKsuPriceAddress.setKsuTokenPrice(parseEther('2'));
-    await tx.wait(1);
+    let ksuPriceDeploymentAddress = '';
+    if (isLiteDeployment) {
+        ksuPriceDeploymentAddress = await deployTransparentProxy(
+            'KsuPriceLite',
+            deployOptions(adminAddress, []),
+            'KsuPrice',
+        );
+    } else {
+        const manualKsuPriceDeploymentAddress = await deployTransparentProxy(
+            'ManualKsuPrice',
+            deployOptions(adminAddress, []),
+            'KsuPrice',
+        );
+        const manualKsuPriceAddress = ManualKsuPrice__factory.connect(
+            manualKsuPriceDeploymentAddress,
+            adminSigner,
+        );
+        tx = await manualKsuPriceAddress.setKsuTokenPrice(parseEther('2'));
+        await tx.wait(1);
+        ksuPriceDeploymentAddress = manualKsuPriceDeploymentAddress;
+    }
 
     let systemVariablesDeploymentAddress;
     if (deploySystemVariablesTestable) {
@@ -115,7 +178,7 @@ async function main() {
         systemVariablesDeploymentAddress = await deployTransparentProxy(
             'SystemVariablesTestable',
             deployOptions(deployerAddress, [
-                manualKsuPriceDeploymentAddress,
+                ksuPriceDeploymentAddress,
                 kasuControllerDeploymentAddress,
             ]),
             'SystemVariables',
@@ -125,7 +188,7 @@ async function main() {
         systemVariablesDeploymentAddress = await deployTransparentProxy(
             'SystemVariables',
             deployOptions(deployerAddress, [
-                manualKsuPriceDeploymentAddress,
+                ksuPriceDeploymentAddress,
                 kasuControllerDeploymentAddress,
             ]),
         );
@@ -142,21 +205,28 @@ async function main() {
     )
 
     const userLoyaltyRewardsDeploymentAddress = await deployTransparentProxy(
+        isLiteDeployment ? 'UserLoyaltyRewardsLite' : 'UserLoyaltyRewards',
+        deployOptions(
+            deployerAddress,
+            isLiteDeployment
+                ? []
+                : [
+                      ksuPriceDeploymentAddress,
+                      ksuDeploymentAddress,
+                      kasuControllerDeploymentAddress,
+                  ],
+        ),
         'UserLoyaltyRewards',
-        deployOptions(deployerAddress, [
-            manualKsuPriceDeploymentAddress,
-            ksuDeploymentAddress,
-            kasuControllerDeploymentAddress,
-        ]),
     );
 
     const userManagerDeploymentAddress = await deployTransparentProxy(
-        'UserManager',
+        isLiteDeployment ? 'UserManagerLite' : 'UserManager',
         deployOptions(deployerAddress, [
             systemVariablesDeploymentAddress,
             ksuLockingDeploymentAddress,
             userLoyaltyRewardsDeploymentAddress,
         ]),
+        'UserManager',
     );
     const userManager = UserManager__factory.connect(
         userManagerDeploymentAddress,
@@ -174,13 +244,13 @@ async function main() {
             fixedTermDepositAddress,
             usdcAddress,
             kasuControllerDeploymentAddress,
-            wEthAddress,
+            wrappedNativeAddress,
             swapperProxyAddress,
         ]),
     );
 
     const feeManagerDeploymentAddress = await deployTransparentProxy(
-        'FeeManager',
+        isLiteDeployment ? 'ProtocolFeeManagerLite' : 'FeeManager',
         deployOptions(deployerAddress, [
             usdcAddress,
             systemVariablesDeploymentAddress,
@@ -188,6 +258,7 @@ async function main() {
             ksuLockingDeploymentAddress,
             lendingPoolManagerDeploymentAddress,
         ]),
+        'FeeManager',
     );
 
     const kasuAllowListDeploymentAddress = await deployTransparentProxy(
@@ -276,25 +347,29 @@ async function main() {
         deployOptions(deployerAddress, []),
     );
 
-    const userLoyaltyRewards = UserLoyaltyRewards__factory.connect(
-        userLoyaltyRewardsDeploymentAddress,
-        adminSigner,
-    );
+    const userLoyaltyRewards = !isLiteDeployment
+        ? UserLoyaltyRewards__factory.connect(
+              userLoyaltyRewardsDeploymentAddress,
+              adminSigner,
+          )
+        : undefined;
 
     // initialize
     if (isNewDeployment) {
-        tx = await ksu.initialize(adminAddress);
-        await tx.wait(1);
+        if (!isLiteDeployment && ksu && ksuLocking) {
+            tx = await ksu.initialize(adminAddress);
+            await tx.wait(1);
 
-        tx = await ksuLocking.initialize(ksuDeploymentAddress, usdcAddress);
-        await tx.wait(1);
+            tx = await ksuLocking.initialize(ksuDeploymentAddress, usdcAddress);
+            await tx.wait(1);
+        }
 
         tx = await userManager.initialize(lendingPoolManagerDeploymentAddress);
         await tx.wait(1);
 
         tx = await kasuAllowList.initialize(
             lendingPoolManagerDeploymentAddress,
-            NEXERA_ID_SIGNER,
+            nexeraIdSigner,
         );
         await tx.wait(1);
 
@@ -333,30 +408,38 @@ async function main() {
             initialEpochStartTimestamp: 1717653600,
             clearingPeriodLength: 3600 * 48,
             performanceFee: 10_00,
-            loyaltyThresholds: [1_00, 5_00],
+            loyaltyThresholds: isLiteDeployment ? [] : [1_00, 5_00],
             defaultTrancheInterestChangeEpochDelay: 4,
             ecosystemFeeRate: 0,
             protocolFeeRate: 100_00,
-            protocolFeeReceiver: adminAddress,
+            protocolFeeReceiver: protocolFeeReceiver,
         };
         console.info('Initializing System Variables', adminAddress);
         tx = await systemVariables.initialize(systemVariablesSetup);
         await tx.wait(1);
         console.log('System Variables initialized');
 
-        tx = await userLoyaltyRewards.initialize(
-            userManagerDeploymentAddress,
-            true,
-        );
-        await tx.wait(1);
+        if (!isLiteDeployment && userLoyaltyRewards) {
+            tx = await userLoyaltyRewards.initialize(
+                userManagerDeploymentAddress,
+                true,
+            );
+            await tx.wait(1);
+        }
     }
 
     // initial values
-    if (isNewDeployment) {
-        tx = await ksuLocking.setCanEmitFees(feeManagerDeploymentAddress, true);
+    if (isNewDeployment && !isLiteDeployment && ksuLocking && userLoyaltyRewards) {
+        tx = await ksuLocking.setCanEmitFees(
+            feeManagerDeploymentAddress,
+            true,
+        );
         await tx.wait(1);
 
-        tx = await ksuLocking.setCanSetFeeRecipient(userManagerDeploymentAddress, true);
+        tx = await ksuLocking.setCanSetFeeRecipient(
+            userManagerDeploymentAddress,
+            true,
+        );
         await tx.wait(1);
 
         tx = await userLoyaltyRewards.setRewardRatesPerLoyaltyLevel([

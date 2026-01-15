@@ -1,5 +1,5 @@
 import { KasuController__factory } from '../../typechain-types';
-import { ContractTransactionResponse, Signer, Wallet } from 'ethers';
+import { ContractTransactionResponse, Signer } from 'ethers';
 import hre from 'hardhat';
 import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 
@@ -12,14 +12,12 @@ export async function grantRole(
     role: string,
     adminAccount: Signer,
 ) {
-    const adminAccountAddress = await adminAccount.getAddress();
-
     const addressFile = deploymentFileFactory(hre.network.name);
     const deploymentAddresses = addressFile.getContractAddresses();
 
     let tx: ContractTransactionResponse;
 
-    console.info(`Granting ${role} role to ${adminAccountAddress}`);
+    console.info(`Granting ${role} role to ${accountAddress}`);
     const kasuControllerAdmin = KasuController__factory.connect(
         deploymentAddresses['KasuController'].address,
         adminAccount,

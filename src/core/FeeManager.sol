@@ -24,7 +24,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
     /// @notice System variables contract.
     ISystemVariables private immutable _systemVariables;
     /// @notice Lending pool manager contract.
-    ILendingPoolManager private immutable _lendingPoolManager;
+    ILendingPoolManager internal immutable _lendingPoolManager;
 
     /// @notice Total amount of protocol fees pending to be claimed.
     uint256 public totalProtocolFeeAmount;
@@ -64,7 +64,7 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
      * while protocol fees are stored in the contract until claimed.
      * @param amount Amount of fees to emit.
      */
-    function emitFees(uint256 amount) external whenNotPaused {
+    function emitFees(uint256 amount) external virtual whenNotPaused {
         if (!_lendingPoolManager.isLendingPool(msg.sender)) {
             revert ILendingPoolErrors.InvalidLendingPool(msg.sender);
         }

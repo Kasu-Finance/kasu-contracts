@@ -1,7 +1,7 @@
-import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
+import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import * as hre from 'hardhat';
-import { MockUSDC__factory } from '../../typechain-types';
-import { getAccounts } from '../_modules/getAccounts';
+import { MockUSDC__factory } from '../../../typechain-types';
+import { getAccounts } from '../../_modules/getAccounts';
 
 const recipients = ['0x68ea8544AA64479c592711205B59F92122E0893c'];
 

@@ -7,13 +7,14 @@ import {
     LendingPool__factory,
     LendingPoolManager__factory,
 } from '../../typechain-types';
-import { mockUsdcMintUser } from './mockUsdcMintUsers';
+import { fundUsdcUsers } from './usdc';
 
 export async function repayPool(
     lendingPoolAddress: string,
     fundsManagerAccount: Signer,
     repayAmount: bigint,
     doRepayFees = false,
+    fundAccounts = false,
 ) {
     const { filePath } = getDeploymentFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(
@@ -48,13 +49,17 @@ export async function repayPool(
         console.log("repay fees amount", feesAmount);
     }
 
-    await mockUsdcMintUser(
-        [{
-            user: fundsManagerAccount,
-            amount: repayAmount,
-        }],
-        fundsManagerAccount,
-    )
+    if (fundAccounts) {
+        await fundUsdcUsers(
+            [
+                {
+                    user: fundsManagerAccount,
+                    amount: repayAmount,
+                },
+            ],
+            fundsManagerAccount,
+        );
+    }
 
     let tx;
 

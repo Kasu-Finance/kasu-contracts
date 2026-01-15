@@ -1,5 +1,5 @@
 import { KasuController__factory } from '../../typechain-types';
-import { ContractTransactionResponse, Signer, Wallet } from 'ethers';
+import { ContractTransactionResponse, Signer } from 'ethers';
 import hre from 'hardhat';
 import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
 import { getAccounts } from './getAccounts';
@@ -31,9 +31,7 @@ export async function grantLendingPoolRole(
         poolAdminAccount,
     );
 
-    console.info(
-        `Granting role ${ROLE_POOL_CLEARING_MANAGER} to ${accountAddress}`,
-    );
+    console.info(`Granting role ${role} to ${accountAddress}`);
     tx = await kasuControllerAdmin.grantLendingPoolRole(
         lendingPool,
         role,

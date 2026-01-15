@@ -30,8 +30,6 @@ export async function createLendingPool(
     // signers
     const signers = await getAccounts(hre.network.name);
 
-    const deployerAccount = signers[0];
-
     const adminAccount = signers[1];
     const adminAccountAddress = await adminAccount.getAddress();
 
