@@ -4,8 +4,10 @@ import { getAccounts } from '../_modules/getAccounts';
 import { parseKasuError } from '../_utils/parseErrors';
 import { SystemVariables__factory } from '../../typechain-types';
 import fs from 'fs';
+import { requireLocalNetwork } from '../_utils/env';
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
     // setup
     const { filePath } = getDeploymentFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(

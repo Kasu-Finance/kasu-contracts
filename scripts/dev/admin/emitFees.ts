@@ -2,8 +2,10 @@ import { ERC20__factory, KSULocking__factory } from '../../../typechain-types';
 import * as hre from 'hardhat';
 import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import { getAccounts } from '../../_modules/getAccounts';
+import { requireLocalNetwork } from '../../_utils/env';
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
     const addressFile = deploymentFileFactory(hre.network.name, 0);
     const deploymentAddresses = addressFile.getContractAddresses();
 

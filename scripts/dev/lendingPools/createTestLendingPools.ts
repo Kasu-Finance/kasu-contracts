@@ -2,8 +2,11 @@ import {
     createLendingPool,
     getDefaultLendingPoolConfig,
 } from '../../_modules/createLendingPool';
+import * as hre from 'hardhat';
+import { requireLocalNetwork } from '../../_utils/env';
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
     await createLendingPool(
         await getDefaultLendingPoolConfig('lending pool 1', 'LP', 3),
     );

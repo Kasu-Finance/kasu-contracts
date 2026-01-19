@@ -66,16 +66,16 @@ const config: HardhatUserConfig = {
             },
         ],
         overrides: {
-            "src/core/lendingPool/PendingPool.sol": {
-                version: "0.8.23",
+            'src/core/lendingPool/PendingPool.sol': {
+                version: '0.8.23',
                 settings: {
                     optimizer: {
                         enabled: true,
                         runs: 200,
                     },
                 },
-            }
-        }
+            },
+        },
     },
     networks: {
         localhost: {
@@ -91,7 +91,7 @@ const config: HardhatUserConfig = {
             chainId: 8453,
         },
         xdc: {
-            url: process.env.XDC_RPC_URL ?? 'https://rpc.xinfin.network',
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.network',
             chainId: 50,
         },
     },

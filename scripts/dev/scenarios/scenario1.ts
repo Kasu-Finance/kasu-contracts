@@ -20,12 +20,14 @@ import { ContractTransactionResponse } from 'ethers';
 import { runClearing } from '../_modules/runClearing';
 import { addFixedTermDeposit } from '../../_modules/addFixedTermDeposit';
 import { addFixedTermDepositConfigAllowlist } from '../../_modules/addFixedTermDepositConfigAllowlist';
+import { requireLocalNetwork } from '../../_utils/env';
 
 function toUSDC(usd: bigint): bigint {
     return ethers.parseUnits(usd.toString(), 6);
 }
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
     // accounts
     const signers = await getAccounts(hre.network.name);
     const adminAccount = signers[1];

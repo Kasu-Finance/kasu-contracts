@@ -1,8 +1,10 @@
 import { getAccounts } from '../../_modules/getAccounts';
 import * as hre from 'hardhat';
 import { addFixedTermDeposit } from '../../_modules/addFixedTermDeposit';
+import { requireLocalNetwork } from '../../_utils/env';
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
     // signers
     const signers = await getAccounts(hre.network.name);
     const adminAccount = signers[1];

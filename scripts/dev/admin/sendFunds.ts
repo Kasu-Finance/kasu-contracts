@@ -3,6 +3,7 @@ import * as hre from 'hardhat';
 import { deploymentFileFactory } from '../../_utils/deploymentFileFactory';
 import { ContractTransactionResponse } from 'ethers';
 import { getAccounts } from '../../_modules/getAccounts';
+import { requireLocalNetwork } from '../../_utils/env';
 
 const recipients = [
     '0x022d1b8c2808702013bb52D0429F45FDC571dD53',
@@ -16,6 +17,8 @@ const KSU_TO_SEND = 'DO_NOT_SEND_KSU';
 let USDC_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
+
     if (USDC_ADDRESS === '') {
         const addressFile = deploymentFileFactory(hre.network.name, 0);
         const deploymentAddresses = addressFile.getContractAddresses();

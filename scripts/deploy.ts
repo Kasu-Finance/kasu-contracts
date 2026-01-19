@@ -18,19 +18,9 @@ import { deployFactory, deployOptions } from './_utils/deployFactory';
 import hre from 'hardhat';
 import { addLockPeriods } from './_modules/addLockPeriods';
 import { getAccounts } from './_modules/getAccounts';
+import { getChainConfig, isLocalNetwork } from './_config/chains';
 
 type DeploymentMode = 'full' | 'lite';
-
-// config values
-const DEFAULT_WRAPPED_NATIVE_ADDRESS =
-    '0x4200000000000000000000000000000000000006';
-const DEFAULT_NEXERA_ID_SIGNER =
-    '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0';
-const DEFAULT_PROTOCOL_FEE_RECEIVER = '';
-const DEFAULT_USDC_ADDRESS =
-    '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
-
-const LOCAL_NETWORKS = new Set(['localhost', 'hardhat']);
 
 function resolveBooleanEnv(name: string, defaultValue: boolean): boolean {
     const rawValue = process.env[name];
@@ -41,29 +31,33 @@ function resolveBooleanEnv(name: string, defaultValue: boolean): boolean {
 }
 
 async function main() {
+    const networkName = hre.network.name;
     const blockNumber = await hre.ethers.provider.getBlockNumber();
-    const addressFile = deploymentFileFactory(hre.network.name, blockNumber);
+    const addressFile = deploymentFileFactory(networkName, blockNumber);
 
     const isNewDeployment = !addressFile.didFileInitiallyExist;
     console.log(`Is new deployment: ${isNewDeployment}`);
 
+    // Get chain configuration
+    const chainConfig = getChainConfig(networkName);
+    const isLocal = isLocalNetwork(networkName);
+
     // get signers
-    const signers = await getAccounts(hre.network.name);
+    const signers = await getAccounts(networkName);
 
     const deploymentMode = (process.env.DEPLOYMENT_MODE ?? 'full').toLowerCase() as DeploymentMode;
     if (deploymentMode !== 'full' && deploymentMode !== 'lite') {
         throw new Error(`Invalid DEPLOYMENT_MODE: ${deploymentMode}`);
     }
     const isLiteDeployment = deploymentMode === 'lite';
-    const isLocalNetwork = LOCAL_NETWORKS.has(hre.network.name);
 
-    const deployMockUSDC = resolveBooleanEnv('DEPLOY_MOCK_USDC', isLocalNetwork);
+    const deployMockUSDC = resolveBooleanEnv('DEPLOY_MOCK_USDC', isLocal);
     const deploySystemVariablesTestable = resolveBooleanEnv(
         'DEPLOY_SYSTEM_VARIABLES_TESTABLE',
-        isLocalNetwork,
+        isLocal,
     );
-    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', isLocalNetwork);
-    const verifySource = resolveBooleanEnv('VERIFY_SOURCE', !isLocalNetwork);
+    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', isLocal);
+    const verifySource = resolveBooleanEnv('VERIFY_SOURCE', !isLocal);
 
     const deployerSigner = signers[0];
     const deployerAddress = await deployerSigner.getAddress();
@@ -71,19 +65,18 @@ async function main() {
     const adminSigner = signers[1];
     const adminAddress = await adminSigner.getAddress();
 
-    const nexeraIdSigner =
-        process.env.NEXERA_ID_SIGNER ?? DEFAULT_NEXERA_ID_SIGNER;
-    const wrappedNativeAddress =
-        process.env.WRAPPED_NATIVE_ADDRESS ?? DEFAULT_WRAPPED_NATIVE_ADDRESS;
-    let protocolFeeReceiver =
-        process.env.PROTOCOL_FEE_RECEIVER ?? DEFAULT_PROTOCOL_FEE_RECEIVER;
-    let usdcAddress = process.env.USDC_ADDRESS ?? DEFAULT_USDC_ADDRESS;
+    // Use chain config for addresses (env vars can override via getChainConfig)
+    const nexeraIdSigner = chainConfig.nexeraIdSigner;
+    const wrappedNativeAddress = chainConfig.wrappedNativeAddress;
+    let protocolFeeReceiver = process.env.PROTOCOL_FEE_RECEIVER ?? '';
+    let usdcAddress = chainConfig.usdcAddress;
 
     if (protocolFeeReceiver === '') {
         protocolFeeReceiver = adminAddress;
     }
 
     console.log();
+    console.log('Network:', chainConfig.name, `(${networkName})`);
     console.log('deployer account: ', deployerAddress);
     console.log('admin account: ', adminAddress);
     console.log(`deployment mode: ${isLiteDeployment ? 'Lite' : 'Full'}`);
@@ -92,6 +85,8 @@ async function main() {
     console.log('deploy updates: ', deployUpdates);
     console.log('verify source: ', verifySource);
     console.log('wrapped native: ', wrappedNativeAddress);
+    console.log('usdc address: ', usdcAddress || '(will deploy MockUSDC)');
+    console.log('nexera id signer: ', nexeraIdSigner);
     console.log();
 
     const { deployTransparentProxy, deployBeacon } = await deployFactory(

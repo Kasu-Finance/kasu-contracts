@@ -23,6 +23,12 @@ cache_hardhat
 **/lcov.info
 **/report
 
+# Deployment env files (contain private keys)
+scripts/_env/.*
+!scripts/_env/.env.example
+
+# Legacy env patterns
 **/.base-sepolia.env
 **/.base-mainnet.env
 **/localhost-addresses.json
+/kasu-contracts.iml

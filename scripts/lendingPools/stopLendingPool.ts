@@ -5,8 +5,11 @@ import fs from 'fs';
 import { LendingPoolManager__factory } from '../../typechain-types';
 import { parseKasuError } from '../_utils/parseErrors';
 import { ContractTransactionResponse } from 'ethers';
+import { requireEnv } from '../_utils/env';
 
-const lendingPoolAddress = '0xb93c239690061228110525aa16622345241b388e';
+// Required environment variables:
+// LENDING_POOL_ADDRESS - address of the lending pool to stop
+const lendingPoolAddress = requireEnv('LENDING_POOL_ADDRESS');
 
 async function main() {
     // file

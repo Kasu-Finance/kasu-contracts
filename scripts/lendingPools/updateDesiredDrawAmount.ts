@@ -4,9 +4,13 @@ import { getAccounts } from '../_modules/getAccounts';
 import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
 import { parseKasuError } from '../_utils/parseErrors';
+import { requireEnv, requireEnvBigInt } from '../_utils/env';
 
-const LENDING_POOL = '0x2f9c56edd3ba0a06aa58767f50e52761d85f3bc7';
-const DESIRED_DRAW_AMOUNT = 300_000_000_000;
+// Required environment variables:
+// LENDING_POOL_ADDRESS - address of the lending pool
+// DESIRED_DRAW_AMOUNT - desired draw amount in raw units (e.g., 300000000000 for 300k USDC)
+const LENDING_POOL = requireEnv('LENDING_POOL_ADDRESS');
+const DESIRED_DRAW_AMOUNT = requireEnvBigInt('DESIRED_DRAW_AMOUNT');
 
 async function main() {
     // contract addresses

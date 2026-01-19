@@ -9,8 +9,10 @@ import { lockPeriod30, lockPeriod180 } from '../_modules/addLockPeriods';
 import { getAccounts } from '../_modules/getAccounts';
 import { getDeploymentFilePath } from '../_utils/deploymentFileFactory';
 import fs from 'fs';
+import { requireLocalNetwork } from '../_utils/env';
 
 async function main() {
+    requireLocalNetwork(hre.network.name);
     // contract addresses
     const { filePath } = getDeploymentFilePath(hre.network.name);
     const deploymentAddresses = JSON.parse(

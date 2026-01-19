@@ -4,11 +4,17 @@ import * as hre from 'hardhat';
 import { doClearing } from '../_modules/doClearing';
 import { parseKasuError } from '../_utils/parseErrors';
 import { ClearingConfigurationStruct } from '../../typechain-types/src/core/clearing/ClearingSteps';
+import { requireEnv, requireEnvBigInt, requireEnvNumber } from '../_utils/env';
 
-const lendingPoolAddress = '0xb93c239690061228110525aa16622345241b388e';
-const numberOfTranches = 3;
-const drawAmount = parseUnits('0', 6);
-const targetEpochNumber = 4n;
+// Required environment variables:
+// LENDING_POOL_ADDRESS - address of the lending pool
+// NUMBER_OF_TRANCHES - number of tranches (1, 2, or 3)
+// DRAW_AMOUNT - amount to draw in USDC units (e.g., "1000" for 1000 USDC)
+// TARGET_EPOCH_NUMBER - target epoch number for clearing
+const lendingPoolAddress = requireEnv('LENDING_POOL_ADDRESS');
+const numberOfTranches = requireEnvNumber('NUMBER_OF_TRANCHES');
+const drawAmount = parseUnits(requireEnv('DRAW_AMOUNT'), 6);
+const targetEpochNumber = requireEnvBigInt('TARGET_EPOCH_NUMBER');
 
 async function main() {
     const signers = await getAccounts(hre.network.name);

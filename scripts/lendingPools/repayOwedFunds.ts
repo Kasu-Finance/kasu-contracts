@@ -8,9 +8,13 @@ import {
 } from '../../typechain-types';
 import { parseKasuError } from '../_utils/parseErrors';
 import { ContractTransactionResponse } from 'ethers';
+import { requireEnv, requireEnvBigInt } from '../_utils/env';
 
-const lendingPoolAddress = '0xb93c239690061228110525aa16622345241b388e';
-const repayAmount = 100_000_000;
+// Required environment variables:
+// LENDING_POOL_ADDRESS - address of the lending pool
+// REPAY_AMOUNT - amount to repay in raw units (e.g., 100000000 for 100 USDC)
+const lendingPoolAddress = requireEnv('LENDING_POOL_ADDRESS');
+const repayAmount = requireEnvBigInt('REPAY_AMOUNT');
 
 async function main() {
     // file
