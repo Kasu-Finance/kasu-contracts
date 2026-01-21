@@ -91,7 +91,7 @@ const config: HardhatUserConfig = {
             chainId: 8453,
         },
         xdc: {
-            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.network',
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
             chainId: 50,
         },
     },

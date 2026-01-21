@@ -10,8 +10,7 @@ Kasu is an RWA (Real World Asset) private credit lending platform built on Solid
 
 ```bash
 # Install dependencies
-forge install          # Foundry dependencies
-npm install           # JS dependencies for deployment scripts
+npm install           # All dependencies (OpenZeppelin + deployment scripts)
 
 # Build
 forge build           # Compile Solidity contracts
@@ -51,6 +50,25 @@ DEPLOYMENT_MODE=lite npx hardhat --network plume deploy  # Lite version without 
 
 Environment files are loaded from `scripts/_env/.{network}.env` (e.g., `.base.env`, `.plume.env`).
 See `scripts/_env/.env.example` for all available options.
+
+## Dependencies
+
+Solidity dependencies are managed via npm and vendored files (not git submodules):
+
+| Dependency | Location | Notes |
+|------------|----------|-------|
+| OpenZeppelin Contracts | `node_modules/@openzeppelin/contracts/` | v5.0.2 (requires Solidity ^0.8.20, compatible with 0.8.23) |
+| OpenZeppelin Upgradeable | `node_modules/@openzeppelin/contracts-upgradeable/` | v5.0.2 |
+| NexeraID Sig Gating | `vendor/nexera/` | 2 vendored files for KYC signature verification |
+| forge-std | `lib/forge-std/` | Foundry testing library (git submodule) |
+
+Import remappings are configured in `remappings.txt`:
+```
+@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
+@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
+NexeraIDSigGatingContracts/=vendor/nexera/
+forge-std/=lib/forge-std/src/
+```
 
 ## Architecture
 
@@ -122,7 +140,7 @@ Test naming convention: `test_<feature>_<scenario>`
 
 ## Networks
 
-Configured networks: localhost, base-sepolia, base (mainnet), xdc
+Configured networks: localhost, hardhat, base-sepolia, base (mainnet), xdc, xdc-apothem, plume
 
 ---
 
@@ -155,6 +173,7 @@ Override-based behavior changes in:
 - **Validated Full vs master**: No regressions - changes are visibility modifiers (`private`→`internal`, `+virtual`) for Lite inheritance + FixedTermDeposit bug fix
 - **Production scripts parameterized**: All hardcoded addresses replaced with env variables (`scripts/_utils/env.ts`)
 - **Dev script network guard**: All `scripts/dev/**` now require local network via `requireLocalNetwork()`
+- **Migrated to npm dependencies**: OpenZeppelin via npm (v5.0.2), NexeraID vendored (2 files), removed 3 git submodules
 
 ### Production Script Environment Variables
 | Script | Required Env Vars |
@@ -179,6 +198,11 @@ To deploy to a new EVM chain:
 
 ### Open TODOs
 - Add smoke test scripts for deployment validation
+- Validate the deployment with checking the roles ROLE_LENDING_POOL_CREATOR, ROLE_POOL_ADMIN, ROLE_POOL_MANAGE, ROLE_POOL_FUNDS_MANAGER, ROLE_POOL_CLEARING_MANAGER are set correctly in both Full and Lite deployments
+- Validate role ROLE_PROTOCOL_FEE_CLAIMER is set
+- Validate `protocolFeeReceiver` is set and is not an admin or deplopyer account
+- Simulate `lendingPoolManager.createPool` can be called in both Full and Lite deployments by the LENDING_POOL_CREATOR role account
+- Test the NEXERA endpoint and signature verification in both Full and Lite deployments
 
 ### Important Constraints
 - Lite must still support KYC/KYB (Nexera) gated deposits
