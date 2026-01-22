@@ -60,6 +60,7 @@
         "hardhat": "^2.26.0",
         "hardhat-contract-sizer": "^2.10.0",
         "hardhat-gas-reporter": "^1.0.8",
+        "picomatch": "^4.0.3",
         "solidity-coverage": "^0.8.1",
         "ts-node": "^10.9.2",
         "typechain": "^8.3.0",
@@ -68,5 +69,10 @@
     "dependencies": {
         "@openzeppelin/contracts": "^5.0.2",
         "@openzeppelin/contracts-upgradeable": "^5.0.2"
+    },
+    "overrides": {
+        "fdir": {
+            "picomatch": "4.0.3"
+        }
     }
 }

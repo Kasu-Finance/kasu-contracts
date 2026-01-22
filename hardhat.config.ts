@@ -99,7 +99,7 @@ const config: HardhatUserConfig = {
             chainId: 50,
         },
         plume: {
-            url: process.env.PLUME_RPC_URL ?? 'https://rpc.plumenetwork.xyz',
+            url: process.env.PLUME_RPC_URL ?? 'https://rpc.plume.org',
             chainId: 98866,
         },
     },
