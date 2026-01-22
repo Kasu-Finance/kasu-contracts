@@ -67,7 +67,21 @@ npx hardhat --network base run scripts/admin/printProxyAdmins.ts
 
 # Transfer all ProxyAdmin ownership to a new address (e.g., multisig)
 NEW_PROXY_ADMIN_OWNER=0x... npx hardhat --network base run scripts/admin/transferAllProxyAdminOwnership.ts
+
+# Validate deployment: check bytecode matches source, Etherscan verification status
+DEPLOYMENT_MODE=full npx hardhat --network base run scripts/admin/validateDeployment.ts
+DEPLOYMENT_MODE=lite npx hardhat --network plume run scripts/admin/validateDeployment.ts
+
+# Auto-verify unverified contracts that match source
+DEPLOYMENT_MODE=full AUTO_VERIFY=true npx hardhat --network base run scripts/admin/validateDeployment.ts
 ```
+
+### Deployment Validation
+The `validateDeployment.ts` script checks all deployed contracts:
+- **Bytecode comparison**: Compares on-chain bytecode with compiled artifacts (strips metadata hash)
+- **Etherscan verification**: Checks if implementation contracts are verified on block explorer
+- **Upgrade eligibility**: Reports whether mismatched contracts can be upgraded (proxies) or need redeployment
+- **Auto-verification**: With `AUTO_VERIFY=true`, attempts to verify unverified contracts that match source
 
 ### Upgrading Contracts
 When running `deploy.ts` with `DEPLOY_UPDATES=true` on an existing deployment:
@@ -235,6 +249,7 @@ Override-based behavior changes in:
 | `grantLendingPoolRole.ts` | `LENDING_POOL_ADDRESS`, `ACCOUNT_ADDRESS` |
 | `stopLendingPool.ts` | `LENDING_POOL_ADDRESS` |
 | `admin/transferAllProxyAdminOwnership.ts` | `NEW_PROXY_ADMIN_OWNER` |
+| `admin/validateDeployment.ts` | `DEPLOYMENT_MODE` (full/lite), (optional) `AUTO_VERIFY=true` |
 
 ### Chain Configuration
 Chain-specific addresses are defined in `scripts/_config/chains.ts` and used by `deploy.ts`:
@@ -254,6 +269,16 @@ To deploy to a new EVM chain:
 1. Add chain config to `scripts/_config/chains.ts` OR set env variables
 2. Add network to `hardhat.config.ts`
 3. Run: `DEPLOYMENT_MODE=lite npx hardhat --network <network> deploy`
+
+### Base Mainnet Upgrade Status
+Validated via `validateDeployment.ts` - contracts modified from `master` that need upgrading:
+
+| Contract | Change Type | Status on Base |
+|----------|-------------|----------------|
+| `UserManager.sol` | Visibility changes (`private`→`internal`, `+virtual`) | **Needs upgrade** |
+| `FeeManager.sol` | Visibility changes (`private`→`internal`, `+virtual`) | **Needs upgrade** |
+| `FixedTermDeposit.sol` | Bug fix (`userTrancheSharesAfter = trancheShares`) | **Needs upgrade** |
+| `LendingPoolManager.sol` | Visibility changes (`public virtual`) | Already deployed with changes |
 
 ### Open TODOs
 - Add smoke test scripts for deployment validation

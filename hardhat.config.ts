@@ -7,6 +7,10 @@ import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/ta
 import '@nomicfoundation/hardhat-verify';
 import '@openzeppelin/hardhat-upgrades';
 import "hardhat-contract-sizer";
+import * as dotenv from 'dotenv';
+
+// Load generic .env file for shared config (ETHERSCAN_API_KEY, etc.)
+dotenv.config({ path: path.join(__dirname, 'scripts', '_env', '.env') });
 
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
