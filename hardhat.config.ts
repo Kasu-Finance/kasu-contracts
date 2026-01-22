@@ -94,11 +94,22 @@ const config: HardhatUserConfig = {
             url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
             chainId: 50,
         },
+        plume: {
+            url: process.env.PLUME_RPC_URL ?? 'https://rpc.plumenetwork.xyz',
+            chainId: 98866,
+        },
     },
     etherscan: {
+        // Etherscan V2 Multichain API - single key works for all supported chains
+        // See supported chains: https://docs.etherscan.io/supported-chains
         apiKey: {
-            base: 'YOUR_API_KEY',
-            xdc: process.env.XDC_SCAN_API_KEY ?? '',
+            // All Etherscan V2 supported chains use the same API key
+            mainnet: process.env.ETHERSCAN_API_KEY ?? '',
+            base: process.env.ETHERSCAN_API_KEY ?? '',
+            baseSepolia: process.env.ETHERSCAN_API_KEY ?? '',
+            xdc: process.env.ETHERSCAN_API_KEY ?? '',
+            // Non-Etherscan explorers need separate keys
+            plume: process.env.PLUME_SCAN_API_KEY ?? '',
         },
         customChains: [
             {
@@ -107,6 +118,14 @@ const config: HardhatUserConfig = {
                 urls: {
                     apiURL: 'https://api.xdcscan.io/api',
                     browserURL: 'https://xdcscan.io',
+                },
+            },
+            {
+                network: 'plume',
+                chainId: 98866,
+                urls: {
+                    apiURL: 'https://phoenix-explorer.plumenetwork.xyz/api',
+                    browserURL: 'https://phoenix-explorer.plumenetwork.xyz',
                 },
             },
         ],

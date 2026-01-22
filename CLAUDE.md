@@ -51,6 +51,30 @@ DEPLOYMENT_MODE=lite npx hardhat --network plume deploy  # Lite version without 
 Environment files are loaded from `scripts/_env/.{network}.env` (e.g., `.base.env`, `.plume.env`).
 See `scripts/_env/.env.example` for all available options.
 
+## ProxyAdmin Management
+
+Kasu uses OpenZeppelin's TransparentUpgradeableProxy pattern. With OpenZeppelin Contracts v5 / hardhat-upgrades v3, **each proxy has its own dedicated ProxyAdmin contract** (not a shared one). This is by design for security isolation.
+
+### Why Per-Proxy ProxyAdmins?
+- **Security isolation**: A compromised ProxyAdmin only affects one proxy, not the entire system
+- **OpenZeppelin v5 design**: The hardhat-upgrades plugin enforces this pattern
+- **Unified ownership**: All ProxyAdmins share the same owner address, so administration is still centralized
+
+### Admin Scripts
+```bash
+# View all ProxyAdmins and their owners
+npx hardhat --network base run scripts/admin/printProxyAdmins.ts
+
+# Transfer all ProxyAdmin ownership to a new address (e.g., multisig)
+NEW_PROXY_ADMIN_OWNER=0x... npx hardhat --network base run scripts/admin/transferAllProxyAdminOwnership.ts
+```
+
+### Upgrading Contracts
+When running `deploy.ts` with `DEPLOY_UPDATES=true` on an existing deployment:
+- The script uses the existing proxy addresses from the deployment file
+- Upgrades are performed through each proxy's individual ProxyAdmin
+- The signer must be the ProxyAdmin owner (typically the admin account)
+
 ## Dependencies
 
 Solidity dependencies are managed via npm and vendored files (not git submodules):
@@ -121,6 +145,32 @@ Files ending in `Lite.sol` are simplified versions for deployment without token-
 
 **Loyalty Levels**: Users earn priority in clearing based on KSU token locking commitment.
 
+## KYC/KYB Verification (Nexera/Compilot)
+
+Kasu uses [Compilot](https://compilot.ai) (formerly NexeraID) for KYC/KYB signature gating. The flow:
+
+```
+Frontend → Compilot API → returns signature → Frontend sends TX → KasuAllowList verifies signature
+```
+
+**How it works:**
+1. Frontend calls Compilot API (`https://api.compilot.ai/customer-tx-auth-signature`) with chainId, contract, function, user
+2. If user is KYC'd, Compilot signs the request with their private key
+3. Frontend appends signature + blockExpiration to TX calldata
+4. `KasuAllowList.verifyUserKyc()` calls `_verifyTxAuthData()` which validates the signature on-chain
+
+**Key contracts:**
+- `KasuAllowList.sol` - Extends `TxAuthDataVerifierUpgradeable` from vendored NexeraID contracts
+- `vendor/nexera/BaseTxAuthDataVerifier.sol` - Core signature verification logic
+- `vendor/nexera/TxAuthDataVerifierUpgradeable.sol` - Upgradeable wrapper
+
+**NEXERA_ID_SIGNER:**
+- This is the `NexeraIDSignerManager` contract address (not an EOA)
+- Compilot deploys this per-chain; it manages the actual signing key
+- Current address for supported chains: `0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0`
+- If Compilot rotates their signing key, they update the manager - no action needed from Kasu
+- For new chains: request Compilot to deploy `NexeraIDSignerManager` and provide the address
+
 ## Testing Patterns
 
 Tests use Foundry's `forge-std/Test.sol`. Base utilities in `test/unit/_utils/`:
@@ -174,6 +224,7 @@ Override-based behavior changes in:
 - **Production scripts parameterized**: All hardcoded addresses replaced with env variables (`scripts/_utils/env.ts`)
 - **Dev script network guard**: All `scripts/dev/**` now require local network via `requireLocalNetwork()`
 - **Migrated to npm dependencies**: OpenZeppelin via npm (v5.0.2), NexeraID vendored (2 files), removed 3 git submodules
+- **Etherscan V2 multichain**: Single `ETHERSCAN_API_KEY` for all supported chains (Base, XDC, etc.)
 
 ### Production Script Environment Variables
 | Script | Required Env Vars |
@@ -183,13 +234,21 @@ Override-based behavior changes in:
 | `repayOwedFunds.ts` | `LENDING_POOL_ADDRESS`, `REPAY_AMOUNT` |
 | `grantLendingPoolRole.ts` | `LENDING_POOL_ADDRESS`, `ACCOUNT_ADDRESS` |
 | `stopLendingPool.ts` | `LENDING_POOL_ADDRESS` |
+| `admin/transferAllProxyAdminOwnership.ts` | `NEW_PROXY_ADMIN_OWNER` |
 
 ### Chain Configuration
 Chain-specific addresses are defined in `scripts/_config/chains.ts` and used by `deploy.ts`:
-- **Supported chains**: localhost, hardhat, base-sepolia, base, xdc, xdc-apothem, plume
+- **Supported chains**: localhost, hardhat, base-sepolia, base, xdc, plume
 - **Extensible**: Add new chains to `CHAIN_CONFIGS` or use env variables for unknown chains
-- **Per-chain config**: `wrappedNativeAddress`, `usdcAddress`, `nexeraIdSigner`, `explorerApiUrl`, `isTestnet`
+- **Per-chain config**: `wrappedNativeAddress`, `usdcAddress`, `nexeraIdSigner`, `isTestnet`
 - **Env overrides**: `WRAPPED_NATIVE_ADDRESS`, `USDC_ADDRESS`, `NEXERA_ID_SIGNER` override chain defaults
+
+### Contract Verification (Etherscan V2)
+Uses Etherscan V2 Multichain API - **single `ETHERSCAN_API_KEY`** works for 100+ chains including:
+- Ethereum, Base, XDC, Arbitrum, Optimism, Polygon, etc.
+- Full list: https://docs.etherscan.io/supported-chains
+
+Non-Etherscan explorers (e.g., Plume) need separate API keys (`PLUME_SCAN_API_KEY`).
 
 To deploy to a new EVM chain:
 1. Add chain config to `scripts/_config/chains.ts` OR set env variables
@@ -203,6 +262,7 @@ To deploy to a new EVM chain:
 - Validate `protocolFeeReceiver` is set and is not an admin or deplopyer account
 - Simulate `lendingPoolManager.createPool` can be called in both Full and Lite deployments by the LENDING_POOL_CREATOR role account
 - Test the NEXERA endpoint and signature verification in both Full and Lite deployments
+- Check the ProxyAdmin (all) owners are NOT the deployer account after deployment in both Full and Lite deployments
 
 ### Important Constraints
 - Lite must still support KYC/KYB (Nexera) gated deposits

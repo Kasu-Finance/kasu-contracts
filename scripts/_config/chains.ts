@@ -16,8 +16,6 @@ export interface ChainConfig {
     usdcAddress: string;
     /** NexeraID signer address for KYC verification */
     nexeraIdSigner: string;
-    /** Block explorer API URL for verification (optional) */
-    explorerApiUrl?: string;
     /** Whether this is a testnet */
     isTestnet: boolean;
 }
@@ -56,7 +54,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         wrappedNativeAddress: '0x4200000000000000000000000000000000000006',
         usdcAddress: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Base Sepolia USDC
         nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
-        explorerApiUrl: 'https://api-sepolia.basescan.org/api',
         isTestnet: true,
     },
     base: {
@@ -65,7 +62,6 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         wrappedNativeAddress: '0x4200000000000000000000000000000000000006',
         usdcAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
         nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
-        explorerApiUrl: 'https://api.basescan.org/api',
         isTestnet: false,
     },
 
@@ -73,19 +69,10 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
     xdc: {
         name: 'XDC Mainnet',
         chainId: 50,
-        wrappedNativeAddress: '0x951857744785E80e2De051c32EE7b25f9c458C42', // WXDC
-        usdcAddress: '', // Set via env - XDC uses different stablecoin
-        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
-        explorerApiUrl: 'https://api.xdcscan.io/api',
+        wrappedNativeAddress: '0x951857744785e80e2de051c32ee7b25f9c458c42', // WXDC
+        usdcAddress: '0xfa2958cb79b0491cc627c1557f441ef849ca8eb1',
+        nexeraIdSigner: '',
         isTestnet: false,
-    },
-    'xdc-apothem': {
-        name: 'XDC Apothem Testnet',
-        chainId: 51,
-        wrappedNativeAddress: '0x2a5084F889a10761F5e0188F40729c02e40b6390', // WXDC Testnet
-        usdcAddress: '', // Set via env
-        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
-        isTestnet: true,
     },
 
     // Plume
