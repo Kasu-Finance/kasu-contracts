@@ -74,6 +74,9 @@ DEPLOYMENT_MODE=lite npx hardhat --network plume run scripts/admin/validateDeplo
 
 # Auto-verify unverified contracts that match source
 DEPLOYMENT_MODE=full AUTO_VERIFY=true npx hardhat --network base run scripts/admin/validateDeployment.ts
+
+# Smoke tests: validate roles, ownership, and configuration (run after deployment)
+npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
 ```
 
 ### Deployment Validation
@@ -280,14 +283,64 @@ Validated via `validateDeployment.ts` - contracts modified from `master` that ne
 | `FixedTermDeposit.sol` | Bug fix (`userTrancheSharesAfter = trancheShares`) | **Needs upgrade** |
 | `LendingPoolManager.sol` | Visibility changes (`public virtual`) | Already deployed with changes |
 
+### Smoke Tests
+
+Post-deployment validation scripts in `scripts/smokeTests/`:
+
+```bash
+# Complete deployment validation (recommended - auto-discovers pools!)
+npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
+
+# Basic role and ownership validation (quick check, no pools)
+npx hardhat --network base run scripts/smokeTests/validateRolesAndOwnership.ts
+
+# Manual pool specification (optional override)
+LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
+  npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
+```
+
+**What gets validated:**
+
+*Global checks (validateDeploymentComplete.ts):*
+- ✅ ProxyAdmin ownership (must be Kasu multisig, not deployer)
+- ✅ Beacon ownership (must be Kasu multisig, not deployer)
+- ✅ ROLE_KASU_ADMIN (Kasu multisig has it, deployer does not)
+- ✅ ROLE_LENDING_POOL_FACTORY (LendingPoolFactory contract)
+- ✅ ROLE_LENDING_POOL_CREATOR (pool admin multisig)
+- ✅ ROLE_PROTOCOL_FEE_CLAIMER (prints who has it)
+- ✅ protocolFeeReceiver (prints the address, validates not deployer)
+
+*Pool-specific checks (validatePoolRoles.ts):*
+- ✅ ROLE_POOL_ADMIN (pool admin multisig, per pool)
+- ✅ ROLE_POOL_CLEARING_MANAGER (pool admin multisig, per pool)
+- ✅ ROLE_POOL_MANAGER (pool manager multisig, per pool)
+- ✅ ROLE_POOL_FUNDS_MANAGER (pool manager multisig, per pool)
+
+**Multisig Addresses:**
+
+*Kasu Multisig (Proxy ownership & ROLE_KASU_ADMIN):*
+- Base: `0xC3128d734563E0d034d3ea177129657408C09D35`
+- Plume: `0x344BA98De46750e0B7CcEa8c3922Db8A70391189`
+- XDC: `0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D`
+
+*Pool Manager Multisig (ROLE_POOL_MANAGER, ROLE_POOL_FUNDS_MANAGER):*
+- Base: `0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2`
+- Plume: `0xEe2F38731F5050e02BF075d86DeBFb4B56F424fe`
+- XDC: Not set yet
+
+*Pool Admin Multisig (ROLE_LENDING_POOL_CREATOR, ROLE_POOL_ADMIN, ROLE_POOL_CLEARING_MANAGER):*
+- Base: `0x7adf999af5E0617257014C94888cf98c4584E5E9`
+- Plume: `0xEb8D4618713517C1367aCA4840b1fca3d8b090DF`
+- XDC: Not set yet
+
+Configure via `scripts/_config/chains.ts` or env variables (`KASU_MULTISIG`, `POOL_MANAGER_MULTISIG`, `POOL_ADMIN_MULTISIG`).
+
+See `scripts/smokeTests/README.md` for full documentation.
+
 ### Open TODOs
-- Add smoke test scripts for deployment validation
-- Validate the deployment with checking the roles ROLE_LENDING_POOL_CREATOR, ROLE_POOL_ADMIN, ROLE_POOL_MANAGE, ROLE_POOL_FUNDS_MANAGER, ROLE_POOL_CLEARING_MANAGER are set correctly in both Full and Lite deployments
-- Validate role ROLE_PROTOCOL_FEE_CLAIMER is set
-- Validate `protocolFeeReceiver` is set and is not an admin or deplopyer account
 - Simulate `lendingPoolManager.createPool` can be called in both Full and Lite deployments by the LENDING_POOL_CREATOR role account
 - Test the NEXERA endpoint and signature verification in both Full and Lite deployments
-- Check the ProxyAdmin (all) owners are NOT the deployer account after deployment in both Full and Lite deployments
+- Validate pool-specific roles on individual lending pools after pool creation (global roles are now validated by smoke tests)
 
 ### Important Constraints
 - Lite must still support KYC/KYB (Nexera) gated deposits
