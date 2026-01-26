@@ -39,8 +39,9 @@ LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
 # Base mainnet
 npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
 
-# Plume mainnet
+# Plume mainnet (Blockscout - no API key required)
 npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
+# See PLUME_RESULTS.md for latest test results and issues found
 
 # XDC mainnet
 npx hardhat --network xdc run scripts/smokeTests/validateDeploymentComplete.ts
@@ -48,6 +49,11 @@ npx hardhat --network xdc run scripts/smokeTests/validateDeploymentComplete.ts
 # Local testing
 npx hardhat --network localhost run scripts/smokeTests/validateDeploymentComplete.ts
 ```
+
+**Network-Specific Notes:**
+- **Base:** Uses Etherscan V2 API (requires `ETHERSCAN_API_KEY`)
+- **Plume:** Uses Blockscout API (free, no API key required)
+- **XDC:** Uses XDC Explorer API (requires `ETHERSCAN_API_KEY` - same key works via Etherscan V2)
 
 ## Scripts
 
@@ -85,6 +91,13 @@ Basic validation script that checks:
 - ✅ Pool admin multisig has ROLE_POOL_CLEARING_MANAGER (per pool)
 - ✅ Pool manager multisig has ROLE_POOL_MANAGER (per pool)
 - ✅ Pool manager multisig has ROLE_POOL_FUNDS_MANAGER (per pool)
+
+**Tenderly Simulation (Optional)**
+- ✅ Simulates `lendingPoolManager.createPool()` transaction
+- ✅ Verifies LENDING_POOL_CREATOR role works correctly
+- ✅ Tests without on-chain execution (no gas cost)
+- ⚠️  Requires Tenderly credentials (skips if not configured)
+- 💡 Set `TENDERLY_ACCESS_KEY`, `TENDERLY_ACCOUNT_ID`, `TENDERLY_PROJECT_SLUG` to enable
 
 **When to use**: Post-deployment validation. Just run it - it handles everything automatically!
 

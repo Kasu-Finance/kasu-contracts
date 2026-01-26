@@ -9,6 +9,7 @@ import {
 } from '../../typechain-types';
 import { validatePoolSpecificRoles, PoolValidationResult } from './_modules/poolRoleValidation';
 import { discoverPoolAddresses } from './_modules/poolDiscovery';
+import { simulateCreatePool } from '../tenderly/simulateCreatePool';
 
 type AddressEntry = {
     address?: string;
@@ -161,6 +162,7 @@ async function validateKasuControllerRoles(
     kasuMultisig: string,
     poolManagerMultisig: string,
     poolAdminMultisig: string,
+    protocolFeeClaimer: string,
     deployerAddress: string,
     kasuControllerAddress: string,
     addresses: Record<string, AddressEntry>,
@@ -235,41 +237,92 @@ async function validateKasuControllerRoles(
     // Note: ROLE_POOL_ADMIN, ROLE_POOL_CLEARING_MANAGER, ROLE_POOL_MANAGER, ROLE_POOL_FUNDS_MANAGER
     // are POOL-SPECIFIC roles (validated per pool in the Pool-Specific Roles section below)
 
-    // Check ROLE_PROTOCOL_FEE_CLAIMER - check known addresses
-    const potentialClaimers: Array<{ address: string; label: string }> = [];
-    if (kasuMultisig) potentialClaimers.push({ address: kasuMultisig, label: 'Kasu multisig' });
-    if (poolAdminMultisig) potentialClaimers.push({ address: poolAdminMultisig, label: 'pool admin multisig' });
-    if (poolManagerMultisig) potentialClaimers.push({ address: poolManagerMultisig, label: 'pool manager multisig' });
-    if (deployerAddress) potentialClaimers.push({ address: deployerAddress, label: 'deployer' });
+    // Check ROLE_PROTOCOL_FEE_CLAIMER - compare to expected address
+    if (protocolFeeClaimer) {
+        const hasRole = await kasuController.hasRole(ROLE_PROTOCOL_FEE_CLAIMER, protocolFeeClaimer);
 
-    let feeClaimerFound = false;
-    let feeClaimerLabel = '';
-    let feeClaimerAddress = '';
+        if (hasRole) {
+            // Check if expected address is the deployer (which would be incorrect)
+            const isDeployer = deployerAddress && protocolFeeClaimer.toLowerCase() === deployerAddress.toLowerCase();
+            results.push({
+                category: 'Roles',
+                passed: !isDeployer,
+                message: isDeployer
+                    ? `ROLE_PROTOCOL_FEE_CLAIMER: Granted to expected address (${protocolFeeClaimer}) - but this is the deployer, should be changed`
+                    : `ROLE_PROTOCOL_FEE_CLAIMER: Correctly granted to expected address (${protocolFeeClaimer})`,
+            });
+        } else {
+            // Expected address doesn't have the role - check who does
+            const potentialClaimers: Array<{ address: string; label: string }> = [];
+            if (kasuMultisig) potentialClaimers.push({ address: kasuMultisig, label: 'Kasu multisig' });
+            if (poolAdminMultisig) potentialClaimers.push({ address: poolAdminMultisig, label: 'pool admin multisig' });
+            if (poolManagerMultisig) potentialClaimers.push({ address: poolManagerMultisig, label: 'pool manager multisig' });
+            if (deployerAddress) potentialClaimers.push({ address: deployerAddress, label: 'deployer' });
 
-    for (const { address, label } of potentialClaimers) {
-        if (await kasuController.hasRole(ROLE_PROTOCOL_FEE_CLAIMER, address)) {
-            feeClaimerFound = true;
-            feeClaimerAddress = address;
-            feeClaimerLabel = label;
-            break;
+            let actualClaimerFound = false;
+            let actualClaimerAddress = '';
+            let actualClaimerLabel = '';
+
+            for (const { address, label } of potentialClaimers) {
+                if (await kasuController.hasRole(ROLE_PROTOCOL_FEE_CLAIMER, address)) {
+                    actualClaimerFound = true;
+                    actualClaimerAddress = address;
+                    actualClaimerLabel = label;
+                    break;
+                }
+            }
+
+            if (actualClaimerFound) {
+                results.push({
+                    category: 'Roles',
+                    passed: false,
+                    message: `ROLE_PROTOCOL_FEE_CLAIMER: Granted to ${actualClaimerLabel} (${actualClaimerAddress}) but expected ${protocolFeeClaimer}`,
+                });
+            } else {
+                results.push({
+                    category: 'Roles',
+                    passed: false,
+                    message: `ROLE_PROTOCOL_FEE_CLAIMER: Not granted to expected address (${protocolFeeClaimer}) or any known address`,
+                });
+            }
         }
-    }
-
-    if (feeClaimerFound) {
-        const isDeployer = deployerAddress && feeClaimerAddress.toLowerCase() === deployerAddress.toLowerCase();
-        results.push({
-            category: 'Roles',
-            passed: !isDeployer,
-            message: isDeployer
-                ? `ROLE_PROTOCOL_FEE_CLAIMER: Granted to ${feeClaimerLabel} (${feeClaimerAddress}) - should be changed`
-                : `ROLE_PROTOCOL_FEE_CLAIMER: Granted to ${feeClaimerLabel} (${feeClaimerAddress})`,
-        });
     } else {
-        results.push({
-            category: 'Roles',
-            passed: false,
-            message: `ROLE_PROTOCOL_FEE_CLAIMER: Not granted to any known address - needs to be set`,
-        });
+        // No expected address configured - just report who has the role
+        const potentialClaimers: Array<{ address: string; label: string }> = [];
+        if (kasuMultisig) potentialClaimers.push({ address: kasuMultisig, label: 'Kasu multisig' });
+        if (poolAdminMultisig) potentialClaimers.push({ address: poolAdminMultisig, label: 'pool admin multisig' });
+        if (poolManagerMultisig) potentialClaimers.push({ address: poolManagerMultisig, label: 'pool manager multisig' });
+        if (deployerAddress) potentialClaimers.push({ address: deployerAddress, label: 'deployer' });
+
+        let feeClaimerFound = false;
+        let feeClaimerLabel = '';
+        let feeClaimerAddress = '';
+
+        for (const { address, label } of potentialClaimers) {
+            if (await kasuController.hasRole(ROLE_PROTOCOL_FEE_CLAIMER, address)) {
+                feeClaimerFound = true;
+                feeClaimerAddress = address;
+                feeClaimerLabel = label;
+                break;
+            }
+        }
+
+        if (feeClaimerFound) {
+            const isDeployer = deployerAddress && feeClaimerAddress.toLowerCase() === deployerAddress.toLowerCase();
+            results.push({
+                category: 'Roles',
+                passed: !isDeployer,
+                message: isDeployer
+                    ? `ROLE_PROTOCOL_FEE_CLAIMER: Granted to ${feeClaimerLabel} (${feeClaimerAddress}) - should be changed (no expected address configured)`
+                    : `ROLE_PROTOCOL_FEE_CLAIMER: Granted to ${feeClaimerLabel} (${feeClaimerAddress}) (no expected address configured)`,
+            });
+        } else {
+            results.push({
+                category: 'Roles',
+                passed: false,
+                message: `ROLE_PROTOCOL_FEE_CLAIMER: Not granted to any known address - needs to be set (no expected address configured)`,
+            });
+        }
     }
 
     return results;
@@ -405,6 +458,7 @@ async function main() {
         kasuMultisig,
         poolManagerMultisig,
         poolAdminMultisig,
+        chainConfig.protocolFeeClaimer,
         deployerAddress,
         addresses.KasuController!.address!,
         addresses,
@@ -468,6 +522,44 @@ async function main() {
         console.log();
     } else {
         console.log();
+    }
+
+    // 5. Tenderly simulation: Test pool creation with LENDING_POOL_CREATOR role
+    console.log('📋 Tenderly Simulation: Pool Creation...\n');
+
+    const lendingPoolManagerAddress = addresses.LendingPoolManager?.address;
+    if (lendingPoolManagerAddress && poolAdminMultisig) {
+        const simulationResult = await simulateCreatePool(
+            networkName,
+            lendingPoolManagerAddress,
+            poolAdminMultisig,
+            false // not verbose - smoke test mode
+        );
+
+        if (simulationResult.skipped) {
+            console.log(`  ⚠️  Tenderly simulation skipped`);
+            console.log(`      ${simulationResult.skipReason}`);
+            console.log(`      💡 To enable, set TENDERLY_ACCESS_KEY, TENDERLY_ACCOUNT_ID, and TENDERLY_PROJECT_SLUG`);
+            console.log(`      See scripts/tenderly/README.md for setup instructions.\n`);
+        } else if (simulationResult.success) {
+            allResults.push({
+                category: 'Tenderly Simulation',
+                passed: true,
+                message: `Pool creation simulation succeeded (gas: ${simulationResult.gasUsed})${simulationResult.dashboardUrl ? ` - ${simulationResult.dashboardUrl}` : ''}`,
+            });
+        } else {
+            allResults.push({
+                category: 'Tenderly Simulation',
+                passed: false,
+                message: `Pool creation simulation FAILED: ${simulationResult.errorMessage}${simulationResult.dashboardUrl ? ` - View: ${simulationResult.dashboardUrl}` : ''}`,
+            });
+        }
+    } else {
+        if (!lendingPoolManagerAddress) {
+            console.log(`  ⚠️  LendingPoolManager address not found - skipping simulation\n`);
+        } else if (!poolAdminMultisig) {
+            console.log(`  ⚠️  Pool admin multisig not configured - skipping simulation\n`);
+        }
     }
 
     // Display results by category

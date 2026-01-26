@@ -128,8 +128,8 @@ const config: HardhatUserConfig = {
                 network: 'plume',
                 chainId: 98866,
                 urls: {
-                    apiURL: 'https://phoenix-explorer.plumenetwork.xyz/api',
-                    browserURL: 'https://phoenix-explorer.plumenetwork.xyz',
+                    apiURL: 'https://explorer.plume.org/api/v2',
+                    browserURL: 'https://explorer.plume.org/',
                 },
             },
         ],

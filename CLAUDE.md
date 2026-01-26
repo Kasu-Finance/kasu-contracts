@@ -43,11 +43,13 @@ cp scripts/_env/.env.example scripts/_env/.base.env
 npm run node:local                                    # Start local Hardhat node
 npx hardhat --network localhost deploy               # Deploy to local node
 
-# 3. Production deployment
-DEPLOYMENT_MODE=full npx hardhat --network base deploy   # Full deployment with KSU token
-DEPLOYMENT_MODE=lite npx hardhat --network plume deploy  # Lite version without token functionality
+# 3. Production deployment (deployment mode set in chains.ts)
+npx hardhat --network base deploy    # Full deployment with KSU token (deploymentMode: 'full')
+npx hardhat --network plume deploy   # Lite version without token (deploymentMode: 'lite')
+npx hardhat --network xdc deploy     # Lite version without token (deploymentMode: 'lite')
 ```
 
+Deployment mode (full/lite) and protocol fee receiver are now chain-specific in `scripts/_config/chains.ts`.
 Environment files are loaded from `scripts/_env/.{network}.env` (e.g., `.base.env`, `.plume.env`).
 See `scripts/_env/.env.example` for all available options.
 
@@ -69,11 +71,13 @@ npx hardhat --network base run scripts/admin/printProxyAdmins.ts
 NEW_PROXY_ADMIN_OWNER=0x... npx hardhat --network base run scripts/admin/transferAllProxyAdminOwnership.ts
 
 # Validate deployment: check bytecode matches source, Etherscan verification status
-DEPLOYMENT_MODE=full npx hardhat --network base run scripts/admin/validateDeployment.ts
-DEPLOYMENT_MODE=lite npx hardhat --network plume run scripts/admin/validateDeployment.ts
+npx hardhat --network base run scripts/admin/validateDeployment.ts
+npx hardhat --network plume run scripts/admin/validateDeployment.ts
 
 # Auto-verify unverified contracts that match source
-DEPLOYMENT_MODE=full AUTO_VERIFY=true npx hardhat --network base run scripts/admin/validateDeployment.ts
+AUTO_VERIFY=true npx hardhat --network base run scripts/admin/validateDeployment.ts
+
+# Note: Deployment mode read from chains.ts. Works with both Etherscan and Blockscout explorers.
 
 # Smoke tests: validate roles, ownership, and configuration (run after deployment)
 npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
@@ -252,26 +256,30 @@ Override-based behavior changes in:
 | `grantLendingPoolRole.ts` | `LENDING_POOL_ADDRESS`, `ACCOUNT_ADDRESS` |
 | `stopLendingPool.ts` | `LENDING_POOL_ADDRESS` |
 | `admin/transferAllProxyAdminOwnership.ts` | `NEW_PROXY_ADMIN_OWNER` |
-| `admin/validateDeployment.ts` | `DEPLOYMENT_MODE` (full/lite), (optional) `AUTO_VERIFY=true` |
+| `admin/validateDeployment.ts` | (optional) `AUTO_VERIFY=true` |
 
 ### Chain Configuration
-Chain-specific addresses are defined in `scripts/_config/chains.ts` and used by `deploy.ts`:
+Chain-specific settings are defined in `scripts/_config/chains.ts` and used by `deploy.ts`:
 - **Supported chains**: localhost, hardhat, base-sepolia, base, xdc, plume
 - **Extensible**: Add new chains to `CHAIN_CONFIGS` or use env variables for unknown chains
-- **Per-chain config**: `wrappedNativeAddress`, `usdcAddress`, `nexeraIdSigner`, `isTestnet`
-- **Env overrides**: `WRAPPED_NATIVE_ADDRESS`, `USDC_ADDRESS`, `NEXERA_ID_SIGNER` override chain defaults
+- **Per-chain config**: `deploymentMode`, `wrappedNativeAddress`, `usdcAddress`, `nexeraIdSigner`, `protocolFeeReceiver`, multisig addresses, `isTestnet`
+- **Env overrides**: `WRAPPED_NATIVE_ADDRESS`, `USDC_ADDRESS`, `NEXERA_ID_SIGNER` override chain defaults (but NOT `deploymentMode` or `protocolFeeReceiver` which are chain-specific only)
 
 ### Contract Verification (Etherscan V2)
 Uses Etherscan V2 Multichain API - **single `ETHERSCAN_API_KEY`** works for 100+ chains including:
 - Ethereum, Base, XDC, Arbitrum, Optimism, Polygon, etc.
 - Full list: https://docs.etherscan.io/supported-chains
 
-Non-Etherscan explorers (e.g., Plume) need separate API keys (`PLUME_SCAN_API_KEY`).
+**Blockscout explorers** (e.g., Plume):
+- Use Blockscout API (free, no API key required)
+- Explorer: https://explorer.plume.org
+- API: https://explorer.plume.org/api/v2
+- `PLUME_SCAN_API_KEY` is optional (empty string works)
 
 To deploy to a new EVM chain:
-1. Add chain config to `scripts/_config/chains.ts` OR set env variables
+1. Add chain config to `scripts/_config/chains.ts` (including `deploymentMode` and `protocolFeeReceiver`)
 2. Add network to `hardhat.config.ts`
-3. Run: `DEPLOYMENT_MODE=lite npx hardhat --network <network> deploy`
+3. Run: `npx hardhat --network <network> deploy`
 
 ### Base Mainnet Upgrade Status
 Validated via `validateDeployment.ts` - contracts modified from `master` that need upgrading:
@@ -307,7 +315,7 @@ LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
 - ✅ ROLE_KASU_ADMIN (Kasu multisig has it, deployer does not)
 - ✅ ROLE_LENDING_POOL_FACTORY (LendingPoolFactory contract)
 - ✅ ROLE_LENDING_POOL_CREATOR (pool admin multisig)
-- ✅ ROLE_PROTOCOL_FEE_CLAIMER (prints who has it)
+- ✅ ROLE_PROTOCOL_FEE_CLAIMER (validates expected address from chain config)
 - ✅ protocolFeeReceiver (prints the address, validates not deployer)
 
 *Pool-specific checks (validatePoolRoles.ts):*
@@ -315,6 +323,12 @@ LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
 - ✅ ROLE_POOL_CLEARING_MANAGER (pool admin multisig, per pool)
 - ✅ ROLE_POOL_MANAGER (pool manager multisig, per pool)
 - ✅ ROLE_POOL_FUNDS_MANAGER (pool manager multisig, per pool)
+
+*Tenderly simulation (optional - requires credentials):*
+- ✅ Simulates `lendingPoolManager.createPool()` with LENDING_POOL_CREATOR role
+- ✅ Verifies pool creation works before on-chain execution
+- ✅ No gas cost, no on-chain state changes
+- ⚠️  Skipped if Tenderly credentials not configured
 
 **Multisig Addresses:**
 
@@ -337,10 +351,105 @@ Configure via `scripts/_config/chains.ts` or env variables (`KASU_MULTISIG`, `PO
 
 See `scripts/smokeTests/README.md` for full documentation.
 
-### Open TODOs
-- Simulate `lendingPoolManager.createPool` can be called in both Full and Lite deployments by the LENDING_POOL_CREATOR role account
-- Test the NEXERA endpoint and signature verification in both Full and Lite deployments
-- Validate pool-specific roles on individual lending pools after pool creation (global roles are now validated by smoke tests)
+### Plume Deployment Status
+
+Plume has a Lite deployment (deployed Jan 15, 2025) but validation revealed issues:
+
+**Role Configuration Issues (as of Jan 26, 2026):**
+- ❌ ROLE_KASU_ADMIN not granted to Kasu multisig (`0x344BA98De46750e0B7CcEa8c3922Db8A70391189`)
+- ❌ ROLE_LENDING_POOL_CREATOR not granted to pool admin multisig (`0xEb8D4618713517C1367aCA4840b1fca3d8b090DF`)
+- ❌ ROLE_PROTOCOL_FEE_CLAIMER not granted to expected address (`0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28`)
+
+**Source Code Mismatch (7 contracts need upgrade):**
+- ❌ KSULockingLite
+- ❌ KsuPriceLite
+- ❌ SystemVariables
+- ❌ FixedTermDeposit
+- ❌ UserLoyaltyRewardsLite
+- ❌ UserManagerLite
+- ❌ ProtocolFeeManagerLite
+
+**Working Correctly:**
+- ✅ All ProxyAdmin ownership (15 contracts owned by Kasu multisig)
+- ✅ All Beacon ownership (3 beacons owned by Kasu multisig)
+- ✅ ROLE_LENDING_POOL_FACTORY granted to LendingPoolFactory
+- ✅ Protocol fee receiver is set
+- ✅ 11 contracts source code matches (verified on Blockscout)
+
+**Action Required:**
+
+1. **Grant missing roles** (use Kasu multisig):
+```bash
+# Grant ROLE_KASU_ADMIN to Kasu multisig
+kasuController.grantRole(ROLE_KASU_ADMIN, 0x344BA98De46750e0B7CcEa8c3922Db8A70391189)
+
+# Grant ROLE_LENDING_POOL_CREATOR to pool admin multisig
+kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, 0xEb8D4618713517C1367aCA4840b1fca3d8b090DF)
+
+# Grant ROLE_PROTOCOL_FEE_CLAIMER to protocol fee claimer
+kasuController.grantRole(ROLE_PROTOCOL_FEE_CLAIMER, 0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28)
+```
+
+2. **Upgrade mismatched contracts** (7 contracts):
+```bash
+# Upgrade all contracts that don't match source (deploymentMode from chains.ts)
+DEPLOY_UPDATES=true npx hardhat --network plume deploy
+```
+
+3. **Verify everything is correct**:
+```bash
+# Run smoke tests
+npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
+
+# Validate source code matches (deploymentMode from chains.ts)
+npx hardhat --network plume run scripts/admin/validateDeployment.ts
+```
+
+### Tenderly Simulations
+
+Transaction simulations using Tenderly API for testing on deployed networks without on-chain execution.
+
+**Integrated into smoke tests**: The `validateDeploymentComplete.ts` script automatically runs Tenderly simulations if credentials are configured. The simulation is optional and gracefully skipped if credentials are not available.
+
+```bash
+# Run smoke tests (includes optional Tenderly simulation)
+npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
+
+# Standalone Tenderly simulations (verbose output)
+npm run scripts:tenderly:createPool:base   # Base (Full deployment)
+npm run scripts:tenderly:createPool:plume  # Plume (Lite deployment)
+```
+
+**Prerequisites (optional - for Tenderly simulations only):**
+```bash
+export TENDERLY_ACCESS_KEY=your_access_key
+export TENDERLY_ACCOUNT_ID=your_username_or_org
+export TENDERLY_PROJECT_SLUG=your_project
+```
+
+**What gets simulated:**
+- ✅ `lendingPoolManager.createPool()` with LENDING_POOL_CREATOR role
+- ✅ Verifies role-based access control works correctly
+- ✅ Tests in both Full (Base) and Lite (Plume) deployments
+- ✅ No gas cost, no on-chain state changes
+- ✅ Automatically run as part of smoke tests (if credentials configured)
+
+**Outputs:**
+- Gas estimation
+- Success/failure status
+- Link to Tenderly dashboard for detailed trace analysis
+- Error messages if simulation fails
+
+See `scripts/tenderly/README.md` for full documentation.
+
+### Testing Checklist
+
+- ✅ Smoke tests validated on Base (Full deployment)
+- ✅ Smoke tests validated on Plume (Lite deployment)
+  - Blockscout API works without API key
+  - Revealed role configuration issues (ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER not granted)
+- ✅ Tenderly simulation integrated into smoke tests
+- ⏸️  Nexera/Compilot endpoint testing (manual testing only - not automated)
 
 ### Important Constraints
 - Lite must still support KYC/KYB (Nexera) gated deposits

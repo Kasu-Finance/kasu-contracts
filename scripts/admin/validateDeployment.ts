@@ -2,6 +2,7 @@ import hre, { upgrades } from 'hardhat';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { deploymentFileFactory } from '../_utils/deploymentFileFactory';
+import { getChainConfig } from '../_config/chains';
 
 type DeploymentMode = 'full' | 'lite';
 
@@ -59,6 +60,11 @@ const CHAIN_IDS: Record<string, number> = {
     baseSepolia: 84532,
 };
 
+// Detect if the API URL is Blockscout
+function isBlockscoutApi(apiUrl: string): boolean {
+    return apiUrl.includes('/api/v2');
+}
+
 // Get block explorer API config
 // Uses Etherscan V2 API for supported chains, falls back to custom chains for others
 function getExplorerApiConfig(networkName: string): {
@@ -67,10 +73,11 @@ function getExplorerApiConfig(networkName: string): {
     explorerName: string;
     chainId: number | null;
     isV2: boolean;
+    isBlockscout: boolean;
 } {
     const etherscanConfig = hre.config.etherscan;
     if (!etherscanConfig) {
-        return { apiUrl: null, apiKey: '', explorerName: 'unknown', chainId: null, isV2: false };
+        return { apiUrl: null, apiKey: '', explorerName: 'unknown', chainId: null, isV2: false, isBlockscout: false };
     }
 
     const apiKey = getApiKeyForNetwork(etherscanConfig.apiKey, networkName);
@@ -84,6 +91,7 @@ function getExplorerApiConfig(networkName: string): {
             explorerName: `etherscan.io/v2 (chainId=${chainId})`,
             chainId,
             isV2: true,
+            isBlockscout: false,
         };
     }
 
@@ -91,16 +99,18 @@ function getExplorerApiConfig(networkName: string): {
     const customChains = etherscanConfig.customChains || [];
     const customChain = customChains.find((c) => c.network === networkName);
     if (customChain) {
+        const isBlockscout = isBlockscoutApi(customChain.urls.apiURL);
         return {
             apiUrl: customChain.urls.apiURL,
             apiKey,
             explorerName: new URL(customChain.urls.browserURL).hostname,
             chainId: null,
             isV2: false,
+            isBlockscout,
         };
     }
 
-    return { apiUrl: null, apiKey, explorerName: 'unknown', chainId: null, isV2: false };
+    return { apiUrl: null, apiKey, explorerName: 'unknown', chainId: null, isV2: false, isBlockscout: false };
 }
 
 function getApiKeyForNetwork(
@@ -133,12 +143,79 @@ type ExplorerSourceResult = {
     allSources: Record<string, string>; // All sources (for multi-file)
 };
 
+// Fetch source code from Blockscout API
+async function fetchBlockscoutSource(
+    address: string,
+    baseApiUrl: string,
+): Promise<ExplorerSourceResult> {
+    const emptyResult: ExplorerSourceResult = {
+        verified: false,
+        contractName: '',
+        sourceCode: null,
+        allSources: {},
+    };
+
+    try {
+        // First, check if contract is verified
+        const addressUrl = `${baseApiUrl}/addresses/${address}`;
+        const addressResponse = await fetch(addressUrl);
+        const addressData = (await addressResponse.json()) as {
+            is_verified?: boolean;
+            name?: string;
+        };
+
+        if (!addressData.is_verified) {
+            return emptyResult;
+        }
+
+        // Get source code
+        const sourceUrl = `${baseApiUrl}/smart-contracts/${address}`;
+        const sourceResponse = await fetch(sourceUrl);
+        const sourceData = (await sourceResponse.json()) as {
+            name?: string;
+            source_code?: string;
+            additional_sources?: Array<{
+                file_path: string;
+                source_code: string;
+            }>;
+        };
+
+        if (!sourceData.source_code) {
+            return emptyResult;
+        }
+
+        const contractName = sourceData.name || '';
+        const allSources: Record<string, string> = {};
+
+        // Main contract source
+        if (contractName) {
+            allSources[`contracts/${contractName}.sol`] = sourceData.source_code;
+        }
+
+        // Additional sources (dependencies)
+        if (sourceData.additional_sources) {
+            for (const src of sourceData.additional_sources) {
+                allSources[src.file_path] = src.source_code;
+            }
+        }
+
+        return {
+            verified: true,
+            contractName,
+            sourceCode: sourceData.source_code,
+            allSources,
+        };
+    } catch {
+        return emptyResult;
+    }
+}
+
 // Fetch source code from block explorer
 async function fetchExplorerSource(
     address: string,
     networkName: string,
 ): Promise<ExplorerSourceResult> {
-    const { apiUrl, apiKey, chainId, isV2 } = getExplorerApiConfig(networkName);
+    const { apiUrl, apiKey, chainId, isV2, isBlockscout } = getExplorerApiConfig(networkName);
 
     const emptyResult: ExplorerSourceResult = {
         verified: false,
@@ -151,6 +228,12 @@ async function fetchExplorerSource(
         return emptyResult;
     }
 
+    // Use Blockscout API if detected
+    if (isBlockscout) {
+        return fetchBlockscoutSource(address, apiUrl);
+    }
+
+    // Use Etherscan API format
     try {
         let url: string;
         if (isV2 && chainId) {
@@ -451,20 +534,9 @@ async function main() {
     const blockNumber = await hre.ethers.provider.getBlockNumber();
     const addressFile = deploymentFileFactory(networkName, blockNumber);
 
-    // Get deployment mode from env (required)
-    const deploymentMode = (
-        process.env.DEPLOYMENT_MODE ?? ''
-    ).toLowerCase() as DeploymentMode;
-    if (deploymentMode !== 'full' && deploymentMode !== 'lite') {
-        console.error(
-            'Error: DEPLOYMENT_MODE environment variable is required (full or lite)',
-        );
-        console.log(
-            'Usage: DEPLOYMENT_MODE=full npx hardhat --network base run scripts/admin/validateDeployment.ts',
-        );
-        process.exitCode = 1;
-        return;
-    }
+    // Get chain config (includes deployment mode)
+    const chainConfig = getChainConfig(networkName);
+    const deploymentMode = chainConfig.deploymentMode;
 
     let addresses: Record<string, AddressEntry>;
     try {

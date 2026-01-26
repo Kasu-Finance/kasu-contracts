@@ -29,8 +29,12 @@
         "scripts:createLendingPool": "hardhat run --network localhost scripts/lendingPools/createLendingPools.ts",
         "scripts:scenario1": "hardhat run --network localhost scripts/dev/scenarios/scenario1.ts",
         "scripts:smokeTest": "hardhat run --network localhost scripts/smokeTests/validateDeploymentComplete.ts",
+        "scripts:smokeTest:base": "hardhat run --network base scripts/smokeTests/validateDeploymentComplete.ts",
+        "scripts:smokeTest:plume": "hardhat run --network plume scripts/smokeTests/validateDeploymentComplete.ts",
         "scripts:smokeTest:roles": "hardhat run --network localhost scripts/smokeTests/validateRolesAndOwnership.ts",
         "scripts:smokeTest:pools": "hardhat run --network localhost scripts/smokeTests/validatePoolRoles.ts",
+        "scripts:tenderly:createPool:base": "hardhat run --network base scripts/tenderly/simulateCreatePool.ts",
+        "scripts:tenderly:createPool:plume": "hardhat run --network plume scripts/tenderly/simulateCreatePool.ts",
         "repl:kasu": "NETWORK_NAME=localhost ts-node scripts/dev/_repl/kasu_repl.ts"
     },
     "repository": {

@@ -45,10 +45,8 @@ async function main() {
     // get signers
     const signers = await getAccounts(networkName);
 
-    const deploymentMode = (process.env.DEPLOYMENT_MODE ?? 'full').toLowerCase() as DeploymentMode;
-    if (deploymentMode !== 'full' && deploymentMode !== 'lite') {
-        throw new Error(`Invalid DEPLOYMENT_MODE: ${deploymentMode}`);
-    }
+    // Get deployment mode from chain config (not env variable)
+    const deploymentMode = chainConfig.deploymentMode;
     const isLiteDeployment = deploymentMode === 'lite';
 
     const deployMockUSDC = resolveBooleanEnv('DEPLOY_MOCK_USDC', isLocal);
@@ -56,7 +54,7 @@ async function main() {
         'DEPLOY_SYSTEM_VARIABLES_TESTABLE',
         isLocal,
     );
-    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', isLocal);
+    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', false); // Default false - only deploy updates if explicitly requested
     const verifySource = resolveBooleanEnv('VERIFY_SOURCE', !isLocal);
 
     const deployerSigner = signers[0];
@@ -68,9 +66,10 @@ async function main() {
     // Use chain config for addresses (env vars can override via getChainConfig)
     const nexeraIdSigner = chainConfig.nexeraIdSigner;
     const wrappedNativeAddress = chainConfig.wrappedNativeAddress;
-    let protocolFeeReceiver = process.env.PROTOCOL_FEE_RECEIVER ?? '';
+    let protocolFeeReceiver = chainConfig.protocolFeeReceiver;
     let usdcAddress = chainConfig.usdcAddress;
 
+    // For local networks or if not set, default to admin address
     if (protocolFeeReceiver === '') {
         protocolFeeReceiver = adminAddress;
     }
@@ -399,8 +398,8 @@ async function main() {
             adminSigner,
         );
         const systemVariablesSetup: SystemVariablesSetupStruct = {
-            // Math.round(Date.now() / 1000) - 3600 * 24 * 4
-            initialEpochStartTimestamp: 1717653600,
+            // Set to 4 days ago so the first epoch is just started
+            initialEpochStartTimestamp: Math.round(Date.now() / 1000) - 3600 * 24 * 4,
             clearingPeriodLength: 3600 * 48,
             performanceFee: 10_00,
             loyaltyThresholds: isLiteDeployment ? [] : [1_00, 5_00],
