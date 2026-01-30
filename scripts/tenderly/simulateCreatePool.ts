@@ -235,7 +235,6 @@ export async function simulateCreatePool(
 async function main() {
     const networkName = hre.network.name;
     const chainConfig = getChainConfig(networkName);
-    const networkId = getNetworkId(networkName);
 
     console.log('\n========================================');
     console.log('Tenderly Pool Creation Simulation');
@@ -243,6 +242,15 @@ async function main() {
 
     console.log(`Network: ${chainConfig.name} (${networkName})`);
     console.log(`Chain ID: ${chainConfig.chainId}`);
+
+    // Check if Tenderly supports this chain
+    if (!chainConfig.tenderlySupported) {
+        console.log(`\n⚠️  Tenderly does not support ${chainConfig.name}`);
+        console.log('   Skipping simulation.\n');
+        return;
+    }
+
+    const networkId = getNetworkId(networkName);
     console.log(`Network ID for Tenderly: ${networkId}`);
 
     // Get deployment addresses

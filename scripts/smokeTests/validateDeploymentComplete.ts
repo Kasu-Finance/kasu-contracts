@@ -528,7 +528,9 @@ async function main() {
     console.log('📋 Tenderly Simulation: Pool Creation...\n');
 
     const lendingPoolManagerAddress = addresses.LendingPoolManager?.address;
-    if (lendingPoolManagerAddress && poolAdminMultisig) {
+    if (!chainConfig.tenderlySupported) {
+        console.log(`  ⚠️  Tenderly simulation skipped - not supported on ${chainConfig.name}\n`);
+    } else if (lendingPoolManagerAddress && poolAdminMultisig) {
         const simulationResult = await simulateCreatePool(
             networkName,
             lendingPoolManagerAddress,

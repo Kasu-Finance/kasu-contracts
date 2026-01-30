@@ -120,8 +120,8 @@ const config: HardhatUserConfig = {
                 network: 'xdc',
                 chainId: 50,
                 urls: {
-                    apiURL: 'https://api.xdcscan.io/api',
-                    browserURL: 'https://xdcscan.io',
+                    apiURL: 'https://api.etherscan.io/v2/api?chainid=50',
+                    browserURL: 'https://xdcscan.com/',
                 },
             },
             {

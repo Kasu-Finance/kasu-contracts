@@ -41,7 +41,6 @@ npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
 
 # Plume mainnet (Blockscout - no API key required)
 npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
-# See PLUME_RESULTS.md for latest test results and issues found
 
 # XDC mainnet
 npx hardhat --network xdc run scripts/smokeTests/validateDeploymentComplete.ts
@@ -92,10 +91,11 @@ Basic validation script that checks:
 - ✅ Pool manager multisig has ROLE_POOL_MANAGER (per pool)
 - ✅ Pool manager multisig has ROLE_POOL_FUNDS_MANAGER (per pool)
 
-**Tenderly Simulation (Optional)**
+**Tenderly Simulation (Optional - Base only)**
 - ✅ Simulates `lendingPoolManager.createPool()` transaction
 - ✅ Verifies LENDING_POOL_CREATOR role works correctly
 - ✅ Tests without on-chain execution (no gas cost)
+- ⚠️  Only supported on Base (Tenderly doesn't support XDC or Plume)
 - ⚠️  Requires Tenderly credentials (skips if not configured)
 - 💡 Set `TENDERLY_ACCESS_KEY`, `TENDERLY_ACCOUNT_ID`, `TENDERLY_PROJECT_SLUG` to enable
 
@@ -175,7 +175,7 @@ KASU_MULTISIG=0x... npx hardhat --network base run scripts/smokeTests/validateDe
 |---------|---------|
 | Base    | `0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2` |
 | Plume   | `0xEe2F38731F5050e02BF075d86DeBFb4B56F424fe` |
-| XDC     | _Not set yet_ |
+| XDC     | `0x21567eA21b14BEd14657e9725C2FE11C7be942B1` |
 
 #### Pool Admin Multisig (ROLE_LENDING_POOL_CREATOR, ROLE_POOL_ADMIN, ROLE_POOL_CLEARING_MANAGER)
 
@@ -183,7 +183,7 @@ KASU_MULTISIG=0x... npx hardhat --network base run scripts/smokeTests/validateDe
 |---------|---------|
 | Base    | `0x7adf999af5E0617257014C94888cf98c4584E5E9` |
 | Plume   | `0xEb8D4618713517C1367aCA4840b1fca3d8b090DF` |
-| XDC     | _Not set yet_ |
+| XDC     | `0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112` |
 
 ### Deployer Address Validation
 

@@ -32,6 +32,8 @@ export interface ChainConfig {
     lendingPoolAddresses: string[];
     /** Whether this is a testnet */
     isTestnet: boolean;
+    /** Whether Tenderly supports this chain for simulations */
+    tenderlySupported: boolean;
 }
 
 /**
@@ -58,6 +60,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         protocolFeeReceiver: '', // Will default to admin address
         lendingPoolAddresses: [], // Pools will be created during testing
         isTestnet: true,
+        tenderlySupported: false,
     },
     hardhat: {
         name: 'Hardhat',
@@ -73,6 +76,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         protocolFeeReceiver: '', // Will default to admin address
         lendingPoolAddresses: [],
         isTestnet: true,
+        tenderlySupported: false,
     },
 
     // Base
@@ -90,6 +94,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         protocolFeeReceiver: '', // Will default to admin address
         lendingPoolAddresses: [],
         isTestnet: true,
+        tenderlySupported: true,
     },
     base: {
         name: 'Base Mainnet',
@@ -110,6 +115,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
             '0xc987350716fe4a7d674c3591c391d29eba26b8ce',
         ],
         isTestnet: false,
+        tenderlySupported: true,
     },
 
     // XDC Network
@@ -121,12 +127,13 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         usdcAddress: '0xfa2958cb79b0491cc627c1557f441ef849ca8eb1',
         nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
         kasuMultisig: '0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D',
-        poolManagerMultisig: '', // Not set yet
-        poolAdminMultisig: '', // Not set yet
+        poolManagerMultisig: '0x21567eA21b14BEd14657e9725C2FE11C7be942B1',
+        poolAdminMultisig: '0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112',
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         protocolFeeReceiver: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         lendingPoolAddresses: [],
         isTestnet: false,
+        tenderlySupported: false, // Tenderly doesn't support XDC
     },
 
     // Plume
@@ -149,6 +156,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
             '0xb742668ACced969b3CE64B4469E17F74A3E1d402',
         ],
         isTestnet: false,
+        tenderlySupported: false, // Tenderly doesn't support Plume
     },
 };
 
@@ -215,6 +223,7 @@ export function getChainConfig(networkName: string): ChainConfig {
         protocolFeeReceiver: protocolFeeReceiver || '',
         lendingPoolAddresses,
         isTestnet: process.env.IS_TESTNET === 'true',
+        tenderlySupported: false, // Unknown chains default to no Tenderly support
     };
 }
 

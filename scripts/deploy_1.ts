@@ -1,7 +1,23 @@
+/**
+ * Phase 1: Deploy and initialize all contracts
+ *
+ * This script deploys all contracts and initializes them, but does NOT:
+ * - Grant roles to multisigs
+ * - Revoke admin permissions from deployer
+ * - Transfer ProxyAdmin/Beacon ownership
+ *
+ * After running this, you can configure and test the deployment manually.
+ * When ready, run deploy_2.ts to finalize permissions and ownership.
+ *
+ * Usage:
+ *   npx hardhat --network xdc run scripts/deploy_1.ts
+ */
+
 import {
     FixedTermDeposit__factory,
     KasuAllowList__factory,
     KasuController__factory,
+    KasuPoolExternalTVL__factory,
     KSU__factory,
     KSULocking__factory,
     LendingPoolManager__factory,
@@ -54,7 +70,7 @@ async function main() {
         'DEPLOY_SYSTEM_VARIABLES_TESTABLE',
         isLocal,
     );
-    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', false); // Default false - only deploy updates if explicitly requested
+    const deployUpdates = resolveBooleanEnv('DEPLOY_UPDATES', false);
     const verifySource = resolveBooleanEnv('VERIFY_SOURCE', !isLocal);
 
     const deployerSigner = signers[0];
@@ -68,12 +84,17 @@ async function main() {
     const wrappedNativeAddress = chainConfig.wrappedNativeAddress;
     let protocolFeeReceiver = chainConfig.protocolFeeReceiver;
     let usdcAddress = chainConfig.usdcAddress;
+    const externalTVLBaseURI = process.env.EXTERNAL_TVL_BASE_URI ?? '';
 
     // For local networks or if not set, default to admin address
     if (protocolFeeReceiver === '') {
         protocolFeeReceiver = adminAddress;
     }
 
+    console.log();
+    console.log('========================================');
+    console.log('PHASE 1: Deploy & Initialize Contracts');
+    console.log('========================================');
     console.log();
     console.log('Network:', chainConfig.name, `(${networkName})`);
     console.log('deployer account: ', deployerAddress);
@@ -86,6 +107,7 @@ async function main() {
     console.log('wrapped native: ', wrappedNativeAddress);
     console.log('usdc address: ', usdcAddress || '(will deploy MockUSDC)');
     console.log('nexera id signer: ', nexeraIdSigner);
+    console.log('external TVL base URI: ', externalTVLBaseURI || '(empty)');
     console.log();
 
     const { deployTransparentProxy, deployBeacon } = await deployFactory(
@@ -341,6 +363,11 @@ async function main() {
         deployOptions(deployerAddress, []),
     );
 
+    const kasuPoolExternalTVLAddress = await deployTransparentProxy(
+        'KasuPoolExternalTVL',
+        deployOptions(deployerAddress, [kasuControllerDeploymentAddress]),
+    );
+
     const userLoyaltyRewards = !isLiteDeployment
         ? UserLoyaltyRewards__factory.connect(
               userLoyaltyRewardsDeploymentAddress,
@@ -372,7 +399,7 @@ async function main() {
             adminSigner,
         );
         tx = await kasuController.initialize(
-            adminAddress, // KASU_ADMIN
+            adminAddress, // KASU_ADMIN (also grants ROLE_LENDING_POOL_FACTORY to factory)
             lendingPoolFactoryAddress,
         );
         await tx.wait(1);
@@ -420,6 +447,15 @@ async function main() {
             );
             await tx.wait(1);
         }
+
+        // Initialize KasuPoolExternalTVL (external TVL tracking)
+        const kasuPoolExternalTVL = KasuPoolExternalTVL__factory.connect(
+            kasuPoolExternalTVLAddress,
+            adminSigner,
+        );
+        tx = await kasuPoolExternalTVL.initialize(externalTVLBaseURI);
+        await tx.wait(1);
+        console.log('KasuPoolExternalTVL initialized');
     }
 
     // initial values
@@ -444,6 +480,23 @@ async function main() {
 
         await addLockPeriods(ksuLocking, ksuLockBonusDeploymentAddress);
     }
+
+    // NOTE: Role grants and ownership transfers are NOT done here
+    // Run deploy_2.ts after verifying the deployment is correct
+
+    console.log();
+    console.log('========================================');
+    console.log('PHASE 1 COMPLETE');
+    console.log('========================================');
+    console.log();
+    console.log('Contracts deployed and initialized.');
+    console.log('Admin/Deployer still has full permissions.');
+    console.log();
+    console.log('Next steps:');
+    console.log('1. Verify deployment is correct (run smoke tests, check configs)');
+    console.log('2. Create lending pools if needed');
+    console.log('3. Run deploy_2.ts to finalize permissions and ownership');
+    console.log();
 }
 
 main().catch((error) => {

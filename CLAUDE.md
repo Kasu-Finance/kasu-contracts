@@ -53,6 +53,8 @@ Deployment mode (full/lite) and protocol fee receiver are now chain-specific in 
 Environment files are loaded from `scripts/_env/.{network}.env` (e.g., `.base.env`, `.plume.env`).
 See `scripts/_env/.env.example` for all available options.
 
+**External TVL Tracking**: The main deployment includes `KasuPoolExternalTVL` (ERC1155 contract for tracking off-chain TVL per pool). Set `EXTERNAL_TVL_BASE_URI` env variable if you need custom metadata URI.
+
 ## ProxyAdmin Management
 
 Kasu uses OpenZeppelin's TransparentUpgradeableProxy pattern. With OpenZeppelin Contracts v5 / hardhat-upgrades v3, **each proxy has its own dedicated ProxyAdmin contract** (not a shared one). This is by design for security isolation.
@@ -324,10 +326,11 @@ LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
 - ✅ ROLE_POOL_MANAGER (pool manager multisig, per pool)
 - ✅ ROLE_POOL_FUNDS_MANAGER (pool manager multisig, per pool)
 
-*Tenderly simulation (optional - requires credentials):*
+*Tenderly simulation (Base only - requires credentials):*
 - ✅ Simulates `lendingPoolManager.createPool()` with LENDING_POOL_CREATOR role
 - ✅ Verifies pool creation works before on-chain execution
 - ✅ No gas cost, no on-chain state changes
+- ⚠️  Skipped on XDC/Plume (not supported by Tenderly)
 - ⚠️  Skipped if Tenderly credentials not configured
 
 **Multisig Addresses:**
@@ -340,12 +343,12 @@ LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
 *Pool Manager Multisig (ROLE_POOL_MANAGER, ROLE_POOL_FUNDS_MANAGER):*
 - Base: `0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2`
 - Plume: `0xEe2F38731F5050e02BF075d86DeBFb4B56F424fe`
-- XDC: Not set yet
+- XDC: `0x21567eA21b14BEd14657e9725C2FE11C7be942B1`
 
 *Pool Admin Multisig (ROLE_LENDING_POOL_CREATOR, ROLE_POOL_ADMIN, ROLE_POOL_CLEARING_MANAGER):*
 - Base: `0x7adf999af5E0617257014C94888cf98c4584E5E9`
 - Plume: `0xEb8D4618713517C1367aCA4840b1fca3d8b090DF`
-- XDC: Not set yet
+- XDC: `0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112`
 
 Configure via `scripts/_config/chains.ts` or env variables (`KASU_MULTISIG`, `POOL_MANAGER_MULTISIG`, `POOL_ADMIN_MULTISIG`).
 
@@ -409,15 +412,13 @@ npx hardhat --network plume run scripts/admin/validateDeployment.ts
 
 Transaction simulations using Tenderly API for testing on deployed networks without on-chain execution.
 
-**Integrated into smoke tests**: The `validateDeploymentComplete.ts` script automatically runs Tenderly simulations if credentials are configured. The simulation is optional and gracefully skipped if credentials are not available.
+**Supported chains**: Only Base (Tenderly doesn't support XDC or Plume). The `tenderlySupported` flag in `chains.ts` controls this.
+
+**Integrated into smoke tests**: The `validateDeploymentComplete.ts` script automatically runs Tenderly simulations on supported chains if credentials are configured.
 
 ```bash
-# Run smoke tests (includes optional Tenderly simulation)
+# Run smoke tests (includes Tenderly simulation on Base only)
 npx hardhat --network base run scripts/smokeTests/validateDeploymentComplete.ts
-
-# Standalone Tenderly simulations (verbose output)
-npm run scripts:tenderly:createPool:base   # Base (Full deployment)
-npm run scripts:tenderly:createPool:plume  # Plume (Lite deployment)
 ```
 
 **Prerequisites (optional - for Tenderly simulations only):**
@@ -430,15 +431,8 @@ export TENDERLY_PROJECT_SLUG=your_project
 **What gets simulated:**
 - ✅ `lendingPoolManager.createPool()` with LENDING_POOL_CREATOR role
 - ✅ Verifies role-based access control works correctly
-- ✅ Tests in both Full (Base) and Lite (Plume) deployments
 - ✅ No gas cost, no on-chain state changes
-- ✅ Automatically run as part of smoke tests (if credentials configured)
-
-**Outputs:**
-- Gas estimation
-- Success/failure status
-- Link to Tenderly dashboard for detailed trace analysis
-- Error messages if simulation fails
+- ✅ Skipped automatically on unsupported chains (XDC, Plume)
 
 See `scripts/tenderly/README.md` for full documentation.
 
@@ -454,3 +448,7 @@ See `scripts/tenderly/README.md` for full documentation.
 ### Important Constraints
 - Lite must still support KYC/KYB (Nexera) gated deposits
 - Full must remain behaviorally identical to `master` for upgradability
+
+### Security Audits
+
+- Before auditing any Solidity contracts, refer to 'skills/SECURITY_AUDIT.md' for detailed audit guidelines and output format.
