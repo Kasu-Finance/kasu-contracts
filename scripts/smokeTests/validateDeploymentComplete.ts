@@ -164,6 +164,7 @@ async function validateKasuControllerRoles(
     poolAdminMultisig: string,
     protocolFeeClaimer: string,
     deployerAddress: string,
+    revokedAdminAddresses: string[],
     kasuControllerAddress: string,
     addresses: Record<string, AddressEntry>,
 ): Promise<ValidationResult[]> {
@@ -194,6 +195,18 @@ async function validateKasuControllerRoles(
             message: deployerHasAdmin
                 ? `ROLE_KASU_ADMIN: Deployer still has admin role (should be revoked)`
                 : `ROLE_KASU_ADMIN: Deployer correctly does NOT have admin role`,
+        });
+    }
+
+    // Check revoked admin addresses do NOT have ROLE_KASU_ADMIN
+    for (const revokedAddress of revokedAdminAddresses) {
+        const hasAdmin = await kasuController.hasRole(ROLE_KASU_ADMIN, revokedAddress);
+        results.push({
+            category: 'Roles',
+            passed: !hasAdmin,
+            message: hasAdmin
+                ? `ROLE_KASU_ADMIN: Old admin ${revokedAddress} still has admin role (should be revoked)`
+                : `ROLE_KASU_ADMIN: Old admin ${revokedAddress} correctly does NOT have admin role`,
         });
     }
 
@@ -460,6 +473,7 @@ async function main() {
         poolAdminMultisig,
         chainConfig.protocolFeeClaimer,
         deployerAddress,
+        chainConfig.revokedAdminAddresses,
         addresses.KasuController!.address!,
         addresses,
     );

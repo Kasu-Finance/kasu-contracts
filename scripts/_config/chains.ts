@@ -30,6 +30,8 @@ export interface ChainConfig {
     protocolFeeReceiver: string;
     /** Lending pool addresses (for smoke tests only - pool addresses are public on-chain) */
     lendingPoolAddresses: string[];
+    /** Addresses that should NOT have admin roles (old admins that were revoked) */
+    revokedAdminAddresses: string[];
     /** Whether this is a testnet */
     isTestnet: boolean;
     /** Whether Tenderly supports this chain for simulations */
@@ -59,6 +61,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         protocolFeeReceiver: '', // Will default to admin address
         lendingPoolAddresses: [], // Pools will be created during testing
+        revokedAdminAddresses: [],
         isTestnet: true,
         tenderlySupported: false,
     },
@@ -75,6 +78,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         protocolFeeReceiver: '', // Will default to admin address
         lendingPoolAddresses: [],
+        revokedAdminAddresses: [],
         isTestnet: true,
         tenderlySupported: false,
     },
@@ -93,6 +97,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         protocolFeeReceiver: '', // Will default to admin address
         lendingPoolAddresses: [],
+        revokedAdminAddresses: [],
         isTestnet: true,
         tenderlySupported: true,
     },
@@ -114,6 +119,10 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
             '0xc347a9e4aec8c8d11a149d2907deb2bf23b81c6f',
             '0xc987350716fe4a7d674c3591c391d29eba26b8ce',
         ],
+        revokedAdminAddresses: [
+            // Old admin that should have DEFAULT_ADMIN_ROLE revoked
+            '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483',
+        ],
         isTestnet: false,
         tenderlySupported: true,
     },
@@ -131,7 +140,12 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         poolAdminMultisig: '0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112',
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         protocolFeeReceiver: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
-        lendingPoolAddresses: [],
+        lendingPoolAddresses: [
+            '0x20F42FB45f91657aCf9528b99a5a16d0229C7800',
+            '0x3b7cb493Aa22f731DB2ab424D918e7375E00F6A9',
+            '0xEDa50C91a8c4CA8A83652b8542c0b3BD00A71fad',
+        ],
+        revokedAdminAddresses: [], // Deployer checked separately
         isTestnet: false,
         tenderlySupported: false, // Tenderly doesn't support XDC
     },
@@ -148,12 +162,16 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         poolManagerMultisig: '0xEe2F38731F5050e02BF075d86DeBFb4B56F424fe',
         poolAdminMultisig: '0xEb8D4618713517C1367aCA4840b1fca3d8b090DF',
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
-        protocolFeeReceiver: '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483',
+        protocolFeeReceiver: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         lendingPoolAddresses: [
             // Lending pools for smoke tests (public on-chain addresses)
             '0xB47Ee8770615E28dDDbCD3fC1bcAF11F2c1e732a',
             '0xf5c8E1E658855E116c656b1790Ef2B5951679764',
             '0xb742668ACced969b3CE64B4469E17F74A3E1d402',
+        ],
+        revokedAdminAddresses: [
+            // Old admin that should have DEFAULT_ADMIN_ROLE revoked
+            '0x0e7e0a898ddBbE859d08976dE1673c7A9F579483',
         ],
         isTestnet: false,
         tenderlySupported: false, // Tenderly doesn't support Plume
@@ -222,6 +240,7 @@ export function getChainConfig(networkName: string): ChainConfig {
         protocolFeeClaimer: protocolFeeClaimer || '',
         protocolFeeReceiver: protocolFeeReceiver || '',
         lendingPoolAddresses,
+        revokedAdminAddresses: [],
         isTestnet: process.env.IS_TESTNET === 'true',
         tenderlySupported: false, // Unknown chains default to no Tenderly support
     };

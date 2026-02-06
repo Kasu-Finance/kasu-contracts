@@ -12,6 +12,26 @@ import * as dotenv from 'dotenv';
 // Load generic .env file for shared config (ETHERSCAN_API_KEY, etc.)
 dotenv.config({ path: path.join(__dirname, 'scripts', '_env', '.env') });
 
+// Helper to load network-specific accounts
+function getNetworkAccounts(networkName: string): string[] {
+    // Try to load network-specific env file
+    const envPath = path.join(__dirname, 'scripts', '_env', `.${networkName}.env`);
+    try {
+        const result = dotenv.config({ path: envPath });
+        if (result.parsed) {
+            const accounts: string[] = [];
+            if (result.parsed.DEPLOYER_KEY) accounts.push(result.parsed.DEPLOYER_KEY);
+            if (result.parsed.ADMIN_KEY && result.parsed.ADMIN_KEY !== result.parsed.DEPLOYER_KEY) {
+                accounts.push(result.parsed.ADMIN_KEY);
+            }
+            return accounts;
+        }
+    } catch (e) {
+        // Env file doesn't exist, return empty array
+    }
+    return [];
+}
+
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
     async (_, hre, runSuper) => {
         const paths = await runSuper();
@@ -93,14 +113,17 @@ const config: HardhatUserConfig = {
         base: {
             url: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
             chainId: 8453,
+            accounts: getNetworkAccounts('base'),
         },
         xdc: {
-            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdcrpc.com',
             chainId: 50,
+            accounts: getNetworkAccounts('xdc'),
         },
         plume: {
             url: process.env.PLUME_RPC_URL ?? 'https://rpc.plume.org',
             chainId: 98866,
+            accounts: getNetworkAccounts('plume'),
         },
     },
     etherscan: {

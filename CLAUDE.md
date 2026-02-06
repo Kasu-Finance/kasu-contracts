@@ -408,6 +408,43 @@ npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
 npx hardhat --network plume run scripts/admin/validateDeployment.ts
 ```
 
+### XDC Deployment Status
+
+XDC has a Lite deployment (deployed Feb 2026) with epoch timing aligned to Base.
+
+**Epoch Timing (aligned Feb 6, 2026):**
+- ✅ Epochs now transition on Thursday 06:00 UTC (same as Base)
+- ✅ Initial epoch start: Thu, 29 Jan 2026 06:00:00 UTC
+- ✅ Epoch 1 preserved (existing deposit safe)
+
+**Pending Tasks:**
+- ❌ ProxyAdmin ownership: Still with deployer, needs transfer to Kasu multisig
+- ❌ Beacon ownership: Still with deployer, needs transfer to Kasu multisig
+- ❌ ROLE_KASU_ADMIN: Deployer still has it, needs revocation
+- ✅ ROLE_KASU_ADMIN: Kasu multisig has it
+- ✅ ROLE_LENDING_POOL_FACTORY: Granted to LendingPoolFactory
+- ✅ ROLE_LENDING_POOL_CREATOR: Granted to pool admin multisig
+- ✅ ROLE_PROTOCOL_FEE_CLAIMER: Granted correctly
+- ✅ Pool-specific roles: Configured for all 3 pools
+
+**Action Required:**
+
+1. **Transfer ProxyAdmin ownership** (16 contracts):
+```bash
+NEW_PROXY_ADMIN_OWNER=0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D \
+  npx hardhat --network xdc run scripts/admin/transferAllProxyAdminOwnership.ts
+```
+
+2. **Revoke deployer admin role** (via Kasu multisig):
+```solidity
+kasuController.revokeRole(0x00, 0x2e202f7A4D5F670D76921aA44B94940bAa87d8F9)
+```
+
+3. **Verify**:
+```bash
+npx hardhat --network xdc run scripts/smokeTests/validateDeploymentComplete.ts
+```
+
 ### Tenderly Simulations
 
 Transaction simulations using Tenderly API for testing on deployed networks without on-chain execution.
@@ -441,7 +478,10 @@ See `scripts/tenderly/README.md` for full documentation.
 - ✅ Smoke tests validated on Base (Full deployment)
 - ✅ Smoke tests validated on Plume (Lite deployment)
   - Blockscout API works without API key
-  - Revealed role configuration issues (ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER not granted)
+  - Revealed role configuration issues (needs upgrade and role grants)
+- ✅ Smoke tests validated on XDC (Lite deployment)
+  - Epoch timing aligned to Thursday 06:00 UTC
+  - Pending: ownership transfer and deployer role revocation
 - ✅ Tenderly simulation integrated into smoke tests
 - ⏸️  Nexera/Compilot endpoint testing (manual testing only - not automated)
 
