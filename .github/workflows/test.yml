@@ -30,6 +30,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly-2024-04-01
 
       - name: Run Forge fmt check
         run: |
