@@ -356,55 +356,39 @@ See `scripts/smokeTests/README.md` for full documentation.
 
 ### Plume Deployment Status
 
-Plume has a Lite deployment (deployed Jan 15, 2025) but validation revealed issues:
+Plume has a Lite deployment with new implementations deployed, awaiting multisig execution.
 
-**Role Configuration Issues (as of Jan 26, 2026):**
-- ❌ ROLE_KASU_ADMIN not granted to Kasu multisig (`0x344BA98De46750e0B7CcEa8c3922Db8A70391189`)
-- ❌ ROLE_LENDING_POOL_CREATOR not granted to pool admin multisig (`0xEb8D4618713517C1367aCA4840b1fca3d8b090DF`)
-- ❌ ROLE_PROTOCOL_FEE_CLAIMER not granted to expected address (`0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28`)
-
-**Source Code Mismatch (7 contracts need upgrade):**
-- ❌ KSULockingLite
-- ❌ KsuPriceLite
-- ❌ SystemVariables
-- ❌ FixedTermDeposit
-- ❌ UserLoyaltyRewardsLite
-- ❌ UserManagerLite
-- ❌ ProtocolFeeManagerLite
-
-**Working Correctly:**
-- ✅ All ProxyAdmin ownership (15 contracts owned by Kasu multisig)
-- ✅ All Beacon ownership (3 beacons owned by Kasu multisig)
+**Current State (Feb 9, 2026):**
+- ✅ All ProxyAdmin ownership (Kasu multisig)
+- ✅ All Beacon ownership (Kasu multisig)
+- ✅ ROLE_KASU_ADMIN granted to Kasu multisig
 - ✅ ROLE_LENDING_POOL_FACTORY granted to LendingPoolFactory
-- ✅ Protocol fee receiver is set
-- ✅ 11 contracts source code matches (verified on Blockscout)
+- ✅ ROLE_LENDING_POOL_CREATOR granted to pool admin multisig
+- ✅ ROLE_PROTOCOL_FEE_CLAIMER granted correctly
+- ✅ All pool-specific roles configured for 3 pools
+- ❌ Old admin `0x0e7e...483` still has DEFAULT_ADMIN_ROLE (needs revoke)
+- ❌ 7 contracts need upgrade to match source code
 
-**Action Required:**
+**New Implementations Deployed:**
+| Contract | New Implementation |
+|----------|-------------------|
+| KSULockingLite | `0x6BABEa605337b3C6D0106d83864d73706971355f` |
+| KsuPriceLite | `0xe81D1C0E031da0E357928ED19aA1EbF6A2f5C904` |
+| SystemVariables | `0x990bCF7f23d58Fa121209ABaF812836b651c82bC` |
+| FixedTermDeposit | `0x7fF469f8c5fba92A9051B8D28794CBb891760e81` |
+| UserLoyaltyRewardsLite | `0xC7c808e0C9fd7F97EA23b7eA21d94104564C6aC0` |
+| UserManagerLite | `0x666b589933965bF8B378eD973f0404b6cae0eb52` |
+| ProtocolFeeManagerLite | `0x161931FC6AFb8195B7516E4D129AcA437c15CA38` |
 
-1. **Grant missing roles** (use Kasu multisig):
+**Action Required - Execute via Gnosis Safe:**
+
+Upload `scripts/multisig/plume-upgrade-all.json` to Gnosis Safe Transaction Builder:
+- 7 upgrade transactions (ProxyAdmin.upgradeAndCall)
+- 1 revoke transaction (remove old admin DEFAULT_ADMIN_ROLE)
+
+**Verify after execution:**
 ```bash
-# Grant ROLE_KASU_ADMIN to Kasu multisig
-kasuController.grantRole(ROLE_KASU_ADMIN, 0x344BA98De46750e0B7CcEa8c3922Db8A70391189)
-
-# Grant ROLE_LENDING_POOL_CREATOR to pool admin multisig
-kasuController.grantRole(ROLE_LENDING_POOL_CREATOR, 0xEb8D4618713517C1367aCA4840b1fca3d8b090DF)
-
-# Grant ROLE_PROTOCOL_FEE_CLAIMER to protocol fee claimer
-kasuController.grantRole(ROLE_PROTOCOL_FEE_CLAIMER, 0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28)
-```
-
-2. **Upgrade mismatched contracts** (7 contracts):
-```bash
-# Upgrade all contracts that don't match source (deploymentMode from chains.ts)
-DEPLOY_UPDATES=true npx hardhat --network plume deploy
-```
-
-3. **Verify everything is correct**:
-```bash
-# Run smoke tests
 npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
-
-# Validate source code matches (deploymentMode from chains.ts)
 npx hardhat --network plume run scripts/admin/validateDeployment.ts
 ```
 

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "KSULocking",
+    "contractName": "KSULockingLite",
+    "proxy": "0xE768E5D17f338DF23983876AfDCD42Ae7d60B052",
+    "proxyAdmin": "0x81395823cbaebb2594192628a0bf8683ef1dd626",
+    "oldImplementation": "0x5D9b878744dbe721a3f33A60a6b102E289CeADBA",
+    "newImplementation": "0x6BABEa605337b3C6D0106d83864d73706971355f"
+  },
+  {
+    "name": "KsuPrice",
+    "contractName": "KsuPriceLite",
+    "proxy": "0x0B98f531754C55C2c2A084E0Ec1647Ccee397931",
+    "proxyAdmin": "0x99714a811a43c29206b2cdd16f4dd8d6eb1365a9",
+    "oldImplementation": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+    "newImplementation": "0xe81D1C0E031da0E357928ED19aA1EbF6A2f5C904"
+  },
+  {
+    "name": "SystemVariables",
+    "contractName": "SystemVariables",
+    "proxy": "0xb82992c13AdeE67F43758bce6FF16E32c0Ca4DC6",
+    "proxyAdmin": "0x8d7a1813dc71f65f461e1d133d79ea7ff1bb9643",
+    "oldImplementation": "0xB145C061684C701c2C018A3f322aa14F5A553CE1",
+    "newImplementation": "0x990bCF7f23d58Fa121209ABaF812836b651c82bC"
+  },
+  {
+    "name": "FixedTermDeposit",
+    "contractName": "FixedTermDeposit",
+    "proxy": "0x59E4Edc892E421a78c531FE750D54Ad40Ee0F576",
+    "proxyAdmin": "0xecbee67ed5dd02d2b6db4c4e201a31d27af85191",
+    "oldImplementation": "0x221a54CbbD5f490Bd8e77CF36acBA4B1304E5c1b",
+    "newImplementation": "0x7fF469f8c5fba92A9051B8D28794CBb891760e81"
+  },
+  {
+    "name": "UserLoyaltyRewards",
+    "contractName": "UserLoyaltyRewardsLite",
+    "proxy": "0x193Bb02A24F5562b58fEB86550e6f09Bb6c41f69",
+    "proxyAdmin": "0x11337d45926ed4035416e160cd7bd7b0617bb9d6",
+    "oldImplementation": "0xaFb2966dCc3f20eC4412162a8D203247a93A7765",
+    "newImplementation": "0xC7c808e0C9fd7F97EA23b7eA21d94104564C6aC0"
+  },
+  {
+    "name": "UserManager",
+    "contractName": "UserManagerLite",
+    "proxy": "0xB4784f69Bb1F1076F50907cB0a815908a719D635",
+    "proxyAdmin": "0x0f8b9569d7e9c9e678166caf7081667bf096862c",
+    "oldImplementation": "0xF0e92ad317a315Adb21923aefce66Aaf55364bE9",
+    "newImplementation": "0x666b589933965bF8B378eD973f0404b6cae0eb52"
+  },
+  {
+    "name": "FeeManager",
+    "contractName": "ProtocolFeeManagerLite",
+    "proxy": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+    "proxyAdmin": "0xf190f9abeb7cb23843bdaccc05a42c70ba345e8c",
+    "oldImplementation": "0xd2812f27ee3D898daEF64772E113A13A0F80c229",
+    "newImplementation": "0x161931FC6AFb8195B7516E4D129AcA437c15CA38"
+  }
+]

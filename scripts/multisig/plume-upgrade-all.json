@@ -1,0 +1,254 @@
+{
+  "version": "1.0",
+  "chainId": "98866",
+  "createdAt": 1770644807269,
+  "meta": {
+    "name": "Plume: Upgrade Contracts & Revoke Old Admin",
+    "description": "This batch transaction:\n\n1. Upgrades 7 contracts to latest implementations:\n   - KSULocking (KSULockingLite)\n   - KsuPrice (KsuPriceLite)\n   - SystemVariables (SystemVariables)\n   - FixedTermDeposit (FixedTermDeposit)\n   - UserLoyaltyRewards (UserLoyaltyRewardsLite)\n   - UserManager (UserManagerLite)\n   - FeeManager (ProtocolFeeManagerLite)\n\n2. Revokes DEFAULT_ADMIN_ROLE from old admin:\n   - 0x0e7e0a898ddBbE859d08976dE1673c7A9F579483",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0x81395823cbaebb2594192628a0bf8683ef1dd626",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xE768E5D17f338DF23983876AfDCD42Ae7d60B052",
+        "implementation": "0x6BABEa605337b3C6D0106d83864d73706971355f",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x99714a811a43c29206b2cdd16f4dd8d6eb1365a9",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0x0B98f531754C55C2c2A084E0Ec1647Ccee397931",
+        "implementation": "0xe81D1C0E031da0E357928ED19aA1EbF6A2f5C904",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x8d7a1813dc71f65f461e1d133d79ea7ff1bb9643",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xb82992c13AdeE67F43758bce6FF16E32c0Ca4DC6",
+        "implementation": "0x990bCF7f23d58Fa121209ABaF812836b651c82bC",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0xecbee67ed5dd02d2b6db4c4e201a31d27af85191",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0x59E4Edc892E421a78c531FE750D54Ad40Ee0F576",
+        "implementation": "0x7fF469f8c5fba92A9051B8D28794CBb891760e81",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x11337d45926ed4035416e160cd7bd7b0617bb9d6",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0x193Bb02A24F5562b58fEB86550e6f09Bb6c41f69",
+        "implementation": "0xC7c808e0C9fd7F97EA23b7eA21d94104564C6aC0",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x0f8b9569d7e9c9e678166caf7081667bf096862c",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xB4784f69Bb1F1076F50907cB0a815908a719D635",
+        "implementation": "0x666b589933965bF8B378eD973f0404b6cae0eb52",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0xf190f9abeb7cb23843bdaccc05a42c70ba345e8c",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+        "implementation": "0x161931FC6AFb8195B7516E4D129AcA437c15CA38",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x7923837dC93d897E12696e0F4FD50b51FBacf693",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "account": "0x0e7e0a898ddBbE859d08976dE1673c7A9F579483"
+      }
+    }
+  ]
+}
