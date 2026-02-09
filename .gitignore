@@ -32,3 +32,4 @@ scripts/_env/.*
 **/.base-mainnet.env
 **/localhost-addresses.json
 /kasu-contracts.iml
+edr-cache/
