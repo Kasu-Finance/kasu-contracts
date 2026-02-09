@@ -83,9 +83,8 @@ abstract contract DepositSwap {
 
         // Transfer the tokens from the caller to the swapper.
         for (uint256 i; i < swapDepositBag.inTokens.length; ++i) {
-            IERC20(swapDepositBag.inTokens[i]).safeTransferFrom(
-                msg.sender, address(_swapper), swapDepositBag.inAmounts[i]
-            );
+            IERC20(swapDepositBag.inTokens[i])
+                .safeTransferFrom(msg.sender, address(_swapper), swapDepositBag.inAmounts[i]);
 
             if (swapDepositBag.inTokens[i] == address(_weth) && msgValue > 0) {
                 IERC20(address(_weth)).safeTransfer(address(_swapper), msgValue);

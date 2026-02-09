@@ -61,10 +61,7 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
 
     function totalPendingDepositAmount() external view returns (uint256);
 
-    function trancheDepositNftDetails(uint256 dNftId)
-        external
-        view
-        returns (DepositNftDetails memory depositNftDetails);
+    function trancheDepositNftDetails(uint256 dNftId) external view returns (DepositNftDetails memory depositNftDetails);
 
     function trancheWithdrawalNftDetails(uint256 wNftId)
         external
@@ -84,9 +81,7 @@ interface IPendingPool is IERC721Enumerable, IClearingSteps {
         external
         returns (uint256 dNftID);
     function cancelDepositRequest(address user, uint256 dNftID) external;
-    function requestWithdrawal(address user, address tranche, uint256 trancheShares)
-        external
-        returns (uint256 wNftID);
+    function requestWithdrawal(address user, address tranche, uint256 trancheShares) external returns (uint256 wNftID);
     function cancelWithdrawalRequest(address user, uint256 wNftID) external;
     function forceAcceptWithdrawalRequest(uint256 wNftID, uint256 acceptedShares) external;
 

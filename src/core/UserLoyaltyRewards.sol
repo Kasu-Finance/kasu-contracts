@@ -123,7 +123,7 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
             }
 
             loyaltyEpochRewardRates[loyaltyEpochRewardRatesInput[i].loyaltyLevel] =
-                loyaltyEpochRewardRatesInput[i].epochRewardRate;
+            loyaltyEpochRewardRatesInput[i].epochRewardRate;
 
             emit UpdatedLoyaltyLevelRewardRate(
                 loyaltyEpochRewardRatesInput[i].loyaltyLevel, loyaltyEpochRewardRatesInput[i].epochRewardRate

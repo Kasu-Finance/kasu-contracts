@@ -192,9 +192,8 @@ abstract contract LendingPoolTestUtils is LockingTestUtils {
         // access control - init
         KasuController(address(kasuController)).initialize(admin, address(lendingPoolFactory));
 
-        LendingPoolManager(address(lendingPoolManager)).initialize(
-            lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator
-        );
+        LendingPoolManager(address(lendingPoolManager))
+            .initialize(lendingPoolFactory, kasuAllowList, userManager, clearingCoordinator);
 
         vm.startPrank(admin);
         kasuController.grantRole(ROLE_SWAPPER, address(lendingPoolManager));

@@ -70,8 +70,8 @@ contract PendingPool is
     mapping(
         address user
             => mapping(
-                uint256 epoch => mapping(address tranche => mapping(RequestedFrom requestedFrom => uint256 wNftId))
-            )
+            uint256 epoch => mapping(address tranche => mapping(RequestedFrom requestedFrom => uint256 wNftId))
+        )
     ) private _wNftIdPerUserPerEpochPerTranchePerPriority;
 
     /// @notice Total pending deposit amount.
@@ -694,14 +694,18 @@ contract PendingPool is
 
     function _deleteDNftDetails(address user, uint256 dNftID) private {
         DepositNftDetails storage dNftDetails = _trancheDepositNftDetails[dNftID];
-        delete _dNftIdPerUserPerEpochPerTranche[user][dNftDetails.epochId][dNftDetails.tranche][_fixedTermConfigPerDeposit[dNftID]];
+        delete _dNftIdPerUserPerEpochPerTranche[
+            user
+        ][dNftDetails.epochId][dNftDetails.tranche][_fixedTermConfigPerDeposit[dNftID]];
         delete _trancheDepositNftDetails[dNftID];
         delete _fixedTermConfigPerDeposit[dNftID];
     }
 
     function _deleteWNftDetails(address user, uint256 wNftID) private {
         WithdrawalNftDetails storage wNftDetails = _trancheWithdrawalNftDetails[wNftID];
-        delete _wNftIdPerUserPerEpochPerTranchePerPriority[user][wNftDetails.epochId][wNftDetails.tranche][wNftDetails.requestedFrom];
+        delete _wNftIdPerUserPerEpochPerTranchePerPriority[
+            user
+        ][wNftDetails.epochId][wNftDetails.tranche][wNftDetails.requestedFrom];
         delete _trancheWithdrawalNftDetails[wNftID];
     }
 

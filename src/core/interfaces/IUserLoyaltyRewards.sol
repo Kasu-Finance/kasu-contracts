@@ -26,8 +26,7 @@ interface IUserLoyaltyRewards {
     function emitUserLoyaltyReward(address user, uint256 epoch, uint256 userLoyaltyLevel, uint256 amountDeposited)
         external;
     function setDoEmitRewards(bool doEmitRewards_) external;
-    function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRateInput)
-        external;
+    function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRateInput) external;
     function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice) external;
     function claimReward(uint256 amount) external;
     function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external;

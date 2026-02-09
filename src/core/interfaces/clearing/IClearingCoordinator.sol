@@ -38,10 +38,7 @@ struct AppliedClearingConfiguration {
 interface IClearingCoordinator {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
-    function lendingPoolClearingStatus(address lendingPool, uint256 epoch)
-        external
-        view
-        returns (ClearingStatus status);
+    function lendingPoolClearingStatus(address lendingPool, uint256 epoch) external view returns (ClearingStatus status);
     function isLendingPoolClearingPending(address lendingPool) external view returns (bool isPending);
     function lendingPoolMaxDrawAmount(address lendingPool) external view returns (uint256 maxDrawAmount);
     function nextLendingPoolClearingEpoch(address lendingPool) external view returns (uint256 nextEpoch);

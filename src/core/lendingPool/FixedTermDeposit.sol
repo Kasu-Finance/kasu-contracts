@@ -459,9 +459,10 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
 
             uint256 trancheBalanceBefore = ILendingPoolTranche(depositConfig.tranche).balanceOf(address(this));
 
-            ILendingPool(lendingPool).applyFixedRateInterests(
-                deposit.user, depositConfig.tranche, trancheShares, depositConfig.epochInterestRate, targetEpoch
-            );
+            ILendingPool(lendingPool)
+                .applyFixedRateInterests(
+                    deposit.user, depositConfig.tranche, trancheShares, depositConfig.epochInterestRate, targetEpoch
+                );
 
             uint256 trancheBalanceAfter = ILendingPoolTranche(depositConfig.tranche).balanceOf(address(this));
 
@@ -501,9 +502,10 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
                 // check if the user has signaled to withdraw
                 if (deposit.withdrawRequested && userTrancheSharesAfter > 0) {
                     // request a priority withdraw
-                    IPendingPool(ILendingPool(lendingPool).pendingPool()).requestPriorityWithdrawal(
-                        deposit.user, depositConfig.tranche, userTrancheSharesAfter, targetEpoch
-                    );
+                    IPendingPool(ILendingPool(lendingPool).pendingPool())
+                        .requestPriorityWithdrawal(
+                            deposit.user, depositConfig.tranche, userTrancheSharesAfter, targetEpoch
+                        );
                 }
             }
 
@@ -543,13 +545,11 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
 
         // check if the withdrawal request is too late
         uint256 currentEpoch = _systemVariables.currentRequestEpoch();
-        if (
-            _verifyWithdrawalActionTime(
+        if (_verifyWithdrawalActionTime(
                 currentEpoch,
                 deposit.epochUnlockNumber,
                 _lendingPoolWithdrawalConfiguration[lendingPool].requestEpochsInAdvance
-            )
-        ) {
+            )) {
             revert FixedTermDepositWithdrawalRequestTooLate(
                 lendingPool,
                 fixedTermDepositId,
@@ -586,13 +586,11 @@ contract FixedTermDeposit is Initializable, IFixedTermDeposit {
 
         // check if the user can still cancel the request
         uint256 currentEpoch = _systemVariables.currentRequestEpoch();
-        if (
-            _verifyWithdrawalActionTime(
+        if (_verifyWithdrawalActionTime(
                 currentEpoch,
                 deposit.epochUnlockNumber,
                 _lendingPoolWithdrawalConfiguration[lendingPool].cancelRequestEpochsInAdvance
-            )
-        ) {
+            )) {
             revert FixedTermDepositWithdrawalRequestCancelTooLate(
                 lendingPool,
                 fixedTermDepositId,

@@ -514,15 +514,15 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256 feesPaid;
         {
             uint256 performanceFee = systemVariables.performanceFee();
-            trancheInterestRatesMultiplier[0] = (
-                poolConfiguration.tranches[0].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
-            ) + INTEREST_RATE_FULL_PERCENT;
-            trancheInterestRatesMultiplier[1] = (
-                poolConfiguration.tranches[1].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
-            ) + INTEREST_RATE_FULL_PERCENT;
-            trancheInterestRatesMultiplier[2] = (
-                poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
-            ) + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier[0] =
+                (poolConfiguration.tranches[0].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT)
+                    + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier[1] =
+                (poolConfiguration.tranches[1].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT)
+                    + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier[2] =
+                (poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT)
+                    + INTEREST_RATE_FULL_PERCENT;
 
             feesPaid += 20_000 * 1e6 * poolConfiguration.tranches[0].interestRate * performanceFee / FULL_PERCENT
                 / INTEREST_RATE_FULL_PERCENT;
@@ -709,15 +709,15 @@ contract ClearingTest is LendingPoolTestUtils {
         uint256[] memory trancheInterestRatesMultiplier2 = new uint256[](3);
         {
             uint256 performanceFee = systemVariables.performanceFee();
-            trancheInterestRatesMultiplier2[0] = (
-                poolConfiguration.tranches[0].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
-            ) + INTEREST_RATE_FULL_PERCENT;
-            trancheInterestRatesMultiplier2[1] = (
-                poolConfiguration.tranches[1].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
-            ) + INTEREST_RATE_FULL_PERCENT;
-            trancheInterestRatesMultiplier2[2] = (
-                poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT
-            ) + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier2[0] =
+                (poolConfiguration.tranches[0].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT)
+                    + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier2[1] =
+                (poolConfiguration.tranches[1].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT)
+                    + INTEREST_RATE_FULL_PERCENT;
+            trancheInterestRatesMultiplier2[2] =
+                (poolConfiguration.tranches[2].interestRate * (FULL_PERCENT - performanceFee) / FULL_PERCENT)
+                    + INTEREST_RATE_FULL_PERCENT;
         }
 
         assertEq(poolConfiguration.tranches[0].interestRate, INTEREST_RATE_FULL_PERCENT / 100);

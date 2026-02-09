@@ -33,9 +33,7 @@ interface ILendingPoolManager {
         KycData calldata kycData
     ) external payable returns (uint256 dNftID);
     function cancelDepositRequest(address lendingPool, uint256 dNftID) external;
-    function requestWithdrawal(address lendingPool, address tranche, uint256 amount)
-        external
-        returns (uint256 wNftID);
+    function requestWithdrawal(address lendingPool, address tranche, uint256 amount) external returns (uint256 wNftID);
     function cancelWithdrawalRequest(address lendingPool, uint256 wNftID) external;
     function claimRepaidLoss(address lendingPool, address tranche, uint256 lossId)
         external

@@ -124,8 +124,7 @@ interface IFixedTermDeposit {
         uint256 configId
     ) external;
 
-    function requestFixedTermDepositWithdrawal(address user, address lendingPool, uint256 fixedTermDepositId)
-        external;
+    function requestFixedTermDepositWithdrawal(address user, address lendingPool, uint256 fixedTermDepositId) external;
 
     function cancelFixedTermDepositWithdrawalRequest(address user, address lendingPool, uint256 fixedTermDepositId)
         external;

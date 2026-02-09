@@ -1094,8 +1094,9 @@ contract FixedTermDepositTest is LendingPoolTestUtils {
         uint256 trancheIndex,
         uint256 interestRate
     ) private pure {
-        (uint256 amountAfterInterests, uint256 feesOwed) =
-            _calculateUserBalanceAfterInterests(balances.trancheUser[trancheIndex][userIndex], interestRate, 1, 10_00);
+        (uint256 amountAfterInterests, uint256 feesOwed) = _calculateUserBalanceAfterInterests(
+            balances.trancheUser[trancheIndex][userIndex], interestRate, 1, 10_00
+        );
         balances.trancheUser[trancheIndex][userIndex] = amountAfterInterests;
         balances.feesOwed += feesOwed;
     }

@@ -33,10 +33,7 @@ error NoReentrantRole();
 interface IKasuController is IAccessControl {
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
 
-    function hasLendingPoolRole(address lendingPool, bytes32 role, address account)
-        external
-        view
-        returns (bool hasRole);
+    function hasLendingPoolRole(address lendingPool, bytes32 role, address account) external view returns (bool hasRole);
 
     function requireNotPaused() external view;
 

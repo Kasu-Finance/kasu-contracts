@@ -151,8 +151,9 @@ contract LendingPoolTest is LendingPoolTestUtils {
         // Alice deposits with KYC signature
         vm.startPrank(alice);
         mockUsdc.approve(address(lendingPoolManager), type(uint256).max);
-        uint256 dNftId1_alice =
-            lendingPoolManager.requestDepositWithKyc(lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", 0, "", kycData);
+        uint256 dNftId1_alice = lendingPoolManager.requestDepositWithKyc(
+            lpd.lendingPool, lpd.tranches[0], 50 * 10 ** 6, "", 0, "", kycData
+        );
 
         // ASSERT
         assertEq(KasuAllowList(address(kasuAllowList)).nonces(alice), 1);

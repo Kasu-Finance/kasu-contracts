@@ -971,10 +971,8 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
             if (assets == 0) return 0;
 
             uint256 balanceBeforeBaseInterest = assets * INTEREST_RATE_FULL_PERCENT
-                / (
-                    INTEREST_RATE_FULL_PERCENT
-                        + ((baseTrancheInterestRate * (FULL_PERCENT - _systemVariables.performanceFee())) / FULL_PERCENT)
-                );
+                / (INTEREST_RATE_FULL_PERCENT
+                    + ((baseTrancheInterestRate * (FULL_PERCENT - _systemVariables.performanceFee())) / FULL_PERCENT));
 
             balanceAfterFixedInterest = balanceBeforeBaseInterest * fixedInterestRate / INTEREST_RATE_FULL_PERCENT;
             balanceAfterBaseInterest = balanceBeforeBaseInterest * baseTrancheInterestRate / INTEREST_RATE_FULL_PERCENT;
@@ -1115,9 +1113,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _updateTargetExcessLiquidityPercentage(uint256 targetExcessLiquidityPercentage) private {
         if (targetExcessLiquidityPercentage < _poolConfiguration.minimumExcessLiquidityPercentage) {
-            revert PoolConfigurationIsIncorrect(
-                "Target excess liquidity percentage is less than minimum excess liquidity percentage"
-            );
+            revert PoolConfigurationIsIncorrect("Target excess liquidity percentage is less than minimum excess liquidity percentage");
         }
 
         _poolConfiguration.targetExcessLiquidityPercentage = targetExcessLiquidityPercentage;
@@ -1127,9 +1123,7 @@ contract LendingPool is ILendingPool, ERC20Upgradeable, AssetFunctionsBase, ILen
 
     function _updateMinimumExcessLiquidityPercentage(uint256 minimumExcessLiquidityPercentage) private {
         if (minimumExcessLiquidityPercentage > _poolConfiguration.targetExcessLiquidityPercentage) {
-            revert PoolConfigurationIsIncorrect(
-                "Minimum excess liquidity percentage is more than target excess liquidity percentage"
-            );
+            revert PoolConfigurationIsIncorrect("Minimum excess liquidity percentage is more than target excess liquidity percentage");
         }
 
         _poolConfiguration.minimumExcessLiquidityPercentage = minimumExcessLiquidityPercentage;

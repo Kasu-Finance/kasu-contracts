@@ -185,9 +185,10 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
         whenNotPaused
         returns (uint256)
     {
-        IERC20Permit(address(_ksuToken)).permit(
-            msg.sender, address(this), ksuPermit.value, ksuPermit.deadline, ksuPermit.v, ksuPermit.r, ksuPermit.s
-        );
+        IERC20Permit(address(_ksuToken))
+            .permit(
+                msg.sender, address(this), ksuPermit.value, ksuPermit.deadline, ksuPermit.v, ksuPermit.r, ksuPermit.s
+            );
 
         return _lock(amount, lockPeriod);
     }

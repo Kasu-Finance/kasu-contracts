@@ -149,11 +149,7 @@ abstract contract LendingPoolTrancheLoss is
      * @param lossId The id of the loss.
      * @return claimedAmount The loss amount claimed.
      */
-    function claimRepaidLoss(address user, uint256 lossId)
-        external
-        onlyOwnLendingPool
-        returns (uint256 claimedAmount)
-    {
+    function claimRepaidLoss(address user, uint256 lossId) external onlyOwnLendingPool returns (uint256 claimedAmount) {
         claimedAmount = userClaimableLoss(user, lossId);
         userClaimedLosses[user][lossId] += claimedAmount;
 

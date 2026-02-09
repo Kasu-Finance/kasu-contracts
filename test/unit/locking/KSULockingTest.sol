@@ -173,11 +173,7 @@ contract KSULockingTest is LockingTestUtils {
 
         // ACT
         SigUtilsERC20.Permit memory permit = SigUtilsERC20.Permit({
-            owner: user,
-            spender: address(_KSULocking),
-            value: lockAmount,
-            nonce: _ksu.nonces(user),
-            deadline: deadline
+            owner: user, spender: address(_KSULocking), value: lockAmount, nonce: _ksu.nonces(user), deadline: deadline
         });
 
         bytes32 digest = sigUtilsERC20.getTypedDataHash(permit);

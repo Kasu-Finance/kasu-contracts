@@ -115,9 +115,8 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[trancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
-                        uint256 totalTranchePriorityDepositedAmount = clearingData
-                            .pendingDeposits
-                            .tranchePriorityDepositsAmounts[requestTrancheIndex][depositNftDetails.priority];
+                        uint256 totalTranchePriorityDepositedAmount = clearingData.pendingDeposits
+                        .tranchePriorityDepositsAmounts[requestTrancheIndex][depositNftDetails.priority];
 
                         // calculate the amount that will be accepted in this tranche
                         if (totalTranchePriorityDepositedAmount == totalAcceptedAmount) {
@@ -137,7 +136,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                                     // "totalAcceptedAmount * depositNftDetails.assetAmount" can be unchecked as we do same operation checked just above
                                     if (
                                         totalAcceptedAmount * depositNftDetails.assetAmount
-                                            % totalTranchePriorityDepositedAmount > 0
+                                                % totalTranchePriorityDepositedAmount > 0
                                     ) {
                                         // can be unchecked as "if (userAcceptedDepositAmount < requestAmountLeft)" is true, so userAcceptedDepositAmount less than max uint256
                                         userAcceptedDepositAmount++;
