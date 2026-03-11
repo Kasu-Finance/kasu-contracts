@@ -133,7 +133,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         chainId: 50,
         deploymentMode: 'lite',
         wrappedNativeAddress: '0x951857744785e80e2de051c32ee7b25f9c458c42', // WXDC
-        usdcAddress: '0xfa2958cb79b0491cc627c1557f441ef849ca8eb1',
+        usdcAddress: '0x9fe4e6321eeb7c4bc537570f015e4734b15002b8', // AUDD
         nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
         kasuMultisig: '0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D',
         poolManagerMultisig: '0x21567eA21b14BEd14657e9725C2FE11C7be942B1',

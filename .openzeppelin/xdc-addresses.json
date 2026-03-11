@@ -2,7 +2,7 @@
     "network": "xdc",
     "startBlock": 98794585,
     "USDC": {
-        "address": "0xfa2958cb79b0491cc627c1557f441ef849ca8eb1",
+        "address": "0x9fe4e6321eeb7c4bc537570f015e4734b15002b8",
         "startBlock": 98794585
     },
     "KasuController": {
@@ -55,7 +55,7 @@
     },
     "LendingPoolManager": {
         "address": "0xa46143db92aBe5bB1f61d13d8C1cCd50fc40Ca10",
-        "implementation": "0x23f6341Ee1b041449DeF280028F8e063DdB105c8",
+        "implementation": "0x3C670B5421e591Ea8cE6018385a700d6c88C86ff",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
@@ -85,7 +85,7 @@
     },
     "LendingPool": {
         "address": "0xBFF58cE17e58A6D15987F57832e8d8D1F65ED586",
-        "implementation": "0xA7807cdce4AFe952fcFa88a4D2c27c72c9F01052",
+        "implementation": "0xF251c824A5F49726bB157E1247aB41416A03f9f1",
         "startBlock": 98794585,
         "proxyType": "BeaconProxy"
     },
@@ -97,7 +97,7 @@
     },
     "LendingPoolTranche": {
         "address": "0x63151944984d00e288258Ead2a1645FF77368360",
-        "implementation": "0x4922677DB05881BC7aC716f75ba88E95828cF967",
+        "implementation": "0xc188125D2b7E12D3Ee47ad0e731910DcE87bC1aD",
         "startBlock": 98794585,
         "proxyType": "BeaconProxy"
     },
