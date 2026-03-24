@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1711195200000,
+  "meta": {
+    "name": "Base: Transfer ROLE_LENDING_POOL_CREATOR to Kasu Multisig",
+    "description": "This batch transaction:\n\n1. Revokes ROLE_LENDING_POOL_CREATOR from Pool Admin multisig (0x7adf999af5E0617257014C94888cf98c4584E5E9)\n2. Grants ROLE_LENDING_POOL_CREATOR to Kasu multisig (0xC3128d734563E0d034d3ea177129657408C09D35)\n\nAfter execution, only the Kasu multisig can create new lending pools.",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xb0b5a1ba50b67e869920a65441b9397357d500de3675797e367a031f6e0b8e13",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xb0b5a1ba50b67e869920a65441b9397357d500de3675797e367a031f6e0b8e13",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    }
+  ]
+}

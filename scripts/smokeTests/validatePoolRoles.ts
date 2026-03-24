@@ -24,6 +24,7 @@ async function main() {
 
     const poolManagerMultisig = chainConfig.poolManagerMultisig;
     const poolAdminMultisig = chainConfig.poolAdminMultisig;
+    const kasuMultisig = chainConfig.kasuMultisig;
 
     if (poolManagerMultisig) {
         console.log(`Pool Manager Multisig: ${poolManagerMultisig}`);
@@ -93,6 +94,7 @@ async function main() {
             poolManagerMultisig,
             poolAdminMultisig,
             kasuControllerEntry.address,
+            kasuMultisig,
         );
         allResults.push(...poolResults);
 

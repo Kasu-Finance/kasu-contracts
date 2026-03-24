@@ -1,0 +1,136 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1711195200000,
+  "meta": {
+    "name": "Base: Grant Roles for Payment Finance Pool",
+    "description": "Grants pool-specific roles for the Payment Finance lending pool:\n\n1. ROLE_POOL_CLEARING_MANAGER → Kasu multisig\n2. ROLE_POOL_MANAGER → Kasu multisig\n3. ROLE_POOL_FUNDS_MANAGER → Kasu multisig\n4. ROLE_PROTOCOL_FEE_CLAIMER → Protocol fee claimer\n\nIMPORTANT: Replace POOL_ADDRESS_HERE with the actual pool address from the createPool transaction receipt.",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "role": "0xe9bdd900170cbda1c63bf0d3de6bc5418c5397b30d34a4073b01fad4b0268a4a",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "role": "0x3e891da8a35d1578f1448b6a57ba9bf0998dc16885b93b35cac01d8497ac95ea",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "role": "0x3329bd6c227be4e42b89b31e00759830ade608c3d5d453d53614f7fe5d902461",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "role": "0x78e3ec43fbee756c5481aaa2a0f7f9f3315fa98715b449de1ca5ca29347f5395",
+        "account": "0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28"
+      }
+    }
+  ]
+}

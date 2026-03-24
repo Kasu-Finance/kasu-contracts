@@ -118,6 +118,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
             '0x03f93c8caa9a82e000d35673ba34a4c0e6e117a2',
             '0xc347a9e4aec8c8d11a149d2907deb2bf23b81c6f',
             '0xc987350716fe4a7d674c3591c391d29eba26b8ce',
+            '0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE', // Payment Finance
         ],
         revokedAdminAddresses: [
             // Old admin that should have DEFAULT_ADMIN_ROLE revoked

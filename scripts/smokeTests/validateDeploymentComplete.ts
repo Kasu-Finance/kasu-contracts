@@ -230,21 +230,34 @@ async function validateKasuControllerRoles(
     }
 
     // Check ROLE_LENDING_POOL_CREATOR (global role)
-    if (poolAdminMultisig) {
-        const hasCreatorRole = await kasuController.hasRole(ROLE_LENDING_POOL_CREATOR, poolAdminMultisig);
-        results.push({
-            category: 'Roles',
-            passed: hasCreatorRole,
-            message: hasCreatorRole
-                ? `ROLE_LENDING_POOL_CREATOR: Granted to pool admin multisig (${poolAdminMultisig})`
-                : `ROLE_LENDING_POOL_CREATOR: NOT granted to pool admin multisig (${poolAdminMultisig})`,
-        });
-    } else {
-        results.push({
-            category: 'Roles',
-            passed: true,
-            message: `ROLE_LENDING_POOL_CREATOR: Pool admin multisig not configured (skipping)`,
-        });
+    // This role may be held by either pool admin multisig or Kasu multisig
+    {
+        const candidates = [
+            { address: poolAdminMultisig, label: 'pool admin multisig' },
+            { address: kasuMultisig, label: 'Kasu multisig' },
+        ].filter((c) => c.address);
+
+        let found = false;
+        for (const { address, label } of candidates) {
+            const hasRole = await kasuController.hasRole(ROLE_LENDING_POOL_CREATOR, address);
+            if (hasRole) {
+                results.push({
+                    category: 'Roles',
+                    passed: true,
+                    message: `ROLE_LENDING_POOL_CREATOR: Granted to ${label} (${address})`,
+                });
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            const checkedAddrs = candidates.map((c) => `${c.label} (${c.address})`).join(', ');
+            results.push({
+                category: 'Roles',
+                passed: false,
+                message: `ROLE_LENDING_POOL_CREATOR: NOT granted to any expected address. Checked: ${checkedAddrs}`,
+            });
+        }
     }
 
     // Note: ROLE_POOL_ADMIN, ROLE_POOL_CLEARING_MANAGER, ROLE_POOL_MANAGER, ROLE_POOL_FUNDS_MANAGER
@@ -530,6 +543,7 @@ async function main() {
                 poolManagerMultisig,
                 poolAdminMultisig,
                 addresses.KasuController!.address!,
+                kasuMultisig,
             );
             poolValidationResults.push(...poolResults);
         }

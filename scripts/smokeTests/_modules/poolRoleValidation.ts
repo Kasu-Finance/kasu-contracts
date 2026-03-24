@@ -18,11 +18,30 @@ const ROLE_POOL_CLEARING_MANAGER = hre.ethers.keccak256(
     hre.ethers.toUtf8Bytes('ROLE_POOL_CLEARING_MANAGER'),
 );
 
+/**
+ * Checks if any of the candidate addresses holds a given pool role.
+ * Returns { passed, holder } where holder is the label of the address that has the role.
+ */
+async function checkPoolRole(
+    kasuController: ReturnType<typeof KasuController__factory.connect>,
+    poolAddress: string,
+    role: string,
+    candidates: { address: string; label: string }[],
+): Promise<{ passed: boolean; holder: string }> {
+    for (const { address, label } of candidates) {
+        if (!address) continue;
+        const hasRole = await kasuController.hasLendingPoolRole(poolAddress, role, address);
+        if (hasRole) return { passed: true, holder: label };
+    }
+    return { passed: false, holder: '' };
+}
+
 export async function validatePoolSpecificRoles(
     poolAddress: string,
     poolManagerMultisig: string,
     poolAdminMultisig: string,
     kasuControllerAddress: string,
+    kasuMultisig?: string,
 ): Promise<PoolValidationResult[]> {
     const results: PoolValidationResult[] = [];
     const kasuController = KasuController__factory.connect(
@@ -30,79 +49,75 @@ export async function validatePoolSpecificRoles(
         hre.ethers.provider,
     );
 
-    // Check pool admin multisig roles for this pool
-    if (poolAdminMultisig) {
-        const hasPoolAdmin = await kasuController.hasLendingPoolRole(
-            poolAddress,
-            ROLE_POOL_ADMIN,
-            poolAdminMultisig,
+    // Pool admin roles may be held by pool admin multisig or Kasu multisig
+    const adminCandidates = [
+        { address: poolAdminMultisig, label: 'pool admin multisig' },
+        { address: kasuMultisig || '', label: 'Kasu multisig' },
+    ].filter((c) => c.address);
+
+    // Pool manager roles may be held by pool manager multisig or Kasu multisig
+    const managerCandidates = [
+        { address: poolManagerMultisig, label: 'pool manager multisig' },
+        { address: kasuMultisig || '', label: 'Kasu multisig' },
+    ].filter((c) => c.address);
+
+    // Check ROLE_POOL_ADMIN
+    if (adminCandidates.length > 0) {
+        const { passed, holder } = await checkPoolRole(
+            kasuController, poolAddress, ROLE_POOL_ADMIN, adminCandidates,
         );
         results.push({
             poolAddress,
             role: 'ROLE_POOL_ADMIN',
-            passed: hasPoolAdmin,
-            message: hasPoolAdmin
-                ? `Pool admin multisig has ROLE_POOL_ADMIN`
-                : `Pool admin multisig does NOT have ROLE_POOL_ADMIN`,
+            passed,
+            message: passed
+                ? `${holder} has ROLE_POOL_ADMIN`
+                : `No expected address has ROLE_POOL_ADMIN`,
         });
+    }
 
-        const hasClearingRole = await kasuController.hasLendingPoolRole(
-            poolAddress,
-            ROLE_POOL_CLEARING_MANAGER,
-            poolAdminMultisig,
+    // Check ROLE_POOL_CLEARING_MANAGER
+    if (adminCandidates.length > 0) {
+        const { passed, holder } = await checkPoolRole(
+            kasuController, poolAddress, ROLE_POOL_CLEARING_MANAGER, adminCandidates,
         );
         results.push({
             poolAddress,
             role: 'ROLE_POOL_CLEARING_MANAGER',
-            passed: hasClearingRole,
-            message: hasClearingRole
-                ? `Pool admin multisig has ROLE_POOL_CLEARING_MANAGER`
-                : `Pool admin multisig does NOT have ROLE_POOL_CLEARING_MANAGER`,
-        });
-    } else {
-        results.push({
-            poolAddress,
-            role: 'ROLE_POOL_ADMIN',
-            passed: true,
-            message: `Pool admin multisig not configured (skipping)`,
+            passed,
+            message: passed
+                ? `${holder} has ROLE_POOL_CLEARING_MANAGER`
+                : `No expected address has ROLE_POOL_CLEARING_MANAGER`,
         });
     }
 
-    // Check pool manager multisig roles for this pool
-    if (poolManagerMultisig) {
-        const hasManagerRole = await kasuController.hasLendingPoolRole(
-            poolAddress,
-            ROLE_POOL_MANAGER,
-            poolManagerMultisig,
+    // Check ROLE_POOL_MANAGER
+    if (managerCandidates.length > 0) {
+        const { passed, holder } = await checkPoolRole(
+            kasuController, poolAddress, ROLE_POOL_MANAGER, managerCandidates,
         );
         results.push({
             poolAddress,
             role: 'ROLE_POOL_MANAGER',
-            passed: hasManagerRole,
-            message: hasManagerRole
-                ? `Pool manager multisig has ROLE_POOL_MANAGER`
-                : `Pool manager multisig does NOT have ROLE_POOL_MANAGER`,
+            passed,
+            message: passed
+                ? `${holder} has ROLE_POOL_MANAGER`
+                : `No expected address has ROLE_POOL_MANAGER`,
         });
+    }
 
-        const hasFundsRole = await kasuController.hasLendingPoolRole(
-            poolAddress,
-            ROLE_POOL_FUNDS_MANAGER,
-            poolManagerMultisig,
+    // Check ROLE_POOL_FUNDS_MANAGER
+    if (managerCandidates.length > 0) {
+        const { passed, holder } = await checkPoolRole(
+            kasuController, poolAddress, ROLE_POOL_FUNDS_MANAGER, managerCandidates,
         );
         results.push({
             poolAddress,
             role: 'ROLE_POOL_FUNDS_MANAGER',
-            passed: hasFundsRole,
-            message: hasFundsRole
-                ? `Pool manager multisig has ROLE_POOL_FUNDS_MANAGER`
-                : `Pool manager multisig does NOT have ROLE_POOL_FUNDS_MANAGER`,
-        });
-    } else {
-        results.push({
-            poolAddress,
-            role: 'ROLE_POOL_MANAGER',
-            passed: true,
-            message: `Pool manager multisig not configured (skipping)`,
+            passed,
+            message: passed
+                ? `${holder} has ROLE_POOL_FUNDS_MANAGER`
+                : `No expected address has ROLE_POOL_FUNDS_MANAGER`,
         });
     }
 
