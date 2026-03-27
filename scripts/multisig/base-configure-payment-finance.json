@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1711540800000,
+  "meta": {
+    "name": "Base: Configure Payment Finance — Draw Recipient + InvoiceMate Roles",
+    "description": "Configuration batch for Payment Finance pool (0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE):\n\n1. Update draw recipient to InvoiceMate multisig (0x793DAEec8293A6869b42cc56988b6780f458d4f3)\n2. Grant ROLE_POOL_CLEARING_MANAGER to InvoiceMate (can trigger clearing)\n3. Grant ROLE_POOL_FUNDS_MANAGER to InvoiceMate (can repay owed funds)",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "drawRecipient",
+            "type": "address"
+          }
+        ],
+        "name": "updateDrawRecipient",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "drawRecipient": "0x793DAEec8293A6869b42cc56988b6780f458d4f3"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "role": "0xe9bdd900170cbda1c63bf0d3de6bc5418c5397b30d34a4073b01fad4b0268a4a",
+        "account": "0x793DAEec8293A6869b42cc56988b6780f458d4f3"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+        "role": "0x3329bd6c227be4e42b89b31e00759830ade608c3d5d453d53614f7fe5d902461",
+        "account": "0x793DAEec8293A6869b42cc56988b6780f458d4f3"
+      }
+    }
+  ]
+}
