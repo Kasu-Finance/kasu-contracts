@@ -33,3 +33,7 @@ scripts/_env/.*
 **/localhost-addresses.json
 /kasu-contracts.iml
 edr-cache/
+
+# Tax report outputs (generated per-user, not stored in repo)
+scripts/reporting/output/*
+!scripts/reporting/output/.gitkeep

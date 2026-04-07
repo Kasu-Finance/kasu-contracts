@@ -215,6 +215,49 @@ Test naming convention: `test_<feature>_<scenario>`
 
 Configured networks: localhost, hardhat, base-sepolia, base (mainnet), xdc, xdc-apothem, plume
 
+## Tax Report Generation
+
+Generate per-depositor tax invoices (JSON + PDF) from on-chain data.
+
+### Usage
+
+```bash
+# Step 1: Generate JSON invoice
+BASE_RPC_URL=https://base.gateway.tenderly.co/<key> \
+DEPOSITOR_ADDRESS=0x... \
+TAX_YEAR=2025 \
+  npx hardhat --network base run scripts/reporting/generateTaxInvoice.ts
+
+# Step 2: Generate PDF from the JSON
+npx ts-node scripts/reporting/generateTaxPdf.ts
+# Or specify a specific JSON file:
+npx ts-node scripts/reporting/generateTaxPdf.ts scripts/reporting/output/tax-invoice-<addr>-<year>.json
+```
+
+### What It Collects
+
+- **Deposits/withdrawals**: From `DepositRequestAccepted` / `WithdrawalRequestAccepted` events on each pool's PendingPool
+- **Yield per epoch**: From `InterestApplied` events on each LendingPool, prorated by user's share of `userActiveShares / totalSupply` at the clearing block
+- **Fixed-term deposit interest**: From `FixedInterestDiffApplied` events (per-user)
+- **Opening/closing balances**: From `LendingPoolTranche.convertToAssets(userActiveShares)` at year-start/end blocks
+- **Reconciliation**: Total yield is derived from balance sheet (`closing - opening - deposits + withdrawals`) and per-epoch records are proportionally adjusted to sum exactly
+
+### Notes
+
+- Requires an archive RPC node (Tenderly recommended — supports large block ranges for `eth_getLogs`)
+- Strategy names and pool addresses are hardcoded in the script for Base mainnet
+- Output goes to `scripts/reporting/output/` (gitignored)
+- PDF uses puppeteer (`npm install --save-dev puppeteer`)
+- Runtime: ~5 minutes per depositor (mostly historical state queries for yield)
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `scripts/reporting/generateTaxInvoice.ts` | On-chain data collection → JSON |
+| `scripts/reporting/generateTaxPdf.ts` | JSON → HTML → PDF |
+| `scripts/reporting/output/` | Generated files (gitignored) |
+
 ---
 
 ## Current WIP: Unified Full/Lite Codebase (branch: `release-candidate`)

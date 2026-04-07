@@ -68,6 +68,7 @@
         "hardhat-contract-sizer": "^2.10.0",
         "hardhat-gas-reporter": "^1.0.8",
         "picomatch": "^4.0.3",
+        "puppeteer": "^24.40.0",
         "solidity-coverage": "^0.8.1",
         "ts-node": "^10.9.2",
         "typechain": "^8.3.0",
