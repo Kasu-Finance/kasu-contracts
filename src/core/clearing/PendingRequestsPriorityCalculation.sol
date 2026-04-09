@@ -102,7 +102,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
         // prepare variables used in processing
         ClearingData storage clearingData = _clearingDataStorage(targetEpoch);
         uint256[][] storage tempPriorityTrancheWithdrawalShares =
-        _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
+            _pendingRequestsPerEpoch[targetEpoch].tempPriorityTrancheWithdrawalShares;
 
         uint8 loyaltyLevelCount = _loyaltyLevelCount();
         address[] memory tranches = _lendingPoolTranches();
@@ -127,8 +127,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
 
                 clearingData.pendingDeposits.totalDepositAmount += depositNftDetails.assetAmount;
                 clearingData.pendingDeposits.trancheDepositsAmounts[trancheIndex] += depositNftDetails.assetAmount;
-                clearingData.pendingDeposits
-                .tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] += depositNftDetails.assetAmount;
+                clearingData.pendingDeposits.tranchePriorityDepositsAmounts[trancheIndex][ownerLoyaltyLevel] +=
+                    depositNftDetails.assetAmount;
 
                 _setDepositRequestPriority(userRequestNftId, ownerLoyaltyLevel);
             } else {
@@ -152,9 +152,8 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 }
 
                 uint256 trancheIndex = _trancheIndex(tranches, withdrawalNftDetails.tranche);
-                tempPriorityTrancheWithdrawalShares[
-                    withdrawLoyaltyLevel
-                ][trancheIndex] += withdrawalNftDetails.sharesAmount;
+                tempPriorityTrancheWithdrawalShares[withdrawLoyaltyLevel][trancheIndex] +=
+                    withdrawalNftDetails.sharesAmount;
 
                 _setWithdrawalRequestPriority(userRequestNftId, withdrawLoyaltyLevel);
             }
@@ -187,7 +186,7 @@ abstract contract PendingRequestsPriorityCalculation is IPendingRequestsPriority
                 clearingData.pendingWithdrawals.totalWithdrawalsAmount += withdrawalPriorityAmountSum;
                 // store the total withdrawal amount for the priority
                 clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalPriority] =
-                withdrawalPriorityAmountSum;
+                    withdrawalPriorityAmountSum;
             }
 
             // mark processing as completed

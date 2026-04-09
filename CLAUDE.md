@@ -444,15 +444,24 @@ XDC has a Lite deployment (deployed Feb 2026) with epoch timing aligned to Base.
 - ✅ Initial epoch start: Thu, 29 Jan 2026 06:00:00 UTC
 - ✅ Epoch 1 preserved (existing deposit safe)
 
-**Pending Tasks:**
-- ❌ ProxyAdmin ownership: Still with deployer, needs transfer to Kasu multisig
-- ❌ Beacon ownership: Still with deployer, needs transfer to Kasu multisig
-- ❌ ROLE_KASU_ADMIN: Deployer still has it, needs revocation
+**Implementation Upgrades (Apr 9, 2026):**
+7 contracts upgraded to sync source with deployed bytecode (Solidity fixes + pre-existing mismatches from forge fmt / compiler drift):
+- SystemVariables, FixedTermDeposit, UserLoyaltyRewardsLite, Swapper, LendingPoolManager, ProtocolFeeManagerLite, KasuPoolExternalTVL
+- Upgrade script: `scripts/upgrade/upgradeXdcImplementations.ts`
+- Validation: 13 OK, 0 source mismatch (6 pending Etherscan verification)
+
+**Roles:**
 - ✅ ROLE_KASU_ADMIN: Kasu multisig has it
 - ✅ ROLE_LENDING_POOL_FACTORY: Granted to LendingPoolFactory
 - ✅ ROLE_LENDING_POOL_CREATOR: Granted to pool admin multisig
 - ✅ ROLE_PROTOCOL_FEE_CLAIMER: Granted correctly
 - ✅ Pool-specific roles: Configured for all 3 pools
+
+**Pending Tasks:**
+- ❌ ProxyAdmin ownership: Still with deployer, needs transfer to Kasu multisig
+- ❌ Beacon ownership: Still with deployer, needs transfer to Kasu multisig
+- ❌ ROLE_KASU_ADMIN: Deployer still has it, needs revocation
+- ❌ Etherscan verification for 6 upgraded implementations (constructor args issue with V2 API)
 
 **Action Required:**
 
@@ -470,6 +479,74 @@ kasuController.revokeRole(0x00, 0x2e202f7A4D5F670D76921aA44B94940bAa87d8F9)
 3. **Verify**:
 ```bash
 npx hardhat --network xdc run scripts/smokeTests/validateDeploymentComplete.ts
+```
+
+### XDC USDC Deployment Status
+
+Second Lite deployment on XDC using USDC (`0xfa2958cb79b0491cc627c1557f441ef849ca8eb1`) instead of AUDD.
+Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract stack.
+
+**Implementation Reuse:** ~12 contracts reuse AUDD on-chain implementations (no asset immutable).
+~5 asset-dependent contracts (LendingPoolManager, FeeManager, LendingPool, PendingPool, LendingPoolTranche) get new implementations.
+
+**Status:** Not yet deployed. Config ready in `chains.ts` and `hardhat.config.ts`.
+
+**Deploy sequence:**
+```bash
+# 1. Deploy & initialize
+npx hardhat --network xdc-usdc run scripts/deploy_1.ts
+
+# 2. Grant roles to multisigs
+npx hardhat --network xdc-usdc run scripts/deploy_2.ts
+
+# 3. Transfer ownership & revoke deployer
+npx hardhat --network xdc-usdc run scripts/deploy_3.ts
+
+# 4. Validate deployment
+npx hardhat --network xdc-usdc run scripts/smokeTests/validateDeploymentComplete.ts
+
+# 5. Validate bytecode matches source
+ETHERSCAN_API_KEY=... npx hardhat --network xdc-usdc run scripts/admin/validateDeployment.ts
+
+# 6. Verify contracts on Etherscan (auto-verify where possible)
+AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network xdc-usdc run scripts/admin/validateDeployment.ts
+```
+
+**Post-deploy:** Pools created by Apxium multisig (`0x880Aa2d6...`) via ROLE_LENDING_POOL_CREATOR.
+
+**Addresses:** `.openzeppelin/xdc-usdc-addresses.json` (created on deploy).
+
+**XDC RPC:** Always use `https://rpc.xdc.org`.
+
+### Deployment & Upgrade Workflow
+
+Every deployment or upgrade MUST follow this sequence:
+
+1. **Dry-run on Anvil fork** before touching mainnet:
+```bash
+anvil --fork-url https://rpc.xdc.org --chain-id 50 --port 8546
+XDC_RPC_URL=http://127.0.0.1:8546 npx hardhat --network xdc run scripts/upgrade/upgradeXdcImplementations.ts
+```
+
+2. **Deploy/upgrade on mainnet**
+
+3. **Validate bytecode** — confirm 0 source mismatches:
+```bash
+ETHERSCAN_API_KEY=... npx hardhat --network <network> run scripts/admin/validateDeployment.ts
+```
+
+4. **Verify on Etherscan** — auto-verify implementations:
+```bash
+AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network <network> run scripts/admin/validateDeployment.ts
+```
+For contracts with constructor args that fail auto-verify, verify manually:
+```bash
+npx hardhat verify --network <network> <impl_address> <constructor_arg1> <constructor_arg2> ...
+```
+
+5. **Smoke tests** — validate roles, ownership, configuration:
+```bash
+npx hardhat --network <network> run scripts/smokeTests/validateDeploymentComplete.ts
 ```
 
 ### Tenderly Simulations

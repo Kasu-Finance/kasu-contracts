@@ -495,6 +495,7 @@ contract UserManager is IUserManager, Initializable {
     }
 
     function _removeLendingPoolFromUser(address user, uint256 userLendingPoolIndex) internal {
+        _isUserPartOfLendingPool[_userLendingPools[user][userLendingPoolIndex]][user] = false;
         _userLendingPools[user][userLendingPoolIndex] = _userLendingPools[user][_userLendingPools[user].length - 1];
         _userLendingPools[user].pop();
     }

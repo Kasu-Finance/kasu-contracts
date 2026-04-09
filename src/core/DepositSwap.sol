@@ -91,9 +91,11 @@ abstract contract DepositSwap {
             }
         }
 
+        uint256 balanceBefore = IERC20(outToken).balanceOf(address(this));
+
         _swapper.swap(swapDepositBag.inTokens, swapDepositBag.swapInfo, outToken, address(this));
 
-        outTokenAmount = IERC20(outToken).balanceOf(address(this));
+        outTokenAmount = IERC20(outToken).balanceOf(address(this)) - balanceBefore;
 
         if (outTokenAmount < swapDepositBag.minAmountOut) {
             revert InsufficientOutputAmount(outTokenAmount, swapDepositBag.minAmountOut);

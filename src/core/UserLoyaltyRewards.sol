@@ -186,17 +186,6 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         emit UserRewardClaimed(msg.sender, amount);
     }
 
-    /**
-     * @notice Recovers ERC20 tokens.
-     * @dev Only admin can call this function.
-     * @param tokenAddress Token address.
-     * @param tokenAmount Token amount.
-     * @param recipient Recipient address.
-     */
-    function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external onlyAdmin {
-        IERC20(tokenAddress).safeTransfer(recipient, tokenAmount);
-    }
-
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
     function _setDoEmitRewards(bool doEmitRewards_) private {

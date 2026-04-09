@@ -271,8 +271,9 @@ contract ClearingCoordinator is IClearingCoordinator, LendingPoolHelpers {
         // Step 5 - Draw funds
         if (clearingStatus == ClearingStatus.STEP5_PENDING) {
             if (_clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount > 0) {
-                ILendingPool(lendingPool)
-                    .drawFunds(_clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount);
+                ILendingPool(lendingPool).drawFunds(
+                    _clearingConfigPerLendingPoolAndEpoch[lendingPool][targetEpoch].config.drawAmount
+                );
             }
 
             clearingStatus = ClearingStatus.ENDED;

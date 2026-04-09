@@ -58,6 +58,9 @@ const CHAIN_IDS: Record<string, number> = {
     base: 8453,
     'base-sepolia': 84532,
     baseSepolia: 84532,
+    xdc: 50,
+    'xdc-usdc': 50,
+    'xdc-apothem': 51,
 };
 
 // Detect if the API URL is Blockscout

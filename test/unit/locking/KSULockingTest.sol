@@ -83,6 +83,11 @@ contract KSULockingTest is LockingTestUtils {
         // ARRANGE
         uint256 rewardAmount = 100 * 1e6;
 
+        // Need eligible holders for emitFees to succeed (M-01 fix)
+        _lock(alice, 50 ether, lockPeriod30);
+        vm.prank(admin);
+        _KSULocking.enableFeesForUser(alice);
+
         // ACT / ASSERT
         vm.startPrank(admin);
         mockUsdc.approve(address(_KSULocking), rewardAmount);
@@ -354,6 +359,8 @@ contract KSULockingTest is LockingTestUtils {
         uint256 aliceLockAmountDeposit1 = 100 ether;
 
         uint256 lockId = _lock(alice, aliceLockAmountDeposit1, lockPeriod30);
+        vm.prank(admin);
+        _KSULocking.enableFeesForUser(alice);
         _emitFees(reward1Amount);
 
         skip(lockPeriod30);
@@ -405,6 +412,10 @@ contract KSULockingTest is LockingTestUtils {
 
         _lock(alice, aliceLockAmountDeposit, lockPeriod30);
         _lock(bob, bobLockAmountDeposit, lockPeriod30);
+        vm.startPrank(admin);
+        _KSULocking.enableFeesForUser(alice);
+        _KSULocking.enableFeesForUser(bob);
+        vm.stopPrank();
         _emitFees(reward1Amount);
 
         skip(lockPeriod30);

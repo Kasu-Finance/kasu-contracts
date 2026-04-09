@@ -372,6 +372,40 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertApproxEqAbs(mockUsdc.balanceOf(lpd.tranches[0]), 0, usersCount);
     }
 
+    /**
+     * @notice M-05 FIX: repayLoss reverts when cumulative recoveredAmount exceeds lossAmount.
+     */
+    function test_M05_repayLossRevertsWhenExceedingLossAmount() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 totalUserDeposits = 100_000 * 10 ** 6;
+        uint256 usersCount = 3;
+        _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
+
+        _drawFunds(lpd.lendingPool, totalUserDeposits);
+
+        uint256 lossAmount = totalUserDeposits / 2; // 50k loss
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, true);
+
+        uint256 lossId = 1;
+
+        // Repay the exact loss amount - should succeed
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, lpd.tranches[0], lossId, lossAmount);
+
+        LossDetails memory lossDetails = LendingPoolTranche(lpd.tranches[0]).lossDetails(lossId);
+        assertEq(lossDetails.recoveredAmount, lossAmount, "Recovered should equal loss");
+
+        // Additional repayment should revert
+        uint256 extraAmount = 1;
+        deal(address(mockUsdc), poolFundsManagerAccount, extraAmount, true);
+        vm.startPrank(poolFundsManagerAccount);
+        mockUsdc.approve(address(lendingPoolManager), extraAmount);
+        vm.expectRevert(abi.encodeWithSelector(ILendingPoolTrancheLoss.RecoveryExceedsLoss.selector, lossId));
+        lendingPoolManager.repayLoss(lpd.lendingPool, lpd.tranches[0], lossId, extraAmount);
+        vm.stopPrank();
+    }
+
     function _requestAndAcceptUserDeposits(address lendingPool, uint256 userCount, address tranche, uint256 totalAmount)
         private
         returns (address[] memory userAddresses, uint256[] memory amounts)

@@ -116,9 +116,14 @@ const config: HardhatUserConfig = {
             accounts: getNetworkAccounts('base'),
         },
         xdc: {
-            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdcrpc.com',
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
             chainId: 50,
             accounts: getNetworkAccounts('xdc'),
+        },
+        'xdc-usdc': {
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
+            chainId: 50,
+            accounts: getNetworkAccounts('xdc-usdc'),
         },
         plume: {
             url: process.env.PLUME_RPC_URL ?? 'https://rpc.plume.org',

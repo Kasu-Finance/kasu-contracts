@@ -125,4 +125,5 @@ interface IKSULocking is IERC20 {
     error UnlockAmountShouldBeMoreThanZero();
     error UserUnlockAmountTooHigh(uint256 userLockId, uint256 lockAmount, uint256 requestedUnlockAmount);
     error AddressCannotSetFeeRecipient(address badFeeRecipientSetter);
+    error NoEligibleFeeRecipients();
 }

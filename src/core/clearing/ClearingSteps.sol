@@ -76,15 +76,14 @@ abstract contract ClearingSteps is IClearingSteps, PendingRequestsPriorityCalcul
         (
             _clearingDataPerEpoch[targetEpoch].tranchePriorityDepositsAccepted,
             _clearingDataPerEpoch[targetEpoch].acceptedPriorityWithdrawalAmounts
-        ) =
-            _acceptedRequestsCalculation.calculateAcceptedRequests(
-                ClearingInput({
-                    config: config,
-                    balance: balance,
-                    pendingDeposits: _clearingDataPerEpoch[targetEpoch].pendingDeposits,
-                    pendingWithdrawals: _clearingDataPerEpoch[targetEpoch].pendingWithdrawals
-                })
-            );
+        ) = _acceptedRequestsCalculation.calculateAcceptedRequests(
+            ClearingInput({
+                config: config,
+                balance: balance,
+                pendingDeposits: _clearingDataPerEpoch[targetEpoch].pendingDeposits,
+                pendingWithdrawals: _clearingDataPerEpoch[targetEpoch].pendingWithdrawals
+            })
+        );
     }
 
     /* ========== VIRTUAL METHODS ========== */

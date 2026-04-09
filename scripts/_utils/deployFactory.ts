@@ -15,7 +15,7 @@ export function deployOptions(
         redeployImplementation: 'onchange',
         verifySourceCode: false,
         kind: kind,
-        unsafeAllow: ['constructor', 'state-variable-immutable'],
+        unsafeAllow: ['constructor', 'state-variable-immutable', 'missing-initializer-call', 'missing-initializer'],
     };
 }
 

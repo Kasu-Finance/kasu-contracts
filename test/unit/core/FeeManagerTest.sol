@@ -30,17 +30,17 @@ contract FeeManagerTest is LendingPoolTestUtils {
         vm.startPrank(alice);
         feeManager.emitFees(feeAmount);
 
-        // ASSERT1
+        // ASSERT1 - M-01 fix: no eligible rKSU holders, so all fees go to protocol
         assertEq(ksuLockingBalanceBeforeFees, 0);
-        assertEq(mockUsdc.balanceOf(address(_KSULocking)), 500 * 1e6);
-        assertEq(mockUsdc.balanceOf(address(feeManager)), 500 * 1e6);
+        assertEq(mockUsdc.balanceOf(address(_KSULocking)), 0, "No fees to KSULocking when no eligible holders");
+        assertEq(mockUsdc.balanceOf(address(feeManager)), feeAmount, "All fees go to protocol");
 
         // ACT2
         feeManager.claimProtocolFees();
 
         // ASSERT2
         assertEq(mockUsdc.balanceOf(address(feeManager)), 0);
-        assertEq(mockUsdc.balanceOf(address(bob)), 500 * 1e6);
+        assertEq(mockUsdc.balanceOf(address(bob)), feeAmount);
 
         // ACT3 & ASSERT3
 

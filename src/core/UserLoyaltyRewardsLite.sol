@@ -29,5 +29,4 @@ contract UserLoyaltyRewardsLite is IUserLoyaltyRewards {
     function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata) external pure override {}
     function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata, uint256) external pure override {}
     function claimReward(uint256) external pure override {}
-    function recoverERC20(address, uint256, address) external pure override {}
 }

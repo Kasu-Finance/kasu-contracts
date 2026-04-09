@@ -310,25 +310,5 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
         assertEq(_ksu.balanceOf(carol), carolReward);
     }
 
-    function test_recoverERC20() public {
-        // ARRANGE
-        _ksu.mint(address(_userLoyaltyRewards), 1000 * 1e18);
-
-        // ACT
-        vm.prank(admin);
-        uint256 recoverAmount = 300 * 1e18;
-        address recipient = address(0x9876);
-        _userLoyaltyRewards.recoverERC20(address(_ksu), recoverAmount, recipient);
-
-        // ASSERT
-        assertEq(_ksu.balanceOf(recipient), recoverAmount);
-        assertEq(_ksu.balanceOf(address(_userLoyaltyRewards)), 1000 * 1e18 - recoverAmount);
-
-        // ACT & ASSERT
-        vm.startPrank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
-        );
-        _userLoyaltyRewards.recoverERC20(address(_ksu), recoverAmount, alice);
-    }
+    // M-02: recoverERC20 has been removed — see SecurityAuditFixesTest.sol
 }

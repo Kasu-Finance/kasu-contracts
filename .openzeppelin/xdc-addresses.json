@@ -25,19 +25,19 @@
     },
     "SystemVariables": {
         "address": "0x34d17c9DD1f31Fb34757DE923EC083601d0eDFFe",
-        "implementation": "0x161931FC6AFb8195B7516E4D129AcA437c15CA38",
+        "implementation": "0xFb5a269a6dD3C11a4e420f30BD407DeCFe94384a",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
     "FixedTermDeposit": {
         "address": "0xD498baBCF8D0eC89E129fB874DAB9e4C35cD2a52",
-        "implementation": "0xb3ee363D1B69f7EBf0460D6f73E3A311f251B2a9",
+        "implementation": "0x893760a4DD9BA59E609E219d173dd9dF63665Ddf",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
     "UserLoyaltyRewards": {
         "address": "0xb95834C5610A178be9065Dd1EF78258D29879CDb",
-        "implementation": "0x4AE8efbf1C5360ca56c427b7DcF88D313C5dacfc",
+        "implementation": "0xd919aD5B5b51a23BAe4054678c981B117cDA5bF2",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
@@ -49,19 +49,19 @@
     },
     "Swapper": {
         "address": "0x19798De0240a62825EAC53B10D85EA0359Eb3d64",
-        "implementation": "0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747",
+        "implementation": "0xB7E733127679669ee739D8f6559c77A27769c915",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
     "LendingPoolManager": {
         "address": "0xa46143db92aBe5bB1f61d13d8C1cCd50fc40Ca10",
-        "implementation": "0x3C670B5421e591Ea8cE6018385a700d6c88C86ff",
+        "implementation": "0x45E96d58bD1E2fDF9eF7Fc00ad69255dbaDB0FB8",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
     "FeeManager": {
         "address": "0x1e548f62cb33Fb04Ff63CCb11BBe208a7280DC7E",
-        "implementation": "0x43DD068e899feC00Cad8C0cc82f65168d30ceCDd",
+        "implementation": "0x86d42AF877e7523010dbe11c7A3C952C4EB3dB72",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     },
@@ -115,7 +115,7 @@
     },
     "KasuPoolExternalTVL": {
         "address": "0xCCB4156964377CF36441f3775A2A800dbeCB8094",
-        "implementation": "0xDd5c0B636175Ad8d3131B023CB0BBDC9035B60fd",
+        "implementation": "0xFC35AFfDB20D745Fa48Ed07069dDFb62E56c2Ed1",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
     }

@@ -177,6 +177,11 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             uint256 acceptedWithdrawalShares =
                                 withdrawalNftDetails.sharesAmount * totalAcceptedAmount / totalWithdrawalAmount;
 
+                            // prevent dust positions from being permanently stuck due to truncation to 0
+                            if (acceptedWithdrawalShares == 0 && withdrawalNftDetails.sharesAmount > 0) {
+                                acceptedWithdrawalShares = withdrawalNftDetails.sharesAmount;
+                            }
+
                             _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
                         }
                     }

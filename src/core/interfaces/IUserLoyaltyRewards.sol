@@ -29,7 +29,6 @@ interface IUserLoyaltyRewards {
     function setRewardRatesPerLoyaltyLevel(LoyaltyEpochRewardRateInput[] calldata loyaltyEpochRewardRateInput) external;
     function emitUserLoyaltyRewardBatch(UserRewardInput[] calldata userRewardInputs, uint256 ksuTokenPrice) external;
     function claimReward(uint256 amount) external;
-    function recoverERC20(address tokenAddress, uint256 tokenAmount, address recipient) external;
 
     /* ========== EVENTS ========== */
 

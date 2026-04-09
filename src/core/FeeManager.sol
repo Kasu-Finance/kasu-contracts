@@ -74,8 +74,14 @@ contract FeeManager is IFeeManager, AssetFunctionsBase, KasuAccessControllable {
         (uint256 ecosystemFeeRate,) = _systemVariables.feeRates();
 
         uint256 ecosystemFeeAmount = ecosystemFeeRate * amount / FULL_PERCENT;
-        _approveAsset(address(_ksuLocking), ecosystemFeeAmount);
-        _ksuLocking.emitFees(ecosystemFeeAmount);
+
+        // If no eligible rKSU holders, redirect ecosystem fees to protocol fees
+        if (_ksuLocking.eligibleRKSUForFees() > 0) {
+            _approveAsset(address(_ksuLocking), ecosystemFeeAmount);
+            _ksuLocking.emitFees(ecosystemFeeAmount);
+        } else {
+            ecosystemFeeAmount = 0;
+        }
 
         uint256 protocolFeeAmount = amount - ecosystemFeeAmount;
         totalProtocolFeeAmount += protocolFeeAmount;

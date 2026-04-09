@@ -52,4 +52,5 @@ interface ILendingPoolTrancheLoss is IERC1155 {
     error LossMintAlreadyComplete(uint256 lossId);
     error LossIdNotValid(uint256 lossId);
     error LossMintingInProgress(uint256 lossId);
+    error RecoveryExceedsLoss(uint256 lossId);
 }

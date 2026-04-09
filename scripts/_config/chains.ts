@@ -151,6 +151,25 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         tenderlySupported: false, // Tenderly doesn't support XDC
     },
 
+    // XDC Network (USDC) — second deployment on XDC with USDC instead of AUDD
+    'xdc-usdc': {
+        name: 'XDC Mainnet (USDC)',
+        chainId: 50,
+        deploymentMode: 'lite',
+        wrappedNativeAddress: '0x951857744785e80e2de051c32ee7b25f9c458c42', // WXDC
+        usdcAddress: '0xfa2958cb79b0491cc627c1557f441ef849ca8eb1', // USDC
+        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
+        kasuMultisig: '0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D',
+        poolManagerMultisig: '0x21567eA21b14BEd14657e9725C2FE11C7be942B1',
+        poolAdminMultisig: '0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112',
+        protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
+        protocolFeeReceiver: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
+        lendingPoolAddresses: [], // Pools created later by Apxium multisig
+        revokedAdminAddresses: [],
+        isTestnet: false,
+        tenderlySupported: false,
+    },
+
     // Plume
     plume: {
         name: 'Plume Mainnet',

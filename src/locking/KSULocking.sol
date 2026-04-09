@@ -263,6 +263,10 @@ contract KSULocking is IKSULocking, rKSU, KasuAccessControllable {
             revert AddressCannotEmitFees(msg.sender);
         }
 
+        if (eligibleRKSUForFees == 0) {
+            revert NoEligibleFeeRecipients();
+        }
+
         _feeToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // update reward details

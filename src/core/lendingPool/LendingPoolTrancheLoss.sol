@@ -137,6 +137,10 @@ abstract contract LendingPoolTrancheLoss is
             revert LossMintingNotYetComplete(lossId);
         }
 
+        if (_lossDetails[lossId].recoveredAmount + amount > _lossDetails[lossId].lossAmount) {
+            revert RecoveryExceedsLoss(lossId);
+        }
+
         _lossDetails[lossId].recoveredAmount += amount;
 
         _transferAssetsFrom(msg.sender, address(this), amount);
