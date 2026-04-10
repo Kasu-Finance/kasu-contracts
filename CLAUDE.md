@@ -470,7 +470,7 @@ Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract 
 **Pending:**
 - ❌ deploy_3.ts (DEFERRED — run together with XDC AUDD, see "Finalizing XDC" below)
 - ❌ Apxium multisig needs to create pools via ROLE_LENDING_POOL_CREATOR
-- ❌ Goldsky subgraph `kasu-xdc-usdc` deploy
+- ✅ Goldsky subgraph `kasu-xdc-usdc/v1.0.0` deployed — `https://api.goldsky.com/api/public/project_cmgzlpxm300765np2a19421om/subgraphs/kasu-xdc-usdc/v1.0.0/gn`
 - ❌ kasu-sdk update with final addresses + subgraph URL
 - ❌ Gitbook docs update
 
