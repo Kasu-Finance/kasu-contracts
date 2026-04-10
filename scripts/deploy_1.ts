@@ -425,8 +425,8 @@ async function main() {
             adminSigner,
         );
         const systemVariablesSetup: SystemVariablesSetupStruct = {
-            // Set to 4 days ago so the first epoch is just started
-            initialEpochStartTimestamp: Math.round(Date.now() / 1000) - 3600 * 24 * 4,
+            // Use chain config if set (aligned to Thursday 06:00 UTC), otherwise default to 4 days ago
+            initialEpochStartTimestamp: chainConfig.initialEpochStartTimestamp ?? Math.round(Date.now() / 1000) - 3600 * 24 * 4,
             clearingPeriodLength: 3600 * 48,
             performanceFee: 10_00,
             loyaltyThresholds: isLiteDeployment ? [] : [1_00, 5_00],

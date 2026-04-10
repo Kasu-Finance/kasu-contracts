@@ -435,88 +435,92 @@ npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
 npx hardhat --network plume run scripts/admin/validateDeployment.ts
 ```
 
-### XDC Deployment Status
+### XDC AUDD Deployment Status
 
-XDC has a Lite deployment (deployed Feb 2026) with epoch timing aligned to Base.
+XDC AUDD is a Lite deployment (deployed Feb 2026) with epoch timing aligned to Base (Thursday 06:00 UTC).
+Epochs are weekly. Epoch 1 start on-chain: `1718258400` (Thu, 13 Jun 2024 06:00:00 UTC).
 
-**Epoch Timing (aligned Feb 6, 2026):**
-- ✅ Epochs now transition on Thursday 06:00 UTC (same as Base)
-- ✅ Initial epoch start: Thu, 29 Jan 2026 06:00:00 UTC
-- ✅ Epoch 1 preserved (existing deposit safe)
+**Roles & configuration (complete):**
+- ✅ Deployment contracts deployed and initialized (deploy_1.ts)
+- ✅ Role grants: ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER (deploy_2.ts)
+- ✅ All 7 source-mismatched implementations upgraded (Apr 9, 2026) and verified on xdcscan
+- ✅ 3 pools created + configured by Apxium multisig
+- ✅ Pool-specific roles configured on all pools
 
-**Implementation Upgrades (Apr 9, 2026):**
-7 contracts upgraded to sync source with deployed bytecode (Solidity fixes + pre-existing mismatches from forge fmt / compiler drift):
-- SystemVariables, FixedTermDeposit, UserLoyaltyRewardsLite, Swapper, LendingPoolManager, ProtocolFeeManagerLite, KasuPoolExternalTVL
-- Upgrade script: `scripts/upgrade/upgradeXdcImplementations.ts`
-- Validation: 13 OK, 0 source mismatch (6 pending Etherscan verification)
-
-**Roles:**
-- ✅ ROLE_KASU_ADMIN: Kasu multisig has it
-- ✅ ROLE_LENDING_POOL_FACTORY: Granted to LendingPoolFactory
-- ✅ ROLE_LENDING_POOL_CREATOR: Granted to pool admin multisig
-- ✅ ROLE_PROTOCOL_FEE_CLAIMER: Granted correctly
-- ✅ Pool-specific roles: Configured for all 3 pools
-
-**Pending Tasks:**
+**Pending (deferred — will be done together with XDC USDC):**
 - ❌ ProxyAdmin ownership: Still with deployer, needs transfer to Kasu multisig
 - ❌ Beacon ownership: Still with deployer, needs transfer to Kasu multisig
 - ❌ ROLE_KASU_ADMIN: Deployer still has it, needs revocation
-- ❌ Etherscan verification for 6 upgraded implementations (constructor args issue with V2 API)
-
-**Action Required:**
-
-1. **Transfer ProxyAdmin ownership** (16 contracts):
-```bash
-NEW_PROXY_ADMIN_OWNER=0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D \
-  npx hardhat --network xdc run scripts/admin/transferAllProxyAdminOwnership.ts
-```
-
-2. **Revoke deployer admin role** (via Kasu multisig):
-```solidity
-kasuController.revokeRole(0x00, 0x2e202f7A4D5F670D76921aA44B94940bAa87d8F9)
-```
-
-3. **Verify**:
-```bash
-npx hardhat --network xdc run scripts/smokeTests/validateDeploymentComplete.ts
-```
+- These will all be handled by running `deploy_3.ts` on both XDC AUDD + XDC USDC simultaneously once USDC deployment is live
 
 ### XDC USDC Deployment Status
 
 Second Lite deployment on XDC using USDC (`0xfa2958cb79b0491cc627c1557f441ef849ca8eb1`) instead of AUDD.
 Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract stack.
 
-**Implementation Reuse:** ~12 contracts reuse AUDD on-chain implementations (no asset immutable).
-~5 asset-dependent contracts (LendingPoolManager, FeeManager, LendingPool, PendingPool, LendingPoolTranche) get new implementations.
+**Status (Apr 10, 2026): LIVE on mainnet.** 19 contracts deployed, initialized, roles granted. Epoch aligned with AUDD (epoch 95). All impls verified on xdcscan. deploy_3 deferred.
 
-**Status:** Not yet deployed. Config ready in `chains.ts` and `hardhat.config.ts`.
+**Completed:**
+- ✅ deploy_1.ts — 19 contracts deployed + initialized (except SystemVariables, see below)
+- ✅ `scripts/recovery/finishXdcUsdcInit.ts` + `finishXdcUsdcInit2.ts` — SystemVariables initialized with epoch aligned to AUDD via migration impl dance, then KasuPoolExternalTVL initialized
+- ✅ deploy_2.ts — ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER granted to multisigs
+- ✅ All 19 production impls + 1 orphaned SystemVariablesMigration impl verified on xdcscan
+- ✅ Addresses saved to `.openzeppelin/xdc-usdc-addresses.json`
 
-**Deploy sequence:**
+**Pending:**
+- ❌ deploy_3.ts (DEFERRED — run together with XDC AUDD, see "Finalizing XDC" below)
+- ❌ Apxium multisig needs to create pools via ROLE_LENDING_POOL_CREATOR
+- ❌ Goldsky subgraph `kasu-xdc-usdc` deploy
+- ❌ kasu-sdk update with final addresses + subgraph URL
+- ❌ Gitbook docs update
+
+**Epoch alignment (the SystemVariables.initialize gotcha):**
+`SystemVariables.initialize()` validates `initialEpochStartTimestamp` must be within `[now - 1 week, now]`, so it rejects aligning fresh deployments to an old anchor like `1718258400`. XDC AUDD originally hit this and worked around it with a post-deploy migration upgrade. For XDC USDC we pre-built the solution:
+
+1. `scripts/_config/chains.ts` has `initialEpochStartTimestamp: 1718258400` in the `xdc-usdc` chain config
+2. `deploy_1.ts` reads from chain config; if not set falls back to `now - 4 days`
+3. If the target timestamp fails `initialize()` validation (it will for any anchor older than 1 week), use the migration impl flow:
+   - `src/core/SystemVariablesMigration.sol` — identical to SystemVariables but with the past-timestamp check removed
+   - Upgrade SV proxy → SystemVariablesMigration with `upgradeAndCall` invoking `initialize(setup)` atomically
+   - Upgrade SV proxy back → production SystemVariables impl (storage preserved, impl pointer back to prod)
+4. The migration impl is verified on xdcscan but orphaned (no proxy points to it)
+
+See `scripts/recovery/finishXdcUsdcInit.ts` and `finishXdcUsdcInit2.ts` for the exact flow. The epoch aligned state: `_initialEpochStartTimestamp = 1718258400`, current epoch at deploy time = 95 (matches AUDD).
+
+**⚠️ Known gotcha:** `upgrades.erc1967.getImplementationAddress()` and proxy view calls immediately after `upgrades.upgradeProxy` can return stale data on XDC RPC (load-balanced, some nodes lag). Always verify via raw storage read of the EIP-1967 impl slot (`0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`) for critical state checks.
+
+**Deploy sequence (for reference / redeploy scenarios):**
 ```bash
-# 1. Deploy & initialize
 npx hardhat --network xdc-usdc run scripts/deploy_1.ts
-
-# 2. Grant roles to multisigs
+# If SV initialize reverts due to past-timestamp check:
+npx hardhat --network xdc-usdc run scripts/recovery/finishXdcUsdcInit.ts
+# (and finishXdcUsdcInit2.ts for rollback + KasuPoolExternalTVL)
 npx hardhat --network xdc-usdc run scripts/deploy_2.ts
-
-# 3. Transfer ownership & revoke deployer
-npx hardhat --network xdc-usdc run scripts/deploy_3.ts
-
-# 4. Validate deployment
+# deploy_3.ts DEFERRED (see "Finalizing XDC")
 npx hardhat --network xdc-usdc run scripts/smokeTests/validateDeploymentComplete.ts
-
-# 5. Validate bytecode matches source
-ETHERSCAN_API_KEY=... npx hardhat --network xdc-usdc run scripts/admin/validateDeployment.ts
-
-# 6. Verify contracts on Etherscan (auto-verify where possible)
 AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network xdc-usdc run scripts/admin/validateDeployment.ts
 ```
 
 **Post-deploy:** Pools created by Apxium multisig (`0x880Aa2d6...`) via ROLE_LENDING_POOL_CREATOR.
 
-**Addresses:** `.openzeppelin/xdc-usdc-addresses.json` (created on deploy).
+**Addresses:** `.openzeppelin/xdc-usdc-addresses.json`.
 
 **XDC RPC:** Always use `https://rpc.xdc.org`.
+
+### Finalizing XDC (both AUDD + USDC at once)
+
+Once XDC USDC deploy_1 + deploy_2 are complete and validated, run deploy_3 on both networks to finalize ownership:
+
+```bash
+npx hardhat --network xdc run scripts/deploy_3.ts
+npx hardhat --network xdc-usdc run scripts/deploy_3.ts
+```
+
+Each transfers ProxyAdmin ownership (16 proxies) + Beacon ownership (3 beacons) to the Kasu multisig and revokes the deployer's ROLE_KASU_ADMIN.
+
+### ⚠️ Apxium Multisig Template Bug (XDC AUDD historical)
+
+When the Apxium pool admin multisig set up the XDC AUDD pools, **3 transactions for granting `ROLE_POOL_MANAGER` / `ROLE_POOL_FUNDS_MANAGER` called a wrong target address** (an EOA `0x7923837dc93d897e12696e0f4fd50b51fbacf693` instead of KasuController). The calls succeeded silently as no-ops. The correct grants were later applied directly. **Warn Apxium before they configure XDC USDC pools to double-check their Safe Transaction Builder template targets KasuController, not a stale EOA.**
 
 ### Deployment & Upgrade Workflow
 
@@ -542,7 +546,25 @@ AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network <network> run scrip
 For contracts with constructor args that fail auto-verify, verify manually:
 ```bash
 npx hardhat verify --network <network> <impl_address> <constructor_arg1> <constructor_arg2> ...
+# If the contract name is ambiguous (e.g. ProtocolFeeManagerLite extends FeeManager), add:
+#   --contract src/path/ContractName.sol:ContractName
 ```
+
+**Etherscan V2 + hardhat-verify 2.x known issue (XDC and other V2 chains):**
+The plugin submits source code successfully but the subsequent status check fails with
+`Missing chainid parameter`. This is a false negative — the verification actually succeeds.
+Always confirm verification via the Etherscan V2 API after submission:
+```bash
+curl -s "https://api.etherscan.io/v2/api?chainid=<CHAIN_ID>&module=contract&action=getsourcecode&address=<ADDRESS>&apikey=<KEY>" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); r=d['result'][0]; print(r.get('ContractName','NOT VERIFIED') if d['status']=='1' and r.get('ContractName') else 'NOT VERIFIED')"
+```
+
+**Constructor args for implementation contracts:** These are immutable values baked in at deploy time.
+Find them in `deploy_1.ts` or the upgrade script that deployed the implementation. Common pattern:
+- `LendingPoolManager`: 5 args (fixedTermDeposit, usdc, controller, weth, swapper)
+- `ProtocolFeeManagerLite`: 5 args (usdc, systemVariables, controller, ksuLocking, lendingPoolManager)
+- `KasuPoolExternalTVL`: 1 arg (controller)
+All addresses come from the chain's `.openzeppelin/<network>-addresses.json` and `chains.ts` config.
 
 5. **Smoke tests** — validate roles, ownership, configuration:
 ```bash

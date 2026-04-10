@@ -36,6 +36,8 @@ export interface ChainConfig {
     isTestnet: boolean;
     /** Whether Tenderly supports this chain for simulations */
     tenderlySupported: boolean;
+    /** Initial epoch start timestamp (Unix seconds). All chains should align to Thursday 06:00 UTC. If omitted, defaults to now - 4 days. */
+    initialEpochStartTimestamp?: number;
 }
 
 /**
@@ -149,6 +151,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         revokedAdminAddresses: [], // Deployer checked separately
         isTestnet: false,
         tenderlySupported: false, // Tenderly doesn't support XDC
+        initialEpochStartTimestamp: 1718258400, // Thu, 13 Jun 2024 06:00:00 UTC — aligned to Base
     },
 
     // XDC Network (USDC) — second deployment on XDC with USDC instead of AUDD
@@ -168,6 +171,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         revokedAdminAddresses: [],
         isTestnet: false,
         tenderlySupported: false,
+        initialEpochStartTimestamp: 1718258400, // Thu, 13 Jun 2024 06:00:00 UTC — aligned to XDC AUDD & Base
     },
 
     // Plume
