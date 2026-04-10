@@ -471,8 +471,8 @@ Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract 
 - ❌ deploy_3.ts (DEFERRED — run together with XDC AUDD, see "Finalizing XDC" below)
 - ❌ Apxium multisig needs to create pools via ROLE_LENDING_POOL_CREATOR
 - ✅ Goldsky subgraph `kasu-xdc-usdc/v1.0.0` deployed — `https://api.goldsky.com/api/public/project_cmgzlpxm300765np2a19421om/subgraphs/kasu-xdc-usdc/v1.0.0/gn`
-- ❌ kasu-sdk update with final addresses + subgraph URL
-- ❌ Gitbook docs update
+- ✅ kasu-sdk updated and published: `@kasufinance/kasu-sdk@2.2.1`
+- ✅ Gitbook docs updated (kasu-gitbook-techdocs); user-facing kasu-gitbook-kasu-finance is chain-agnostic, no updates needed
 
 **Epoch alignment (the SystemVariables.initialize gotcha):**
 `SystemVariables.initialize()` validates `initialEpochStartTimestamp` must be within `[now - 1 week, now]`, so it rejects aligning fresh deployments to an old anchor like `1718258400`. XDC AUDD originally hit this and worked around it with a post-deploy migration upgrade. For XDC USDC we pre-built the solution:
