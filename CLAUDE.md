@@ -399,9 +399,9 @@ See `scripts/smokeTests/README.md` for full documentation.
 
 ### Plume Deployment Status
 
-Plume has a Lite deployment with new implementations deployed, awaiting multisig execution.
+Plume has a Lite deployment. Fully finalized.
 
-**Current State (Feb 9, 2026):**
+**Status: FINALIZED (confirmed Apr 13, 2026)**
 - ✅ All ProxyAdmin ownership (Kasu multisig)
 - ✅ All Beacon ownership (Kasu multisig)
 - ✅ ROLE_KASU_ADMIN granted to Kasu multisig
@@ -409,56 +409,30 @@ Plume has a Lite deployment with new implementations deployed, awaiting multisig
 - ✅ ROLE_LENDING_POOL_CREATOR granted to pool admin multisig
 - ✅ ROLE_PROTOCOL_FEE_CLAIMER granted correctly
 - ✅ All pool-specific roles configured for 3 pools
-- ❌ Old admin `0x0e7e...483` still has DEFAULT_ADMIN_ROLE (needs revoke)
-- ❌ 7 contracts need upgrade to match source code
-
-**New Implementations Deployed:**
-| Contract | New Implementation |
-|----------|-------------------|
-| KSULockingLite | `0x6BABEa605337b3C6D0106d83864d73706971355f` |
-| KsuPriceLite | `0xe81D1C0E031da0E357928ED19aA1EbF6A2f5C904` |
-| SystemVariables | `0x990bCF7f23d58Fa121209ABaF812836b651c82bC` |
-| FixedTermDeposit | `0x7fF469f8c5fba92A9051B8D28794CBb891760e81` |
-| UserLoyaltyRewardsLite | `0xC7c808e0C9fd7F97EA23b7eA21d94104564C6aC0` |
-| UserManagerLite | `0x666b589933965bF8B378eD973f0404b6cae0eb52` |
-| ProtocolFeeManagerLite | `0x161931FC6AFb8195B7516E4D129AcA437c15CA38` |
-
-**Action Required - Execute via Gnosis Safe:**
-
-Upload `scripts/multisig/plume-upgrade-all.json` to Gnosis Safe Transaction Builder:
-- 7 upgrade transactions (ProxyAdmin.upgradeAndCall)
-- 1 revoke transaction (remove old admin DEFAULT_ADMIN_ROLE)
-
-**Verify after execution:**
-```bash
-npx hardhat --network plume run scripts/smokeTests/validateDeploymentComplete.ts
-npx hardhat --network plume run scripts/admin/validateDeployment.ts
-```
+- ✅ Old admin `0x0e7e...483` DEFAULT_ADMIN_ROLE revoked
+- ✅ 7 contracts upgraded to match source code (plume-upgrade-all.json executed)
+- ✅ Smoke tests: 37/37 checks passing (25 global + 12 pool)
 
 ### XDC AUDD Deployment Status
 
 XDC AUDD is a Lite deployment (deployed Feb 2026) with epoch timing aligned to Base (Thursday 06:00 UTC).
 Epochs are weekly. Epoch 1 start on-chain: `1718258400` (Thu, 13 Jun 2024 06:00:00 UTC).
 
-**Roles & configuration (complete):**
+**Status: FINALIZED (Apr 13, 2026)**
 - ✅ Deployment contracts deployed and initialized (deploy_1.ts)
 - ✅ Role grants: ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER (deploy_2.ts)
 - ✅ All 7 source-mismatched implementations upgraded (Apr 9, 2026) and verified on xdcscan
 - ✅ 3 pools created + configured by Apxium multisig
-- ✅ Pool-specific roles configured on all pools
-
-**Pending (deferred — will be done together with XDC USDC):**
-- ❌ ProxyAdmin ownership: Still with deployer, needs transfer to Kasu multisig
-- ❌ Beacon ownership: Still with deployer, needs transfer to Kasu multisig
-- ❌ ROLE_KASU_ADMIN: Deployer still has it, needs revocation
-- These will all be handled by running `deploy_3.ts` on both XDC AUDD + XDC USDC simultaneously once USDC deployment is live
+- ✅ Pool-specific roles configured on all pools (ROLE_POOL_MANAGER + ROLE_POOL_FUNDS_MANAGER granted to pool admin multisig 0x880Aa2...)
+- ✅ deploy_3.ts executed (Apr 13, 2026): 16 ProxyAdmin + 3 Beacon ownerships transferred to Kasu multisig, ROLE_KASU_ADMIN revoked from deployer
+- ✅ Smoke tests: 25/25 global checks passing
 
 ### XDC USDC Deployment Status
 
 Second Lite deployment on XDC using USDC (`0xfa2958cb79b0491cc627c1557f441ef849ca8eb1`) instead of AUDD.
 Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract stack.
 
-**Status (Apr 10, 2026): LIVE on mainnet.** 19 contracts deployed, initialized, roles granted. Epoch aligned with AUDD (epoch 95). All impls verified on xdcscan. deploy_3 deferred.
+**Status (Apr 13, 2026): FINALIZED on mainnet.** 19 contracts deployed, initialized, roles granted, ownership transferred. Epoch aligned with AUDD (epoch 95). All impls verified on xdcscan.
 
 **Completed:**
 - ✅ deploy_1.ts — 19 contracts deployed + initialized (except SystemVariables, see below)
@@ -466,9 +440,10 @@ Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract 
 - ✅ deploy_2.ts — ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER granted to multisigs
 - ✅ All 19 production impls + 1 orphaned SystemVariablesMigration impl verified on xdcscan
 - ✅ Addresses saved to `.openzeppelin/xdc-usdc-addresses.json`
+- ✅ deploy_3.ts executed (Apr 13, 2026): 16 ProxyAdmin + 3 Beacon ownerships transferred to Kasu multisig, ROLE_KASU_ADMIN revoked from deployer
+- ✅ Smoke tests: 25/25 global checks passing
 
 **Pending:**
-- ❌ deploy_3.ts (DEFERRED — run together with XDC AUDD, see "Finalizing XDC" below)
 - ❌ Apxium multisig needs to create pools via ROLE_LENDING_POOL_CREATOR
 - ✅ Goldsky subgraph `kasu-xdc-usdc/v1.0.0` deployed — `https://api.goldsky.com/api/public/project_cmgzlpxm300765np2a19421om/subgraphs/kasu-xdc-usdc/v1.0.0/gn`
 - ✅ kasu-sdk updated and published: `@kasufinance/kasu-sdk@2.2.1`
@@ -507,16 +482,9 @@ AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network xdc-usdc run script
 
 **XDC RPC:** Always use `https://rpc.xdc.org`.
 
-### Finalizing XDC (both AUDD + USDC at once)
+### Finalizing XDC (COMPLETED Apr 13, 2026)
 
-Once XDC USDC deploy_1 + deploy_2 are complete and validated, run deploy_3 on both networks to finalize ownership:
-
-```bash
-npx hardhat --network xdc run scripts/deploy_3.ts
-npx hardhat --network xdc-usdc run scripts/deploy_3.ts
-```
-
-Each transfers ProxyAdmin ownership (16 proxies) + Beacon ownership (3 beacons) to the Kasu multisig and revokes the deployer's ROLE_KASU_ADMIN.
+deploy_3.ts executed on both `xdc` and `xdc-usdc`. All ProxyAdmin + Beacon ownerships transferred to Kasu multisig (`0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D`). Deployer's ROLE_KASU_ADMIN revoked on both. Smoke tests verified: 25/25 global checks on both networks.
 
 ### ⚠️ Apxium Multisig Template Bug (XDC AUDD historical)
 
