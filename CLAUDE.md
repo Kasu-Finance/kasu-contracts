@@ -260,7 +260,28 @@ npx ts-node scripts/reporting/generateTaxPdf.ts scripts/reporting/output/tax-inv
 
 ---
 
-## Current WIP: Unified Full/Lite Codebase (branch: `release-candidate`)
+## Current WIP: April 2026 security upgrade — awaiting on-chain rollout
+
+Commit `f8d2d45` on `master` fixes the four remaining open mediums from the April 2026
+audit (M-03, M-04, M-06, M-08) plus a regression (FV-01) surfaced by post-fix Feynman
+re-audit. All fixes validated by three independent auditor runs (Feynman, State
+Inconsistency, Nemesis — all 0/0/0/0). Tests 208/208 passing.
+
+**Deployment plan:** `.audit/deployment-plan-2026-04.md` — per-chain rollout sequence
+(XDC USDC → XDC AUDD → Plume → Base), Safe batch templates, storage layout notes,
+`unsafeAllow: ['struct-definition']` caveat for the `AcceptedRequestsExecutionEpoch`
+struct extension, rollback procedure, and post-upgrade `setRewardCaps` requirement
+on Base.
+
+**Auditor findings:** `.audit/findings/` — raw outputs from both the pre-FV01
+baseline audits and the post-FV01 confirmation audits. Useful as an audit trail.
+
+**v3 public audit report** will be generated after all four chains are upgraded
+on-chain and the cycle is complete.
+
+---
+
+## Historical: Unified Full/Lite Codebase (branch: `release-candidate`, merged to master at f8d2d45)
 
 ### Goal
 Single unified codebase supporting:
