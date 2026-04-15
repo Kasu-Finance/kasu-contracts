@@ -28,6 +28,7 @@ interface ISystemVariables {
     /* ========== TOKEN PRICE ========== */
 
     function ksuEpochTokenPrice() external view returns (uint256);
+    function ksuEpochTokenPriceFresh() external view returns (uint256);
     function priceUpdateEpoch() external view returns (uint256);
     function updateKsuEpochTokenPrice() external;
 

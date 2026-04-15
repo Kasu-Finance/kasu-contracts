@@ -27,6 +27,8 @@ interface ILendingPoolTrancheLoss is IERC1155 {
     function lossDetails(uint256 lossId) external view returns (LossDetails memory);
     function isLossMintingComplete(uint256 lossId) external view returns (bool);
     function isPendingLossMint() external view returns (bool);
+    function pendingLossMintId() external view returns (uint256);
+    function pendingLossMintUsersRemaining() external view returns (uint256);
     function userClaimableLoss(address user, uint256 lossId) external view returns (uint256 claimableAmount);
 
     /* ========== EXTERNAL MUTATIVE FUNCTIONS ========== */

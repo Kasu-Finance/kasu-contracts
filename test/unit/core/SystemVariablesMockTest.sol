@@ -342,6 +342,41 @@ contract SystemVariablesMockTest is BaseTestUtils {
         systemVariables.setLoyaltyThresholds(newLoyaltyThresholds);
     }
 
+    // M-04: ksuEpochTokenPriceFresh returns spot when snapshot is stale (view-side defense-in-depth).
+
+    function test_M04_ksuEpochTokenPriceFresh_snapshotFresh_returnsSnapshot() public {
+        _initialize();
+
+        uint256 initialPrice = ksuPrice.ksuTokenPrice();
+        assertEq(systemVariables.ksuEpochTokenPrice(), initialPrice);
+        assertEq(systemVariables.ksuEpochTokenPriceFresh(), initialPrice);
+
+        // spot moves in the same epoch, but snapshot is still "fresh" (priceUpdateEpoch == currentEpoch)
+        ksuPrice.setKsuTokenPrice(9e18);
+        assertEq(systemVariables.ksuEpochTokenPriceFresh(), initialPrice);
+    }
+
+    function test_M04_ksuEpochTokenPriceFresh_snapshotStale_returnsSpot() public {
+        _initialize();
+
+        uint256 snapshotPrice = ksuPrice.ksuTokenPrice();
+        uint256 newSpot = 7e18;
+
+        // advance one epoch without calling updateKsuEpochTokenPrice — snapshot is stale
+        skip(1 weeks);
+        ksuPrice.setKsuTokenPrice(newSpot);
+
+        // stored snapshot is still the old price
+        assertEq(systemVariables.ksuEpochTokenPrice(), snapshotPrice);
+        // fresh view falls back to spot
+        assertEq(systemVariables.ksuEpochTokenPriceFresh(), newSpot);
+
+        // once someone (cron or clearing) refreshes, fresh and stored agree again
+        systemVariables.updateKsuEpochTokenPrice();
+        assertEq(systemVariables.ksuEpochTokenPrice(), newSpot);
+        assertEq(systemVariables.ksuEpochTokenPriceFresh(), newSpot);
+    }
+
     function test_setDefaultTrancheInterestChangeEpochDelay() public {
         _initialize();
 

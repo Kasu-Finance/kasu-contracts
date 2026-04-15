@@ -69,6 +69,22 @@ abstract contract LendingPoolTrancheLoss is
     }
 
     /**
+     * @notice Returns the loss id of the pending mint, or 0 if none is pending.
+     */
+    function pendingLossMintId() external view returns (uint256) {
+        return _pendingMintLossId;
+    }
+
+    /**
+     * @notice Returns the number of users still to be minted for the pending loss (0 if none is pending).
+     */
+    function pendingLossMintUsersRemaining() external view returns (uint256) {
+        uint256 lossId = _pendingMintLossId;
+        if (lossId == 0) return 0;
+        return _lossDetails[lossId].usersCount - _lossDetails[lossId].usersMintedCount;
+    }
+
+    /**
      * @notice Gets the claimable loss amount for the user and loss id.
      * @param user The user to get the claimable loss for.
      * @param lossId The id of the loss.

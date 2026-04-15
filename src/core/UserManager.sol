@@ -252,6 +252,10 @@ contract UserManager is IUserManager, Initializable {
             return;
         }
 
+        // M-04 Layer 2: self-heal the KSU epoch price if the cron missed updating it this epoch.
+        // Idempotent — no-op when the snapshot is already fresh for the current epoch.
+        _systemVariables.updateKsuEpochTokenPrice();
+
         LoyaltyGlobalParameters memory params = _loyaltyParameters();
 
         // initialize user loyalty processing for the epoch if it has not started yet
@@ -423,7 +427,11 @@ contract UserManager is IUserManager, Initializable {
 
     function _loyaltyParameters() private view returns (LoyaltyGlobalParameters memory params) {
         params.currentEpoch = _systemVariables.currentEpochNumber();
-        params.ksuPrice = _systemVariables.ksuEpochTokenPrice();
+        // M-04 Layer 3: view-safe fallback to spot price if the snapshot is stale. In the mutative
+        // clearing path the preceding updateKsuEpochTokenPrice() call guarantees a fresh snapshot,
+        // so this returns ksuEpochTokenPrice directly. In view-only callers (userLoyaltyLevel) it
+        // prevents a stale snapshot from corrupting external reads.
+        params.ksuPrice = _systemVariables.ksuEpochTokenPriceFresh();
         params.loyaltyThresholds = _systemVariables.loyaltyThresholds();
     }
 

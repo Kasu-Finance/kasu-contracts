@@ -9,6 +9,10 @@ import {LossDetails} from "../../../src/core/interfaces/lendingPool/ILendingPool
 import "../../../src/core/lendingPool/LendingPoolStoppable.sol";
 import "../../../src/shared/CommonErrors.sol";
 
+interface IAcceptedRequestsExecutionTestShim {
+    function CLEARING_MINT_BATCH_SIZE() external view returns (uint256);
+}
+
 contract LendingPoolLossTest is LendingPoolTestUtils {
     function setUp() public {
         __baseTestUtils_setUp();
@@ -404,6 +408,48 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         vm.expectRevert(abi.encodeWithSelector(ILendingPoolTrancheLoss.RecoveryExceedsLoss.selector, lossId));
         lendingPoolManager.repayLoss(lpd.lendingPool, lpd.tranches[0], lossId, extraAmount);
         vm.stopPrank();
+    }
+
+    // M-06: pending-mint accessors expose lossId and remaining user count so that step 4 self-heal
+    // and backend monitoring can reason about incomplete loss-token mints.
+    function test_M06_pendingLossMintAccessors() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        uint256 totalUserDeposits = 100_000 * 10 ** 6;
+        uint256 usersCount = 5;
+        _requestAndAcceptUserDeposits(lpd.lendingPool, usersCount, lpd.tranches[0], totalUserDeposits);
+        _drawFunds(lpd.lendingPool, totalUserDeposits);
+
+        LendingPoolTranche tranche = LendingPoolTranche(lpd.tranches[0]);
+
+        // no pending mint initially
+        assertEq(tranche.pendingLossMintId(), 0);
+        assertEq(tranche.pendingLossMintUsersRemaining(), 0);
+
+        // register loss without minting — pending state entered
+        uint256 lossAmount = totalUserDeposits / 2;
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, false);
+
+        uint256 lossId = 1;
+        assertEq(tranche.pendingLossMintId(), lossId);
+        assertEq(tranche.pendingLossMintUsersRemaining(), usersCount);
+
+        // partial mint — remaining decreases
+        tranche.batchMintLossTokens(lossId, 2);
+        assertEq(tranche.pendingLossMintId(), lossId);
+        assertEq(tranche.pendingLossMintUsersRemaining(), usersCount - 2);
+
+        // finish mint — accessors clear
+        tranche.batchMintLossTokens(lossId, usersCount - 2);
+        assertEq(tranche.pendingLossMintId(), 0);
+        assertEq(tranche.pendingLossMintUsersRemaining(), 0);
+    }
+
+    // M-06: CLEARING_MINT_BATCH_SIZE is exposed on the PendingPool (via AcceptedRequestsExecution).
+    function test_M06_clearingMintBatchSizeExposed() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address pendingPool = LendingPool(lpd.lendingPool).pendingPool();
+        assertEq(IAcceptedRequestsExecutionTestShim(pendingPool).CLEARING_MINT_BATCH_SIZE(), 100);
     }
 
     function _requestAndAcceptUserDeposits(address lendingPool, uint256 userCount, address tranche, uint256 totalAmount)

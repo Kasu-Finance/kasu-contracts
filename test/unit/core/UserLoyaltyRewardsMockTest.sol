@@ -179,6 +179,8 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
         userRewardInputs[1] = UserRewardInput(bob, 0, bobLoyalty, bobDeposited);
         userRewardInputs[2] = UserRewardInput(carol, 0, carolLoyalty, carolDeposited);
         vm.prank(admin);
+        _userLoyaltyRewards.setRewardCaps(100 * 1e18, 1000 * 1e18);
+        vm.prank(admin);
         _userLoyaltyRewards.emitUserLoyaltyRewardBatch(userRewardInputs, manualTokenPrice);
 
         // ASSERT
@@ -230,6 +232,8 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
         userRewardInputs[0] = UserRewardInput(alice, 0, aliceLoyalty, aliceDeposited);
         userRewardInputs[1] = UserRewardInput(bob, 0, bobLoyalty, bobDeposited);
         userRewardInputs[2] = UserRewardInput(carol, 0, carolLoyalty, carolDeposited);
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardCaps(100 * 1e18, 1000 * 1e18);
         vm.prank(admin);
         _userLoyaltyRewards.emitUserLoyaltyRewardBatch(userRewardInputs, 0);
 
@@ -311,4 +315,101 @@ contract UserLoyaltyRewardsMockTest is BaseTestUtils {
     }
 
     // M-02: recoverERC20 has been removed — see SecurityAuditFixesTest.sol
+
+    // M-03: reward caps bound admin blast radius on emitUserLoyaltyRewardBatch
+
+    function test_M03_rewardCapsNotSet_revertsBatch() public {
+        LoyaltyEpochRewardRateInput[] memory rates = new LoyaltyEpochRewardRateInput[](1);
+        rates[0] = LoyaltyEpochRewardRateInput(1, 1e15);
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(rates);
+
+        _mockKsuPrice.setKsuTokenPrice(2e18);
+
+        UserRewardInput[] memory inputs = new UserRewardInput[](1);
+        inputs[0] = UserRewardInput(bob, 0, 1, 1000 * 1e6);
+
+        vm.prank(admin);
+        vm.expectRevert(abi.encodeWithSelector(IUserLoyaltyRewards.RewardCapsNotSet.selector));
+        _userLoyaltyRewards.emitUserLoyaltyRewardBatch(inputs, 0);
+    }
+
+    function test_M03_perUserCapExceeded_reverts() public {
+        LoyaltyEpochRewardRateInput[] memory rates = new LoyaltyEpochRewardRateInput[](1);
+        rates[0] = LoyaltyEpochRewardRateInput(1, 1e15); // 0.1%
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(rates);
+
+        _mockKsuPrice.setKsuTokenPrice(2e18);
+
+        // bobReward = 1000 * 0.1% / 2.0 = 0.5 KSU = 0.5e18
+        uint256 perUserCap = 0.4 * 1e18;
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardCaps(perUserCap, 1000 * 1e18);
+
+        UserRewardInput[] memory inputs = new UserRewardInput[](1);
+        inputs[0] = UserRewardInput(bob, 0, 1, 1000 * 1e6);
+
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(IUserLoyaltyRewards.PerUserCapExceeded.selector, bob, 0.5 * 1e18, perUserCap)
+        );
+        _userLoyaltyRewards.emitUserLoyaltyRewardBatch(inputs, 0);
+    }
+
+    function test_M03_batchCapExceeded_reverts() public {
+        LoyaltyEpochRewardRateInput[] memory rates = new LoyaltyEpochRewardRateInput[](1);
+        rates[0] = LoyaltyEpochRewardRateInput(1, 1e15); // 0.1%
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(rates);
+
+        _mockKsuPrice.setKsuTokenPrice(2e18);
+
+        // two users at 0.5 KSU each = 1.0 total; cap at 0.75 so second trips batch cap
+        uint256 batchCap = 0.75 * 1e18;
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardCaps(10 * 1e18, batchCap);
+
+        UserRewardInput[] memory inputs = new UserRewardInput[](2);
+        inputs[0] = UserRewardInput(alice, 0, 1, 1000 * 1e6);
+        inputs[1] = UserRewardInput(bob, 0, 1, 1000 * 1e6);
+
+        vm.prank(admin);
+        vm.expectRevert(abi.encodeWithSelector(IUserLoyaltyRewards.BatchCapExceeded.selector, 1e18, batchCap));
+        _userLoyaltyRewards.emitUserLoyaltyRewardBatch(inputs, 0);
+    }
+
+    function test_M03_exactCap_succeeds() public {
+        LoyaltyEpochRewardRateInput[] memory rates = new LoyaltyEpochRewardRateInput[](1);
+        rates[0] = LoyaltyEpochRewardRateInput(1, 1e15); // 0.1%
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardRatesPerLoyaltyLevel(rates);
+
+        _mockKsuPrice.setKsuTokenPrice(2e18);
+
+        // bobReward = 0.5 KSU; set caps exactly to 0.5
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardCaps(0.5 * 1e18, 0.5 * 1e18);
+
+        UserRewardInput[] memory inputs = new UserRewardInput[](1);
+        inputs[0] = UserRewardInput(bob, 0, 1, 1000 * 1e6);
+
+        vm.prank(admin);
+        _userLoyaltyRewards.emitUserLoyaltyRewardBatch(inputs, 0);
+
+        assertEq(_userLoyaltyRewards.userRewards(bob), 0.5 * 1e18);
+    }
+
+    function test_M03_setRewardCaps_onlyAdmin() public {
+        vm.prank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ROLE_KASU_ADMIN)
+        );
+        _userLoyaltyRewards.setRewardCaps(1, 1);
+
+        vm.prank(admin);
+        _userLoyaltyRewards.setRewardCaps(123, 456);
+        assertEq(_userLoyaltyRewards.maxRewardPerUserPerBatch(), 123);
+        assertEq(_userLoyaltyRewards.maxBatchTotalReward(), 456);
+    }
 }

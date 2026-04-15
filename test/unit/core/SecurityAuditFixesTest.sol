@@ -103,6 +103,12 @@ contract H01_StalePoolMappingTest is BaseTestUtils {
             abi.encodeWithSelector(ISystemVariables.ksuEpochTokenPrice.selector),
             abi.encode(2e18)
         );
+        // M-04: _loyaltyParameters now reads ksuEpochTokenPriceFresh (view-safe fallback)
+        vm.mockCall(
+            address(systemVariables),
+            abi.encodeWithSelector(ISystemVariables.ksuEpochTokenPriceFresh.selector),
+            abi.encode(2e18)
+        );
 
         // 1. Alice deposits, then gets cleaned up
         _userRequestedDeposit(alice, lendingPool1);

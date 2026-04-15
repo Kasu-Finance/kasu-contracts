@@ -396,5 +396,29 @@ contract UserManagerMockTest is BaseTestUtils {
             abi.encodeWithSelector(ISystemVariables.ksuEpochTokenPrice.selector),
             abi.encode(ksuPrice)
         );
+        // M-04: _loyaltyParameters reads ksuEpochTokenPriceFresh in the view-safe path
+        vm.mockCall(
+            address(systemVariables),
+            abi.encodeWithSelector(ISystemVariables.ksuEpochTokenPriceFresh.selector),
+            abi.encode(ksuPrice)
+        );
+        // M-04: batchCalculateUserLoyaltyLevels self-heals by calling updateKsuEpochTokenPrice
+        vm.mockCall(
+            address(systemVariables),
+            abi.encodeWithSelector(ISystemVariables.updateKsuEpochTokenPrice.selector),
+            abi.encode()
+        );
+    }
+
+    // M-04: clearing path must self-heal by calling SystemVariables.updateKsuEpochTokenPrice.
+    function test_M04_batchCalculateUserLoyaltyLevels_callsUpdateKsuEpochTokenPrice() public {
+        _userRequestedDeposit(alice, lendingPool1);
+
+        vm.mockCall(
+            address(systemVariables), abi.encodeWithSelector(ISystemVariables.isClearingTime.selector), abi.encode(true)
+        );
+
+        vm.expectCall(address(systemVariables), abi.encodeCall(ISystemVariables.updateKsuEpochTokenPrice, ()));
+        userManager.batchCalculateUserLoyaltyLevels(1);
     }
 }

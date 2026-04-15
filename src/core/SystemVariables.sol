@@ -238,6 +238,18 @@ contract SystemVariables is ISystemVariables, KasuAccessControllable, Initializa
         }
     }
 
+    /**
+     * @notice Returns the KSU epoch token price, falling back to the spot price when the stored snapshot is stale.
+     * @dev Defense-in-depth for view callers (loyalty reads) when neither the cron nor clearing has refreshed the
+     * snapshot for the current epoch yet.
+     */
+    function ksuEpochTokenPriceFresh() external view returns (uint256) {
+        if (currentEpochNumber() > priceUpdateEpoch) {
+            return _ksuPrice.ksuTokenPrice();
+        }
+        return ksuEpochTokenPrice;
+    }
+
     function _updateKsuTokenPrice() internal {
         priceUpdateEpoch = currentEpochNumber();
         ksuEpochTokenPrice = _ksuPrice.ksuTokenPrice();

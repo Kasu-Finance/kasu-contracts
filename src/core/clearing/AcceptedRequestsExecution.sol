@@ -3,16 +3,22 @@ pragma solidity 0.8.23;
 
 import "../interfaces/clearing/IAcceptedRequestsExecution.sol";
 import "../interfaces/lendingPool/IPendingPool.sol";
+import "../interfaces/lendingPool/ILendingPoolTranche.sol";
+import "../interfaces/lendingPool/ILendingPoolTrancheLoss.sol";
 import "../lendingPool/UserRequestIds.sol";
 
 /**
  * @notice Accepted request execution status for the epoch.
  * @custom:member nextIndexToProcess The next request index to process.
  * @custom:member status The status of the accepted requests execution task.
+ * @custom:member acceptedAssetValuePerPriority Running asset-value total of accepted withdrawals
+ * per priority for the epoch. Persists across batch calls so the dust-truncation fallback can
+ * respect the priority's asset budget (FV-01).
  */
 struct AcceptedRequestsExecutionEpoch {
     uint256 nextIndexToProcess;
     TaskStatus status;
+    mapping(uint8 priority => uint256 assetSpent) acceptedAssetValuePerPriority;
 }
 
 /**
@@ -26,6 +32,13 @@ struct AcceptedRequestsExecutionEpoch {
  * Withdrawals can be partially accepted. Whatever is not accepted will remain pending.
  */
 abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
+    /// @notice Maximum number of loss-token mints drained per tranche during step 4 self-heal.
+    /// @dev If a pool reported a loss with doMintLossTokens=false and never finished minting, step 4
+    /// drains up to this many users per tranche at the top of each executeAcceptedRequestsBatch call.
+    /// Larger pending queues revert with LossMintingStillPending so the clearer can drain manually via
+    /// batchMintLossTokens before retrying.
+    uint256 public constant CLEARING_MINT_BATCH_SIZE = 100;
+
     /// @dev epochId => AcceptedRequestsExecutionEpoch
     mapping(uint256 => AcceptedRequestsExecutionEpoch) private _acceptedRequestsExecutionPerEpoch;
 
@@ -74,6 +87,24 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
         }
 
         address[] memory tranches = _lendingPoolTranches();
+
+        // M-06: self-heal any pending loss-token mints before touching tranche shares. If the pool
+        // manager reported a loss with doMintLossTokens=false and didn't finish the follow-up mint,
+        // step 4 would otherwise silently revert on the first deposit/redeem via the tranche's
+        // notPendingLossMint guard. Drain up to CLEARING_MINT_BATCH_SIZE users per tranche; if the
+        // queue is larger, revert explicitly so the clearer can drain it manually via
+        // batchMintLossTokens and retry.
+        for (uint256 t; t < tranches.length; ++t) {
+            ILendingPoolTrancheLoss tranche = ILendingPoolTrancheLoss(tranches[t]);
+            if (tranche.isPendingLossMint()) {
+                uint256 lossId = tranche.pendingLossMintId();
+                tranche.batchMintLossTokens(lossId, CLEARING_MINT_BATCH_SIZE);
+                if (tranche.isPendingLossMint()) {
+                    revert LossMintingStillPending(address(tranche), lossId, tranche.pendingLossMintUsersRemaining());
+                }
+            }
+        }
+
         ClearingData memory clearingData = _clearingDataMemory(targetEpoch);
 
         uint256 endingIndexInclusive;
@@ -177,12 +208,32 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             uint256 acceptedWithdrawalShares =
                                 withdrawalNftDetails.sharesAmount * totalAcceptedAmount / totalWithdrawalAmount;
 
-                            // prevent dust positions from being permanently stuck due to truncation to 0
+                            uint256 acceptedAssetValue;
                             if (acceptedWithdrawalShares == 0 && withdrawalNftDetails.sharesAmount > 0) {
-                                acceptedWithdrawalShares = withdrawalNftDetails.sharesAmount;
+                                // Dust fallback: pro-rata truncated to zero. Accept the user's full
+                                // shares only if doing so does not push the priority's cumulative
+                                // accepted asset value past totalAcceptedAmount (FV-01). Otherwise
+                                // leave the request pending for a future epoch.
+                                uint256 fullAssetValue = ILendingPoolTranche(withdrawalNftDetails.tranche)
+                                    .convertToAssets(withdrawalNftDetails.sharesAmount);
+                                uint256 consumed = _acceptedRequestsExecutionPerEpoch[targetEpoch]
+                                    .acceptedAssetValuePerPriority[withdrawalNftDetails.priority];
+                                if (consumed + fullAssetValue <= totalAcceptedAmount) {
+                                    acceptedWithdrawalShares = withdrawalNftDetails.sharesAmount;
+                                    acceptedAssetValue = fullAssetValue;
+                                }
+                            } else if (acceptedWithdrawalShares > 0) {
+                                // Pro-rata path: compute asset value for budget accounting so the
+                                // fallback in later iterations/batches sees the remaining budget.
+                                acceptedAssetValue = ILendingPoolTranche(withdrawalNftDetails.tranche)
+                                    .convertToAssets(acceptedWithdrawalShares);
                             }
 
-                            _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
+                            if (acceptedWithdrawalShares > 0) {
+                                _acceptedRequestsExecutionPerEpoch[targetEpoch]
+                                    .acceptedAssetValuePerPriority[withdrawalNftDetails.priority] += acceptedAssetValue;
+                                _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
+                            }
                         }
                     }
                 }

@@ -28,4 +28,5 @@ interface IAcceptedRequestsExecution {
 
     error AcceptedRequestsExecutionAlreadyInitialized(uint256 epoch);
     error AcceptedRequestsExecutionAlreadyProcessed(uint256 epoch);
+    error LossMintingStillPending(address tranche, uint256 lossId, uint256 usersRemaining);
 }

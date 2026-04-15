@@ -435,10 +435,9 @@ Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract 
 **Status (Apr 13, 2026): FINALIZED on mainnet.** 19 contracts deployed, initialized, roles granted, ownership transferred. Epoch aligned with AUDD (epoch 95). All impls verified on xdcscan.
 
 **Completed:**
-- ✅ deploy_1.ts — 19 contracts deployed + initialized (except SystemVariables, see below)
-- ✅ `scripts/recovery/finishXdcUsdcInit.ts` + `finishXdcUsdcInit2.ts` — SystemVariables initialized with epoch aligned to AUDD via migration impl dance, then KasuPoolExternalTVL initialized
+- ✅ deploy_1.ts — 19 contracts deployed + initialized; SystemVariables epoch-aligned to AUDD via one-time migration impl dance (since removed from the repo)
 - ✅ deploy_2.ts — ROLE_KASU_ADMIN, ROLE_LENDING_POOL_CREATOR, ROLE_PROTOCOL_FEE_CLAIMER granted to multisigs
-- ✅ All 19 production impls + 1 orphaned SystemVariablesMigration impl verified on xdcscan
+- ✅ All 19 production impls verified on xdcscan (one orphaned SystemVariablesMigration impl remains verified on-chain, no proxy points to it)
 - ✅ Addresses saved to `.openzeppelin/xdc-usdc-addresses.json`
 - ✅ deploy_3.ts executed (Apr 13, 2026): 16 ProxyAdmin + 3 Beacon ownerships transferred to Kasu multisig, ROLE_KASU_ADMIN revoked from deployer
 - ✅ Smoke tests: 25/25 global checks passing
@@ -449,27 +448,16 @@ Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract 
 - ✅ kasu-sdk updated and published: `@kasufinance/kasu-sdk@2.2.1`
 - ✅ Gitbook docs updated (kasu-gitbook-techdocs); user-facing kasu-gitbook-kasu-finance is chain-agnostic, no updates needed
 
-**Epoch alignment (the SystemVariables.initialize gotcha):**
-`SystemVariables.initialize()` validates `initialEpochStartTimestamp` must be within `[now - 1 week, now]`, so it rejects aligning fresh deployments to an old anchor like `1718258400`. XDC AUDD originally hit this and worked around it with a post-deploy migration upgrade. For XDC USDC we pre-built the solution:
-
-1. `scripts/_config/chains.ts` has `initialEpochStartTimestamp: 1718258400` in the `xdc-usdc` chain config
-2. `deploy_1.ts` reads from chain config; if not set falls back to `now - 4 days`
-3. If the target timestamp fails `initialize()` validation (it will for any anchor older than 1 week), use the migration impl flow:
-   - `src/core/SystemVariablesMigration.sol` — identical to SystemVariables but with the past-timestamp check removed
-   - Upgrade SV proxy → SystemVariablesMigration with `upgradeAndCall` invoking `initialize(setup)` atomically
-   - Upgrade SV proxy back → production SystemVariables impl (storage preserved, impl pointer back to prod)
-4. The migration impl is verified on xdcscan but orphaned (no proxy points to it)
-
-See `scripts/recovery/finishXdcUsdcInit.ts` and `finishXdcUsdcInit2.ts` for the exact flow. The epoch aligned state: `_initialEpochStartTimestamp = 1718258400`, current epoch at deploy time = 95 (matches AUDD).
+**Epoch alignment (historical):**
+`SystemVariables.initialize()` validates `initialEpochStartTimestamp` must be within `[now - 1 week, now]`, rejecting alignment to an old anchor like `1718258400`. XDC AUDD and XDC USDC both worked around this with a one-shot migration-impl flow: upgrade the SV proxy to a stripped-check `SystemVariablesMigration` atomically via `upgradeAndCall(initialize(...))`, then upgrade back to the production SV impl (storage preserved). Both migration impls are verified-but-orphaned on xdcscan. The `SystemVariablesMigration.sol` contract and `scripts/recovery/finishXdcUsdcInit*.ts` scripts have been removed from the repo now that the migration is complete on all target chains.
 
 **⚠️ Known gotcha:** `upgrades.erc1967.getImplementationAddress()` and proxy view calls immediately after `upgrades.upgradeProxy` can return stale data on XDC RPC (load-balanced, some nodes lag). Always verify via raw storage read of the EIP-1967 impl slot (`0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`) for critical state checks.
 
 **Deploy sequence (for reference / redeploy scenarios):**
 ```bash
 npx hardhat --network xdc-usdc run scripts/deploy_1.ts
-# If SV initialize reverts due to past-timestamp check:
-npx hardhat --network xdc-usdc run scripts/recovery/finishXdcUsdcInit.ts
-# (and finishXdcUsdcInit2.ts for rollback + KasuPoolExternalTVL)
+# If SV initialize reverts due to past-timestamp check, restore a migration-impl flow
+# from git history (scripts/recovery/finishXdcUsdcInit*.ts were deleted after use).
 npx hardhat --network xdc-usdc run scripts/deploy_2.ts
 # deploy_3.ts DEFERRED (see "Finalizing XDC")
 npx hardhat --network xdc-usdc run scripts/smokeTests/validateDeploymentComplete.ts

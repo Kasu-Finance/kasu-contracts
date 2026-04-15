@@ -249,6 +249,13 @@ contract SystemVariablesTestable is ISystemVariables, KasuAccessControllable, In
         }
     }
 
+    function ksuEpochTokenPriceFresh() external view returns (uint256) {
+        if (currentEpochNumber() > priceUpdateEpoch) {
+            return _ksuPrice.ksuTokenPrice();
+        }
+        return ksuEpochTokenPrice;
+    }
+
     function _updateKsuTokenPrice() internal {
         priceUpdateEpoch = currentEpochNumber();
         ksuEpochTokenPrice = _ksuPrice.ksuTokenPrice();

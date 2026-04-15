@@ -41,6 +41,14 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
     /// @notice Mapping of user to unclaimed reward amount.
     mapping(address user => uint256 rewardAmount) public userRewards;
 
+    /// @notice Maximum KSU reward that can be emitted to a single user within a single batch call.
+    /// @dev Must be set to a non-zero value before emitUserLoyaltyRewardBatch can be used.
+    uint256 public maxRewardPerUserPerBatch;
+
+    /// @notice Maximum total KSU reward that can be emitted across a single batch call.
+    /// @dev Must be set to a non-zero value before emitUserLoyaltyRewardBatch can be used.
+    uint256 public maxBatchTotalReward;
+
     /* ========== CONSTRUCTOR ========== */
 
     /**
@@ -141,19 +149,51 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         external
         onlyAdmin
     {
+        uint256 perUserCap = maxRewardPerUserPerBatch;
+        uint256 batchCap = maxBatchTotalReward;
+
+        if (perUserCap == 0 || batchCap == 0) {
+            revert RewardCapsNotSet();
+        }
+
         if (ksuTokenPrice == 0) {
             ksuTokenPrice = _ksuPrice.ksuTokenPrice();
         }
 
+        uint256 batchTotal;
+
         for (uint256 i; i < userRewardInputs.length; ++i) {
-            _emitUserLoyaltyReward(
+            uint256 ksuReward = _emitUserLoyaltyReward(
                 userRewardInputs[i].user,
                 userRewardInputs[i].epoch,
                 userRewardInputs[i].userLoyaltyLevel,
                 userRewardInputs[i].amountDeposited,
                 ksuTokenPrice
             );
+
+            if (ksuReward > perUserCap) {
+                revert PerUserCapExceeded(userRewardInputs[i].user, ksuReward, perUserCap);
+            }
+
+            batchTotal += ksuReward;
+
+            if (batchTotal > batchCap) {
+                revert BatchCapExceeded(batchTotal, batchCap);
+            }
         }
+    }
+
+    /**
+     * @notice Sets the reward caps enforced by emitUserLoyaltyRewardBatch.
+     * @dev Both caps must be non-zero for batch emission to be enabled. Admin-only.
+     * @param perUser Maximum KSU reward mintable to a single user within a single batch call.
+     * @param perBatch Maximum total KSU reward mintable across a single batch call.
+     */
+    function setRewardCaps(uint256 perUser, uint256 perBatch) external onlyAdmin {
+        maxRewardPerUserPerBatch = perUser;
+        maxBatchTotalReward = perBatch;
+
+        emit RewardCapsUpdated(perUser, perBatch);
     }
 
     /**
@@ -208,19 +248,19 @@ contract UserLoyaltyRewards is IUserLoyaltyRewards, KasuAccessControllable, Init
         uint256 userLoyaltyLevel,
         uint256 amountDeposited,
         uint256 ksuTokenPrice
-    ) private {
+    ) private returns (uint256 ksuReward) {
         if (amountDeposited == 0 || ksuTokenPrice == 0) {
-            return;
+            return 0;
         }
 
         uint256 epochRewardRate = loyaltyEpochRewardRates[userLoyaltyLevel];
 
         if (epochRewardRate == 0) {
-            return;
+            return 0;
         }
 
         // calculate reward in KSU tokens based on user's active liquidity, epoch reward rate and KSU token price.
-        uint256 ksuReward = (amountDeposited * epochRewardRate * KSU_PRICE_MULTIPLIER * 1e12) / ksuTokenPrice
+        ksuReward = (amountDeposited * epochRewardRate * KSU_PRICE_MULTIPLIER * 1e12) / ksuTokenPrice
             / INTEREST_RATE_FULL_PERCENT;
 
         userRewards[user] += ksuReward;
