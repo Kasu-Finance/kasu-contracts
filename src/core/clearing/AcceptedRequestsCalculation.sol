@@ -254,9 +254,9 @@ contract AcceptedRequestsCalculation is IAcceptedRequestsCalculation {
         uint256 previousTrancheAmountOversubscribed;
         for (uint256 i; i < inputData.trancheDepositsAmounts.length - 1; ++i) {
             // calculate the maximum accepted amount for the current tranche, considering any unallocated deposits left from the previous tranche
-            uint256 maxTrancheAcceptedAmount = (
-                acceptedDepositAmountToTranches * inputData.trancheDesiredRatios[i] / FULL_PERCENT
-            ) + previousTrancheAmountLeft;
+            uint256 maxTrancheAcceptedAmount =
+                (acceptedDepositAmountToTranches * inputData.trancheDesiredRatios[i] / FULL_PERCENT)
+                    + previousTrancheAmountLeft;
 
             // get deposits for the current tranche plus the deposits left from the previous tranche
             uint256 trancheDepositsAmounts = inputData.trancheDepositsAmounts[i] + previousTrancheAmountOversubscribed;

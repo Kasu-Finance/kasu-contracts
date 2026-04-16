@@ -216,8 +216,9 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                                 // leave the request pending for a future epoch.
                                 uint256 fullAssetValue = ILendingPoolTranche(withdrawalNftDetails.tranche)
                                     .convertToAssets(withdrawalNftDetails.sharesAmount);
-                                uint256 consumed = _acceptedRequestsExecutionPerEpoch[targetEpoch]
-                                    .acceptedAssetValuePerPriority[withdrawalNftDetails.priority];
+                                uint256 consumed = _acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedAssetValuePerPriority[
+                                    withdrawalNftDetails.priority
+                                ];
                                 if (consumed + fullAssetValue <= totalAcceptedAmount) {
                                     acceptedWithdrawalShares = withdrawalNftDetails.sharesAmount;
                                     acceptedAssetValue = fullAssetValue;
@@ -230,8 +231,9 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                             }
 
                             if (acceptedWithdrawalShares > 0) {
-                                _acceptedRequestsExecutionPerEpoch[targetEpoch]
-                                    .acceptedAssetValuePerPriority[withdrawalNftDetails.priority] += acceptedAssetValue;
+                                _acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedAssetValuePerPriority[
+                                        withdrawalNftDetails.priority
+                                    ] += acceptedAssetValue;
                                 _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
                             }
                         }

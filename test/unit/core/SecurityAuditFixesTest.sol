@@ -118,16 +118,8 @@ contract H01_StalePoolMappingTest is BaseTestUtils {
         _userRequestedDeposit(alice, lendingPool1);
 
         // Mock alice having 1000 USDC in the pool and 5 rKSU
-        vm.mockCall(
-            address(lendingPool1),
-            abi.encodeCall(ILendingPool.userBalance, (alice)),
-            abi.encode(1000 * 1e6)
-        );
-        vm.mockCall(
-            address(ksuLocking),
-            abi.encodeWithSelector(IERC20.balanceOf.selector, alice),
-            abi.encode(5 * 1e18)
-        );
+        vm.mockCall(address(lendingPool1), abi.encodeCall(ILendingPool.userBalance, (alice)), abi.encode(1000 * 1e6));
+        vm.mockCall(address(ksuLocking), abi.encodeWithSelector(IERC20.balanceOf.selector, alice), abi.encode(5 * 1e18));
 
         // 3. Loyalty level should be 1 (1% ratio) — fix ensures pool is tracked
         (, uint256 loyaltyLevel) = userManager.userLoyaltyLevel(alice);
@@ -219,12 +211,8 @@ contract M02_RecoverERC20RemovedTest is LockingTestUtils {
      * @notice M-02 FIX: recoverERC20 no longer exists.
      */
     function test_M02_recoverERC20DoesNotExist() public {
-        bytes memory callData = abi.encodeWithSignature(
-            "recoverERC20(address,uint256,address)",
-            address(_ksu),
-            100 * 1e18,
-            admin
-        );
+        bytes memory callData =
+            abi.encodeWithSignature("recoverERC20(address,uint256,address)", address(_ksu), 100 * 1e18, admin);
         vm.prank(admin);
         (bool success,) = address(_userLoyaltyRewards).call(callData);
         assertFalse(success, "M-02: recoverERC20 should not exist");

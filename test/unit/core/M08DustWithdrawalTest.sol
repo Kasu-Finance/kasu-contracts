@@ -217,9 +217,7 @@ contract M08DustWithdrawalTest is Test {
         // Invariant: cumulative accepted shares (asset-equivalent via 1:1 tranche)
         // must not exceed the priority's asset budget.
         assertLe(
-            harness.totalAcceptedShares(),
-            totalAccepted,
-            "aggregate dust acceptance must respect totalAcceptedAmount"
+            harness.totalAcceptedShares(), totalAccepted, "aggregate dust acceptance must respect totalAcceptedAmount"
         );
         // Liveness: at least some dust NFTs should clear (we didn't regress M-08's goal).
         assertGt(harness.acceptCallCount(), 0, "at least one dust NFT should clear");

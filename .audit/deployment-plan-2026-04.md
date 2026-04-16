@@ -133,14 +133,27 @@ npx hardhat --network plume run scripts/admin/validateDeployment.ts
 
 ### Choosing cap values
 
-Coordinate with backend team to pick values. Recommended starting point based on current loyalty rates (1e15 = 0.1% per epoch, 2e15 = 0.2% per epoch) and observed deposit sizes:
+**Units:** both caps are in **KSU tokens at 18-decimal precision (wei)**, NOT USDC. `emitUserLoyaltyRewardBatch` compares them against `ksuReward` computed from `(amountDeposited * epochRewardRate * KSU_PRICE_MULTIPLIER * 1e12) / ksuTokenPrice / INTEREST_RATE_FULL_PERCENT`, which yields KSU amounts.
 
-- `maxRewardPerUserPerBatch`: 2× the largest per-user reward observed in the last 10 weekly batches. Gives headroom without allowing massive inflation.
-- `maxBatchTotalReward`: 1.5× the largest total-batch reward observed in the last 10 weekly batches.
+Example: a 1,000 KSU cap is `1_000 * 1e18` passed to `setRewardCaps`.
 
-Both can be tuned later via another `setRewardCaps` call. Start conservative.
+**Initial cap (pre-token-launch):** the KSU token doesn't exist yet, so there's no historical emission data to calibrate against. Use a conservative blanket cap of **1,000 KSU per epoch** until real emission volume is observed:
 
-Before the upgrade: the backend must run one final "measurement" query against historical `UserLoyaltyRewardsEmitted` events to pick these numbers. Document the chosen values in the upgrade PR.
+```solidity
+// Initial values for the first upgrade on Base
+setRewardCaps(1_000 * 1e18, 1_000 * 1e18);
+//            ↑ perUser     ↑ perBatch
+// Both set to 1_000 KSU wei. Batch cap bounds total epoch emission at 1,000 KSU,
+// per-user cap equals batch cap so a single dominant user isn't artificially
+// throttled below the overall budget.
+```
+
+**Post-launch retune:** once KSU is live and weekly emission volume stabilizes, call `setRewardCaps` again with values calibrated from historical `UserLoyaltyRewardsEmitted(user, epoch, rewardAmount)` events (rewardAmount is the KSU wei amount):
+
+- `maxRewardPerUserPerBatch`: 2× largest observed per-user reward in last 10 weekly batches
+- `maxBatchTotalReward`: 1.5× largest observed total-batch reward in last 10 weekly batches
+
+Caps are settable by `ROLE_KASU_ADMIN` at any time — no upgrade needed for retunes.
 
 ### Rollout steps
 
