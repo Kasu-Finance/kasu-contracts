@@ -197,47 +197,7 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
 
                 // only consider withdrawals from current and past epochs
                 if (withdrawalNftDetails.epochId <= targetEpoch) {
-                    uint256 totalAcceptedAmount =
-                        clearingData.acceptedPriorityWithdrawalAmounts[withdrawalNftDetails.priority];
-                    if (totalAcceptedAmount > 0) {
-                        uint256 totalWithdrawalAmount =
-                            clearingData.pendingWithdrawals.priorityWithdrawalAmounts[withdrawalNftDetails.priority];
-
-                        // calculate the amount withdrawn that will be accepted in this tranche
-                        if (totalWithdrawalAmount > 0) {
-                            uint256 acceptedWithdrawalShares =
-                                withdrawalNftDetails.sharesAmount * totalAcceptedAmount / totalWithdrawalAmount;
-
-                            uint256 acceptedAssetValue;
-                            if (acceptedWithdrawalShares == 0 && withdrawalNftDetails.sharesAmount > 0) {
-                                // Dust fallback: pro-rata truncated to zero. Accept the user's full
-                                // shares only if doing so does not push the priority's cumulative
-                                // accepted asset value past totalAcceptedAmount (FV-01). Otherwise
-                                // leave the request pending for a future epoch.
-                                uint256 fullAssetValue = ILendingPoolTranche(withdrawalNftDetails.tranche)
-                                    .convertToAssets(withdrawalNftDetails.sharesAmount);
-                                uint256 consumed = _acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedAssetValuePerPriority[
-                                    withdrawalNftDetails.priority
-                                ];
-                                if (consumed + fullAssetValue <= totalAcceptedAmount) {
-                                    acceptedWithdrawalShares = withdrawalNftDetails.sharesAmount;
-                                    acceptedAssetValue = fullAssetValue;
-                                }
-                            } else if (acceptedWithdrawalShares > 0) {
-                                // Pro-rata path: compute asset value for budget accounting so the
-                                // fallback in later iterations/batches sees the remaining budget.
-                                acceptedAssetValue = ILendingPoolTranche(withdrawalNftDetails.tranche)
-                                    .convertToAssets(acceptedWithdrawalShares);
-                            }
-
-                            if (acceptedWithdrawalShares > 0) {
-                                _acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedAssetValuePerPriority[
-                                        withdrawalNftDetails.priority
-                                    ] += acceptedAssetValue;
-                                _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
-                            }
-                        }
-                    }
+                    _processAcceptedWithdrawal(userRequestNftId, withdrawalNftDetails, targetEpoch, clearingData);
                 }
             }
 
@@ -256,6 +216,45 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
     }
 
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
+
+    /// @dev Extracted from executeAcceptedRequestsBatch to keep the outer loop under EIP-170.
+    function _processAcceptedWithdrawal(
+        uint256 userRequestNftId,
+        WithdrawalNftDetails memory withdrawalNftDetails,
+        uint256 targetEpoch,
+        ClearingData memory clearingData
+    ) private {
+        uint8 priority = withdrawalNftDetails.priority;
+        uint256 totalAcceptedAmount = clearingData.acceptedPriorityWithdrawalAmounts[priority];
+        if (totalAcceptedAmount == 0) return;
+
+        uint256 totalWithdrawalAmount = clearingData.pendingWithdrawals.priorityWithdrawalAmounts[priority];
+        if (totalWithdrawalAmount == 0) return;
+
+        uint256 acceptedWithdrawalShares =
+            withdrawalNftDetails.sharesAmount * totalAcceptedAmount / totalWithdrawalAmount;
+
+        ILendingPoolTranche tranche = ILendingPoolTranche(withdrawalNftDetails.tranche);
+        mapping(uint8 => uint256) storage assetValuePerPriority =
+            _acceptedRequestsExecutionPerEpoch[targetEpoch].acceptedAssetValuePerPriority;
+
+        uint256 acceptedAssetValue;
+        if (acceptedWithdrawalShares == 0 && withdrawalNftDetails.sharesAmount > 0) {
+            // Dust fallback (FV-01): accept full shares only if budget allows; else roll to next epoch.
+            uint256 fullAssetValue = tranche.convertToAssets(withdrawalNftDetails.sharesAmount);
+            if (assetValuePerPriority[priority] + fullAssetValue <= totalAcceptedAmount) {
+                acceptedWithdrawalShares = withdrawalNftDetails.sharesAmount;
+                acceptedAssetValue = fullAssetValue;
+            }
+        } else if (acceptedWithdrawalShares > 0) {
+            acceptedAssetValue = tranche.convertToAssets(acceptedWithdrawalShares);
+        }
+
+        if (acceptedWithdrawalShares > 0) {
+            assetValuePerPriority[priority] += acceptedAssetValue;
+            _acceptWithdrawalRequest(userRequestNftId, acceptedWithdrawalShares);
+        }
+    }
 
     function _initializeAcceptedRequests(uint256 targetEpoch) private {
         uint256 totalPendingRequests = _clearingDataStorage(targetEpoch).totalPendingRequestsToProcess;

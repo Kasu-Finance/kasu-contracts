@@ -82,14 +82,19 @@ contract SystemVariablesMockTest is BaseTestUtils {
     function test_nextEpochStartTimestamp() public {
         _initialize();
 
-        uint256 nextEpochStartTime = block.timestamp + 1 weeks;
-        assertEq(systemVariables.nextEpochStartTimestamp(), nextEpochStartTime);
+        // Capture the epoch anchor from the contract rather than reading `block.timestamp`
+        // into a local — under via_ir, CSE can re-read TIMESTAMP across later vm.warp() calls
+        // and the captured local gets silently recomputed after a skip(). External calls are
+        // treated as opaque so their return values are correctly cached.
+        uint256 startTime = systemVariables.epochStartTimestamp(0);
+
+        assertEq(systemVariables.nextEpochStartTimestamp(), startTime + 1 weeks);
 
         skip(1 days);
-        assertEq(systemVariables.nextEpochStartTimestamp(), nextEpochStartTime);
+        assertEq(systemVariables.nextEpochStartTimestamp(), startTime + 1 weeks);
 
         skip(1 weeks);
-        assertEq(systemVariables.nextEpochStartTimestamp(), nextEpochStartTime + 1 weeks);
+        assertEq(systemVariables.nextEpochStartTimestamp(), startTime + 2 weeks);
     }
 
     function test_epochDuration() public {
