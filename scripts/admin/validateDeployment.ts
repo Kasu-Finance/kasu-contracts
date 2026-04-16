@@ -19,7 +19,12 @@ type ValidationResult = {
     proxyAddress: string;
     implementationAddress: string;
     proxyType: string;
+    // Primary check: stripped runtime bytecode (on-chain) vs local artifact deployedBytecode.
+    // This is authoritative — whitespace/comment-only source changes don't affect it.
     bytecodeMatch: 'match' | 'mismatch' | 'unknown';
+    // Secondary check: verified source on explorer vs local source file.
+    // Strict (any whitespace diff fails) — used as a corroborating signal, not a blocker.
+    sourceMatch: 'match' | 'mismatch' | 'unknown';
     etherscanVerified: boolean;
     upgradeable: boolean;
     verificationAttempted?: boolean;
@@ -333,6 +338,81 @@ function normalizeSource(source: string): string {
         .trim();
 }
 
+// Strip the Solidity metadata CBOR trailer from deployed bytecode. The last 2 bytes of the
+// runtime bytecode encode the metadata length (big-endian uint16); everything from
+// (end - metadataLen - 2 bytes) onward is the metadata blob. Stripping it leaves the pure
+// executable bytecode, which is what we actually care about for "is this the same contract?"
+// questions — it's deterministic for a given AST + compiler settings and is invariant to
+// whitespace-only source changes (forge fmt, comment edits, etc.).
+function stripMetadata(bytecode: string): string {
+    const hex = bytecode.startsWith('0x') ? bytecode.slice(2) : bytecode;
+    if (hex.length < 4) return hex;
+    const metadataLen = parseInt(hex.slice(-4), 16);
+    if (Number.isNaN(metadataLen) || metadataLen * 2 + 4 > hex.length) return hex;
+    return hex.slice(0, hex.length - metadataLen * 2 - 4);
+}
+
+// Compare on-chain runtime bytecode against the local artifact's deployedBytecode, with the
+// Solidity metadata CBOR trailer stripped from both. This is authoritative: if the executable
+// bytes match, the deployed contract IS the compiled output of the current source (modulo
+// whitespace-only changes that don't affect the AST).
+//
+// Returns 'match' if the stripped bytecodes are identical, 'mismatch' if they differ, or
+// 'unknown' if either the on-chain code is empty (not a contract) or the local artifact
+// can't be loaded.
+async function compareBytecode(
+    implementationAddress: string,
+    contractName: string,
+    debug: boolean = false,
+): Promise<'match' | 'mismatch' | 'unknown'> {
+    try {
+        const onChainRaw = await hre.ethers.provider.getCode(implementationAddress);
+        if (!onChainRaw || onChainRaw === '0x' || onChainRaw.length <= 2) {
+            if (debug) console.log(`    No on-chain code at ${implementationAddress}`);
+            return 'unknown';
+        }
+
+        let artifact;
+        try {
+            artifact = await hre.artifacts.readArtifact(contractName);
+        } catch {
+            if (debug) console.log(`    No local artifact for ${contractName}`);
+            return 'unknown';
+        }
+
+        const localRaw = artifact.deployedBytecode;
+        if (!localRaw || localRaw === '0x') {
+            if (debug) console.log(`    Empty artifact deployedBytecode for ${contractName}`);
+            return 'unknown';
+        }
+
+        const onChainStripped = stripMetadata(onChainRaw).toLowerCase();
+        const localStripped = stripMetadata(localRaw).toLowerCase();
+
+        if (onChainStripped === localStripped) {
+            return 'match';
+        }
+
+        if (debug) {
+            console.log(`    Bytecode mismatch for ${contractName}:`);
+            console.log(`      on-chain length: ${onChainStripped.length}, local length: ${localStripped.length}`);
+            // Find first differing byte offset for quick diagnosis
+            const minLen = Math.min(onChainStripped.length, localStripped.length);
+            for (let i = 0; i < minLen; i += 2) {
+                if (onChainStripped[i] !== localStripped[i] || onChainStripped[i + 1] !== localStripped[i + 1]) {
+                    console.log(`      first diff at byte ${i / 2}: on-chain=${onChainStripped.slice(i, i + 8)} local=${localStripped.slice(i, i + 8)}`);
+                    break;
+                }
+            }
+        }
+
+        return 'mismatch';
+    } catch (err) {
+        if (debug) console.log(`    Bytecode comparison error: ${(err as Error).message}`);
+        return 'unknown';
+    }
+}
+
 // Compare source code from explorer with local source
 async function compareSourceCode(
     explorerSources: Record<string, string>,
@@ -610,41 +690,40 @@ async function main() {
             implementationAddress,
             proxyType: entry.proxyType || 'none',
             bytecodeMatch: 'unknown',
+            sourceMatch: 'unknown',
             etherscanVerified: false,
             upgradeable: isProxy,
         };
 
         const addressToCheck = implementationAddress || proxyAddress;
+        const debug = process.env.DEBUG === 'true';
 
-        // Fetch verified source from explorer
+        // Primary check: on-chain runtime bytecode vs local artifact deployedBytecode (metadata stripped).
+        // Authoritative — unaffected by whitespace/comment-only source changes.
+        result.bytecodeMatch = await compareBytecode(addressToCheck, contractName, debug);
+
+        // Secondary check: fetch verified source from explorer for source-level corroboration.
         const explorerResult = await fetchExplorerSource(addressToCheck, networkName);
         result.etherscanVerified = explorerResult.verified;
 
         // Small delay to avoid rate limiting
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-        const debug = process.env.DEBUG === 'true';
-
         if (explorerResult.verified && Object.keys(explorerResult.allSources).length > 0) {
-            // Compare source code from explorer with local source
-            result.bytecodeMatch = await compareSourceCode(
+            // Compare source code from explorer with local source (strict — flags whitespace diffs).
+            result.sourceMatch = await compareSourceCode(
                 explorerResult.allSources,
                 explorerResult.contractName,
                 contractName,
                 debug,
             );
-        } else {
-            // Not verified - can't compare source
-            result.bytecodeMatch = 'unknown';
-
-            // Try to verify if auto-verify is enabled
-            if (autoVerify) {
-                result.verificationAttempted = true;
-                const constructorArgs = (await getConstructorArgsFromManifest(addressToCheck)) || [];
-                result.verificationSuccess = await attemptVerification(addressToCheck, contractName, constructorArgs);
-                if (result.verificationSuccess) {
-                    result.etherscanVerified = true;
-                }
+        } else if (autoVerify) {
+            // Not verified - try to verify if auto-verify is enabled
+            result.verificationAttempted = true;
+            const constructorArgs = (await getConstructorArgsFromManifest(addressToCheck)) || [];
+            result.verificationSuccess = await attemptVerification(addressToCheck, contractName, constructorArgs);
+            if (result.verificationSuccess) {
+                result.etherscanVerified = true;
             }
         }
 
@@ -652,27 +731,36 @@ async function main() {
     }
 
     // Categorize results
-    const ok = results.filter((r) => r.bytecodeMatch === 'match' && r.etherscanVerified);
-    const mismatched = results.filter((r) => r.bytecodeMatch === 'mismatch');
+    // Authoritative pass condition: on-chain bytecode matches local artifact. Explorer verification
+    // is a separate concern (public transparency), tracked but not gating.
+    const bytecodeOk = results.filter((r) => r.bytecodeMatch === 'match');
+    const bytecodeMismatch = results.filter((r) => r.bytecodeMatch === 'mismatch');
+    const bytecodeUnknown = results.filter((r) => r.bytecodeMatch === 'unknown');
+    const sourceDrift = results.filter(
+        (r) => r.bytecodeMatch === 'match' && r.sourceMatch === 'mismatch',
+    );
     const notVerified = results.filter((r) => !r.etherscanVerified);
-    const unknown = results.filter((r) => r.bytecodeMatch === 'unknown' && r.etherscanVerified);
 
     console.log();
     console.log('='.repeat(60));
 
-    // Show OK contracts
-    if (ok.length > 0) {
-        console.log(`\nOK (source matches & verified): ${ok.length}`);
-        for (const r of ok) {
+    // Show OK contracts (bytecode match)
+    if (bytecodeOk.length > 0) {
+        console.log(`\nOK (bytecode matches): ${bytecodeOk.length}`);
+        for (const r of bytecodeOk) {
             const label = r.contractName !== r.name ? `${r.name} (${r.contractName})` : r.name;
-            console.log(`  ✓ ${label}`);
+            const verifiedMark = r.etherscanVerified ? '' : ' [NOT VERIFIED ON EXPLORER]';
+            const driftMark = r.sourceMatch === 'mismatch'
+                ? ' [explorer source is stale — re-verify with AUTO_VERIFY=true to refresh]'
+                : '';
+            console.log(`  ✓ ${label}${verifiedMark}${driftMark}`);
         }
     }
 
-    // Show mismatched contracts (source code differs)
-    if (mismatched.length > 0) {
-        console.log(`\nSOURCE MISMATCH: ${mismatched.length}`);
-        for (const r of mismatched) {
+    // Show mismatched contracts (bytecode actually differs — real regression)
+    if (bytecodeMismatch.length > 0) {
+        console.log(`\nBYTECODE MISMATCH: ${bytecodeMismatch.length}`);
+        for (const r of bytecodeMismatch) {
             const label = r.contractName !== r.name ? `${r.name} (${r.contractName})` : r.name;
             const addr = r.implementationAddress || r.proxyAddress;
             const canUpgrade = r.upgradeable ? '(can upgrade)' : '(needs redeploy)';
@@ -681,9 +769,29 @@ async function main() {
         }
     }
 
-    // Show not verified
+    // Show unknown (couldn't load artifact or no on-chain code)
+    if (bytecodeUnknown.length > 0) {
+        console.log(`\nBYTECODE UNKNOWN (artifact missing or no on-chain code): ${bytecodeUnknown.length}`);
+        for (const r of bytecodeUnknown) {
+            const label = r.contractName !== r.name ? `${r.name} (${r.contractName})` : r.name;
+            const addr = r.implementationAddress || r.proxyAddress;
+            console.log(`  ? ${label}`);
+            console.log(`    ${addr}`);
+        }
+    }
+
+    // Show source drift (bytecode fine, but explorer source is stale — e.g. post-fmt).
+    if (sourceDrift.length > 0) {
+        console.log(`\nSOURCE DRIFT (bytecode OK but explorer source out of date): ${sourceDrift.length}`);
+        for (const r of sourceDrift) {
+            const label = r.contractName !== r.name ? `${r.name} (${r.contractName})` : r.name;
+            console.log(`  ~ ${label} — re-verify with AUTO_VERIFY=true to refresh`);
+        }
+    }
+
+    // Show not verified on explorer (public transparency concern, not a correctness concern).
     if (notVerified.length > 0) {
-        console.log(`\nNOT VERIFIED: ${notVerified.length}`);
+        console.log(`\nNOT VERIFIED ON EXPLORER: ${notVerified.length}`);
         for (const r of notVerified) {
             const label = r.contractName !== r.name ? `${r.name} (${r.contractName})` : r.name;
             const addr = r.implementationAddress || r.proxyAddress;
@@ -692,18 +800,12 @@ async function main() {
         }
     }
 
-    // Show unknown (verified but couldn't find local source)
-    if (unknown.length > 0) {
-        console.log(`\nUNKNOWN (local source not found): ${unknown.length}`);
-        for (const r of unknown) {
-            const label = r.contractName !== r.name ? `${r.name} (${r.contractName})` : r.name;
-            console.log(`  ? ${label}`);
-        }
-    }
-
     console.log();
     console.log('='.repeat(60));
-    console.log(`Summary: ${ok.length} OK, ${mismatched.length} source mismatch, ${notVerified.length} not verified, ${unknown.length} unknown`);
+    console.log(
+        `Summary: ${bytecodeOk.length} bytecode OK, ${bytecodeMismatch.length} bytecode mismatch, `
+        + `${bytecodeUnknown.length} unknown, ${sourceDrift.length} source drift, ${notVerified.length} not verified`,
+    );
 }
 
 main().catch((error) => {

@@ -19,17 +19,13 @@
 
 ### Source-verification drift from forge fmt
 
-The `ci(fmt)` commit reformatted 5 files in `src/core/clearing/**` to align with CI's pinned forge v1.5.1. Pure whitespace changes — runtime bytecode is byte-identical (modulo the metadata hash suffix which Etherscan strips before compare).
+The `ci(fmt)` commit reformatted 5 files in `src/core/clearing/**` to align with CI's pinned forge v1.5.1. Pure whitespace changes — runtime bytecode is byte-identical (modulo the metadata hash suffix).
 
-**However**, `validateDeployment.ts` compares the Etherscan-verified source against the local source with only CRLF normalization — pure whitespace diffs will show as `'mismatch'` until re-verification lands.
+`validateDeployment.ts` now uses **on-chain runtime bytecode comparison (with metadata stripped)** as the primary check, so pure whitespace / comment changes no longer trigger a "mismatch" verdict. The source comparison against the explorer's verified source is still run as a secondary signal (reported as "SOURCE DRIFT" when bytecode matches but explorer source is stale). That advisory line can be cleared at your leisure by re-running with `AUTO_VERIFY=true` — cosmetic only, doesn't block the upgrade.
 
-Two contracts are independently deployed and will flag on all 4 chains:
-- `AcceptedRequestsCalculation` (own proxy address)
-- `ClearingCoordinator` (own proxy address)
+Two contracts will show SOURCE DRIFT until re-verified: `AcceptedRequestsCalculation` and `ClearingCoordinator` (both independently deployed; their on-chain bytecode is unchanged). `AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network <net> run scripts/admin/validateDeployment.ts` refreshes the explorer source — no gas, no redeployment. Worth doing once per chain as part of the smoke-test pass, but not a blocker.
 
-**Resolution:** just re-verify them on the explorer with the new source. No gas cost, no redeployment. The one-liner `AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network <net> run scripts/admin/validateDeployment.ts` will do this automatically and clear the flag. Add this step to each chain's rollout.
-
-The other 3 fmt'd files (`AcceptedRequestsExecution`, `ClearingSteps`, `PendingRequestsPriorityCalculation`) are abstract / inherited by `PendingPool`. They roll into the new `PendingPool` impl deployed for M-06/FV-01 and get verified together with it — no extra step needed.
+The 3 fmt'd abstract files (`AcceptedRequestsExecution`, `ClearingSteps`, `PendingRequestsPriorityCalculation`) are inherited by `PendingPool` and roll into the new `PendingPool` impl deployed for M-06/FV-01 — no separate step.
 
 ### Storage layout verdict
 
