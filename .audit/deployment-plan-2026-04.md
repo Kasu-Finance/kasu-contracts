@@ -17,6 +17,20 @@
 | `LendingPoolTrancheLoss.sol` | Beacon (via tranche) | All 4 | No (views added) |
 | `AcceptedRequestsExecution.sol` | Beacon (via PendingPool) | All 4 | **Yes — struct extended with mapping** |
 
+### Source-verification drift from forge fmt
+
+The `ci(fmt)` commit reformatted 5 files in `src/core/clearing/**` to align with CI's pinned forge v1.5.1. Pure whitespace changes — runtime bytecode is byte-identical (modulo the metadata hash suffix which Etherscan strips before compare).
+
+**However**, `validateDeployment.ts` compares the Etherscan-verified source against the local source with only CRLF normalization — pure whitespace diffs will show as `'mismatch'` until re-verification lands.
+
+Two contracts are independently deployed and will flag on all 4 chains:
+- `AcceptedRequestsCalculation` (own proxy address)
+- `ClearingCoordinator` (own proxy address)
+
+**Resolution:** just re-verify them on the explorer with the new source. No gas cost, no redeployment. The one-liner `AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network <net> run scripts/admin/validateDeployment.ts` will do this automatically and clear the flag. Add this step to each chain's rollout.
+
+The other 3 fmt'd files (`AcceptedRequestsExecution`, `ClearingSteps`, `PendingRequestsPriorityCalculation`) are abstract / inherited by `PendingPool`. They roll into the new `PendingPool` impl deployed for M-06/FV-01 and get verified together with it — no extra step needed.
+
 ### Storage layout verdict
 
 Both state changes are additive and upgrade-safe:
