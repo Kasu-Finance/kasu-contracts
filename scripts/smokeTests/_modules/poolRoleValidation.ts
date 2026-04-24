@@ -49,75 +49,32 @@ export async function validatePoolSpecificRoles(
         hre.ethers.provider,
     );
 
-    // Pool admin roles may be held by pool admin multisig or Kasu multisig
-    const adminCandidates = [
+    // Apxium holds BOTH the "pool admin" and "pool manager" Safes on every chain they
+    // operate (XDC, Plume, Base), so the split is organisational, not a trust boundary.
+    // Any pool role held by either Apxium Safe (or the Kasu multisig) is valid.
+    const candidates = [
         { address: poolAdminMultisig, label: 'pool admin multisig' },
-        { address: kasuMultisig || '', label: 'Kasu multisig' },
-    ].filter((c) => c.address);
-
-    // Pool manager roles may be held by pool manager multisig or Kasu multisig
-    const managerCandidates = [
         { address: poolManagerMultisig, label: 'pool manager multisig' },
         { address: kasuMultisig || '', label: 'Kasu multisig' },
     ].filter((c) => c.address);
 
-    // Check ROLE_POOL_ADMIN
-    if (adminCandidates.length > 0) {
-        const { passed, holder } = await checkPoolRole(
-            kasuController, poolAddress, ROLE_POOL_ADMIN, adminCandidates,
-        );
-        results.push({
-            poolAddress,
-            role: 'ROLE_POOL_ADMIN',
-            passed,
-            message: passed
-                ? `${holder} has ROLE_POOL_ADMIN`
-                : `No expected address has ROLE_POOL_ADMIN`,
-        });
-    }
+    const roleChecks: { role: string; hash: string }[] = [
+        { role: 'ROLE_POOL_ADMIN', hash: ROLE_POOL_ADMIN },
+        { role: 'ROLE_POOL_CLEARING_MANAGER', hash: ROLE_POOL_CLEARING_MANAGER },
+        { role: 'ROLE_POOL_MANAGER', hash: ROLE_POOL_MANAGER },
+        { role: 'ROLE_POOL_FUNDS_MANAGER', hash: ROLE_POOL_FUNDS_MANAGER },
+    ];
 
-    // Check ROLE_POOL_CLEARING_MANAGER
-    if (adminCandidates.length > 0) {
+    for (const { role, hash } of roleChecks) {
+        if (candidates.length === 0) break;
         const { passed, holder } = await checkPoolRole(
-            kasuController, poolAddress, ROLE_POOL_CLEARING_MANAGER, adminCandidates,
+            kasuController, poolAddress, hash, candidates,
         );
         results.push({
             poolAddress,
-            role: 'ROLE_POOL_CLEARING_MANAGER',
+            role,
             passed,
-            message: passed
-                ? `${holder} has ROLE_POOL_CLEARING_MANAGER`
-                : `No expected address has ROLE_POOL_CLEARING_MANAGER`,
-        });
-    }
-
-    // Check ROLE_POOL_MANAGER
-    if (managerCandidates.length > 0) {
-        const { passed, holder } = await checkPoolRole(
-            kasuController, poolAddress, ROLE_POOL_MANAGER, managerCandidates,
-        );
-        results.push({
-            poolAddress,
-            role: 'ROLE_POOL_MANAGER',
-            passed,
-            message: passed
-                ? `${holder} has ROLE_POOL_MANAGER`
-                : `No expected address has ROLE_POOL_MANAGER`,
-        });
-    }
-
-    // Check ROLE_POOL_FUNDS_MANAGER
-    if (managerCandidates.length > 0) {
-        const { passed, holder } = await checkPoolRole(
-            kasuController, poolAddress, ROLE_POOL_FUNDS_MANAGER, managerCandidates,
-        );
-        results.push({
-            poolAddress,
-            role: 'ROLE_POOL_FUNDS_MANAGER',
-            passed,
-            message: passed
-                ? `${holder} has ROLE_POOL_FUNDS_MANAGER`
-                : `No expected address has ROLE_POOL_FUNDS_MANAGER`,
+            message: passed ? `${holder} has ${role}` : `No expected address has ${role}`,
         });
     }
 

@@ -168,6 +168,45 @@ Files ending in `Lite.sol` are simplified versions for deployment without token-
 
 **Loyalty Levels**: Users earn priority in clearing based on KSU token locking commitment.
 
+## Tranche ownership model — `userActiveShares` vs `balanceOf`
+
+`LendingPoolTranche` tracks two different views of ownership, and conflating them is a
+common source of reasoning errors:
+
+- **`balanceOf(user)` — ERC20 custody.** Standard ERC4626/ERC20 balance. Moves freely
+  on `transfer`/`transferFrom`. During an FT lock it sits on `FixedTermDeposit`, not
+  on the original depositor.
+- **`userActiveShares[user]` — beneficial ownership.** A separate mapping that is only
+  mutated by `tranche.deposit(...)` (on mint) and `removeUserActiveShares(...)` (on
+  redeem). The ERC20 `_update` path is **not** overridden to sync this mapping, so
+  `transfer`/`transferFrom` do not move `userActiveShares` — they only move ERC20
+  balance.
+
+**Consequence:** when `FixedTermDeposit._lockFixTermDeposit` calls
+`transferFrom(user, FT, shares)` (`FixedTermDeposit.sol:618`), only the ERC20 balance
+moves. `userActiveShares[user]` remains unchanged; `userActiveShares[FT]` stays `0`.
+The depositor remains the beneficial owner throughout the lock.
+
+This matters for:
+- **ERC1155 loss-token minting** (`LendingPoolTrancheLoss.sol:275-283`): iterates
+  `_trancheUsers` and mints against `userActiveShares`. Loss tokens therefore go to
+  the beneficial owner (the depositor / integrating vault), **not** to the FT custody
+  contract.
+- **Loss recovery via `claimRepaidLoss`**: works directly for FT-locked depositors.
+  No stranded funds, no special forwarding path needed.
+- **Yield-diff top-ups** (`LendingPool.sol:989-991`): extra shares are minted by
+  calling `tranche.deposit(..., user)` which correctly increments
+  `userActiveShares[user]` before being transferred into FT for custody.
+
+**When documenting this to integrators:** `convertToAssets(userActiveShares(vault))`
+gives the total beneficial position (flexible + FT-locked); `balanceOf(vault)` gives
+only the uncustoodied portion. For per-lock reads, `lock.trancheShares` is the
+authoritative count and `convertToAssets(lock.trancheShares)` gives current USDC
+value.
+
+Regression test pinning this behaviour: `test_ftDepositLoss_recoveryWorksForFTDepositor`
+in `test/unit/core/LendingPoolLossTest.sol`.
+
 ## KYC/KYB Verification (Nexera/Compilot)
 
 Kasu uses [Compilot](https://compilot.ai) (formerly NexeraID) for KYC/KYB signature gating. The flow:
@@ -260,24 +299,33 @@ npx ts-node scripts/reporting/generateTaxPdf.ts scripts/reporting/output/tax-inv
 
 ---
 
-## Current WIP: April 2026 security upgrade — awaiting on-chain rollout
+## April 2026 security upgrade — ROLLOUT COMPLETE (2026-04-24)
 
-Commit `f8d2d45` on `master` fixes the four remaining open mediums from the April 2026
-audit (M-03, M-04, M-06, M-08) plus a regression (FV-01) surfaced by post-fix Feynman
-re-audit. All fixes validated by three independent auditor runs (Feynman, State
-Inconsistency, Nemesis — all 0/0/0/0). Tests 208/208 passing.
+Commit `f8d2d45` on `master`. Tests 209/209 passing.
 
-**Deployment plan:** `.audit/deployment-plan-2026-04.md` — per-chain rollout sequence
-(XDC USDC → XDC AUDD → Plume → Base), Safe batch templates, storage layout notes,
-`unsafeAllow: ['struct-definition']` caveat for the `AcceptedRequestsExecutionEpoch`
-struct extension, rollback procedure, and post-upgrade `setRewardCaps` requirement
-on Base.
+**Rollout status (all 4 chains done):**
+- ✅ XDC USDC — 4 impls
+- ✅ XDC AUDD — 5 impls
+- ✅ Plume — 7 impls
+- ✅ Base — 9 impls + `setRewardCaps(1_000e18, 1_000e18)` seeded (10-tx Safe batch executed 2026-04-24). Post-upgrade validateDeployment: 20 bytecode OK / 0 mismatch. Smoke tests: 43/43 passing.
 
-**Auditor findings:** `.audit/findings/` — raw outputs from both the pre-FV01
-baseline audits and the post-FV01 confirmation audits. Useful as an audit trail.
+**Reward caps on Base:** seeded at `maxRewardPerUserPerBatch = maxBatchTotalReward = 1_000 KSU`
+(1e21 wei). Retune via `setRewardCaps` (Kasu multisig, `ROLE_KASU_ADMIN`) once KSU
+token launches and weekly emission volume stabilizes: target `perUser ≈ 2× largest observed`,
+`perBatch ≈ 1.5× largest observed`.
 
-**v3 public audit report** will be generated after all four chains are upgraded
-on-chain and the cycle is complete.
+**Residual cosmetic drift:** 3 contracts on Base show SOURCE DRIFT on Basescan
+(`AcceptedRequestsCalculation`, `ClearingCoordinator`, `LendingPool`) — bytecode matches
+source, only the explorer-displayed source is stale. Etherscan V2 rejects re-verification
+of already-verified contracts, so this is not refreshable via `hardhat verify --force`;
+it will age out the next time these contracts are redeployed.
+
+**Hardhat-verify config gotcha (fixed this cycle):** `hardhat.config.ts` previously used
+`etherscan.apiKey: { <network>: key }` (object form) which forces hardhat-verify onto the
+decommissioned Etherscan V1 endpoint (retired 2025-05-31). Every verify call failed with
+"You are using a deprecated V1 endpoint". Fixed by flattening to a single
+`apiKey: process.env.ETHERSCAN_API_KEY` string — V2 multichain handles all Etherscan
+chains; Blockscout custom chains (Plume) continue via `customChains` URL override.
 
 ---
 

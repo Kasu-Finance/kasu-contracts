@@ -1,0 +1,292 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1776956537748,
+  "meta": {
+    "name": "Base Mainnet: April 2026 security upgrade",
+    "description": "Upgrade impls for April 2026 audit fixes (M-03, M-04, M-06, M-08, FV-01).\nSource commit: see git HEAD when this batch was generated.\n\nTransactions:\n  1. SystemVariables (SystemVariables) upgradeAndCall — 0xe91994C546CE95DC4e08B3f9fA44a00271A3CD4a → 0x666b589933965bF8B378eD973f0404b6cae0eb52\n  2. UserManager (UserManager) upgradeAndCall — 0xAa81b50dFBa54ae5b5a52C6738249148bc7A5436 → 0x34d17c9DD1f31Fb34757DE923EC083601d0eDFFe\n  3. UserLoyaltyRewards (UserLoyaltyRewards) upgradeAndCall — 0xF0e92ad317a315Adb21923aefce66Aaf55364bE9 → 0xb3ee363D1B69f7EBf0460D6f73E3A311f251B2a9\n  4. KSULocking (KSULocking) upgradeAndCall — 0x601EAb262Ba2cEd5bE905Ad200d451dE0AC3d1Ef → 0xD498baBCF8D0eC89E129fB874DAB9e4C35cD2a52\n  5. LendingPoolManager (LendingPoolManager) upgradeAndCall — 0x2cCE4A6d835C60aE98Aa2914f0153c354D48E955 → 0x4AE8efbf1C5360ca56c427b7DcF88D313C5dacfc\n  6. FeeManager (FeeManager) upgradeAndCall — 0xe2acCC83a41F8d5F4baf57Be42E9856091227016 → 0xb95834C5610A178be9065Dd1EF78258D29879CDb\n  7. FixedTermDeposit (FixedTermDeposit) upgradeAndCall — 0x1617B79c57E00c862941EB578fD134C4D1c0F833 → 0x138fcB1D9d921BF49fBD23a82a9c5Ac52Ef7ea30\n  8. PendingPool (PendingPool) upgradeTo — 0x0C5554058118dBA2da4a3Ca2a448C5a61Bc7F4cC → 0x9b57dF89e59235f0481A5Fae942302c8831e1B81\n  9. LendingPoolTranche (LendingPoolTranche) upgradeTo — 0x31B186049085E7bF5b68C27657bD73b5A5bac13F → 0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747\n  10. setRewardCaps → 0xB4784f69Bb1F1076F50907cB0a815908a719D635 (UserLoyaltyRewards.setRewardCaps(1_000e18, 1_000e18) — seeds conservative initial caps so the first real emission (at KSU launch) does not revert with RewardCapsNotSet. Retune post-launch from observed emission volume.)",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0x11337d45926eD4035416E160Cd7bD7b0617bB9D6",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0x193Bb02A24F5562b58fEB86550e6f09Bb6c41f69",
+        "implementation": "0x666b589933965bF8B378eD973f0404b6cae0eb52",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x72F83650CF90f8E38209eD82500e2bB94207eF1E",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0x5Dc8D315a80fd99AbEF0f327B9a52a3FBC3C93f3",
+        "implementation": "0x34d17c9DD1f31Fb34757DE923EC083601d0eDFFe",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x0f8B9569D7e9c9e678166cAf7081667BF096862C",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xB4784f69Bb1F1076F50907cB0a815908a719D635",
+        "implementation": "0xb3ee363D1B69f7EBf0460D6f73E3A311f251B2a9",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0xB6F6C2eB1eFFD9009e67592f120F613be92d2ac0",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xB145C061684C701c2C018A3f322aa14F5A553CE1",
+        "implementation": "0xD498baBCF8D0eC89E129fB874DAB9e4C35cD2a52",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0xF190f9ABeB7Cb23843BdAcCC05A42c70ba345e8c",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+        "implementation": "0x4AE8efbf1C5360ca56c427b7DcF88D313C5dacfc",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x5d29D8B421BBB820096AD0F5d1A3D49ecF4540D6",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0xef956C2193e032609da84bEc5E5251B28939b6B9",
+        "implementation": "0xb95834C5610A178be9065Dd1EF78258D29879CDb",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x0aee002450D20eFCEE51CFba869525bA733b4293",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "proxy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeAndCall",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "proxy": "0x757AB3139E09Beb9cCdf59762aD00825EfAE5ED3",
+        "implementation": "0x138fcB1D9d921BF49fBD23a82a9c5Ac52Ef7ea30",
+        "data": "0x"
+      }
+    },
+    {
+      "to": "0x6ECd74982433Ea8F00fbd879485641C507c8E2E0",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "newImplementation": "0x9b57dF89e59235f0481A5Fae942302c8831e1B81"
+      }
+    },
+    {
+      "to": "0xA2e9992B73BE340eC7134e751A4E5358374Fb1d0",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "newImplementation": "0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747"
+      }
+    },
+    {
+      "to": "0xB4784f69Bb1F1076F50907cB0a815908a719D635",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "perUser",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "perBatch",
+            "type": "uint256"
+          }
+        ],
+        "name": "setRewardCaps",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "perUser": "1000000000000000000000",
+        "perBatch": "1000000000000000000000"
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+[
+  {
+    "name": "SystemVariables",
+    "contractName": "SystemVariables",
+    "kind": "proxy",
+    "proxyOrBeacon": "0x193Bb02A24F5562b58fEB86550e6f09Bb6c41f69",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0xe91994C546CE95DC4e08B3f9fA44a00271A3CD4a",
+    "newImpl": "0x666b589933965bF8B378eD973f0404b6cae0eb52"
+  },
+  {
+    "name": "UserManager",
+    "contractName": "UserManager",
+    "kind": "proxy",
+    "proxyOrBeacon": "0x5Dc8D315a80fd99AbEF0f327B9a52a3FBC3C93f3",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0xAa81b50dFBa54ae5b5a52C6738249148bc7A5436",
+    "newImpl": "0x34d17c9DD1f31Fb34757DE923EC083601d0eDFFe"
+  },
+  {
+    "name": "UserLoyaltyRewards",
+    "contractName": "UserLoyaltyRewards",
+    "kind": "proxy",
+    "proxyOrBeacon": "0xB4784f69Bb1F1076F50907cB0a815908a719D635",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0xF0e92ad317a315Adb21923aefce66Aaf55364bE9",
+    "newImpl": "0xb3ee363D1B69f7EBf0460D6f73E3A311f251B2a9"
+  },
+  {
+    "name": "KSULocking",
+    "contractName": "KSULocking",
+    "kind": "proxy",
+    "proxyOrBeacon": "0xB145C061684C701c2C018A3f322aa14F5A553CE1",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0x601EAb262Ba2cEd5bE905Ad200d451dE0AC3d1Ef",
+    "newImpl": "0xD498baBCF8D0eC89E129fB874DAB9e4C35cD2a52"
+  },
+  {
+    "name": "LendingPoolManager",
+    "contractName": "LendingPoolManager",
+    "kind": "proxy",
+    "proxyOrBeacon": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0x2cCE4A6d835C60aE98Aa2914f0153c354D48E955",
+    "newImpl": "0x4AE8efbf1C5360ca56c427b7DcF88D313C5dacfc"
+  },
+  {
+    "name": "FeeManager",
+    "contractName": "FeeManager",
+    "kind": "proxy",
+    "proxyOrBeacon": "0xef956C2193e032609da84bEc5E5251B28939b6B9",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0xe2acCC83a41F8d5F4baf57Be42E9856091227016",
+    "newImpl": "0xb95834C5610A178be9065Dd1EF78258D29879CDb"
+  },
+  {
+    "name": "FixedTermDeposit",
+    "contractName": "FixedTermDeposit",
+    "kind": "proxy",
+    "proxyOrBeacon": "0x757AB3139E09Beb9cCdf59762aD00825EfAE5ED3",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0x1617B79c57E00c862941EB578fD134C4D1c0F833",
+    "newImpl": "0x138fcB1D9d921BF49fBD23a82a9c5Ac52Ef7ea30"
+  },
+  {
+    "name": "PendingPool",
+    "contractName": "PendingPool",
+    "kind": "beacon",
+    "proxyOrBeacon": "0x6ECd74982433Ea8F00fbd879485641C507c8E2E0",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0x0C5554058118dBA2da4a3Ca2a448C5a61Bc7F4cC",
+    "newImpl": "0x9b57dF89e59235f0481A5Fae942302c8831e1B81"
+  },
+  {
+    "name": "LendingPoolTranche",
+    "contractName": "LendingPoolTranche",
+    "kind": "beacon",
+    "proxyOrBeacon": "0xA2e9992B73BE340eC7134e751A4E5358374Fb1d0",
+    "adminOrOwner": "0xC3128d734563E0d034d3ea177129657408C09D35",
+    "oldImpl": "0x31B186049085E7bF5b68C27657bD73b5A5bac13F",
+    "newImpl": "0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747"
+  }
+]

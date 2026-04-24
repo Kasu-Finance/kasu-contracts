@@ -90,9 +90,12 @@ const config: HardhatUserConfig = {
             },
         ],
         overrides: {
+            // PendingPool grew past EIP-170 after the FV-01 budget-tracking fix. via_ir's
+            // yul-based pipeline shrinks it back under 24576 bytes. Matches foundry.toml.
             'src/core/lendingPool/PendingPool.sol': {
                 version: '0.8.23',
                 settings: {
+                    viaIR: true,
                     optimizer: {
                         enabled: true,
                         runs: 200,
@@ -132,17 +135,13 @@ const config: HardhatUserConfig = {
         },
     },
     etherscan: {
-        // Etherscan V2 Multichain API - single key works for all supported chains
-        // See supported chains: https://docs.etherscan.io/supported-chains
-        apiKey: {
-            // All Etherscan V2 supported chains use the same API key
-            mainnet: process.env.ETHERSCAN_API_KEY ?? '',
-            base: process.env.ETHERSCAN_API_KEY ?? '',
-            baseSepolia: process.env.ETHERSCAN_API_KEY ?? '',
-            xdc: process.env.ETHERSCAN_API_KEY ?? '',
-            // Non-Etherscan explorers need separate keys
-            plume: process.env.PLUME_SCAN_API_KEY ?? '',
-        },
+        // Etherscan V2 Multichain API — pass a single key at the top level.
+        // Object-form `apiKey: { <network>: ... }` forces hardhat-verify onto the
+        // deprecated V1 endpoint (decommissioned 2025-05-31) and verification
+        // fails with "You are using a deprecated V1 endpoint".
+        // Plume is Blockscout (not Etherscan) — its customChain apiURL below
+        // receives this same key; Blockscout accepts empty/any key.
+        apiKey: process.env.ETHERSCAN_API_KEY ?? '',
         customChains: [
             {
                 network: 'xdc',
@@ -156,7 +155,9 @@ const config: HardhatUserConfig = {
                 network: 'plume',
                 chainId: 98866,
                 urls: {
-                    apiURL: 'https://explorer.plume.org/api/v2',
+                    // Blockscout exposes an Etherscan-compat API at /api; hardhat-verify
+                    // 2.x doesn't speak the REST-style /api/v2 shape, so point here.
+                    apiURL: 'https://explorer.plume.org/api',
                     browserURL: 'https://explorer.plume.org/',
                 },
             },

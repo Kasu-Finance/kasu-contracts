@@ -452,6 +452,123 @@ contract LendingPoolLossTest is LendingPoolTestUtils {
         assertEq(IAcceptedRequestsExecutionTestShim(pendingPool).CLEARING_MINT_BATCH_SIZE(), 100);
     }
 
+    /**
+     * @notice Proves that an FT-locked depositor can self-serve a loss recovery,
+     * just like a flexible depositor. No stranded funds on FixedTermDeposit.
+     *
+     * Key insight: `userActiveShares` tracks *beneficial* ownership, independent of
+     * where the ERC20 balance sits. When shares are moved to FixedTermDeposit for
+     * custody via transferFrom, only the ERC20 balance moves — `userActiveShares[user]`
+     * is untouched. The ERC20 `_update` path doesn't sync with the userActiveShares
+     * mapping; that mapping is only mutated by `tranche.deposit(...)` (on mint) and
+     * `removeUserActiveShares(...)` (on redeem).
+     *
+     * Consequence: loss tokens (ERC1155) are minted against `userActiveShares`, so
+     * they land on the depositor (bob), not on the FT contract. bob can call
+     * `LendingPoolManager.claimRepaidLoss(pool, tranche, lossId)` directly and
+     * receive his share of any recovery, while his principal shares are still locked.
+     */
+    function test_ftDepositLoss_recoveryWorksForFTDepositor() public {
+        // ### ARRANGE ###
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+
+        // Add an FT config on tranche[0]: 5-epoch lock, 1% per-epoch rate, open to anyone.
+        vm.prank(poolManagerAccount);
+        lendingPoolManager.addLendingPoolTrancheFixedTermDeposit(
+            lpd.lendingPool,
+            lpd.tranches[0],
+            5, // epochLockDuration
+            INTEREST_RATE_FULL_PERCENT / 100, // 1% per epoch
+            false // whitelistedOnly
+        );
+        uint256 ftConfigId = 1;
+
+        // Two depositors, equal amounts on the same tranche.
+        uint256 depositAmount = 50_000 * 1e6;
+        _allowUser(alice);
+        _allowUser(bob);
+
+        // Alice: flexible deposit.
+        uint256 aliceDNft = _requestDeposit(alice, lpd.lendingPool, lpd.tranches[0], depositAmount);
+        _acceptDepositRequest(lpd.lendingPool, aliceDNft, depositAmount);
+
+        // Bob: FT deposit. Accept auto-triggers lockFixedTermDepositAutomatically
+        // via PendingPool._acceptDepositRequest, so his shares land on FixedTermDeposit.
+        uint256 bobDNft =
+            _requestFixedTermDeposit(bob, lpd.lendingPool, lpd.tranches[0], depositAmount, ftConfigId);
+        _acceptDepositRequest(lpd.lendingPool, bobDNft, depositAmount);
+
+        LendingPoolTranche tranche = LendingPoolTranche(lpd.tranches[0]);
+        address ftContract = address(fixedTermDeposit);
+
+        // #### Beneficial ownership (userActiveShares) vs custody (ERC20 balanceOf) ####
+
+        // Beneficial ownership: alice and bob both have > 0, FT contract has 0.
+        assertGt(tranche.userActiveShares(alice), 0, "alice userActiveShares > 0");
+        assertGt(tranche.userActiveShares(bob), 0, "bob userActiveShares > 0 (beneficial ownership preserved)");
+        assertEq(tranche.userActiveShares(ftContract), 0, "FT contract userActiveShares == 0");
+        assertEq(
+            tranche.userActiveShares(alice),
+            tranche.userActiveShares(bob),
+            "alice and bob are equal beneficial owners"
+        );
+
+        // ERC20 custody: alice holds her balance, bob's moved to FT contract.
+        assertGt(tranche.balanceOf(alice), 0, "alice ERC20 balance > 0");
+        assertEq(tranche.balanceOf(bob), 0, "bob ERC20 balance == 0 (custody moved to FT)");
+        assertGt(tranche.balanceOf(ftContract), 0, "FT contract holds ERC20 for bob");
+
+        _drawFunds(lpd.lendingPool, depositAmount * 2);
+
+        // ### ACT: loss lands on the tranche ###
+        uint256 lossAmount = depositAmount; // 50% haircut on tranche assets
+        _reportLoss(poolFundsManagerAccount, lpd.lendingPool, lossAmount, true);
+        uint256 lossId = 1;
+
+        // #### ERC1155 loss tokens go to beneficial owners, NOT the FT custodian ####
+        assertGt(tranche.balanceOf(alice, lossId), 0, "alice holds loss tokens");
+        assertGt(tranche.balanceOf(bob, lossId), 0, "bob holds loss tokens (despite FT custody)");
+        assertEq(
+            tranche.balanceOf(ftContract, lossId),
+            0,
+            "FT contract holds ZERO loss tokens - not a beneficial holder, no forwarding needed"
+        );
+        assertEq(
+            tranche.balanceOf(alice, lossId),
+            tranche.balanceOf(bob, lossId),
+            "equal deposits -> equal loss tokens"
+        );
+
+        // Share-price haircut applied uniformly.
+        assertLt(
+            tranche.convertToAssets(tranche.userActiveShares(bob)),
+            depositAmount,
+            "bob's position value dropped via share-price haircut"
+        );
+
+        // ### ACT: borrower recovers the full loss ###
+        _repayLoss(poolFundsManagerAccount, lpd.lendingPool, address(tranche), lossId, lossAmount);
+
+        // #### Both depositors self-serve claim — no special path for FT ####
+        uint256 aliceUsdcBefore = mockUsdc.balanceOf(alice);
+        uint256 aliceClaimed = _claimRepaidLoss(alice, lpd.lendingPool, address(tranche), lossId);
+        assertGt(aliceClaimed, 0, "alice claims recovery directly");
+        assertEq(mockUsdc.balanceOf(alice) - aliceUsdcBefore, aliceClaimed, "alice received USDC");
+
+        uint256 bobUsdcBefore = mockUsdc.balanceOf(bob);
+        uint256 bobClaimed = _claimRepaidLoss(bob, lpd.lendingPool, address(tranche), lossId);
+        assertGt(bobClaimed, 0, "bob claims recovery directly - no FT intervention needed");
+        assertEq(mockUsdc.balanceOf(bob) - bobUsdcBefore, bobClaimed, "bob received USDC");
+
+        // Equal pro-rata within rounding.
+        assertApproxEqAbs(aliceClaimed, bobClaimed, 1, "equal recovery for equal positions");
+
+        // Nothing stranded: FT contract's loss-token balance unchanged (still 0),
+        // and the tranche's USDC is fully distributed (modulo rounding dust).
+        assertEq(tranche.balanceOf(ftContract, lossId), 0, "FT contract never held tokens; nothing to sweep");
+        assertApproxEqAbs(mockUsdc.balanceOf(address(tranche)), 0, 2, "all recovery USDC claimed");
+    }
+
     function _requestAndAcceptUserDeposits(address lendingPool, uint256 userCount, address tranche, uint256 totalAmount)
         private
         returns (address[] memory userAddresses, uint256[] memory amounts)

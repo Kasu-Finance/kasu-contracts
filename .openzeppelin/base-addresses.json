@@ -18,7 +18,7 @@
     },
     "KSULocking": {
         "address": "0xB145C061684C701c2C018A3f322aa14F5A553CE1",
-        "implementation": "0x601EAb262Ba2cEd5bE905Ad200d451dE0AC3d1Ef",
+        "implementation": "0xd498babcf8d0ec89e129fb874dab9e4c35cd2a52",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
@@ -30,19 +30,19 @@
     },
     "SystemVariables": {
         "address": "0x193Bb02A24F5562b58fEB86550e6f09Bb6c41f69",
-        "implementation": "0xaFb2966dCc3f20eC4412162a8D203247a93A7765",
+        "implementation": "0x666b589933965bf8b378ed973f0404b6cae0eb52",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
     "UserLoyaltyRewards": {
         "address": "0xB4784f69Bb1F1076F50907cB0a815908a719D635",
-        "implementation": "0xF0e92ad317a315Adb21923aefce66Aaf55364bE9",
+        "implementation": "0xb3ee363d1b69f7ebf0460d6f73e3a311f251b2a9",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
     "UserManager": {
         "address": "0x5Dc8D315a80fd99AbEF0f327B9a52a3FBC3C93f3",
-        "implementation": "0xAa81b50dFBa54ae5b5a52C6738249148bc7A5436",
+        "implementation": "0x34d17c9dd1f31fb34757de923ec083601d0edffe",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
@@ -54,13 +54,13 @@
     },
     "LendingPoolManager": {
         "address": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
-        "implementation": "0x2cCE4A6d835C60aE98Aa2914f0153c354D48E955",
+        "implementation": "0x4ae8efbf1c5360ca56c427b7dcf88d313c5dacfc",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
     "FeeManager": {
         "address": "0xef956C2193e032609da84bEc5E5251B28939b6B9",
-        "implementation": "0xe2acCC83a41F8d5F4baf57Be42E9856091227016",
+        "implementation": "0xb95834c5610a178be9065dd1ef78258d29879cdb",
         "startBlock": 15486216,
         "proxyType": "TransparentProxy"
     },
@@ -90,13 +90,13 @@
     },
     "PendingPool": {
         "address": "0x6ECd74982433Ea8F00fbd879485641C507c8E2E0",
-        "implementation": "0x0C5554058118dBA2da4a3Ca2a448C5a61Bc7F4cC",
+        "implementation": "0x9b57df89e59235f0481a5fae942302c8831e1b81",
         "startBlock": 15486216,
         "proxyType": "BeaconProxy"
     },
     "LendingPoolTranche": {
         "address": "0xA2e9992B73BE340eC7134e751A4E5358374Fb1d0",
-        "implementation": "0xeC998071E553742596D9971190f13c3dafD9C899",
+        "implementation": "0x43e1b2d290cda67038e9e2c1c0020149fa0e3747",
         "startBlock": 15486216,
         "proxyType": "BeaconProxy"
     },
@@ -114,7 +114,7 @@
     },
     "FixedTermDeposit": {
         "address": "0x757AB3139E09Beb9cCdf59762aD00825EfAE5ED3",
-        "implementation": "0x1617B79c57E00c862941EB578fD134C4D1c0F833",
+        "implementation": "0x138fcb1d9d921bf49fbd23a82a9c5ac52ef7ea30",
         "startBlock": 23046539,
         "proxyType": "TransparentProxy"
     },

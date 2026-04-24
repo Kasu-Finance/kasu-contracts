@@ -352,6 +352,56 @@ function stripMetadata(bytecode: string): string {
     return hex.slice(0, hex.length - metadataLen * 2 - 4);
 }
 
+// Zero out immutable reference byte ranges. Solidity bakes immutable values (addresses,
+// uint256s, etc.) into the runtime bytecode at deploy time, in slots whose byte offsets
+// are recorded in the compiler's `immutableReferences` output. The local artifact has
+// zero placeholders at those offsets; the on-chain copy has actual values. Comparing
+// directly would always mismatch for any contract with immutables. Zeroing both sides
+// at the known offsets gives an apples-to-apples code comparison.
+//
+// `refs` is keyed by AST node id; each entry is an array of {start, length} byte offsets
+// within the RUNTIME bytecode (before metadata is appended).
+function zeroImmutables(
+    hexNoPrefix: string,
+    refs: Record<string, Array<{ start: number; length: number }>>,
+): string {
+    if (!refs || Object.keys(refs).length === 0) return hexNoPrefix;
+    const chars = hexNoPrefix.split('');
+    for (const offsets of Object.values(refs)) {
+        for (const { start, length } of offsets) {
+            const charStart = start * 2;
+            const charEnd = (start + length) * 2;
+            for (let i = charStart; i < charEnd && i < chars.length; i++) {
+                chars[i] = '0';
+            }
+        }
+    }
+    return chars.join('');
+}
+
+// Fetch immutableReferences for a contract from hardhat's build-info. Returns {} if
+// none are defined (contract has no immutables) or build-info can't be located.
+async function getImmutableReferences(
+    contractName: string,
+): Promise<Record<string, Array<{ start: number; length: number }>>> {
+    try {
+        const fqns = await hre.artifacts.getAllFullyQualifiedNames();
+        const fqn = fqns.find((n) => n.endsWith(`:${contractName}`));
+        if (!fqn) return {};
+        const buildInfo = await hre.artifacts.getBuildInfo(fqn);
+        if (!buildInfo) return {};
+        const [sourceName] = fqn.split(':');
+        const contractOutput =
+            buildInfo.output?.contracts?.[sourceName]?.[contractName];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const dbc = (contractOutput as any)?.evm?.deployedBytecode;
+        if (!dbc || typeof dbc !== 'object') return {};
+        return dbc.immutableReferences || {};
+    } catch {
+        return {};
+    }
+}
+
 // Compare on-chain runtime bytecode against the local artifact's deployedBytecode, with the
 // Solidity metadata CBOR trailer stripped from both. This is authoritative: if the executable
 // bytes match, the deployed contract IS the compiled output of the current source (modulo
@@ -386,8 +436,15 @@ async function compareBytecode(
             return 'unknown';
         }
 
-        const onChainStripped = stripMetadata(onChainRaw).toLowerCase();
-        const localStripped = stripMetadata(localRaw).toLowerCase();
+        const immutableRefs = await getImmutableReferences(contractName);
+        const onChainStripped = zeroImmutables(
+            stripMetadata(onChainRaw).toLowerCase(),
+            immutableRefs,
+        );
+        const localStripped = zeroImmutables(
+            stripMetadata(localRaw).toLowerCase(),
+            immutableRefs,
+        );
 
         if (onChainStripped === localStripped) {
             return 'match';
