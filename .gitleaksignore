@@ -1,0 +1,15 @@
+# Baseline: historical findings triaged 2026-08-11 (real ones rotated, rest false positives).
+# New findings will still fail CI. Format: commit:file:rule:line
+03c7a6921f168910724f9c28d5323658b941dd67:hardhat.config.ts:generic-api-key:59
+0b3e004324d97d51ea3ff9851f8838e2ffe087b7:.env.sample:generic-api-key:1
+122a1d8330ae2063dc8ad71772dbdf789fbf53bf:scripts/_env/.localhost.env:generic-api-key:2
+122a1d8330ae2063dc8ad71772dbdf789fbf53bf:scripts/_env/.localhost.env:generic-api-key:3
+a4bc9961b9531c07d30d7be2569b64449cd10d95:scripts/_env/.base-sepolia.env:generic-api-key:1
+a4bc9961b9531c07d30d7be2569b64449cd10d95:scripts/_env/.base-sepolia.env:generic-api-key:2
+bdf4c9179979df8eaeab7c99dc93eb151051cd4f:package.json:generic-api-key:22
+c7f41c05598172b499b634a8d44e35d496522d0f:scripts/_env/.localhost.env:generic-api-key:3
+c7f41c05598172b499b634a8d44e35d496522d0f:scripts/_env/.localhost.env:generic-api-key:4
+c7f41c05598172b499b634a8d44e35d496522d0f:scripts/_env/.localhost.env:generic-api-key:5
+f2e56ce9b03396c366b1b5d6c46e3b17b204dd62:scripts/_env/.base-sepolia.env:generic-api-key:3
+f2e56ce9b03396c366b1b5d6c46e3b17b204dd62:scripts/_env/.base-sepolia.env:generic-api-key:4
+f2e56ce9b03396c366b1b5d6c46e3b17b204dd62:scripts/_env/.base-sepolia.env:generic-api-key:5
