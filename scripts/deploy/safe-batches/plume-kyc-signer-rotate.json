@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "chainId": "98866",
+  "createdAt": 1787669384466,
+  "meta": {
+    "name": "plume: KYC signer rotation",
+    "description": "KasuAllowList.setNexeraIDSigner(0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747)\n\nPoints the KYC signature check at the KasuKycSigner contract (ERC-1271), replacing\nthe Compilot NexeraIDSignerManager. Signing key behind the contract: 0xE99a7Ec33cEf5B09db5e7af9a9B0A648660244f6.\n\n  Allow list:      0xef956C2193e032609da84bEc5E5251B28939b6B9\n  Signer before:   0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0\n  Signer after:    0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747\n\nPRECONDITION: every frontend must already be requesting KYC signatures from the backend\nsigner service. Rotation takes effect on the next signature verified — signatures minted\nagainst the old signer stop being accepted the moment this executes. Drain the in-flight\nwindow (bounded by blockExpiration, ~300 blocks / ~10 min) before executing.\n\nRollback: see the matching *-kyc-signer-rollback.json batch.",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0xef956C2193e032609da84bEc5E5251B28939b6B9",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "signer_",
+            "type": "address"
+          }
+        ],
+        "name": "setNexeraIDSigner",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "signer_": "0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747"
+      }
+    }
+  ]
+}

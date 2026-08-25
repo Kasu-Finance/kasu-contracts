@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "chainId": "50",
+  "createdAt": 1787669380717,
+  "meta": {
+    "name": "xdc: KYC signer rotation ROLLBACK",
+    "description": "KasuAllowList.setNexeraIDSigner(0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0)\n\nROLLBACK ONLY — undoes the matching *-kyc-signer-rotate.json batch by restoring the\nprevious signer (current on-chain signer (pre-rotation state)).\n\n  Allow list:      0x32c1Ff5FbBe6D28503ddc46E5001C0D13d6E9B2A\n  Signer restored: 0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0\n\nExecuting this re-breaks any signature minted against KasuKycSigner, so the frontends must\nbe moved back onto the old signer path in the same window.",
+    "txBuilderVersion": "1.16.5"
+  },
+  "transactions": [
+    {
+      "to": "0x32c1Ff5FbBe6D28503ddc46E5001C0D13d6E9B2A",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "signer_",
+            "type": "address"
+          }
+        ],
+        "name": "setNexeraIDSigner",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "signer_": "0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0"
+      }
+    }
+  ]
+}

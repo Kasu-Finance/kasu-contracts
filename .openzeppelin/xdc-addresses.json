@@ -118,5 +118,9 @@
         "implementation": "0xFC35AFfDB20D745Fa48Ed07069dDFb62E56c2Ed1",
         "startBlock": 98794585,
         "proxyType": "TransparentProxy"
+    },
+    "KasuKycSigner": {
+        "address": "0x3EB700d27db3F2d6842359Ff9be0Aa5503a5394C",
+        "startBlock": 106464008
     }
 }
