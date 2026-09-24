@@ -97,10 +97,24 @@ Tenderly, or an Anvil fork:
 anvil --fork-url https://mainnet.base.org --chain-id 8453 --port 8546
 ```
 
-Gas is the main unknown: 4 clearings + a sweep + 7 role/config writes in one MultiSend. If it
-does not fit, split into batch A (txs 1-5, through the sweep) and batch B (txs 6-12) and
-**confirm A landed before proposing B** — never the reverse, since B revokes the role that A
-depends on.
+**Simulated 2026-09-24 on Tenderly (`kasu_finance/clearing`), Base block 51721159, epoch 120,
+window closed — PASS:**
+
+- End-to-end through the real path (owner → `Safe.execTransaction` → delegatecall
+  `MultiSendCallOnly` 1.3.0 `0x40A2aCCb…`, threshold overridden 3→1 with an approved-hash
+  signature from owner `0xC7664488…`): **SUCCESS, 909,094 gas**, `ExecutionSuccess`, 4×
+  `ClearingExecuted`, 8× `InterestApplied`, **0× `FundsDrawn`**, 3 grants, 3 revokes.
+  `OwedFundsRepaid`: fees 2,239.346566 / users 2,698.569823.
+  https://dashboard.tenderly.co/kasu_finance/clearing/simulator/52f61402-9396-46d1-a915-bb9b2c29788e
+- Per-step bundle from the Safe: all 12 calls OK, followed by state reads — old Safe USDC 0,
+  residual allowance 73,206.819980, `availableFunds` 2,698.569823, `feesOwedAmount` 0,
+  `userOwedAmount` 1,519,822.346842, pending `false`, next clearing epoch 120, draw recipient =
+  new Safe with `desiredDrawAmount` 0, new Safe holds all three roles, old Safe none, Kasu Safe
+  still `ROLE_POOL_ADMIN`.
+
+Gas is comfortably within limits, so no A/B split is needed. If one is ever forced, split into
+batch A (txs 1-5, through the sweep) and batch B (txs 6-12) and **confirm A landed before
+proposing B** — never the reverse, since B revokes the role that A depends on.
 
 ## Post-execution checks
 
