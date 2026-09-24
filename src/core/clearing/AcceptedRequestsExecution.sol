@@ -143,6 +143,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                         trancheIndex < trancheDepositAcceptedAmounts.length;
                         ++trancheIndex
                     ) {
+                        // the request has already been fully accepted in a previous
+                        // tranche (its dNFT is burned); stop to avoid re-touching it
+                        if (requestAmountLeft == 0) break;
+
                         uint256 totalAcceptedAmount = trancheDepositAcceptedAmounts[trancheIndex];
                         if (totalAcceptedAmount == 0) continue;
 
@@ -177,6 +181,10 @@ abstract contract AcceptedRequestsExecution is IAcceptedRequestsExecution {
                                 // if we're accepting more than the request amount (because we've rounded up in the previous tranches), we need to adjust the amount to the request amount
                                 userAcceptedDepositAmount = requestAmountLeft;
                             }
+
+                            // nothing to accept for this user in this tranche; skip to
+                            // avoid touching a (possibly burned) dNFT with a zero amount
+                            if (userAcceptedDepositAmount == 0) continue;
 
                             _acceptDepositRequest(
                                 userRequestNftId, _trancheAddress(tranches, trancheIndex), userAcceptedDepositAmount
