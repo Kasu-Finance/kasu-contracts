@@ -119,12 +119,14 @@ const config: HardhatUserConfig = {
             accounts: getNetworkAccounts('base'),
         },
         xdc: {
-            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
+            // NOT rpc.xdc.org — see the XDC RPC note in CLAUDE.md.
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.primenumbers.xyz/',
             chainId: 50,
             accounts: getNetworkAccounts('xdc'),
         },
         'xdc-usdc': {
-            url: process.env.XDC_RPC_URL ?? 'https://rpc.xdc.org',
+            // NOT rpc.xdc.org — see the XDC RPC note in CLAUDE.md.
+            url: process.env.XDC_RPC_URL ?? 'https://rpc.primenumbers.xyz/',
             chainId: 50,
             accounts: getNetworkAccounts('xdc-usdc'),
         },

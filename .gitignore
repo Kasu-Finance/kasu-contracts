@@ -37,3 +37,6 @@ edr-cache/
 # Tax report outputs (generated per-user, not stored in repo)
 scripts/reporting/output/*
 !scripts/reporting/output/.gitkeep
+
+# macOS
+.DS_Store

@@ -109,7 +109,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         deploymentMode: 'full',
         wrappedNativeAddress: '0x4200000000000000000000000000000000000006',
         usdcAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
+        nexeraIdSigner: '0x19798De0240a62825EAC53B10D85EA0359Eb3d64', // KasuKycSigner (ERC-1271, KMS-backed) — rotate via setSigningKey, never re-point KasuAllowList
         kasuMultisig: '0xC3128d734563E0d034d3ea177129657408C09D35',
         poolManagerMultisig: '0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2',
         poolAdminMultisig: '0x7adf999af5E0617257014C94888cf98c4584E5E9',
@@ -137,7 +137,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         deploymentMode: 'lite',
         wrappedNativeAddress: '0x951857744785e80e2de051c32ee7b25f9c458c42', // WXDC
         usdcAddress: '0x9fe4e6321eeb7c4bc537570f015e4734b15002b8', // AUDD
-        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
+        nexeraIdSigner: '0x3EB700d27db3F2d6842359Ff9be0Aa5503a5394C', // KasuKycSigner (ERC-1271, KMS-backed) — rotate via setSigningKey, never re-point KasuAllowList
         kasuMultisig: '0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D',
         poolManagerMultisig: '0x21567eA21b14BEd14657e9725C2FE11C7be942B1',
         poolAdminMultisig: '0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112',
@@ -151,7 +151,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         revokedAdminAddresses: [], // Deployer checked separately
         isTestnet: false,
         tenderlySupported: false, // Tenderly doesn't support XDC
-        initialEpochStartTimestamp: 1718258400, // Thu, 13 Jun 2024 06:00:00 UTC — aligned to Base
+        initialEpochStartTimestamp: 1717653600, // Thu, 6 Jun 2024 06:00:00 UTC — matches on-chain epoch 0 (= Base anchor)
     },
 
     // XDC Network (USDC) — second deployment on XDC with USDC instead of AUDD
@@ -161,17 +161,23 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         deploymentMode: 'lite',
         wrappedNativeAddress: '0x951857744785e80e2de051c32ee7b25f9c458c42', // WXDC
         usdcAddress: '0xfa2958cb79b0491cc627c1557f441ef849ca8eb1', // USDC
-        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
+        nexeraIdSigner: '0x21baeA02EC8F179E9f605F18B3FA9378D6Ac8613', // KasuKycSigner (ERC-1271, KMS-backed) — rotate via setSigningKey, never re-point KasuAllowList
         kasuMultisig: '0x1E9ed74140DA7B81a1612AA5df33F98Eb5Ea0B4D',
         poolManagerMultisig: '0x21567eA21b14BEd14657e9725C2FE11C7be942B1',
         poolAdminMultisig: '0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112',
         protocolFeeClaimer: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
         protocolFeeReceiver: '0xb925f1ecDAef927C88Ec69E5bdE779516DDdFF28',
-        lendingPoolAddresses: [], // Pools created later by Apxium multisig
+        lendingPoolAddresses: [
+            // Lending pools created by Apxium multisig (public on-chain addresses)
+            '0x0c80c419804fc226dFCa0E7efEA19a256E3948c0',
+            '0x4B5f34A6B6E90cf6D8a1A7E8528FB9CC50e40013',
+            '0xAc3BA50F290385fDce7004ae6EfAd8874bBeAb5F',
+            '0xEabB109A49455fd58D43dD66297A0Fa47149CeC5',
+        ],
         revokedAdminAddresses: [],
         isTestnet: false,
         tenderlySupported: false,
-        initialEpochStartTimestamp: 1718258400, // Thu, 13 Jun 2024 06:00:00 UTC — aligned to XDC AUDD & Base
+        initialEpochStartTimestamp: 1717653600, // Thu, 6 Jun 2024 06:00:00 UTC — aligned to Base & xdc AUDD. Originally deployed with 1718258400 (one week off); corrected on-chain via a one-shot SystemVariables migration (see CLAUDE.md).
     },
 
     // Plume
@@ -181,7 +187,7 @@ export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
         deploymentMode: 'lite',
         wrappedNativeAddress: '0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1', // WPLUME
         usdcAddress: '0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F',
-        nexeraIdSigner: '0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0',
+        nexeraIdSigner: '0x43E1b2D290cdA67038e9e2C1C0020149Fa0E3747', // KasuKycSigner (ERC-1271, KMS-backed) — rotate via setSigningKey, never re-point KasuAllowList
         kasuMultisig: '0x344BA98De46750e0B7CcEa8c3922Db8A70391189',
         poolManagerMultisig: '0xEe2F38731F5050e02BF075d86DeBFb4B56F424fe',
         poolAdminMultisig: '0xEb8D4618713517C1367aCA4840b1fca3d8b090DF',
