@@ -13,3 +13,11 @@ c7f41c05598172b499b634a8d44e35d496522d0f:scripts/_env/.localhost.env:generic-api
 f2e56ce9b03396c366b1b5d6c46e3b17b204dd62:scripts/_env/.base-sepolia.env:generic-api-key:3
 f2e56ce9b03396c366b1b5d6c46e3b17b204dd62:scripts/_env/.base-sepolia.env:generic-api-key:4
 f2e56ce9b03396c366b1b5d6c46e3b17b204dd62:scripts/_env/.base-sepolia.env:generic-api-key:5
+
+# Public addresses, not secrets (2026-09-24): KasuKycSigner contract address in the Safe
+# batch descriptions, and the KMS key's public signer address in deployKycSigner.ts.
+68e6a9313013a640a38c08331ca127f9b7d5a88b:scripts/deploy/safe-batches/plume-kyc-signer-rotate.json:generic-api-key:7
+68e6a9313013a640a38c08331ca127f9b7d5a88b:scripts/deploy/safe-batches/xdc-usdc-kyc-signer-rotate.json:generic-api-key:7
+68e6a9313013a640a38c08331ca127f9b7d5a88b:scripts/deploy/safe-batches/base-kyc-signer-rotate.json:generic-api-key:7
+68e6a9313013a640a38c08331ca127f9b7d5a88b:scripts/deploy/safe-batches/xdc-kyc-signer-rotate.json:generic-api-key:7
+14e2d352b69ec06718fc3da20833ff069cdc148e:scripts/deploy/deployKycSigner.ts:generic-api-key:49

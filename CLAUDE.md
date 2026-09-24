@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Kasu is an RWA (Real World Asset) private credit lending platform built on Solidity. It connects DeFi investors with lending entities for business loan origination. The platform uses permissioned lending pools with epoch-based clearing, KYC requirements via NexeraID, and a KSU token-based loyalty system.
+Kasu is an RWA (Real World Asset) private credit lending platform built on Solidity. It connects DeFi investors with lending entities for business loan origination. The platform uses permissioned lending pools with epoch-based clearing, signature-gated deposits (Didit-verified lenders; signatures minted by kasu-backend with AWS KMS and verified on-chain through `KasuKycSigner`), and a KSU token-based loyalty system.
 
 ## Build & Test Commands
 
@@ -207,31 +207,40 @@ value.
 Regression test pinning this behaviour: `test_ftDepositLoss_recoveryWorksForFTDepositor`
 in `test/unit/core/LendingPoolLossTest.sol`.
 
-## KYC/KYB Verification (Nexera/Compilot)
+**Full fixed-term-deposit reference:** see `docs/fixed-term-deposits.md` for the complete FT model —
+config/lock data structures, the two yield layers (base NAV vs fixed premium), create/lock/withdraw
+entry points and which are operator vs depositor-only, the `forceImmediateWithdrawal` liquidity gate
+(`repayOwedFunds`), config/allowlist management, the roles matrix, and the operator gotcha checklist.
 
-Kasu uses [Compilot](https://compilot.ai) (formerly NexeraID) for KYC/KYB signature gating. The flow:
+## KYC/KYB Verification (Didit + KasuKycSigner)
+
+Deposits are gated by a signature that `KasuAllowList.verifyUserKyc()` checks on-chain
+through the vendored NexeraID `TxAuthDataVerifier` (the verifier code and the
+`setNexeraIDSigner` name are legacy; the vendor is not — ComPilot/Nexera was
+decommissioned 2026-08-27). The flow since the 2026-08-27 cutover:
 
 ```
-Frontend → Compilot API → returns signature → Frontend sends TX → KasuAllowList verifies signature
+Frontend → kasu-backend `POST /kyc/signature` (reads OUR Didit status store; fails closed unless Approved)
+        → AWS KMS `alias/kasu-kyc-signer` signs
+        → Frontend appends signature + blockExpiration to TX calldata
+        → `KasuAllowList.verifyUserKyc()` → `_verifyTxAuthData()` validates on-chain
 ```
 
-**How it works:**
-1. Frontend calls Compilot API (`https://api.compilot.ai/customer-tx-auth-signature`) with chainId, contract, function, user
-2. If user is KYC'd, Compilot signs the request with their private key
-3. Frontend appends signature + blockExpiration to TX calldata
-4. `KasuAllowList.verifyUserKyc()` calls `_verifyTxAuthData()` which validates the signature on-chain
+**The registered signer is `KasuKycSigner` (`src/core/KasuKycSigner.sol`, ERC-1271), one
+per chain:** Base `0x19798De0…`, XDC AUDD `0x3EB700d2…`, XDC USDC `0x21baeA02…` (Plume
+`0x43E1b2D2…`, retired). It wraps the KMS public key; **key rotation = `setSigningKey`
+on that contract from the Kasu multisig** — `KasuAllowList.setNexeraIDSigner` is not
+touched again. Rollback Safe batches: `scripts/deploy/safe-batches/`.
+
+⚠ `scripts/_config/chains.ts` still carries `nexeraIdSigner: 0x29A75f22…` — the
+decommissioned ComPilot `NexeraIDSignerManager` — for every chain. A fresh deployment
+would register a dead signer: point it at that chain's `KasuKycSigner` (or set
+`NEXERA_ID_SIGNER`) before running `deploy`.
 
 **Key contracts:**
 - `KasuAllowList.sol` - Extends `TxAuthDataVerifierUpgradeable` from vendored NexeraID contracts
-- `vendor/nexera/BaseTxAuthDataVerifier.sol` - Core signature verification logic
-- `vendor/nexera/TxAuthDataVerifierUpgradeable.sol` - Upgradeable wrapper
-
-**NEXERA_ID_SIGNER:**
-- This is the `NexeraIDSignerManager` contract address (not an EOA)
-- Compilot deploys this per-chain; it manages the actual signing key
-- Current address for supported chains: `0x29A75f22AC9A7303Abb86ce521Bb44C4C69028A0`
-- If Compilot rotates their signing key, they update the manager - no action needed from Kasu
-- For new chains: request Compilot to deploy `NexeraIDSignerManager` and provide the address
+- `KasuKycSigner.sol` - ERC-1271 signer holding the KMS public key (`setSigningKey`)
+- `vendor/nexera/BaseTxAuthDataVerifier.sol` / `TxAuthDataVerifierUpgradeable.sol` - verifier only
 
 ## Testing Patterns
 
@@ -299,67 +308,37 @@ npx ts-node scripts/reporting/generateTaxPdf.ts scripts/reporting/output/tax-inv
 
 ---
 
-## April 2026 security upgrade — ROLLOUT COMPLETE (2026-04-24)
+## April 2026 security upgrade (deployed on all chains 2026-04-24, `f8d2d45`)
 
-Commit `f8d2d45` on `master`. Tests 209/209 passing.
-
-**Rollout status (all 4 chains done):**
-- ✅ XDC USDC — 4 impls
-- ✅ XDC AUDD — 5 impls
-- ✅ Plume — 7 impls
-- ✅ Base — 9 impls + `setRewardCaps(1_000e18, 1_000e18)` seeded (10-tx Safe batch executed 2026-04-24). Post-upgrade validateDeployment: 20 bytecode OK / 0 mismatch. Smoke tests: 43/43 passing.
-
-**Reward caps on Base:** seeded at `maxRewardPerUserPerBatch = maxBatchTotalReward = 1_000 KSU`
-(1e21 wei). Retune via `setRewardCaps` (Kasu multisig, `ROLE_KASU_ADMIN`) once KSU
-token launches and weekly emission volume stabilizes: target `perUser ≈ 2× largest observed`,
-`perBatch ≈ 1.5× largest observed`.
-
-**Residual cosmetic drift:** 3 contracts on Base show SOURCE DRIFT on Basescan
-(`AcceptedRequestsCalculation`, `ClearingCoordinator`, `LendingPool`) — bytecode matches
-source, only the explorer-displayed source is stale. Etherscan V2 rejects re-verification
-of already-verified contracts, so this is not refreshable via `hardhat verify --force`;
-it will age out the next time these contracts are redeployed.
-
-**Hardhat-verify config gotcha (fixed this cycle):** `hardhat.config.ts` previously used
-`etherscan.apiKey: { <network>: key }` (object form) which forces hardhat-verify onto the
-decommissioned Etherscan V1 endpoint (retired 2025-05-31). Every verify call failed with
-"You are using a deprecated V1 endpoint". Fixed by flattening to a single
-`apiKey: process.env.ETHERSCAN_API_KEY` string — V2 multichain handles all Etherscan
-chains; Blockscout custom chains (Plume) continue via `customChains` URL override.
+- **Reward caps on Base** are seeded at `maxRewardPerUserPerBatch = maxBatchTotalReward =
+  1_000 KSU` (1e21 wei). Retune via `setRewardCaps` (Kasu multisig, `ROLE_KASU_ADMIN`)
+  once the KSU token launches and weekly emission volume stabilises: target
+  `perUser ≈ 2× largest observed`, `perBatch ≈ 1.5× largest observed`.
+- **Residual cosmetic drift:** `AcceptedRequestsCalculation`, `ClearingCoordinator` and
+  `LendingPool` on Base show SOURCE DRIFT on Basescan — bytecode matches, only the
+  explorer's displayed source is stale. Etherscan V2 rejects re-verification of verified
+  contracts (`hardhat verify --force` cannot refresh it); it ages out at the next redeploy.
+- **Hardhat-verify config gotcha:** `etherscan.apiKey` as an object (`{ <network>: key }`)
+  forces hardhat-verify onto the retired Etherscan V1 endpoint ("You are using a
+  deprecated V1 endpoint"). Keep it a single string, `apiKey: process.env.ETHERSCAN_API_KEY`
+  — V2 multichain covers every Etherscan chain; Blockscout chains go through `customChains`.
 
 ---
 
-## Historical: Unified Full/Lite Codebase (branch: `release-candidate`, merged to master at f8d2d45)
+## Unified Full/Lite codebase — reference
 
-### Goal
-Single unified codebase supporting:
-- **Full deployment**: Identical behavior to `master` (KSU token, locking, loyalty system)
-- **Lite deployment**: No Kasu token/locking/loyalty, but same KYC/KYB/Nexera allowlisting and deposits
-- Preserve upgradability for existing Base deployment
-- Maintain all ExternalTVL behavior
-
-### Lite Contract Implementations
-Override-based behavior changes in:
+One codebase serves both deployment modes (merged to `master` at `f8d2d45`): **Full**
+(Base — KSU token, locking, loyalty) and **Lite** (no token/locking/loyalty, same
+signature-gated deposits). Lite behaviour is override-based, in:
 - `src/core/KsuPriceLite.sol`
 - `src/core/ProtocolFeeManagerLite.sol`
 - `src/core/UserLoyaltyRewardsLite.sol`
 - `src/core/UserManagerLite.sol`
 - `src/locking/KSULockingLite.sol`
 
-### Work Completed
-- Lite implementations for all token-dependent contracts
-- FixedTermDeposit bug fix (`userTrancheSharesAfter = trancheShares`)
-- Plume OpenZeppelin files for future upgrades (`.openzeppelin/plume-addresses.json`, `.openzeppelin/unknown-98866.json`)
-- GitHub workflows run tests on push/PR (`.github/workflows/test.yml`)
-- Updated `diagrams/flows.puml` with KasuAllowList, SystemVariables, FixedTermDeposit, clearing steps
-- Scripts reorganized: dev-only scripts moved to `scripts/dev/**`
-- USDC helper to prevent minting on non-mock USDC (`scripts/_modules/usdc.ts`)
-- Deployment uses env-gated flags (DEPLOY_MOCK_USDC, DEPLOY_SYSTEM_VARIABLES_TESTABLE, DEPLOY_UPDATES, VERIFY_SOURCE)
-- **Validated Full vs master**: No regressions - changes are visibility modifiers (`private`→`internal`, `+virtual`) for Lite inheritance + FixedTermDeposit bug fix
-- **Production scripts parameterized**: All hardcoded addresses replaced with env variables (`scripts/_utils/env.ts`)
-- **Dev script network guard**: All `scripts/dev/**` now require local network via `requireLocalNetwork()`
-- **Migrated to npm dependencies**: OpenZeppelin via npm (v5.0.2), NexeraID vendored (2 files), removed 3 git submodules
-- **Etherscan V2 multichain**: Single `ETHERSCAN_API_KEY` for all supported chains (Base, XDC, etc.)
+Deployment flags are env-gated (`DEPLOY_MOCK_USDC`, `DEPLOY_SYSTEM_VARIABLES_TESTABLE`,
+`DEPLOY_UPDATES`, `VERIFY_SOURCE`); `scripts/dev/**` refuse to run off a local network
+(`requireLocalNetwork()`); `scripts/_modules/usdc.ts` prevents minting on non-mock USDC.
 
 ### Production Script Environment Variables
 | Script | Required Env Vars |
@@ -394,16 +373,6 @@ To deploy to a new EVM chain:
 1. Add chain config to `scripts/_config/chains.ts` (including `deploymentMode` and `protocolFeeReceiver`)
 2. Add network to `hardhat.config.ts`
 3. Run: `npx hardhat --network <network> deploy`
-
-### Base Mainnet Upgrade Status
-Validated via `validateDeployment.ts` - contracts modified from `master` that need upgrading:
-
-| Contract | Change Type | Status on Base |
-|----------|-------------|----------------|
-| `UserManager.sol` | Visibility changes (`private`→`internal`, `+virtual`) | **Needs upgrade** |
-| `FeeManager.sol` | Visibility changes (`private`→`internal`, `+virtual`) | **Needs upgrade** |
-| `FixedTermDeposit.sol` | Bug fix (`userTrancheSharesAfter = trancheShares`) | **Needs upgrade** |
-| `LendingPoolManager.sol` | Visibility changes (`public virtual`) | Already deployed with changes |
 
 ### Smoke Tests
 
@@ -462,30 +431,29 @@ LENDING_POOL_ADDRESSES=0xpool1,0xpool2 \
 - Plume: `0xEb8D4618713517C1367aCA4840b1fca3d8b090DF`
 - XDC: `0x880Aa2d6eEC5bD573059444cF1b3C09658f8c112`
 
+*InvoiceMate Multisig (ROLE_POOL_MANAGER, ROLE_POOL_FUNDS_MANAGER, ROLE_POOL_CLEARING_MANAGER
++ draw recipient on the Base Payment Finance pool `0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE`
+only — note the pool manager Safe `0x39905d…` holds **no** role on that pool):*
+- Base: `0x156aea25b5C62210Ea42F0A08791253688705eC9` (Safe v1.4.1, 2-of-3)
+- Base (old, retired 2026-09-22): `0x793DAEec8293A6869b42cc56988b6780f458d4f3` — 3-of-3 with a
+  lost signer key, permanently unable to transact. Stranded USDC swept and roles migrated via
+  `scripts/recovery/safe-batches/base-invoicemate-safe-migration.json`. Never grant it a role
+  again, and never set it as a draw recipient.
+
 Configure via `scripts/_config/chains.ts` or env variables (`KASU_MULTISIG`, `POOL_MANAGER_MULTISIG`, `POOL_ADMIN_MULTISIG`).
 
 See `scripts/smokeTests/README.md` for full documentation.
 
 ### Plume Deployment Status
 
-Plume has a Lite deployment. Fully finalized.
-
-**Status: FINALIZED (confirmed Apr 13, 2026)**
-- ✅ All ProxyAdmin ownership (Kasu multisig)
-- ✅ All Beacon ownership (Kasu multisig)
-- ✅ ROLE_KASU_ADMIN granted to Kasu multisig
-- ✅ ROLE_LENDING_POOL_FACTORY granted to LendingPoolFactory
-- ✅ ROLE_LENDING_POOL_CREATOR granted to pool admin multisig
-- ✅ ROLE_PROTOCOL_FEE_CLAIMER granted correctly
-- ✅ All pool-specific roles configured for 3 pools
-- ✅ Old admin `0x0e7e...483` DEFAULT_ADMIN_ROLE revoked
-- ✅ 7 contracts upgraded to match source code (plume-upgrade-all.json executed)
-- ✅ Smoke tests: 37/37 checks passing (25 global + 12 pool)
-
+Plume (Lite) is **retired** — wound down and fully drained (last activity 2026-01-07);
+it survives only as frozen since-inception history. Addresses stay in
+`.openzeppelin/plume-addresses.json`; do not target it with upgrades, role changes or
+fee rollouts.
 ### XDC AUDD Deployment Status
 
 XDC AUDD is a Lite deployment (deployed Feb 2026) with epoch timing aligned to Base (Thursday 06:00 UTC).
-Epochs are weekly. Epoch 1 start on-chain: `1718258400` (Thu, 13 Jun 2024 06:00:00 UTC).
+Epochs are weekly. Epoch 0 start on-chain: `1717653600` (Thu, 6 Jun 2024 06:00:00 UTC) — same anchor as Base.
 
 **Status: FINALIZED (Apr 13, 2026)**
 - ✅ Deployment contracts deployed and initialized (deploy_1.ts)
@@ -501,7 +469,9 @@ Epochs are weekly. Epoch 1 start on-chain: `1718258400` (Thu, 13 Jun 2024 06:00:
 Second Lite deployment on XDC using USDC (`0xfa2958cb79b0491cc627c1557f441ef849ca8eb1`) instead of AUDD.
 Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract stack.
 
-**Status (Apr 13, 2026): FINALIZED on mainnet.** 19 contracts deployed, initialized, roles granted, ownership transferred. Epoch aligned with AUDD (epoch 95). All impls verified on xdcscan.
+**Status (Apr 13, 2026): FINALIZED on mainnet.** 19 contracts deployed, initialized, roles granted, ownership transferred. All impls verified on xdcscan.
+
+**Epoch anchor off-by-one (discovered 2026-05-14 — REALIGNED since):** SystemVariables was initialized with `_initialEpochStartTimestamp = 1718258400` (Thu 13 Jun 2024 06:00 UTC) instead of the canonical Kasu anchor `1717653600` (Thu 6 Jun 2024 06:00 UTC) used by Base and XDC AUDD — `chains.ts` set both `xdc` and `xdc-usdc` to `1718258400` in commit `6aa0f91` and `finishXdcUsdcInit.ts` propagated it on-chain. Corrected on-chain with a one-shot `SystemVariablesEpochAlignmentMigration` impl and a Kasu-multisig Safe batch (both retired from the repo 2026-09-24 after execution; the backup is outside git); all three live deployments now return the same `currentEpochNumber()` (117 on each, read on-chain 2026-09-03). Before any redeploy, check that `chains.ts` carries `1717653600` for both XDC entries.
 
 **Completed:**
 - ✅ deploy_1.ts — 19 contracts deployed + initialized; SystemVariables epoch-aligned to AUDD via one-time migration impl dance (since removed from the repo)
@@ -511,14 +481,14 @@ Network name: `xdc-usdc`. Shares chain ID 50, same multisigs, separate contract 
 - ✅ deploy_3.ts executed (Apr 13, 2026): 16 ProxyAdmin + 3 Beacon ownerships transferred to Kasu multisig, ROLE_KASU_ADMIN revoked from deployer
 - ✅ Smoke tests: 25/25 global checks passing
 
-**Pending:**
-- ❌ Apxium multisig needs to create pools via ROLE_LENDING_POOL_CREATOR
+**Post-deploy completed:**
+- ✅ Apxium multisig created 4 pools via ROLE_LENDING_POOL_CREATOR (`0x0c80…3948c0`, `0x4B5f…40013`, `0xAc3B…AB5F`, `0xEabB…CeC5`)
 - ✅ Goldsky subgraph `kasu-xdc-usdc/v1.0.0` deployed — `https://api.goldsky.com/api/public/project_cmgzlpxm300765np2a19421om/subgraphs/kasu-xdc-usdc/v1.0.0/gn`
 - ✅ kasu-sdk updated and published: `@kasufinance/kasu-sdk@2.2.1`
 - ✅ Gitbook docs updated (kasu-gitbook-techdocs); user-facing kasu-gitbook-kasu-finance is chain-agnostic, no updates needed
 
 **Epoch alignment (historical):**
-`SystemVariables.initialize()` validates `initialEpochStartTimestamp` must be within `[now - 1 week, now]`, rejecting alignment to an old anchor like `1718258400`. XDC AUDD and XDC USDC both worked around this with a one-shot migration-impl flow: upgrade the SV proxy to a stripped-check `SystemVariablesMigration` atomically via `upgradeAndCall(initialize(...))`, then upgrade back to the production SV impl (storage preserved). Both migration impls are verified-but-orphaned on xdcscan. The `SystemVariablesMigration.sol` contract and `scripts/recovery/finishXdcUsdcInit*.ts` scripts have been removed from the repo now that the migration is complete on all target chains.
+`SystemVariables.initialize()` validates `initialEpochStartTimestamp` must be within `[now - 1 week, now]`, rejecting alignment to any anchor older than one week. Both XDC AUDD (Feb 2026) and XDC USDC (Apr 2026) had to bootstrap with the canonical Kasu anchor `1717653600` (Thu 6 Jun 2024 06:00 UTC, matching Base), so each used a one-shot migration-impl flow: upgrade the SV proxy to a stripped-check `SystemVariablesMigration` impl, atomically `upgradeAndCall(initialize(...))` with the past anchor, then upgrade back to the production SV impl (storage preserved). AUDD's run successfully wrote `1717653600`; USDC's run wrote `1718258400` due to a `chains.ts` config bug (see "⚠️ Epoch anchor off-by-one week" above), leaving USDC one epoch number behind Base + AUDD until the realignment above. Both legacy migration impls are verified-but-orphaned on xdcscan. The `SystemVariablesMigration.sol` contract and `scripts/recovery/finishXdcUsdcInit*.ts` scripts were removed from the repo after first use, but are still in git history at commit `6aa0f91`. The USDC realignment used a different one-shot impl (`SystemVariablesEpochAlignmentMigration`, ROLE_KASU_ADMIN-gated setter, no re-`initialize()`) because the existing proxy is already initialized.
 
 **⚠️ Known gotcha:** `upgrades.erc1967.getImplementationAddress()` and proxy view calls immediately after `upgrades.upgradeProxy` can return stale data on XDC RPC (load-balanced, some nodes lag). Always verify via raw storage read of the EIP-1967 impl slot (`0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`) for critical state checks.
 
@@ -537,7 +507,12 @@ AUTO_VERIFY=true ETHERSCAN_API_KEY=... npx hardhat --network xdc-usdc run script
 
 **Addresses:** `.openzeppelin/xdc-usdc-addresses.json`.
 
-**XDC RPC:** Always use `https://rpc.xdc.org`.
+**XDC RPC:** **Never use `https://rpc.xdc.org`** — it is unreliable and took the
+backend's chain-50 poller down on 2026-08-24. Primary is
+`https://rpc.primenumbers.xyz/`. The backend runs an ordered failover list
+(`primenumbers, ankr, xdcrpc.com, rpc.xinfin.network` via a comma-separated
+`CHAIN_50_RPC_URL`); scripts here take a single URL and default to primenumbers,
+overridable with `XDC_RPC_URL`.
 
 ### Finalizing XDC (COMPLETED Apr 13, 2026)
 
@@ -545,7 +520,19 @@ deploy_3.ts executed on both `xdc` and `xdc-usdc`. All ProxyAdmin + Beacon owner
 
 ### ⚠️ Apxium Multisig Template Bug (XDC AUDD historical)
 
-When the Apxium pool admin multisig set up the XDC AUDD pools, **3 transactions for granting `ROLE_POOL_MANAGER` / `ROLE_POOL_FUNDS_MANAGER` called a wrong target address** (an EOA `0x7923837dc93d897e12696e0f4fd50b51fbacf693` instead of KasuController). The calls succeeded silently as no-ops. The correct grants were later applied directly. **Warn Apxium before they configure XDC USDC pools to double-check their Safe Transaction Builder template targets KasuController, not a stale EOA.**
+When the Apxium pool admin multisig set up the XDC AUDD pools, **3 transactions for granting `ROLE_POOL_MANAGER` / `ROLE_POOL_FUNDS_MANAGER` called a wrong target address** (an EOA `0x7923837dc93d897e12696e0f4fd50b51fbacf693` instead of KasuController). The calls succeeded silently as no-ops. That address is the **Plume** KasuController — they reused the Plume template on XDC. The roles were subsequently granted to the pool admin Safe `0x880Aa2…` only; the pool manager Safe `0x21567e…` never received any pool role on AUDD (verified on-chain 2026-09-02, all 3 pools), unlike Base / xdc-usdc / Plume where it holds `ROLE_POOL_MANAGER` + `ROLE_POOL_FUNDS_MANAGER`. First symptom: the `repayOwedFunds` Safe batch proposed from `0x21567e…` (nonce 8, 2026-09-02) reverts with `AccessControlUnauthorizedAccount`. Fix batch (6 grants, executed by `0x880Aa2…`): `scripts/recovery/safe-batches/xdc-audd-grant-pool-manager-roles.json` (see the README there). **Warn Apxium before they configure any new pools to double-check their Safe Transaction Builder template targets that chain's KasuController.**
+
+### `release-candidate` — the next upgrade cycle
+
+`master` mirrors what is deployed on-chain. Contract changes that are ready but not yet
+deployed are collected on the long-lived **`release-candidate`** branch, and ship together in
+the next impl upgrade cycle. After deployment, `release-candidate` merges into `master`.
+So `validateDeployment.ts` should be run against `master`, not `release-candidate`.
+
+Queued for the next cycle:
+- **Clearing dust-spill guard** (`AcceptedRequestsExecution`, PendingPool impl, all chains).
+  Once a request is fully accepted, deposit execution no longer touches its burned dNFT a
+  second time with a zero amount. Regression test: `ClearingDustSpillRevertTest`.
 
 ### Deployment & Upgrade Workflow
 
@@ -553,7 +540,7 @@ Every deployment or upgrade MUST follow this sequence:
 
 1. **Dry-run on Anvil fork** before touching mainnet:
 ```bash
-anvil --fork-url https://rpc.xdc.org --chain-id 50 --port 8546
+anvil --fork-url https://rpc.primenumbers.xyz/ --chain-id 50 --port 8546
 XDC_RPC_URL=http://127.0.0.1:8546 npx hardhat --network xdc run scripts/upgrade/upgradeXdcImplementations.ts
 ```
 
@@ -624,20 +611,8 @@ export TENDERLY_PROJECT_SLUG=your_project
 
 See `scripts/tenderly/README.md` for full documentation.
 
-### Testing Checklist
-
-- ✅ Smoke tests validated on Base (Full deployment)
-- ✅ Smoke tests validated on Plume (Lite deployment)
-  - Blockscout API works without API key
-  - Revealed role configuration issues (needs upgrade and role grants)
-- ✅ Smoke tests validated on XDC (Lite deployment)
-  - Epoch timing aligned to Thursday 06:00 UTC
-  - Pending: ownership transfer and deployer role revocation
-- ✅ Tenderly simulation integrated into smoke tests
-- ⏸️  Nexera/Compilot endpoint testing (manual testing only - not automated)
-
 ### Important Constraints
-- Lite must still support KYC/KYB (Nexera) gated deposits
+- Lite must still support signature-gated (KYC/KYB) deposits
 - Full must remain behaviorally identical to `master` for upgradability
 
 ### Security Audits

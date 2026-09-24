@@ -16,7 +16,7 @@ import { POST_UPGRADE_TXS, UPGRADE_LISTS, UpgradeKind, Deps } from './upgrade202
  *
  * Usage:
  *   # Dry-run on Anvil fork first
- *   anvil --fork-url https://rpc.xdc.org --chain-id 50 --port 8546
+ *   anvil --fork-url https://rpc.primenumbers.xyz/ --chain-id 50 --port 8546
  *   XDC_USDC_RPC_URL=http://127.0.0.1:8546 \
  *     npx hardhat --network xdc-usdc run scripts/upgrade/generateUpgrade2026_04.ts
  *
