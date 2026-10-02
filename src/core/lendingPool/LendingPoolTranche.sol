@@ -133,6 +133,13 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
             }
 
             _userManager.removeUserActiveTranche(user, address(_ownLendingPool()));
+        } else {
+            // still a holder: heal a missing listing or record on this interaction (both idempotent)
+            if (!_isTrancheUser(user)) {
+                _addTrancheUser(user);
+                emit TrancheUserRestored(user, _userArrayIndex[user]);
+            }
+            _userManager.addUserActiveTranche(user, address(_ownLendingPool()));
         }
     }
 
@@ -157,7 +164,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
             emit TrancheUserRemoved(user);
         }
 
-        _userManager.syncUserActiveTranche(user, address(_ownLendingPool()), address(this));
+        _userManager.syncUserActiveTrancheFromTranche(user, address(_ownLendingPool()), isHolder);
     }
 
     /**
@@ -165,8 +172,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @dev Overrides the ERC4626 deposit function.
      * Only the lending pool can call this function.
      * The user receives tranche shares.
-     * If the user had no shares before, they are added to the trancheUsers array
-     * and the userManager is updated.
+     * If the user is not listed, they are added to the trancheUsers array. The userManager record is ensured on
+     * every deposit (idempotent), so a missing record heals on the user's next deposit.
      * @param assets The amount of assets to deposit.
      * @param receiver The receiver address of the tranche shares.
      * @return shares The amount of shares received.
@@ -187,11 +194,10 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
             _addTrancheUser(receiver);
         }
 
-        if (userActiveShares[receiver] == 0) {
-            _userManager.addUserActiveTranche(receiver, address(_ownLendingPool()));
-        }
-
         userActiveShares[receiver] += shares;
+
+        // idempotent: records a first deposit, and heals a missing record on any later one
+        _userManager.addUserActiveTranche(receiver, address(_ownLendingPool()));
     }
 
     /**

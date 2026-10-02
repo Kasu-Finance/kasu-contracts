@@ -37,6 +37,8 @@ interface IUserManager {
     function addUserActiveTranche(address user, address lendingPool) external;
     function removeUserActiveTranche(address user, address lendingPool) external;
     function syncUserActiveTranche(address user, address lendingPool, address tranche) external;
+    function syncUserActiveTrancheFromTranche(address user, address lendingPool, bool isActive) external;
+    function syncUserFees(address user) external;
     function updateUserLendingPools(uint256 fromIndex, uint256 toIndex) external;
 
     /* ========== EVENTS ========== */
@@ -47,10 +49,13 @@ interface IUserManager {
     event UserActiveTrancheUpdated(
         address indexed user, address indexed lendingPool, address indexed tranche, bool isActive, uint256 count
     );
-    /// @notice A tranche reported a user leaving it while the user was not recorded as active in it.
-    /// @dev The removal is skipped so clearing cannot revert; the event surfaces the earlier desync.
-    /// Repair: `syncUserActiveTranche(user, lendingPool, tranche)` for each tranche of the user.
-    event UserActiveTrancheCountUnderflow(address indexed user, address indexed lendingPool, address indexed tranche);
+    /// @notice A tranche reported the user's last shares leaving it, but the (user, tranche) pair was not recorded
+    /// as active, so there was nothing to remove.
+    /// @dev The removal is skipped, so a clearing never reverts. The user has left this tranche, so this pair needs
+    /// no repair. The record was missing before, so the user's count may have been one too low while they held it:
+    /// run `syncUserFees(user)` to realign the user's fee eligibility, and `syncUserActiveTranche` on the user's
+    /// other tranches if more drift is suspected.
+    event RemovalForInactiveTranche(address indexed user, address indexed lendingPool, address indexed tranche);
 
     /* ========== ERRORS ========== */
 

@@ -53,6 +53,7 @@ contract UserManager is IUserManager, Initializable {
 
     /// @dev Retired: the former bare active tranche counter, which a double removal could desync.
     /// Kept only to hold its storage slot. Replaced by `_isUserActiveInTranche` and `_activeTrancheCount`.
+    /// @custom:oz-renamed-from _userActiveTrancheCount
     mapping(address user => uint256) private __deprecatedUserActiveTrancheCount;
 
     /// @notice Whether the user holds active shares in the tranche, as reported by the tranche.
@@ -340,10 +341,10 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Marks the user active in the calling tranche.
-     * @dev Called by the tranche when the user's first shares in it are minted.
-     * Idempotent per (user, tranche): a repeated call changes nothing, so the count cannot double count.
+     * @dev Called by the tranche whenever the user ends an interaction holding shares in it. Idempotent per
+     * (user, tranche), so a repeated call changes nothing and a missed record heals on the next interaction.
      * If the user had no active tranches before, the user fees are enabled.
-     * @param user The address of the user that deposited in the tranche.
+     * @param user The address of the user holding shares in the tranche.
      * @param lendingPool The address of the lending pool corresponding to the tranche.
      */
     function addUserActiveTranche(address user, address lendingPool) external verifyTranche(lendingPool, msg.sender) {
@@ -352,10 +353,9 @@ contract UserManager is IUserManager, Initializable {
 
     /**
      * @notice Marks the user inactive in the calling tranche.
-     * @dev Called by the tranche when the user's last shares in it are redeemed.
-     * Idempotent per (user, tranche). A removal for a user not recorded as active (an earlier desync) is
-     * skipped and surfaced with `UserActiveTrancheCountUnderflow`: it can never revert a clearing.
-     * If the user has no active tranches after, the user fees are disabled.
+     * @dev Called by the tranche when the user's last shares in it are redeemed. Idempotent per (user, tranche).
+     * A removal for a pair not recorded as active is skipped and surfaced with `RemovalForInactiveTranche`; it can
+     * never revert a clearing. If the user has no active tranches after, the user fees are disabled.
      * @param user The address of the user that redeemed all of his shares from the tranche.
      * @param lendingPool The address of the lending pool corresponding to the tranche.
      */
@@ -363,18 +363,30 @@ contract UserManager is IUserManager, Initializable {
         external
         verifyTranche(lendingPool, msg.sender)
     {
-        if (!_isUserActiveInTranche[user][msg.sender]) {
-            emit UserActiveTrancheCountUnderflow(user, lendingPool, msg.sender);
-            return;
+        if (!_setUserActiveInTranche(user, lendingPool, msg.sender, false)) {
+            emit RemovalForInactiveTranche(user, lendingPool, msg.sender);
         }
-        _setUserActiveInTranche(user, lendingPool, msg.sender, false);
     }
 
     /**
-     * @notice Re-derives the user's active flag for a tranche from the tranche's active shares.
+     * @notice Sets the user's record for the calling tranche to the state the tranche reports.
+     * @dev Used by `LendingPoolTranche.syncTrancheUser`, which passes `userActiveShares > 0` directly, so the
+     * repair needs no call back into the tranche. Idempotent; emits nothing when the record already matches.
+     * @param user The address of the user.
+     * @param lendingPool The address of the lending pool corresponding to the tranche.
+     * @param isActive Whether the user holds active shares in the tranche.
+     */
+    function syncUserActiveTrancheFromTranche(address user, address lendingPool, bool isActive)
+        external
+        verifyTranche(lendingPool, msg.sender)
+    {
+        _setUserActiveInTranche(user, lendingPool, msg.sender, isActive);
+    }
+
+    /**
+     * @notice Re-derives the user's record for a tranche from the tranche's active shares.
      * @dev Permissionless and idempotent: the result only depends on `userActiveShares` on-chain, so any caller
-     * can only move the record towards the truth. Used to backfill every holder atomically with the upgrade
-     * that introduced the per-tranche flags, and to repair any later desync without an admin.
+     * can only move the record towards the truth. Repairs any desync without an admin.
      * @param user The address of the user.
      * @param lendingPool The lending pool of the tranche.
      * @param tranche The tranche address.
@@ -383,9 +395,24 @@ contract UserManager is IUserManager, Initializable {
         external
         verifyTranche(lendingPool, tranche)
     {
-        bool isActive = ILendingPoolTranche(tranche).userActiveShares(user) > 0;
-        if (_isUserActiveInTranche[user][tranche] != isActive) {
-            _setUserActiveInTranche(user, lendingPool, tranche, isActive);
+        _setUserActiveInTranche(user, lendingPool, tranche, ILendingPoolTranche(tranche).userActiveShares(user) > 0);
+    }
+
+    /**
+     * @notice Aligns the user's KSU fee eligibility with the user's active tranche count.
+     * @dev Permissionless and idempotent. Fees are enabled while a user is active in at least one tranche and
+     * disabled otherwise, the same rule the count transitions apply. Repairs users whose fees were left enabled
+     * by the retired counter after they had left every tranche (or the reverse).
+     * @param user The address of the user.
+     */
+    function syncUserFees(address user) external {
+        bool shouldBeEnabled = _activeTrancheCount[user] > 0;
+        if (_ksuLocking.isFeeRecipientEnabled(user) == shouldBeEnabled) return;
+
+        if (shouldBeEnabled) {
+            _ksuLocking.enableFeesForUser(user);
+        } else {
+            _ksuLocking.disableFeesForUser(user);
         }
     }
 
@@ -551,8 +578,12 @@ contract UserManager is IUserManager, Initializable {
 
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
-    function _setUserActiveInTranche(address user, address lendingPool, address tranche, bool isActive) private {
-        if (_isUserActiveInTranche[user][tranche] == isActive) return;
+    /// @dev The one place a (user, tranche) record changes. Returns false when it already matched.
+    function _setUserActiveInTranche(address user, address lendingPool, address tranche, bool isActive)
+        private
+        returns (bool changed)
+    {
+        if (_isUserActiveInTranche[user][tranche] == isActive) return false;
 
         _isUserActiveInTranche[user][tranche] = isActive;
         uint256 count = _activeTrancheCount[user];
@@ -570,6 +601,7 @@ contract UserManager is IUserManager, Initializable {
         }
 
         emit UserActiveTrancheUpdated(user, lendingPool, tranche, isActive, count);
+        return true;
     }
 
     /* ========== MODIFIERS ========== */
