@@ -96,29 +96,60 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * @dev Lending pool should call this function right after redeem.
      * If user has no shares left, they are removed from the trancheUsers array
      * and the userManager is updated.
+     * A zero-share call is a no-op: a user can only leave the tranche when their shares go from non-zero to zero.
+     * Without this guard, a zero-share redeem for a user holding no shares (e.g. `forceImmediateWithdrawal` with 0)
+     * decremented the user's active tranche count a second time and evicted whichever user sat at index 0.
      * @param user The address of the user.
      * @param shares The amount of shares that were redeemed.
      */
     function removeUserActiveShares(address user, uint256 shares) external onlyOwnLendingPool {
+        if (shares == 0) return;
+
         userActiveShares[user] -= shares;
 
         // remove user from trancheUsers array if they have no shares
         if (userActiveShares[user] == 0) {
-            // get removing and last user
             uint256 removingUserIndex = _userArrayIndex[user];
-            uint256 lastUserIndex = _trancheUsers.length - 1;
-            address lastUser = _trancheUsers[lastUserIndex];
 
-            // swap removing user with last user
-            _trancheUsers[removingUserIndex] = lastUser;
-            _trancheUsers.pop();
+            if (removingUserIndex < _trancheUsers.length && _trancheUsers[removingUserIndex] == user) {
+                // swap removing user with last user
+                uint256 lastUserIndex = _trancheUsers.length - 1;
+                address lastUser = _trancheUsers[lastUserIndex];
 
-            // update last and removing user index
-            _userArrayIndex[lastUser] = removingUserIndex;
+                _trancheUsers[removingUserIndex] = lastUser;
+                _trancheUsers.pop();
+
+                // update last and removing user index
+                _userArrayIndex[lastUser] = removingUserIndex;
+            } else {
+                // the user is not where the index says (earlier desync): never evict someone else
+                emit TrancheUserIndexMismatch(user, removingUserIndex);
+            }
             delete _userArrayIndex[user];
 
             _userManager.removeUserActiveTranche(user, address(_ownLendingPool()));
         }
+    }
+
+    /**
+     * @notice Re-adds a user who holds active shares but is missing from the tranche users array.
+     * @dev Repairs arrays desynced by the former zero-share removal, which evicted the user at index 0.
+     * A missing user receives no loss receipt tokens when a loss is registered.
+     * Permissionless and idempotent: every user in the array is at its recorded index (swap-and-pop keeps
+     * the index of the moved user), so a user not at its recorded index is absent and is added exactly once.
+     * @param user The address of the user.
+     */
+    function syncTrancheUser(address user) external notPendingLossMint {
+        if (userActiveShares[user] == 0) return;
+
+        uint256 index = _userArrayIndex[user];
+        if (index < _trancheUsers.length && _trancheUsers[index] == user) return;
+
+        index = _trancheUsers.length;
+        _userArrayIndex[user] = index;
+        _trancheUsers.push(user);
+
+        emit TrancheUserRestored(user, index);
     }
 
     /**
@@ -141,8 +172,8 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     {
         shares = super.deposit(assets, receiver);
 
-        // if user had not shares before, add to the trancheUsers array
-        if (userActiveShares[receiver] == 0) {
+        // if user had not shares before, add to the trancheUsers array (a zero-share deposit adds nothing)
+        if (shares > 0 && userActiveShares[receiver] == 0) {
             _userArrayIndex[receiver] = _trancheUsers.length;
             _trancheUsers.push(receiver);
 

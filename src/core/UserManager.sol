@@ -2,6 +2,7 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import "./interfaces/IUserManager.sol";
 import "./interfaces/ISystemVariables.sol";
 import "./interfaces/IUserLoyaltyRewards.sol";
@@ -96,7 +97,22 @@ contract UserManager is IUserManager, Initializable {
      * @param users The array of users.
      * @param counts The array of user active tranche counts.
      */
-    function reinitialize(address[] calldata users, uint256[] calldata counts) external reinitializer(2) {
+    function reinitialize(address[] calldata users, uint256[] calldata counts)
+        external
+        reinitializer(2)
+        onlyProxyAdmin
+    {
+        _batchSetUserActiveTrancheCount(users, counts);
+    }
+
+    /**
+     * @notice Sets user active tranche counts, to repair counts desynced by the former zero-share removal.
+     * @dev Only callable inside `ProxyAdmin.upgradeAndCall` (the proxy admin is the caller only there),
+     * so it can never be called directly, and every call goes through the ProxyAdmin owner.
+     * @param users The array of users.
+     * @param counts The array of user active tranche counts.
+     */
+    function setUserActiveTrancheCounts(address[] calldata users, uint256[] calldata counts) external onlyProxyAdmin {
         _batchSetUserActiveTrancheCount(users, counts);
     }
 
@@ -340,6 +356,9 @@ contract UserManager is IUserManager, Initializable {
      * @notice Decrease the user active tranche count.
      * @dev This function is called by the tranche when a user redeems all of his shares from the tranche.
      * If the user has no active tranches after, the user fees are disabled.
+     * If the count is already zero (an earlier desync), the decrement is skipped and
+     * `UserActiveTrancheCountUnderflow` is emitted instead of reverting, so that a stale count can never
+     * revert a clearing or a forced withdrawal.
      * @param user The address of the user that redeemed all of his shares from the tranche.
      * @param lendingPool The address of the lending pool corresponding to the tranche.
      */
@@ -347,9 +366,19 @@ contract UserManager is IUserManager, Initializable {
         external
         verifyTranche(lendingPool, msg.sender)
     {
-        _userActiveTrancheCount[user]--;
+        uint256 count = _userActiveTrancheCount[user];
 
-        if (_userActiveTrancheCount[user] == 0) {
+        if (count == 0) {
+            emit UserActiveTrancheCountUnderflow(user, lendingPool, msg.sender);
+            return;
+        }
+
+        unchecked {
+            --count;
+        }
+        _userActiveTrancheCount[user] = count;
+
+        if (count == 0) {
             _ksuLocking.disableFeesForUser(user);
         }
     }
@@ -535,10 +564,20 @@ contract UserManager is IUserManager, Initializable {
             }
 
             _userActiveTrancheCount[users[i]] = counts[i];
+
+            emit UserActiveTrancheCountSet(users[i], counts[i]);
         }
     }
 
     /* ========== MODIFIERS ========== */
+
+    /// @dev The proxy admin can only reach the implementation through `upgradeAndCall` (transparent proxy).
+    modifier onlyProxyAdmin() {
+        if (msg.sender != ERC1967Utils.getAdmin()) {
+            revert CallerNotProxyAdmin(msg.sender);
+        }
+        _;
+    }
 
     modifier verifyTranche(address lendingPool, address tranche) {
         if (

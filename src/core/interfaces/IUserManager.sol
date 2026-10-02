@@ -40,8 +40,14 @@ interface IUserManager {
 
     event UserLoyaltyLevelUpdated(address indexed user, uint256 indexed epoch, uint256 loyaltyLevel);
     event UserLoyaltyLevelsForEpochProcessed(uint256 indexed epoch, uint256 userCount);
+    /// @notice A user's active tranche count was set by the proxy admin (repair after a desync).
+    event UserActiveTrancheCountSet(address indexed user, uint256 count);
+    /// @notice A tranche reported a user leaving it while the user's active tranche count was already zero.
+    /// @dev The decrement is skipped so clearing cannot revert; the event surfaces the earlier desync.
+    event UserActiveTrancheCountUnderflow(address indexed user, address indexed lendingPool, address indexed tranche);
 
     /* ========== ERRORS ========== */
 
     error BadUserIndex();
+    error CallerNotProxyAdmin(address caller);
 }
