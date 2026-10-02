@@ -2,23 +2,26 @@
 pragma solidity 0.8.23;
 
 import "../_utils/LendingPoolTestUtils.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
- * @dev Active tranche count and tranche users array bookkeeping (Base Tax Pay incident, epoch 121).
+ * @dev Active tranche bookkeeping (Base Tax Pay incident, epoch 121).
  *
- * On Base, a batch of `forceImmediateWithdrawal(TaxPay, Senior, user, 0)` calls (2025-08-29) ran for two
- * users who no longer held Senior shares. `removeUserActiveShares(user, 0)` saw `0 == 0`, removed the user
- * a second time: it decremented `UserManager._userActiveTrancheCount[user]` again and evicted whichever
- * user sat at index 0 of the Senior tranche users array. One of those users later left a 1-share
- * withdrawal request; accepting it underflowed the count and reverted the whole Tax Pay clearing.
+ * On Base, `forceImmediateWithdrawal(TaxPay, Senior, user, 0)` (2025-08-29) ran for two users who no longer held
+ * Senior shares. `removeUserActiveShares(user, 0)` saw `0 == 0` and removed the user a second time: it decremented
+ * the user manager's bare active tranche counter again and evicted whichever user sat at index 0 of the Senior
+ * tranche users array. One of those users later left a 1-share withdrawal request; accepting it underflowed the
+ * counter and reverted the whole Tax Pay clearing.
+ *
+ * The fix keeps one membership check per side: the tranche lists a user iff `_isTrancheUser`, and the user
+ * manager counts a (user, tranche) pair iff its flag is set, with add/remove idempotent per pair.
  */
 contract UserActiveTrancheCountTest is LendingPoolTestUtils {
-    uint256 private constant COUNT_SLOT = 7; // UserManager._userActiveTrancheCount
-    uint256 private constant INDEX_SLOT = 5; // LendingPoolTranche._userArrayIndex
-    uint256 private constant USERS_SLOT = 6; // LendingPoolTranche._trancheUsers
+    // Storage slots used only to simulate the desynced on-chain state; `test_storageSlots_matchViews` pins them.
+    uint256 private constant TRANCHE_SHARES_SLOT = 4; // LendingPoolTranche.userActiveShares
+    uint256 private constant TRANCHE_INDEX_SLOT = 5; // LendingPoolTranche._userArrayIndex
+    uint256 private constant TRANCHE_USERS_SLOT = 6; // LendingPoolTranche._trancheUsers
+    uint256 private constant UM_FLAG_SLOT = 8; // UserManager._isUserActiveInTranche
+    uint256 private constant UM_COUNT_SLOT = 9; // UserManager._activeTrancheCount
 
     function setUp() public {
         __baseTestUtils_setUp();
@@ -29,20 +32,19 @@ contract UserActiveTrancheCountTest is LendingPoolTestUtils {
     // ------------------------------------------------------------------ helpers
 
     function _count(address user) private view returns (uint256) {
-        return uint256(vm.load(address(userManager), keccak256(abi.encode(user, COUNT_SLOT))));
+        return userManager.userActiveTrancheCount(user);
     }
 
-    function _setCount(address user, uint256 count) private {
-        vm.store(address(userManager), keccak256(abi.encode(user, COUNT_SLOT)), bytes32(count));
+    function _listed(address tranche, address user) private view returns (bool) {
+        return ILendingPoolTranche(tranche).isTrancheUser(user);
     }
 
-    function _trancheUsers(address tranche) private view returns (address[] memory users) {
-        uint256 n = uint256(vm.load(tranche, bytes32(USERS_SLOT)));
-        users = new address[](n);
-        uint256 base = uint256(keccak256(abi.encode(USERS_SLOT)));
-        for (uint256 i; i < n; ++i) {
-            users[i] = address(uint160(uint256(vm.load(tranche, bytes32(base + i)))));
-        }
+    function _listedCount(address tranche) private view returns (uint256) {
+        return ILendingPoolTranche(tranche).trancheUserCount();
+    }
+
+    function _shares(address tranche, address user) private view returns (uint256) {
+        return ILendingPoolTranche(tranche).userActiveShares(user);
     }
 
     function _deposit(LendingPoolDeployment memory lpd, address user, uint256 trancheIndex, uint256 amount) private {
@@ -50,8 +52,45 @@ contract UserActiveTrancheCountTest is LendingPoolTestUtils {
         _acceptDepositRequest(lpd.lendingPool, dNftId, amount);
     }
 
-    function _shares(address tranche, address user) private view returns (uint256) {
-        return ILendingPoolTranche(tranche).userActiveShares(user);
+    function _usersBase() private pure returns (uint256) {
+        return uint256(keccak256(abi.encode(TRANCHE_USERS_SLOT)));
+    }
+
+    /// @dev Removes `user` from the array the way the old zero-share removal did (array only, index left stale).
+    function _evict(address tranche, address user) private {
+        uint256 n = _listedCount(tranche);
+        uint256 index = uint256(vm.load(tranche, keccak256(abi.encode(user, TRANCHE_INDEX_SLOT))));
+        address last = address(uint160(uint256(vm.load(tranche, bytes32(_usersBase() + n - 1)))));
+        vm.store(tranche, bytes32(_usersBase() + index), bytes32(uint256(uint160(last))));
+        vm.store(tranche, keccak256(abi.encode(last, TRANCHE_INDEX_SLOT)), bytes32(index));
+        vm.store(tranche, bytes32(TRANCHE_USERS_SLOT), bytes32(n - 1));
+    }
+
+    /// @dev Clears the user manager record of (user, tranche), as in the state left on-chain before the backfill.
+    function _clearUserManagerRecord(address user, address tranche) private {
+        vm.store(address(userManager), keccak256(abi.encode(tranche, keccak256(abi.encode(user, UM_FLAG_SLOT)))), 0);
+        vm.store(address(userManager), keccak256(abi.encode(user, UM_COUNT_SLOT)), 0);
+    }
+
+    // ------------------------------------------------------------------ layout guard
+
+    /// Fails if a layout change moves any slot the tests write to.
+    function test_storageSlots_matchViews() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address mezz = lpd.tranches[1];
+        _deposit(lpd, bob, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+
+        assertEq(uint256(vm.load(mezz, keccak256(abi.encode(alice, TRANCHE_SHARES_SLOT)))), _shares(mezz, alice));
+        assertEq(uint256(vm.load(mezz, bytes32(TRANCHE_USERS_SLOT))), _listedCount(mezz));
+        uint256 index = uint256(vm.load(mezz, keccak256(abi.encode(alice, TRANCHE_INDEX_SLOT))));
+        assertEq(index, 1);
+        assertEq(address(uint160(uint256(vm.load(mezz, bytes32(_usersBase() + index))))), alice);
+
+        bytes32 flagSlot = keccak256(abi.encode(mezz, keccak256(abi.encode(alice, UM_FLAG_SLOT))));
+        assertEq(uint256(vm.load(address(userManager), flagSlot)), 1);
+        assertTrue(userManager.isUserActiveInTranche(alice, mezz));
+        assertEq(uint256(vm.load(address(userManager), keccak256(abi.encode(alice, UM_COUNT_SLOT)))), _count(alice));
     }
 
     // ------------------------------------------------------------------ root cause
@@ -65,27 +104,22 @@ contract UserActiveTrancheCountTest is LendingPoolTestUtils {
         _deposit(lpd, alice, 1, 100 * 10 ** 6);
         _deposit(lpd, alice, 2, 100 * 10 ** 6);
         assertEq(_count(alice), 2);
-        assertEq(_trancheUsers(senior)[0], bob);
 
-        // alice leaves the senior tranche in full
         _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, senior, alice, _shares(senior, alice));
         assertEq(_count(alice), 1);
 
         // the 2025-08-29 call: zero shares on a tranche alice no longer holds
         _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, senior, alice, 0);
 
-        assertEq(_count(alice), 1, "zero-share redeem must not decrement the count");
-        address[] memory users = _trancheUsers(senior);
-        assertEq(users.length, 1, "zero-share redeem must not evict anyone");
-        assertEq(users[0], bob);
+        assertEq(_count(alice), 1, "zero-share redeem must not decrement");
+        assertEq(_listedCount(senior), 1, "zero-share redeem must not evict");
+        assertTrue(_listed(senior, bob));
 
-        // alice's last exit reaches zero without an underflow
         address mezz = lpd.tranches[1];
         _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, mezz, alice, _shares(mezz, alice));
         assertEq(_count(alice), 0);
     }
 
-    /// A zero-share redeem by a holder is a no-op too (shares and membership unchanged).
     function test_zeroShareForcedWithdrawal_holderUnchanged() public {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
         address mezz = lpd.tranches[1];
@@ -96,21 +130,21 @@ contract UserActiveTrancheCountTest is LendingPoolTestUtils {
 
         assertEq(_shares(mezz, alice), shares);
         assertEq(_count(alice), 1);
-        assertEq(_trancheUsers(mezz).length, 1);
+        assertEq(_listedCount(mezz), 1);
     }
 
-    // ------------------------------------------------------------------ safe decrement
+    // ------------------------------------------------------------------ user manager: idempotent per (user, tranche)
 
-    /// The live K-1 state: a pending withdrawal whose acceptance empties the position of a user whose count is
-    /// already 0. Before the fix this reverted with Panic(0x11) and took the whole clearing with it.
-    function test_acceptWithdrawal_countAlreadyZero_emitsAndDoesNotRevert() public {
+    /// The live K-1 state: accepting a withdrawal that empties a position the user manager does not record.
+    /// Before the fix this reverted with Panic(0x11) and took the whole clearing with it.
+    function test_acceptWithdrawal_unrecordedPosition_emitsAndDoesNotRevert() public {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
         address mezz = lpd.tranches[1];
         _deposit(lpd, alice, 1, 100 * 10 ** 6);
         uint256 shares = _shares(mezz, alice);
         uint256 wNftId = _requestWithdrawal(alice, lpd.lendingPool, mezz, shares);
 
-        _setCount(alice, 0); // the desync left on-chain by the zero-share redeem
+        _clearUserManagerRecord(alice, mezz);
 
         vm.expectEmit(true, true, true, true, address(userManager));
         emit IUserManager.UserActiveTrancheCountUnderflow(alice, lpd.lendingPool, mezz);
@@ -118,18 +152,29 @@ contract UserActiveTrancheCountTest is LendingPoolTestUtils {
 
         assertEq(_shares(mezz, alice), 0);
         assertEq(_count(alice), 0);
-        assertEq(_trancheUsers(mezz).length, 0);
+        assertEq(_listedCount(mezz), 0);
     }
 
-    function test_removeUserActiveTranche_atZero_skipsWithEvent() public {
+    function test_addUserActiveTranche_isIdempotentPerTranche() public {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
 
+        vm.startPrank(lpd.tranches[0]);
+        userManager.addUserActiveTranche(carol, lpd.lendingPool);
+        userManager.addUserActiveTranche(carol, lpd.lendingPool);
+        vm.stopPrank();
+        assertEq(_count(carol), 1, "a second add for the same tranche is a no-op");
+
+        vm.prank(lpd.tranches[1]);
+        userManager.addUserActiveTranche(carol, lpd.lendingPool);
+        assertEq(_count(carol), 2);
+
+        vm.startPrank(lpd.tranches[0]);
+        userManager.removeUserActiveTranche(carol, lpd.lendingPool);
         vm.expectEmit(true, true, true, true, address(userManager));
         emit IUserManager.UserActiveTrancheCountUnderflow(carol, lpd.lendingPool, lpd.tranches[0]);
-        vm.prank(lpd.tranches[0]);
         userManager.removeUserActiveTranche(carol, lpd.lendingPool);
-
-        assertEq(_count(carol), 0);
+        vm.stopPrank();
+        assertEq(_count(carol), 1, "a second remove for the same tranche is a no-op");
     }
 
     function test_removeUserActiveTranche_onlyTranche() public {
@@ -139,104 +184,169 @@ contract UserActiveTrancheCountTest is LendingPoolTestUtils {
         userManager.removeUserActiveTranche(carol, lpd.lendingPool);
     }
 
-    // ------------------------------------------------------------------ tranche users array
+    function test_syncUserActiveTranche_derivesFromShares() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address mezz = lpd.tranches[1];
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        _clearUserManagerRecord(alice, mezz);
+        assertEq(_count(alice), 0);
 
-    /// A user whose recorded index points at someone else (evicted earlier) leaves without evicting that user.
-    function test_exitWithStaleIndex_doesNotEvictOthers() public {
+        vm.startPrank(carol); // permissionless
+        userManager.syncUserActiveTranche(alice, lpd.lendingPool, mezz);
+        userManager.syncUserActiveTranche(alice, lpd.lendingPool, mezz);
+        userManager.syncUserActiveTranche(alice, lpd.lendingPool, lpd.tranches[0]); // holds nothing there
+        vm.stopPrank();
+        assertEq(_count(alice), 1);
+        assertTrue(userManager.isUserActiveInTranche(alice, mezz));
+        assertFalse(userManager.isUserActiveInTranche(alice, lpd.tranches[0]));
+
+        // a record without shares is cleared
+        _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, mezz, alice, _shares(mezz, alice));
+        vm.prank(lpd.tranches[0]);
+        userManager.addUserActiveTranche(alice, lpd.lendingPool); // bogus record
+        assertEq(_count(alice), 1);
+        userManager.syncUserActiveTranche(alice, lpd.lendingPool, lpd.tranches[0]);
+        assertEq(_count(alice), 0);
+    }
+
+    function test_syncUserActiveTranche_rejectsForeignTranche() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        LendingPoolDeployment memory other = _createDefaultLendingPool();
+        vm.expectRevert(
+            abi.encodeWithSelector(ILendingPoolErrors.InvalidTranche.selector, lpd.lendingPool, other.tranches[0])
+        );
+        userManager.syncUserActiveTranche(alice, lpd.lendingPool, other.tranches[0]);
+    }
+
+    /// The upgrade backfill: the new per-tranche records start empty and are rebuilt from on-chain shares.
+    function test_backfill_rebuildsRecordsFromShares() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 2, 100 * 10 ** 6);
+        _deposit(lpd, bob, 2, 100 * 10 ** 6);
+        _clearUserManagerRecord(alice, lpd.tranches[1]);
+        _clearUserManagerRecord(alice, lpd.tranches[2]);
+        _clearUserManagerRecord(bob, lpd.tranches[2]);
+
+        ILendingPoolTranche(lpd.tranches[1]).syncTrancheUser(alice);
+        ILendingPoolTranche(lpd.tranches[2]).syncTrancheUser(alice);
+        ILendingPoolTranche(lpd.tranches[2]).syncTrancheUser(bob);
+
+        assertEq(_count(alice), 2);
+        assertEq(_count(bob), 1);
+        assertEq(_listedCount(lpd.tranches[2]), 2, "listed users unchanged");
+    }
+
+    // ------------------------------------------------------------------ tranche users array: one membership check
+
+    /// An evicted user (out of the array, stale index pointing at someone else) leaves without evicting anyone.
+    function test_exitWhileNotListed_doesNotEvictOthers() public {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
         address mezz = lpd.tranches[1];
         _deposit(lpd, bob, 1, 100 * 10 ** 6); // index 0
         _deposit(lpd, alice, 1, 100 * 10 ** 6); // index 1
         _deposit(lpd, carol, 1, 100 * 10 ** 6); // index 2
-
-        // simulate the on-chain state of an evicted user: alice out of the array, her index still 0
-        uint256 base = uint256(keccak256(abi.encode(USERS_SLOT)));
-        vm.store(mezz, bytes32(base + 1), bytes32(uint256(uint160(carol))));
-        vm.store(mezz, bytes32(USERS_SLOT), bytes32(uint256(2)));
-        vm.store(mezz, keccak256(abi.encode(carol, INDEX_SLOT)), bytes32(uint256(1)));
-        vm.store(mezz, keccak256(abi.encode(alice, INDEX_SLOT)), bytes32(uint256(0)));
+        _evict(mezz, alice); // carol moves to index 1; alice's index stays 1
 
         vm.expectEmit(true, true, true, true, mezz);
-        emit ILendingPoolTranche.TrancheUserIndexMismatch(alice, 0);
+        emit ILendingPoolTranche.TrancheUserNotInArray(alice);
         _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, mezz, alice, _shares(mezz, alice));
 
-        address[] memory users = _trancheUsers(mezz);
-        assertEq(users.length, 2);
-        assertEq(users[0], bob);
-        assertEq(users[1], carol);
+        assertEq(_listedCount(mezz), 2);
+        assertTrue(_listed(mezz, bob));
+        assertTrue(_listed(mezz, carol));
         assertEq(_count(alice), 0);
     }
 
     function test_syncTrancheUser_restoresMissingHolderOnce() public {
         LendingPoolDeployment memory lpd = _createDefaultLendingPool();
         address mezz = lpd.tranches[1];
-        _deposit(lpd, bob, 1, 100 * 10 ** 6); // index 0
-        _deposit(lpd, alice, 1, 100 * 10 ** 6); // index 1
-
-        // evict alice the way the zero-share redeem did (she keeps her shares, index left at 1)
-        vm.store(mezz, bytes32(USERS_SLOT), bytes32(uint256(1)));
+        _deposit(lpd, bob, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        _evict(mezz, alice);
+        assertFalse(_listed(mezz, alice));
 
         vm.expectEmit(true, true, true, true, mezz);
         emit ILendingPoolTranche.TrancheUserRestored(alice, 1);
+        vm.prank(carol); // permissionless
         ILendingPoolTranche(mezz).syncTrancheUser(alice);
 
-        // idempotent: present users, non-holders and repeated calls change nothing
-        vm.recordLogs();
         ILendingPoolTranche(mezz).syncTrancheUser(alice);
         ILendingPoolTranche(mezz).syncTrancheUser(bob);
         ILendingPoolTranche(mezz).syncTrancheUser(carol);
-        assertEq(vm.getRecordedLogs().length, 0);
+        assertEq(_listedCount(mezz), 2);
+        assertTrue(_listed(mezz, alice));
+        assertEq(_count(alice), 1, "count untouched: the record was already right");
 
-        address[] memory users = _trancheUsers(mezz);
-        assertEq(users.length, 2);
-        assertEq(users[0], bob);
-        assertEq(users[1], alice);
-
-        // and she can leave cleanly afterwards
         _forceImmediateWithdrawal(poolManagerAccount, lpd.lendingPool, mezz, alice, _shares(mezz, alice));
-        users = _trancheUsers(mezz);
-        assertEq(users.length, 1);
-        assertEq(users[0], bob);
+        assertEq(_listedCount(mezz), 1);
+        assertTrue(_listed(mezz, bob));
     }
 
-    // ------------------------------------------------------------------ count repair
+    /// An evicted holder who deposits again is re-listed exactly once, and the count does not move.
+    function test_depositWhileNotListed_relistsOnce() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address mezz = lpd.tranches[1];
+        _deposit(lpd, bob, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        _evict(mezz, alice);
 
-    function _userManagerProxyAdmin() private view returns (ProxyAdmin) {
-        return ProxyAdmin(address(uint160(uint256(vm.load(address(userManager), ERC1967Utils.ADMIN_SLOT)))));
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+
+        assertEq(_listedCount(mezz), 2);
+        assertTrue(_listed(mezz, alice));
+        assertEq(_count(alice), 1);
     }
 
-    function _currentImpl() private view returns (address) {
-        return address(uint160(uint256(vm.load(address(userManager), ERC1967Utils.IMPLEMENTATION_SLOT))));
+    /// Finding 2: a listed user holding zero shares must not be pushed a second time on a new deposit (the old
+    /// `userActiveShares == 0` check did), which would mint loss receipt tokens to that user twice.
+    function test_depositWhileListedWithZeroShares_noDoublePush() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address mezz = lpd.tranches[1];
+        _deposit(lpd, bob, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        // a listed user with zero active shares
+        vm.store(mezz, keccak256(abi.encode(alice, TRANCHE_SHARES_SLOT)), 0);
+        assertTrue(_listed(mezz, alice));
+
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+
+        assertEq(_listedCount(mezz), 2, "no second entry for alice");
+        assertTrue(_listed(mezz, alice));
     }
 
-    function test_setUserActiveTrancheCounts_onlyThroughUpgradeAndCall() public {
-        address[] memory users = new address[](1);
-        uint256[] memory counts = new uint256[](1);
-        users[0] = alice;
-        counts[0] = 2;
+    function test_syncTrancheUser_removesListedUserWithoutShares() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address mezz = lpd.tranches[1];
+        _deposit(lpd, bob, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        vm.store(mezz, keccak256(abi.encode(alice, TRANCHE_SHARES_SLOT)), 0);
 
-        vm.expectRevert(abi.encodeWithSelector(IUserManager.CallerNotProxyAdmin.selector, carol));
-        vm.prank(carol);
-        UserManager(address(userManager)).setUserActiveTrancheCounts(users, counts);
+        vm.expectEmit(true, true, true, true, mezz);
+        emit ILendingPoolTranche.TrancheUserRemoved(alice);
+        ILendingPoolTranche(mezz).syncTrancheUser(alice);
 
-        ProxyAdmin pa = _userManagerProxyAdmin();
-        vm.expectEmit(true, true, true, true, address(userManager));
-        emit IUserManager.UserActiveTrancheCountSet(alice, 2);
-        vm.prank(pa.owner());
-        pa.upgradeAndCall(
-            ITransparentUpgradeableProxy(address(userManager)),
-            _currentImpl(),
-            abi.encodeCall(UserManager.setUserActiveTrancheCounts, (users, counts))
-        );
-        assertEq(_count(alice), 2);
+        assertEq(_listedCount(mezz), 1);
+        assertTrue(_listed(mezz, bob));
+        assertEq(_count(alice), 0, "record follows the shares");
     }
 
-    /// The v2 reinitializer was callable by anyone wherever it had not been run (XDC AUDD and XDC USDC).
-    function test_reinitialize_onlyThroughUpgradeAndCall() public {
-        address[] memory users = new address[](0);
-        uint256[] memory counts = new uint256[](0);
-        vm.expectRevert(abi.encodeWithSelector(IUserManager.CallerNotProxyAdmin.selector, carol));
-        vm.prank(carol);
-        UserManager(address(userManager)).reinitialize(users, counts);
+    /// Loss receipts reach every holder exactly once after a repair.
+    function test_lossReceipts_afterRepair_eachHolderOnce() public {
+        LendingPoolDeployment memory lpd = _createDefaultLendingPool();
+        address mezz = lpd.tranches[1];
+        _deposit(lpd, bob, 1, 100 * 10 ** 6);
+        _deposit(lpd, alice, 1, 100 * 10 ** 6);
+        _evict(mezz, alice);
+        ILendingPoolTranche(mezz).syncTrancheUser(alice);
+        ILendingPoolTranche(mezz).syncTrancheUser(alice);
+
+        _drawFunds(lpd.lendingPool, 200 * 10 ** 6); // a loss can only hit drawn funds
+        uint256 lossId = _reportLoss(poolFundsManagerAccount, lpd.lendingPool, 10 * 10 ** 6, true);
+        assertGt(_shares(mezz, alice), 0);
+
+        assertEq(IERC1155(mezz).balanceOf(alice, lossId), _shares(mezz, alice));
+        assertEq(IERC1155(mezz).balanceOf(bob, lossId), _shares(mezz, bob));
     }
 }

@@ -2,7 +2,6 @@
 pragma solidity 0.8.23;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import "./interfaces/IUserManager.sol";
 import "./interfaces/ISystemVariables.sol";
 import "./interfaces/IUserLoyaltyRewards.sol";
@@ -52,8 +51,15 @@ contract UserManager is IUserManager, Initializable {
     /// @dev Details of processing user loyalty levels for the epoch.
     mapping(uint256 epochId => EpochUserLoyaltyProcessing) private _epochUserLoyaltyProcessing;
 
-    /// @notice Count of tranches user is active in.
-    mapping(address user => uint256 activeTrancheCount) private _userActiveTrancheCount;
+    /// @dev Retired: the former bare active tranche counter, which a double removal could desync.
+    /// Kept only to hold its storage slot. Replaced by `_isUserActiveInTranche` and `_activeTrancheCount`.
+    mapping(address user => uint256) private __deprecatedUserActiveTrancheCount;
+
+    /// @notice Whether the user holds active shares in the tranche, as reported by the tranche.
+    mapping(address user => mapping(address tranche => bool)) private _isUserActiveInTranche;
+
+    /// @notice Number of tranches the user is active in. Always equals the number of set flags above.
+    mapping(address user => uint256) private _activeTrancheCount;
 
     struct LoyaltyGlobalParameters {
         uint256 currentEpoch;
@@ -92,31 +98,26 @@ contract UserManager is IUserManager, Initializable {
         _lendingPoolManager = lendingPoolManager_;
     }
 
-    /**
-     * @notice Initialize the contract the second time.
-     * @param users The array of users.
-     * @param counts The array of user active tranche counts.
-     */
-    function reinitialize(address[] calldata users, uint256[] calldata counts)
-        external
-        reinitializer(2)
-        onlyProxyAdmin
-    {
-        _batchSetUserActiveTrancheCount(users, counts);
-    }
-
-    /**
-     * @notice Sets user active tranche counts, to repair counts desynced by the former zero-share removal.
-     * @dev Only callable inside `ProxyAdmin.upgradeAndCall` (the proxy admin is the caller only there),
-     * so it can never be called directly, and every call goes through the ProxyAdmin owner.
-     * @param users The array of users.
-     * @param counts The array of user active tranche counts.
-     */
-    function setUserActiveTrancheCounts(address[] calldata users, uint256[] calldata counts) external onlyProxyAdmin {
-        _batchSetUserActiveTrancheCount(users, counts);
-    }
-
     /* ========== EXTERNAL VIEW FUNCTIONS ========== */
+
+    /**
+     * @notice Number of tranches the user holds active shares in.
+     * @param user The address of the user.
+     * @return The active tranche count.
+     */
+    function userActiveTrancheCount(address user) external view returns (uint256) {
+        return _activeTrancheCount[user];
+    }
+
+    /**
+     * @notice Whether the user is recorded as active in the tranche.
+     * @param user The address of the user.
+     * @param tranche The tranche address.
+     * @return True if the user is recorded as active in the tranche.
+     */
+    function isUserActiveInTranche(address user, address tranche) external view returns (bool) {
+        return _isUserActiveInTranche[user][tranche];
+    }
 
     /**
      * @notice Get the calculated user epoch loyalty level.
@@ -338,27 +339,23 @@ contract UserManager is IUserManager, Initializable {
     }
 
     /**
-     * @notice Increase the user active tranche count.
-     * @dev This function is called by the tranche when a user first deposit is accepted in the tranche.
-     * If the user has no active tranches before, the user fees are enabled.
+     * @notice Marks the user active in the calling tranche.
+     * @dev Called by the tranche when the user's first shares in it are minted.
+     * Idempotent per (user, tranche): a repeated call changes nothing, so the count cannot double count.
+     * If the user had no active tranches before, the user fees are enabled.
      * @param user The address of the user that deposited in the tranche.
      * @param lendingPool The address of the lending pool corresponding to the tranche.
      */
     function addUserActiveTranche(address user, address lendingPool) external verifyTranche(lendingPool, msg.sender) {
-        _userActiveTrancheCount[user]++;
-
-        if (_userActiveTrancheCount[user] == 1) {
-            _ksuLocking.enableFeesForUser(user);
-        }
+        _setUserActiveInTranche(user, lendingPool, msg.sender, true);
     }
 
     /**
-     * @notice Decrease the user active tranche count.
-     * @dev This function is called by the tranche when a user redeems all of his shares from the tranche.
+     * @notice Marks the user inactive in the calling tranche.
+     * @dev Called by the tranche when the user's last shares in it are redeemed.
+     * Idempotent per (user, tranche). A removal for a user not recorded as active (an earlier desync) is
+     * skipped and surfaced with `UserActiveTrancheCountUnderflow`: it can never revert a clearing.
      * If the user has no active tranches after, the user fees are disabled.
-     * If the count is already zero (an earlier desync), the decrement is skipped and
-     * `UserActiveTrancheCountUnderflow` is emitted instead of reverting, so that a stale count can never
-     * revert a clearing or a forced withdrawal.
      * @param user The address of the user that redeemed all of his shares from the tranche.
      * @param lendingPool The address of the lending pool corresponding to the tranche.
      */
@@ -366,20 +363,29 @@ contract UserManager is IUserManager, Initializable {
         external
         verifyTranche(lendingPool, msg.sender)
     {
-        uint256 count = _userActiveTrancheCount[user];
-
-        if (count == 0) {
+        if (!_isUserActiveInTranche[user][msg.sender]) {
             emit UserActiveTrancheCountUnderflow(user, lendingPool, msg.sender);
             return;
         }
+        _setUserActiveInTranche(user, lendingPool, msg.sender, false);
+    }
 
-        unchecked {
-            --count;
-        }
-        _userActiveTrancheCount[user] = count;
-
-        if (count == 0) {
-            _ksuLocking.disableFeesForUser(user);
+    /**
+     * @notice Re-derives the user's active flag for a tranche from the tranche's active shares.
+     * @dev Permissionless and idempotent: the result only depends on `userActiveShares` on-chain, so any caller
+     * can only move the record towards the truth. Used to backfill every holder atomically with the upgrade
+     * that introduced the per-tranche flags, and to repair any later desync without an admin.
+     * @param user The address of the user.
+     * @param lendingPool The lending pool of the tranche.
+     * @param tranche The tranche address.
+     */
+    function syncUserActiveTranche(address user, address lendingPool, address tranche)
+        external
+        verifyTranche(lendingPool, tranche)
+    {
+        bool isActive = ILendingPoolTranche(tranche).userActiveShares(user) > 0;
+        if (_isUserActiveInTranche[user][tranche] != isActive) {
+            _setUserActiveInTranche(user, lendingPool, tranche, isActive);
         }
     }
 
@@ -545,39 +551,28 @@ contract UserManager is IUserManager, Initializable {
 
     /* ========== INTERNAL MUTATIVE FUNCTIONS ========== */
 
-    /**
-     * @notice Manually updates user active tranche count.
-     * @dev SHOULD ONLY BE CALLED TO MANUALLY SYNC USER ACTIVE TRANCHE COUNT AFTER UPGRADING THE CONTRACT.
-     * @param users The array of users.
-     * @param counts The array of user active tranche counts.
-     */
-    function _batchSetUserActiveTrancheCount(address[] calldata users, uint256[] calldata counts) private {
-        if (users.length != counts.length) {
-            revert InvalidArrayLength();
-        }
+    function _setUserActiveInTranche(address user, address lendingPool, address tranche, bool isActive) private {
+        if (_isUserActiveInTranche[user][tranche] == isActive) return;
 
-        for (uint256 i; i < users.length; ++i) {
-            if (_userActiveTrancheCount[users[i]] == 0 && counts[i] > 0) {
-                _ksuLocking.enableFeesForUser(users[i]);
-            } else if (_userActiveTrancheCount[users[i]] > 0 && counts[i] == 0) {
-                _ksuLocking.disableFeesForUser(users[i]);
+        _isUserActiveInTranche[user][tranche] = isActive;
+        uint256 count = _activeTrancheCount[user];
+
+        if (isActive) {
+            _activeTrancheCount[user] = ++count;
+            if (count == 1) {
+                _ksuLocking.enableFeesForUser(user);
             }
-
-            _userActiveTrancheCount[users[i]] = counts[i];
-
-            emit UserActiveTrancheCountSet(users[i], counts[i]);
+        } else {
+            _activeTrancheCount[user] = --count;
+            if (count == 0) {
+                _ksuLocking.disableFeesForUser(user);
+            }
         }
+
+        emit UserActiveTrancheUpdated(user, lendingPool, tranche, isActive, count);
     }
 
     /* ========== MODIFIERS ========== */
-
-    /// @dev The proxy admin can only reach the implementation through `upgradeAndCall` (transparent proxy).
-    modifier onlyProxyAdmin() {
-        if (msg.sender != ERC1967Utils.getAdmin()) {
-            revert CallerNotProxyAdmin(msg.sender);
-        }
-        _;
-    }
 
     modifier verifyTranche(address lendingPool, address tranche) {
         if (

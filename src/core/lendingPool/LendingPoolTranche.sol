@@ -82,6 +82,23 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     }
 
     /**
+     * @notice Whether the user is in the tranche users array (receives loss receipt tokens).
+     * @param user The address of the user.
+     * @return True if the user is listed.
+     */
+    function isTrancheUser(address user) external view returns (bool) {
+        return _isTrancheUser(user);
+    }
+
+    /**
+     * @notice Number of users in the tranche users array.
+     * @return The number of listed users.
+     */
+    function trancheUserCount() external view returns (uint256) {
+        return _trancheUsers.length;
+    }
+
+    /**
      * @notice Returns the maximum amount of assets that can be reported as a loss.
      * @return maxLossAmount The maximum amount of assets that can be reported as a loss.
      */
@@ -98,7 +115,7 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
      * and the userManager is updated.
      * A zero-share call is a no-op: a user can only leave the tranche when their shares go from non-zero to zero.
      * Without this guard, a zero-share redeem for a user holding no shares (e.g. `forceImmediateWithdrawal` with 0)
-     * decremented the user's active tranche count a second time and evicted whichever user sat at index 0.
+     * removed the user a second time and evicted whichever user sat at index 0.
      * @param user The address of the user.
      * @param shares The amount of shares that were redeemed.
      */
@@ -107,49 +124,40 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
 
         userActiveShares[user] -= shares;
 
-        // remove user from trancheUsers array if they have no shares
         if (userActiveShares[user] == 0) {
-            uint256 removingUserIndex = _userArrayIndex[user];
-
-            if (removingUserIndex < _trancheUsers.length && _trancheUsers[removingUserIndex] == user) {
-                // swap removing user with last user
-                uint256 lastUserIndex = _trancheUsers.length - 1;
-                address lastUser = _trancheUsers[lastUserIndex];
-
-                _trancheUsers[removingUserIndex] = lastUser;
-                _trancheUsers.pop();
-
-                // update last and removing user index
-                _userArrayIndex[lastUser] = removingUserIndex;
+            if (_isTrancheUser(user)) {
+                _removeTrancheUser(user);
             } else {
-                // the user is not where the index says (earlier desync): never evict someone else
-                emit TrancheUserIndexMismatch(user, removingUserIndex);
+                // missing from the array (earlier desync): never evict someone else
+                emit TrancheUserNotInArray(user);
             }
-            delete _userArrayIndex[user];
 
             _userManager.removeUserActiveTranche(user, address(_ownLendingPool()));
         }
     }
 
     /**
-     * @notice Re-adds a user who holds active shares but is missing from the tranche users array.
-     * @dev Repairs arrays desynced by the former zero-share removal, which evicted the user at index 0.
-     * A missing user receives no loss receipt tokens when a loss is registered.
-     * Permissionless and idempotent: every user in the array is at its recorded index (swap-and-pop keeps
-     * the index of the moved user), so a user not at its recorded index is absent and is added exactly once.
+     * @notice Re-derives the user's membership of the tranche users array, and the user's active flag in the
+     * user manager, from `userActiveShares`.
+     * @dev Adds a holder missing from the array (the former zero-share removal evicted the user at index 0, and
+     * a missing user receives no loss receipt tokens), and removes a listed user holding no shares.
+     * Permissionless and idempotent: membership is decided by `_isTrancheUser`, the same check every path uses,
+     * so a user can never be listed twice.
      * @param user The address of the user.
      */
     function syncTrancheUser(address user) external notPendingLossMint {
-        if (userActiveShares[user] == 0) return;
+        bool isHolder = userActiveShares[user] > 0;
+        bool isListed = _isTrancheUser(user);
 
-        uint256 index = _userArrayIndex[user];
-        if (index < _trancheUsers.length && _trancheUsers[index] == user) return;
+        if (isHolder && !isListed) {
+            _addTrancheUser(user);
+            emit TrancheUserRestored(user, _userArrayIndex[user]);
+        } else if (!isHolder && isListed) {
+            _removeTrancheUser(user);
+            emit TrancheUserRemoved(user);
+        }
 
-        index = _trancheUsers.length;
-        _userArrayIndex[user] = index;
-        _trancheUsers.push(user);
-
-        emit TrancheUserRestored(user, index);
+        _userManager.syncUserActiveTranche(user, address(_ownLendingPool()), address(this));
     }
 
     /**
@@ -172,11 +180,14 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     {
         shares = super.deposit(assets, receiver);
 
-        // if user had not shares before, add to the trancheUsers array (a zero-share deposit adds nothing)
-        if (shares > 0 && userActiveShares[receiver] == 0) {
-            _userArrayIndex[receiver] = _trancheUsers.length;
-            _trancheUsers.push(receiver);
+        // a zero-share deposit changes nothing
+        if (shares == 0) return shares;
 
+        if (!_isTrancheUser(receiver)) {
+            _addTrancheUser(receiver);
+        }
+
+        if (userActiveShares[receiver] == 0) {
             _userManager.addUserActiveTranche(receiver, address(_ownLendingPool()));
         }
 
@@ -254,6 +265,29 @@ contract LendingPoolTranche is ILendingPoolTranche, ERC4626Upgradeable, LendingP
     }
 
     /* ========== INTERNAL VIEW FUNCTIONS ========== */
+
+    /// @dev The one membership check: a user is listed iff the slot at its recorded index holds it.
+    function _isTrancheUser(address user) private view returns (bool) {
+        uint256 index = _userArrayIndex[user];
+        return index < _trancheUsers.length && _trancheUsers[index] == user;
+    }
+
+    function _addTrancheUser(address user) private {
+        _userArrayIndex[user] = _trancheUsers.length;
+        _trancheUsers.push(user);
+    }
+
+    /// @dev Swap-and-pop. Callers ensure `_isTrancheUser(user)`.
+    function _removeTrancheUser(address user) private {
+        uint256 removingUserIndex = _userArrayIndex[user];
+        address lastUser = _trancheUsers[_trancheUsers.length - 1];
+
+        _trancheUsers[removingUserIndex] = lastUser;
+        _trancheUsers.pop();
+
+        _userArrayIndex[lastUser] = removingUserIndex;
+        delete _userArrayIndex[user];
+    }
 
     function _trancheUsersStorage() internal view override returns (address[] storage) {
         return _trancheUsers;
