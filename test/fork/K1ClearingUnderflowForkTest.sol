@@ -54,8 +54,7 @@ contract K1ClearingUnderflowForkTest is Test {
     address private constant EVICTED_SENIOR_1 = 0x0876eA886B818C4F30aaf4cE61949A7890De9c70;
     address private constant EVICTED_SENIOR_2 = 0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658;
 
-    uint256 private constant COUNT_SLOT = 7;
-    uint256 private constant USERS_SLOT = 6;
+    uint256 private constant LEGACY_COUNT_SLOT = 7; // the bare counter the live UserManager uses
 
     ISystemVariables private constant sv = ISystemVariables(SYS_VARS);
 
@@ -72,17 +71,33 @@ contract K1ClearingUnderflowForkTest is Test {
 
     // ------------------------------------------------------------------ helpers
 
-    function _count(address user) private view returns (uint256) {
-        return uint256(vm.load(USER_MANAGER, keccak256(abi.encode(user, COUNT_SLOT))));
+    struct Pair {
+        address lendingPool;
+        address tranche;
+        address user;
     }
 
-    function _trancheUsersContain(address tranche, address user) private view returns (bool) {
-        uint256 n = uint256(vm.load(tranche, bytes32(USERS_SLOT)));
-        uint256 base = uint256(keccak256(abi.encode(USERS_SLOT)));
-        for (uint256 i; i < n; ++i) {
-            if (address(uint160(uint256(vm.load(tranche, bytes32(base + i))))) == user) return true;
+    struct PoolEntry {
+        address lendingPool;
+        address[] tranches;
+    }
+
+    function _count(address user) private view returns (uint256) {
+        return IUserManager(USER_MANAGER).userActiveTrancheCount(user);
+    }
+
+    function _snapshot() private view returns (Pair[] memory pairs, PoolEntry[] memory pools) {
+        string memory json = vm.readFile("scripts/recovery/k1/base-active-tranches.json");
+        pairs = abi.decode(vm.parseJson(json, ".pairs"), (Pair[]));
+        pools = abi.decode(vm.parseJson(json, ".pools"), (PoolEntry[]));
+    }
+
+    /// @dev The Safe batch's step 3, as `buildActiveTrancheRepairBatch.ts` writes it.
+    function _backfill() private returns (Pair[] memory pairs, PoolEntry[] memory pools) {
+        (pairs, pools) = _snapshot();
+        for (uint256 i; i < pairs.length; ++i) {
+            ILendingPoolTranche(pairs[i].tranche).syncTrancheUser(pairs[i].user);
         }
-        return false;
     }
 
     function _staleWNft() private view returns (uint256) {
@@ -176,58 +191,75 @@ contract K1ClearingUnderflowForkTest is Test {
         assertEq(ret, abi.encodeWithSignature("Panic(uint256)", 0x11));
     }
 
-    function test_fork_K1_fixedCodeClears() public {
-        uint256 wNft = _staleWNft();
-        if (wNft == 0) return;
+    function _underflowEmittedFor(Vm.Log[] memory logs, address user) private pure returns (bool) {
+        for (uint256 i; i < logs.length; ++i) {
+            if (
+                logs[i].emitter == USER_MANAGER
+                    && logs[i].topics[0] == IUserManager.UserActiveTrancheCountUnderflow.selector
+                    && logs[i].topics[1] == bytes32(uint256(uint160(user)))
+            ) return true;
+        }
+        return false;
+    }
+
+    /// The live desync this repair targets (fails once the state changes on-chain, as it should).
+    function test_fork_liveDesyncPresent() public {
+        assertEq(uint256(vm.load(USER_MANAGER, keccak256(abi.encode(STALE_USER, LEGACY_COUNT_SLOT)))), 0);
+        assertEq(uint256(vm.load(USER_MANAGER, keccak256(abi.encode(UNDERCOUNTED_USER, LEGACY_COUNT_SLOT)))), 1);
+    }
+
+    /// Even with no backfill at all, the fixed code cannot revert the clearing.
+    function test_fork_K1_fixedCodeClearsWithoutBackfill() public {
+        if (_staleWNft() == 0) return;
         _upgrade();
 
         vm.recordLogs();
         (bool ok,) = _clearTwoEpochs();
         assertTrue(ok, "fixed code: clearing succeeds");
-
-        bool underflowEmitted;
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        for (uint256 i; i < logs.length; ++i) {
-            if (
-                logs[i].emitter == USER_MANAGER
-                    && logs[i].topics[0] == IUserManager.UserActiveTrancheCountUnderflow.selector
-                    && logs[i].topics[1] == bytes32(uint256(uint160(STALE_USER)))
-            ) underflowEmitted = true;
-        }
-        assertTrue(underflowEmitted, "skipped decrement is surfaced as an event");
+        assertTrue(_underflowEmittedFor(vm.getRecordedLogs(), STALE_USER), "unrecorded removal is surfaced");
         assertEq(_staleWNft(), 0, "stale request accepted");
         assertEq(ILendingPoolTranche(TAX_PAY_MEZZ).userActiveShares(STALE_USER), 0);
-        assertEq(_count(STALE_USER), 0);
     }
 
-    /// The repair the upgrade ships with: put the two evicted Senior holders back, fix the undercounted user.
-    function test_fork_repairDesyncedState() public {
+    /// The full Safe batch on the live state: upgrade, backfill every holder, then the next two clearings.
+    function test_fork_upgradeAndBackfill() public {
         _upgrade();
+        uint256 gasBefore = gasleft();
+        (Pair[] memory pairs, PoolEntry[] memory pools) = _backfill();
+        emit log_named_uint("backfill gas", gasBefore - gasleft());
+        emit log_named_uint("backfill pairs", pairs.length);
 
-        assertFalse(_trancheUsersContain(TAX_PAY_SENIOR, EVICTED_SENIOR_1));
-        assertFalse(_trancheUsersContain(TAX_PAY_SENIOR, EVICTED_SENIOR_2));
-        ILendingPoolTranche(TAX_PAY_SENIOR).syncTrancheUser(EVICTED_SENIOR_1);
-        ILendingPoolTranche(TAX_PAY_SENIOR).syncTrancheUser(EVICTED_SENIOR_2);
-        assertTrue(_trancheUsersContain(TAX_PAY_SENIOR, EVICTED_SENIOR_1));
-        assertTrue(_trancheUsersContain(TAX_PAY_SENIOR, EVICTED_SENIOR_2));
-
-        address[] memory users = new address[](2);
-        uint256[] memory counts = new uint256[](2);
-        (users[0], counts[0]) = (UNDERCOUNTED_USER, 2);
-        (users[1], counts[1]) = (STALE_USER, ILendingPoolTranche(TAX_PAY_MEZZ).userActiveShares(STALE_USER) > 0 ? 1 : 0);
-        ProxyAdmin pa = ProxyAdmin(address(uint160(uint256(vm.load(USER_MANAGER, ERC1967Utils.ADMIN_SLOT)))));
-        address impl = address(uint160(uint256(vm.load(USER_MANAGER, ERC1967Utils.IMPLEMENTATION_SLOT))));
-        vm.prank(pa.owner());
-        pa.upgradeAndCall(
-            ITransparentUpgradeableProxy(USER_MANAGER),
-            impl,
-            abi.encodeCall(UserManager.setUserActiveTrancheCounts, (users, counts))
-        );
+        // every holder recorded and listed, and the listing is complete
+        for (uint256 i; i < pairs.length; ++i) {
+            assertTrue(IUserManager(USER_MANAGER).isUserActiveInTranche(pairs[i].user, pairs[i].tranche));
+            assertTrue(ILendingPoolTranche(pairs[i].tranche).isTrancheUser(pairs[i].user));
+        }
+        for (uint256 p; p < pools.length; ++p) {
+            for (uint256 t; t < pools[p].tranches.length; ++t) {
+                ILendingPoolTranche tranche = ILendingPoolTranche(pools[p].tranches[t]);
+                uint256 holders;
+                uint256 sum;
+                for (uint256 i; i < pairs.length; ++i) {
+                    if (pairs[i].tranche != address(tranche)) continue;
+                    ++holders;
+                    sum += tranche.userActiveShares(pairs[i].user);
+                }
+                assertEq(sum, tranche.totalSupply(), "snapshot complete (re-generate it if a holder was added)");
+                assertEq(tranche.trancheUserCount(), holders, "every holder listed once");
+            }
+        }
+        // the known desync is gone
+        assertEq(_count(STALE_USER), 1);
         assertEq(_count(UNDERCOUNTED_USER), 2);
-        assertEq(_count(STALE_USER), counts[1]);
+        assertTrue(ILendingPoolTranche(TAX_PAY_SENIOR).isTrancheUser(EVICTED_SENIOR_1));
+        assertTrue(ILendingPoolTranche(TAX_PAY_SENIOR).isTrancheUser(EVICTED_SENIOR_2));
 
-        // and the clearing still goes through with the repaired state
+        if (_staleWNft() == 0) return;
+        vm.recordLogs();
         (bool ok,) = _clearTwoEpochs();
-        assertTrue(ok, "clearing after repair");
+        assertTrue(ok, "clearing after the batch");
+        assertFalse(_underflowEmittedFor(vm.getRecordedLogs(), STALE_USER), "a normal removal after backfill");
+        assertEq(_staleWNft(), 0);
+        assertEq(_count(STALE_USER), 0);
     }
 }

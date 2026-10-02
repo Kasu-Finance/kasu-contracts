@@ -1,0 +1,86 @@
+{
+  "network": "xdc",
+  "snapshotBlock": 107917522,
+  "source": "every tranche of every pool; candidates = all past share recipients; complete iff sum(userActiveShares) == totalSupply per tranche",
+  "pools": [
+    {
+      "lendingPool": "0x20F42FB45f91657aCf9528b99a5a16d0229C7800",
+      "tranches": [
+        "0x08271eedcee53c38fAf423CF0A14582dA64C2d4F",
+        "0xdd18A8fFDA3d307CA500ED29679876cdace7b91A",
+        "0x4e3BBFCC8508e139f7Eb7b2C0a62320558EB8429"
+      ]
+    },
+    {
+      "lendingPool": "0x3b7cb493Aa22f731DB2ab424D918e7375E00F6A9",
+      "tranches": [
+        "0x8AB288DCdA530aDdd731e3C8667B391b211428fD",
+        "0xC4C38826AbEDd417d4931DC78C19388850982bff",
+        "0xCa89043ac73Ef444DECac74F6BE16c73E24e1591"
+      ]
+    },
+    {
+      "lendingPool": "0xEDa50C91a8c4CA8A83652b8542c0b3BD00A71fad",
+      "tranches": [
+        "0x28a96CCb218dC3ddEAcf2D025EDc26c870D156Ec",
+        "0x1B2a9546f276c80f84aD683Ab150B074ABC17EE4",
+        "0x5C7C5AfEfBa74F2EF24BB65D10c52622850DA4Fa"
+      ]
+    },
+    {
+      "lendingPool": "0x10853cD58e89cf8f00Bc723E3ed1215f58263A77",
+      "tranches": [
+        "0x2f321d677e72bC2Fc8E428b361d25Fd313E80EAa",
+        "0x2715C5fF5e74B6CC6e17f6313f1D1268c55E51a6",
+        "0x1A1380798DD2a17A30dd19c62D16D5A686e0f3D5"
+      ]
+    },
+    {
+      "lendingPool": "0x62c9b18E50D2D66FeB0008FEBB8A195fA598b28e",
+      "tranches": [
+        "0x539FfB03f7D90e1BcA20e09eDF518572FA9e5404",
+        "0xC7e8231ce6B686B56Ae122518f67591F712DD5Fd",
+        "0x510D8407e05AD595f42d4FC13d42315cfFFdd77B"
+      ]
+    },
+    {
+      "lendingPool": "0xE5dc5328c8690A164AAC611a22DD74541fB138d8",
+      "tranches": [
+        "0x6eb3f84448dD0376D3246a1cF2E0a61c12654ca1",
+        "0xa521CA7B5Fe03F4467c7fE68Ef4D3DdC4260a02A",
+        "0xe30DDe97AEDE6BF44C8D5F2402f1358b9F855875"
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "lendingPool": "0x20F42FB45f91657aCf9528b99a5a16d0229C7800",
+      "tranche": "0x4e3BBFCC8508e139f7Eb7b2C0a62320558EB8429",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0x20F42FB45f91657aCf9528b99a5a16d0229C7800",
+      "tranche": "0xdd18A8fFDA3d307CA500ED29679876cdace7b91A",
+      "user": "0x26b5b8060A704b0420734d5Ccd657384fb1366C2"
+    },
+    {
+      "lendingPool": "0x20F42FB45f91657aCf9528b99a5a16d0229C7800",
+      "tranche": "0xdd18A8fFDA3d307CA500ED29679876cdace7b91A",
+      "user": "0x9c9550871C8d714e90eE03E610B21F156381bDF1"
+    },
+    {
+      "lendingPool": "0x3b7cb493Aa22f731DB2ab424D918e7375E00F6A9",
+      "tranche": "0x8AB288DCdA530aDdd731e3C8667B391b211428fD",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0x3b7cb493Aa22f731DB2ab424D918e7375E00F6A9",
+      "tranche": "0xC4C38826AbEDd417d4931DC78C19388850982bff",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    }
+  ],
+  "knownDesync": {
+    "countMismatches": [],
+    "trancheArrayIssues": []
+  }
+}

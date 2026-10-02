@@ -3,6 +3,8 @@ solc = "0.8.23"
 src = "src"
 out = "out"
 libs = ["lib", "vendor"]
+# read-only, for the Base fork test that replays the K-1 repair batch from its snapshot
+fs_permissions = [{ access = "read", path = "./scripts/recovery/k1" }]
 
 # optimizer
 optimizer = true

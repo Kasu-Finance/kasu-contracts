@@ -1,0 +1,44 @@
+{
+  "network": "xdc-usdc",
+  "snapshotBlock": 107917527,
+  "source": "every tranche of every pool; candidates = all past share recipients; complete iff sum(userActiveShares) == totalSupply per tranche",
+  "pools": [
+    {
+      "lendingPool": "0x0c80c419804fc226dFCa0E7efEA19a256E3948c0",
+      "tranches": [
+        "0x24574914d3c155b9fA6797Ae3BC9A02361169Eaa",
+        "0xce2ba4c86D73FBDbfDf0b3e38081a68685480918",
+        "0x3e70240830aD8ab1E1B05B0d210684667880dba4"
+      ]
+    },
+    {
+      "lendingPool": "0x4B5f34A6B6E90cf6D8a1A7E8528FB9CC50e40013",
+      "tranches": [
+        "0x64Cd9ed39b0D46872D54CC72662Dce5C9159c712",
+        "0x1d3dc07Ca0a9F1Fbfef7b91ca5a543B2BEf65eC9",
+        "0x53d06028Fc10eEC4eAe53e9ed04EBC06EC435b05"
+      ]
+    },
+    {
+      "lendingPool": "0xEabB109A49455fd58D43dD66297A0Fa47149CeC5",
+      "tranches": [
+        "0x84dA2F4C617DEb3b2e8eF83330CC9f436e17eF3f",
+        "0xca84574500B955437bE483a4FB0fAe608648C667",
+        "0x144eCd6C4692e728ABa60FA78B3D7d70DE2ff91E"
+      ]
+    },
+    {
+      "lendingPool": "0xAc3BA50F290385fDce7004ae6EfAd8874bBeAb5F",
+      "tranches": [
+        "0x2C80673AbEBf9e961f8A1f8A50fd182b427257C8",
+        "0xb853A0495c81ee41eDbC262BD5b18eEBe2D6D233",
+        "0x4B88045A66f506b618967E5dC9ab58c4dAAA7137"
+      ]
+    }
+  ],
+  "pairs": [],
+  "knownDesync": {
+    "countMismatches": [],
+    "trancheArrayIssues": []
+  }
+}

@@ -1,0 +1,402 @@
+{
+  "network": "base",
+  "snapshotBlock": 52078744,
+  "source": "every tranche of every pool; candidates = all past share recipients; complete iff sum(userActiveShares) == totalSupply per tranche",
+  "pools": [
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranches": [
+        "0x1E7cD16f077082F5158B9d7206027400e707810F",
+        "0xf1451615a146920cFC5Dc83915E446f9b67411c4"
+      ]
+    },
+    {
+      "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+      "tranches": [
+        "0xadF8D61688ea90b1D73EBFE55610DF3F01442a2F",
+        "0x747267737b499B7E115a2eb8cBda8576ba47556D"
+      ]
+    },
+    {
+      "lendingPool": "0xe621eC2A0De3C9EAb96e088256b60c59FFF87607",
+      "tranches": [
+        "0x27bd54D71104ee63aA01B540fe309Be7BaaA5b70"
+      ]
+    },
+    {
+      "lendingPool": "0x9185162FB82F6b4fd469b5127fe3874dFa74f652",
+      "tranches": [
+        "0xc0e18f5816302747708e6503c28ffB9b5f544a75"
+      ]
+    },
+    {
+      "lendingPool": "0x2bf0c43659C2A9f2CA15a9c335A8f2689dfF7AB2",
+      "tranches": [
+        "0x019838EC22DB74E8F8789a05A8B64e32dFf11dDd"
+      ]
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranches": [
+        "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+        "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+        "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38"
+      ]
+    },
+    {
+      "lendingPool": "0x03F93C8cAa9A82e000d35673ba34a4C0E6e117A2",
+      "tranches": [
+        "0x413FD1DcdeF10971E087A47d94DA727A974EEF8F",
+        "0x493024ec48671B8eeC3737946d7412E437CEE343",
+        "0xDDF4DbD570024f22FFc235Ae582fC2fB6E4222b8"
+      ]
+    },
+    {
+      "lendingPool": "0xc347a9e4AEC8c8d11a149d2907Deb2bF23b81C6F",
+      "tranches": [
+        "0xD29745A57802303c994E5F6CC83E68224989Ae09",
+        "0xD59275cEB52D97aF56c1883188ea8fB5F369e9d8",
+        "0x396E79FFbb9aFc503c045b4f88ca7F393557aa59"
+      ]
+    },
+    {
+      "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+      "tranches": [
+        "0x171583fe33bFC27D9bC6Cf04A745074c95506156",
+        "0x4639ac7870B9217c6919616fD37AdBd353F53Ea1",
+        "0x94A699A93519BEF708B5be69914436363100F3F9"
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "lendingPool": "0x03F93C8cAa9A82e000d35673ba34a4C0E6e117A2",
+      "tranche": "0x493024ec48671B8eeC3737946d7412E437CEE343",
+      "user": "0x20547cB8588bf3A1f531bB32EdAaF6e72BF9052C"
+    },
+    {
+      "lendingPool": "0x03F93C8cAa9A82e000d35673ba34a4C0E6e117A2",
+      "tranche": "0x493024ec48671B8eeC3737946d7412E437CEE343",
+      "user": "0x26b5b8060A704b0420734d5Ccd657384fb1366C2"
+    },
+    {
+      "lendingPool": "0x03F93C8cAa9A82e000d35673ba34a4C0E6e117A2",
+      "tranche": "0x493024ec48671B8eeC3737946d7412E437CEE343",
+      "user": "0x2b0384Cd3596d63085e361425F66031580c16fe2"
+    },
+    {
+      "lendingPool": "0x03F93C8cAa9A82e000d35673ba34a4C0E6e117A2",
+      "tranche": "0x493024ec48671B8eeC3737946d7412E437CEE343",
+      "user": "0x4e96300bC21Ea29cE73BC526D89e191cA6340242"
+    },
+    {
+      "lendingPool": "0x03F93C8cAa9A82e000d35673ba34a4C0E6e117A2",
+      "tranche": "0x493024ec48671B8eeC3737946d7412E437CEE343",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0x1E7cD16f077082F5158B9d7206027400e707810F",
+      "user": "0x3417bcf408BC3932f94effc68930E144D1fAF267"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0x1E7cD16f077082F5158B9d7206027400e707810F",
+      "user": "0x4c0d92e9c862B58b0FFeAAD031004A049d2c360D"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0x1E7cD16f077082F5158B9d7206027400e707810F",
+      "user": "0x6854BFBD1D6a7d2423a9126894F7dB48d0aDb538"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0xf1451615a146920cFC5Dc83915E446f9b67411c4",
+      "user": "0x3417bcf408BC3932f94effc68930E144D1fAF267"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0xf1451615a146920cFC5Dc83915E446f9b67411c4",
+      "user": "0x4c0d92e9c862B58b0FFeAAD031004A049d2c360D"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0xf1451615a146920cFC5Dc83915E446f9b67411c4",
+      "user": "0x63546Ff6D7586a3dB4d3676F34106E7583d33c24"
+    },
+    {
+      "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+      "tranche": "0xf1451615a146920cFC5Dc83915E446f9b67411c4",
+      "user": "0x6854BFBD1D6a7d2423a9126894F7dB48d0aDb538"
+    },
+    {
+      "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+      "tranche": "0x747267737b499B7E115a2eb8cBda8576ba47556D",
+      "user": "0x3417bcf408BC3932f94effc68930E144D1fAF267"
+    },
+    {
+      "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+      "tranche": "0x747267737b499B7E115a2eb8cBda8576ba47556D",
+      "user": "0x3c30BcC6c78968EC52621F510668D139E306f785"
+    },
+    {
+      "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+      "tranche": "0xadF8D61688ea90b1D73EBFE55610DF3F01442a2F",
+      "user": "0x3417bcf408BC3932f94effc68930E144D1fAF267"
+    },
+    {
+      "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+      "tranche": "0xadF8D61688ea90b1D73EBFE55610DF3F01442a2F",
+      "user": "0x3c30BcC6c78968EC52621F510668D139E306f785"
+    },
+    {
+      "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+      "tranche": "0x171583fe33bFC27D9bC6Cf04A745074c95506156",
+      "user": "0xe4CD1b5954B940465CAaeE8c630EC4233Fa51163"
+    },
+    {
+      "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+      "tranche": "0x94A699A93519BEF708B5be69914436363100F3F9",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xB6DeAb2f712eFC9DF8c1E949b194BEE12F9C04FE",
+      "tranche": "0x94A699A93519BEF708B5be69914436363100F3F9",
+      "user": "0x9c9550871C8d714e90eE03E610B21F156381bDF1"
+    },
+    {
+      "lendingPool": "0xc347a9e4AEC8c8d11a149d2907Deb2bF23b81C6F",
+      "tranche": "0x396E79FFbb9aFc503c045b4f88ca7F393557aa59",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xc347a9e4AEC8c8d11a149d2907Deb2bF23b81C6F",
+      "tranche": "0xD29745A57802303c994E5F6CC83E68224989Ae09",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xc347a9e4AEC8c8d11a149d2907Deb2bF23b81C6F",
+      "tranche": "0xD59275cEB52D97aF56c1883188ea8fB5F369e9d8",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x0876eA886B818C4F30aaf4cE61949A7890De9c70"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x0FFb5dcBDf83049EfAe2DA4971E5199e7838ed97"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x1da82d5F196C7203DA85e234936c61E5c8bc96aD"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x20547cB8588bf3A1f531bB32EdAaF6e72BF9052C"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x2D8E086aA82852106d74d184bdb5F84058BD6815"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x480760E862d30c5E3BD2A3B5A7203e53aB86f446"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0x843aC0C61DDF449Acd2256fe0fCAf9E5834740cc"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0xB5085a8C27B365fACd1AbE57C4208D6a1A128C7B"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+      "user": "0xe10638C4E990ADe31fb395852A9b008a053B7d94"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0x0876eA886B818C4F30aaf4cE61949A7890De9c70"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0x4e96300bC21Ea29cE73BC526D89e191cA6340242"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0x6854BFBD1D6a7d2423a9126894F7dB48d0aDb538"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0x9c9550871C8d714e90eE03E610B21F156381bDF1"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0xCB5dd2D4fe7643A73574E1cb5B9a6CE69b4fd69D"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+      "user": "0xCC587620d234B2ebF72cA7B9fE53DB8AAc4CD7B7"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x0C0Df0B1a4AAF6805039Af657bb4831bdA79779d"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x3987aFed7E1Eb24e5477D734f32219176D04b134"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x4BF1680a49bdaD5b534Be824D81AA21F79d80683"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x4c0d92e9c862B58b0FFeAAD031004A049d2c360D"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x4e96300bC21Ea29cE73BC526D89e191cA6340242"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x752A9bEC4Fb0b07b402d7c93aDc03D0C2457Cc8f"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x766750B9909A6d3f72Df220aE5D0687661Ca7d92"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x843aC0C61DDF449Acd2256fe0fCAf9E5834740cc"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x849878Fe831a83a3B265850149068e50d7687dF9"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x8F524310D2e1b2ed1A52e3ab855F2252850Dee20"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0x9c9550871C8d714e90eE03E610B21F156381bDF1"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0xA214E5CFd8C9eD75C68547A032F4689b7DB9bc85"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0xA5E6958E1a34C010BE961B20222345e1D7f4E1da"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0xcBB6C7016750e4E75Bd7B63D8f3FEbA246ab9074"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0xCC587620d234B2ebF72cA7B9fE53DB8AAc4CD7B7"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0xE91aeDc7E0Ae7155464811d320e40Bd4F95799A9"
+    },
+    {
+      "lendingPool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+      "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+      "user": "0xf60E296Abbc4ccdB76b0CffB13D486C8a7b00022"
+    }
+  ],
+  "knownDesync": {
+    "countMismatches": [
+      {
+        "user": "0x20547cB8588bf3A1f531bB32EdAaF6e72BF9052C",
+        "stored": "1",
+        "expected": "2",
+        "positions": [
+          {
+            "tranche": "0x018eE6de5F5BdC6FEb047Ffda25d69B41CFbBe9D",
+            "uas": "922606471414175956322"
+          },
+          {
+            "tranche": "0x493024ec48671B8eeC3737946d7412E437CEE343",
+            "uas": "423945454316593603107"
+          }
+        ]
+      },
+      {
+        "user": "0x849878Fe831a83a3B265850149068e50d7687dF9",
+        "stored": "0",
+        "expected": "1",
+        "positions": [
+          {
+            "tranche": "0xe2024d80C5dCc1E2F552F7685B9E957Da3d2817E",
+            "uas": "1"
+          }
+        ]
+      }
+    ],
+    "trancheArrayIssues": [
+      {
+        "pool": "0xc987350716Fe4a7d674C3591c391D29eBA26B8Ce",
+        "tranche": "0x70c5Bc8D18366Fb7C190514dd9BBaff937Fe2F38",
+        "holders": 7,
+        "arrayLen": 5,
+        "missing": [
+          "0x0876eA886B818C4F30aaf4cE61949A7890De9c70",
+          "0x7b4A6F5FaD9aB79749EC7190Ec27BeAdD434A658"
+        ],
+        "extra": [],
+        "badIdx": []
+      }
+    ]
+  }
+}
