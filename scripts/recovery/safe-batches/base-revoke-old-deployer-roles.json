@@ -1,16 +1,341 @@
 {
   "version": "1.0",
   "chainId": "8453",
-  "createdAt": 1791791812924,
+  "createdAt": 1791796915314,
   "meta": {
-    "name": "Base: hand two unused pools to Apxium and revoke every role of the old deployer",
-    "description": "22 calls on the Base KasuController (0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868), executed by the Kasu multisig 0xC3128d734563E0d034d3ea177129657408C09D35 (holds DEFAULT_ADMIN_ROLE, the admin of every pool-scoped role and of ROLE_LENDING_POOL_CREATOR). 9 grantRole calls give the Apxium pool admin Safe 0x7adf999af5E0617257014C94888cf98c4584E5E9 and pool manager Safe 0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2 the roles on Invoice Financing - Accounting Firms (0x54A98e1baeD45854789B0448ED1277997D64FFFE) and Taxation Funding (0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe) that the old deployer holds alone, matching the live Base pools. Then 12 revokeLendingPoolRole calls remove every pool role of the old deployer 0x0e7e0a898ddBbE859d08976dE1673c7A9F579483 on those two pools and on Professional Fee Funding - Accounting Firms (0xe621eC2A0De3C9EAb96e088256b60c59FFF87607), and revokeRole removes its ROLE_LENDING_POOL_CREATOR. Grants come first so no pool is ever left without an admin. Idempotent.",
+    "name": "Base: hand two unused pools to Apxium, draw them to the Kasu Safe, revoke every role of the old deployer",
+    "description": "41 calls, executed by the Kasu multisig 0xC3128d734563E0d034d3ea177129657408C09D35 (DEFAULT_ADMIN_ROLE, the admin of every pool-scoped role and of ROLE_LENDING_POOL_CREATOR). A: the Kasu Safe takes ROLE_POOL_ADMIN on Invoice Financing - Accounting Firms (0x54A98e1baeD45854789B0448ED1277997D64FFFE) and Taxation Funding (0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe) for the duration of the batch. B: LendingPoolManager (0xE1Be322323a412579b4A09fB08ff4bfcA12096B5).updateDrawRecipient points both pools at the Kasu Safe (Taxation Funding drew to the old deployer, Invoice Financing to the Apxium admin Safe; both pools are unused and hold no USDC). C: grantRole sets the live Base layout on those two pools and on Professional Fee Funding - Accounting Firms (0xe621eC2A0De3C9EAb96e088256b60c59FFF87607): ADMIN + CLEARING_MANAGER to the Apxium pool admin Safe 0x7adf999af5E0617257014C94888cf98c4584E5E9, MANAGER + FUNDS_MANAGER to it and the Apxium pool manager Safe 0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2. Most are already held (idempotent); the new ones replace roles the deployer held, some of them alone. D: revokeLendingPoolRole removes every pool role of the old deployer 0x0e7e0a898ddBbE859d08976dE1673c7A9F579483 on the three pools, and revokeRole removes its ROLE_LENDING_POOL_CREATOR. D2: revokeLendingPoolRole removes the 4 Invoice Financing pool roles granted in 2024 to the Professional Fee Funding pool contract address 0xe621eC2A0De3C9EAb96e088256b60c59FFF87607 (a mis-paste found in the RoleGranted history). E: the Kasu Safe gives up the temporary pool admin. Grants precede revokes, so no pool is ever without an admin.",
     "txBuilderVersion": "1.16.5",
     "createdFromSafeAddress": "0xC3128d734563E0d034d3ea177129657408C09D35",
     "createdFromOwnerAddress": "",
     "checksum": ""
   },
   "transactions": [
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x7361c54b7cea96b9f31e53efb237769277c31909ad12b83c9fd8fa0eea2bd930",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x45232f1db8d84d0b1b15d1be23e62f375349b5dcf18780ad324a11966edc1bc1",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "drawRecipient",
+            "type": "address"
+          }
+        ],
+        "name": "updateDrawRecipient",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+        "drawRecipient": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xE1Be322323a412579b4A09fB08ff4bfcA12096B5",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "drawRecipient",
+            "type": "address"
+          }
+        ],
+        "name": "updateDrawRecipient",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+        "drawRecipient": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x4940699f8310076ae4e0d743af84330de61d772e90596c7cf2b6b0a668af3b95",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x4a6d929e524d1bdeb87694ebf7e9f87dc9e0d9a0ecb3c8519abee43e63b39147",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x170a00a1c4e841260baddba5ab3dbd4dfa33bb67285fb4a3dd733221f570dd2e",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x170a00a1c4e841260baddba5ab3dbd4dfa33bb67285fb4a3dd733221f570dd2e",
+        "account": "0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xc8ce435be8c02ceb6e90e30778ffb5f576ed2431c23a5a1c1e0cc6a57aa92aa0",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0xc8ce435be8c02ceb6e90e30778ffb5f576ed2431c23a5a1c1e0cc6a57aa92aa0",
+        "account": "0x39905d92Fc61643546D0940F97E5B5D0C0FB69F2"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x7361c54b7cea96b9f31e53efb237769277c31909ad12b83c9fd8fa0eea2bd930",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x210400e587a0cbdfc42c447ab6b09a45ec8b3f24cab8dbeb44cecb09be7b570f",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "grantRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "role": "0x6064fecc7dbb375d2da3afd80f230865b71fe3e4efb373042ea72d7e57668674",
+        "account": "0x7adf999af5E0617257014C94888cf98c4584E5E9"
+      }
+    },
     {
       "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
       "value": "0",
@@ -631,6 +956,192 @@
       "contractInputsValues": {
         "role": "0xb0b5a1ba50b67e869920a65441b9397357d500de3675797e367a031f6e0b8e13",
         "account": "0x0e7e0a898ddBbE859d08976dE1673c7A9F579483"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+        "role": "0xa1ae6eecd2227b91b634171cc3574edbbd83f7aba2d5244820d9ed78e07481ca",
+        "account": "0xe621eC2A0De3C9EAb96e088256b60c59FFF87607"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+        "role": "0xe9bdd900170cbda1c63bf0d3de6bc5418c5397b30d34a4073b01fad4b0268a4a",
+        "account": "0xe621eC2A0De3C9EAb96e088256b60c59FFF87607"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+        "role": "0x3e891da8a35d1578f1448b6a57ba9bf0998dc16885b93b35cac01d8497ac95ea",
+        "account": "0xe621eC2A0De3C9EAb96e088256b60c59FFF87607"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+        "role": "0x3329bd6c227be4e42b89b31e00759830ade608c3d5d453d53614f7fe5d902461",
+        "account": "0xe621eC2A0De3C9EAb96e088256b60c59FFF87607"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0x54A98e1baeD45854789B0448ED1277997D64FFFE",
+        "role": "0xa1ae6eecd2227b91b634171cc3574edbbd83f7aba2d5244820d9ed78e07481ca",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
+      }
+    },
+    {
+      "to": "0xb0D7Eb2D5036fB85A231D0E243a5b723BA5D2868",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "lendingPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "role",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "revokeLendingPoolRole",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "lendingPool": "0xA30D35aa4eBb885c9c7Bb9de766266CD6a221eBe",
+        "role": "0xa1ae6eecd2227b91b634171cc3574edbbd83f7aba2d5244820d9ed78e07481ca",
+        "account": "0xC3128d734563E0d034d3ea177129657408C09D35"
       }
     }
   ]
